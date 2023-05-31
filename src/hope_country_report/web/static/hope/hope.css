@@ -1,0 +1,14 @@
+body {
+    padding-top: 70px;
+}
+.navbar-brand {
+    padding: 0px;
+}
+.navbar-brand>img {
+    height: 50px;
+    width: 110px;
+}
+a {
+  color: #1396ef;
+  text-decoration: none;
+}

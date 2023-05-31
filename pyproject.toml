@@ -1,0 +1,98 @@
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations
+  | snapshots
+)/
+'''
+[tool.django-stubs]
+django_settings_module = "hope_country_report.config.settings"
+
+
+[tool.poetry]
+name = "HOPE Country Report"
+version = "2023.6.1"
+description = "Country Report on top of HOPE platform."
+authors = ['ddinicola']
+
+[tool.poetry.dependencies]
+python = "3.11.*"
+
+Django = "*"
+black = "*"
+celery = {extras = ["redis"], version = "*"}
+django-admin-extra-buttons = "*"
+django-admin-sync = "*"
+django-adminactions = "*"
+django-adminfilters = "*"
+django-advanced-filters = "*"
+django-celery-beat = "*"
+django-celery-results = "*"
+django-concurrency = "*"
+django-cors-headers = "*"
+django-csp = "*"
+django-debug-toolbar = "*"
+django-environ = "*"
+django-extensions = "*"
+django-filter = "*"
+django-import-export = "*"
+django-mptt = "*"
+django-smart-admin = "*"
+dj-static = "*"
+factory-boy = "*"
+gunicorn = "*"
+newrelic = "*"
+natural-keys = "*"
+pre_commit = "*"
+psycopg2 = "*"
+sentry-sdk = "*"
+social-auth-app-django = "*"
+social-auth-core = "*"
+tablib = "*"
+unicef-security = "*"
+unicef-power-query = "^0.3.1"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "0.982"
+django-stubs = "~1.12.0"  # more pypi
+django-stubs-ext = "^0.7.0"  # more pypi
+
+argh = "*"
+django-webtest = "*"
+faker = "*"
+flake8 = "*"
+flake8-bugbear = "*"
+flake8-formatter-junit-xml = "*"
+freezegun = "*"
+graphene-stubs = "*"
+ipdb = "*"
+isort = "*"
+openpyxl-stubs = "*"
+parameterized = "*"
+parso = "*"
+requests-mock = "*"
+responses = "*"
+snapshottest = "*"
+types-freezegun = "*"
+types-requests = "*"
+types-python-dateutil = "*"
+types-pytz = "*"
+types-redis = "*"
+unittest-xml-reporting = "*"
+watchdog = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

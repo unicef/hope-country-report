@@ -1,0 +1,20 @@
+repos:
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        stages: [commit]
+  - repo: https://github.com/ambv/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+        args: [--config=backend/pyproject.toml]
+        exclude: "migrations|snapshots"
+        stages: [commit]
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [--config=backend/.flake8]
+        additional_dependencies: [flake8-bugbear==22.9.23]
+        stages: [ commit ]
