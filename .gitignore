@@ -6,7 +6,7 @@
 !.pre-commit-config.yaml
 !.dockerignore
 *.pyc
-
+DATA/
 build
 ~build
 /dist
