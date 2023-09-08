@@ -1,6 +1,6 @@
 from django.contrib import admin
-
-from hope_country_report.apps.hope.models import Household
+from smart_admin.mixins import DisplayAllMixin
+from hope_country_report.apps.hope.models import Household, Individual, BusinessArea
 
 
 class ReadOnlyMixin:
@@ -14,10 +14,20 @@ class ReadOnlyMixin:
         return False
 
 
+class HopeModelAdmin(ReadOnlyMixin, DisplayAllMixin, admin.ModelAdmin):
+    pass
+
+
+@admin.register(BusinessArea)
+class BusinessAreaAdmin(HopeModelAdmin):
+    pass
+
+
 @admin.register(Household)
-class HouseholdAdmin(ReadOnlyMixin, admin.ModelAdmin):
-    list_display = (
-        "id",
-        "unicef_id",
-        "withdrawn",
-    )
+class HouseholdAdmin(HopeModelAdmin):
+    pass
+
+
+@admin.register(Individual)
+class HouseholdAdmin(HopeModelAdmin):
+    pass

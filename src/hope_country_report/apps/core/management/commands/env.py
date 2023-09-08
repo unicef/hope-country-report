@@ -68,6 +68,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--check", action="store_true", dest="check", default=False, help="Check env for variable availability"
         )
+
     def handle(self, *args: Any, **options: Any) -> None:
         from hope_country_report.config import env, MANDATORY, OPTIONS
 
@@ -104,7 +105,6 @@ class Command(BaseCommand):
                     self.stdout.write(f"#{k}={value}")
                 else:
                     self.stdout.write(f"{k}={value}")
-
 
         if check_failure:
             raise CommandError("Env check command failure!")
