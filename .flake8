@@ -5,5 +5,7 @@ exclude =
     */migrations,
 
 ignore =
-    W503,
     # line break before binary operator
+    W503,
+    # do not assign a lambda expression, use a def
+    E731

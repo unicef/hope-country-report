@@ -3,17 +3,15 @@ import os
 from pathlib import Path
 from typing import Dict
 
-import environ
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 
+from . import env
+
 SETTINGS_DIR = Path(__file__).parent
 PACKAGE_DIR = SETTINGS_DIR.parent
 DEVELOPMENT_DIR = PACKAGE_DIR.parent.parent
-
-env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env()
 
 DEBUG = env.bool("DEBUG")
 
@@ -28,22 +26,26 @@ RO_CONN.update(
 )
 
 DATABASES = {
-    "default": env.db(default="psql://postgres:pass@db:5432/postgres"),
+    "default": env.db(),
     "hope_no_use": env.db(var="DATABASE_HOPE_URL", default="psql://postgres:pass@db:5432/postgres"),
     "hope": RO_CONN,
 }
-
+TEST_RUNNER = "hope_country_report.utils.tests.runner.UnManagedModelTestRunner"
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
 DATABASE_APPS_MAPPING: Dict[str, str] = {
     "hope": "hope",
 }
+MIGRATION_MODULES = {"hope": None}
+
 
 INSTALLED_APPS = (
     "hope_country_report.web",
     "hope_country_report.apps.core.apps.AppConfig",
     "hope_country_report.apps.hope.apps.AppConfig",
     "django.contrib.contenttypes",
+    "flags",
     "advanced_filters",
+    "django_celery_beat",
     "power_query.apps.Config",
     "unicef_security",
     "django.contrib.auth",
@@ -85,6 +87,7 @@ MIDDLEWARE = (
 AUTHENTICATION_BACKENDS = (
     "unicef_security.backends.UNICEFAzureADB2COAuth2",
     "django.contrib.auth.backends.ModelBackend",
+    "hope_country_report.utils.tests.backends.AnyUserAuthBackend",
 )
 
 
@@ -101,10 +104,7 @@ STATICFILES_FINDERS = [
 ]
 
 SECRET_KEY = env("SECRET_KEY")
-ALLOWED_HOSTS = (
-    env("ALLOWED_HOST", default="localhost"),
-    "0.0.0.0",
-)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
@@ -248,7 +248,6 @@ if DEBUG:  # pragma: no cover
 
 
 DEFAULT_FROM_EMAIL = "hope@unicef.org"
-EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
