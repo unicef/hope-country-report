@@ -1,11 +1,12 @@
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
-import pytest
-from admin_extra_buttons.handlers import ChoiceHandler
 from django.contrib.admin.sites import site
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.db.models.options import Options
 from django.urls import reverse
+
+import pytest
+from admin_extra_buttons.handlers import ChoiceHandler
 from django_regex.utils import RegexList as _RegexList
 
 
@@ -22,10 +23,7 @@ GLOBAL_EXCLUDED_MODELS = RegexList(
     ]
 )
 
-GLOBAL_EXCLUDED_BUTTONS = RegexList(
-    [
-    ]
-)
+GLOBAL_EXCLUDED_BUTTONS = RegexList([])
 
 KWARGS = {}
 pytestmark = pytest.mark.admin

@@ -100,7 +100,7 @@ class Command(BaseCommand):
         self.admin_email = str(options["admin_email"] or env("ADMIN_EMAIL", ""))
         self.admin_password = str(options["admin_password"] or env("ADMIN_PASSWORD", ""))
 
-    def halt(self, msg: Exception) -> None:  # pragma: no cover
+    def halt(self, msg: Any) -> None:  # pragma: no cover
         self.stdout.write(str(msg), style_func=self.style.ERROR)
         self.stdout.write("\n\n***", style_func=self.style.ERROR)
         self.stdout.write("SYSTEM HALTED", style_func=self.style.ERROR)

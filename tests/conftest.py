@@ -3,19 +3,21 @@ import logging
 import os
 import sys
 from pathlib import Path
+
 import pytest
 import responses
 
 
 def _setup_models():
     import django
+    from django.conf import settings
     from django.db import connection
     from django.db.backends.utils import truncate_name
 
-    from django.conf import settings
     settings.DATABASE_ROUTERS = []
 
     from django.apps import apps
+
     django.setup()
 
     for m in apps.get_app_config("hope").get_models():
@@ -23,15 +25,20 @@ def _setup_models():
             opts = m._meta.proxy_for_model._meta
         else:
             opts = m._meta
-        if opts.app_label not in ('contenttypes', 'sites'):
-            db_table = ('hope_ro__{0.app_label}_{0.model_name}'.format(opts)).lower()
+        if opts.app_label not in ("contenttypes", "sites"):
+            db_table = ("hope_ro__{0.app_label}_{0.model_name}".format(opts)).lower()
             m._meta.db_table = truncate_name(db_table, connection.ops.max_name_length())
-            m._meta.db_tablespace = ''
+            m._meta.db_tablespace = ""
             m._meta.managed = True
+
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--selenium", action="store_true", dest="enable_selenium", default=False, help="enable selenium tests"
+        "--selenium",
+        action="store_true",
+        dest="enable_selenium",
+        default=False,
+        help="enable selenium tests",
     )
 
     parser.addoption(
@@ -44,8 +51,13 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        "--with-sentry", action="store_true", dest="with_sentry", default=False, help="enable sentry error logging"
+        "--with-sentry",
+        action="store_true",
+        dest="with_sentry",
+        default=False,
+        help="enable sentry error logging",
     )
+
 
 def pytest_configure(config):
     here = Path(__file__).parent
@@ -73,7 +85,6 @@ def pytest_configure(config):
         TWILIO_SERVICE="twilio-service",
         EMAIL_SUBJECT_PREFIX="[Bob-test] ",
         FERNET_USE_HKDF="true",
-
         SECRET_KEY="123",
         SESSION_COOKIE_SECURE="False",
         STRIPE_SECRET_KEY="sk_test_ithKZS91q4FgBxCJGEqwauqwau",
@@ -89,6 +100,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "skip_if_ci: this mark skips the tests on GitlabCI")
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
     _setup_models()
+
 
 #
 # @pytest.fixture(autouse=True)
@@ -159,4 +171,3 @@ def pytest_configure(config):
 def mocked_responses():
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         yield rsps
-

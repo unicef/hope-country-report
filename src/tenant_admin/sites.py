@@ -8,6 +8,7 @@ from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
+
 from smart_admin.site import SmartAdminSite
 
 from .config import conf
@@ -84,7 +85,6 @@ class TenantAdminSite(SmartAdminSite):
             return redirect(f"{self.name}:select_tenant")
         return super().index(request)
 
-
     def app_index(self, request, app_label, extra_context=None):
         if not conf.strategy.get_selected_tenant(request):
             return redirect(f"{self.name}:select_tenant")
@@ -106,9 +106,7 @@ class TenantAdminSite(SmartAdminSite):
         ret["site_url"] = "site_url"
         ret["selected_tenant"] = selected_tenant
         # ret["current_app"] = self.name
-        ret["tenant_form"] = SelectTenantForm(
-            initial={"tenant": selected_tenant}, request=request
-        )
+        ret["tenant_form"] = SelectTenantForm(initial={"tenant": selected_tenant}, request=request)
         return ret  # type: ignore
 
     def register(self, admin_class: TenantModelAdmin, **options: Any) -> None:
@@ -125,7 +123,7 @@ class TenantAdminSite(SmartAdminSite):
 
     @property
     def urls(self):
-        return self.get_urls(), 'admin', self.name
+        return self.get_urls(), "admin", self.name
 
 
 site: TenantAdminSite = TenantAdminSite()

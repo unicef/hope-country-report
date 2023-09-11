@@ -2,12 +2,13 @@ import random
 import uuid
 from uuid import uuid4
 
-import factory
 from django.contrib.admin.models import LogEntry
+
+import factory
 from social_django.models import UserSocialAuth
+from testutils.factories.base import AutoRegisterModelFactory
 
 from hope_country_report.apps.core.models import User
-from testutils.factories.base import AutoRegisterModelFactory
 
 
 class UserFactory(AutoRegisterModelFactory):
@@ -51,6 +52,7 @@ class SocialAuthUserFactory(UserFactory):
     @factory.post_generation
     def sso(obj, create, extracted, **kwargs):
         UserSocialAuth.objects.get_or_create(user=obj, provider="test", uid=uuid4())
+
 
 class LogEntryFactory(AutoRegisterModelFactory):
     action_flag = 1

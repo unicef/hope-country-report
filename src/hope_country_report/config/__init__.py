@@ -18,10 +18,4 @@ OPTIONS = {
 }
 
 
-class SmartEnv(Env):
-    pass
-    # def get_value(self, var, cast=None, default=Env.NOTSET, parse_default=False):
-    #     return self.get_value(var, cast, default, parse_default)
-
-
-env = SmartEnv(**MANDATORY, **OPTIONS)
+env = Env(**MANDATORY, **OPTIONS)

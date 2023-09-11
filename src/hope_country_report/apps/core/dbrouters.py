@@ -6,10 +6,10 @@ from django.db.models import Model
 
 class DbRouter:
     @staticmethod
-    def select_db(model: Optional[Type[Model]]) -> Optional[str]:
+    def select_db(model: Optional[Type[Model]]) -> str | None:
         if model._meta.proxy:
             model = model._meta.proxy_for_model
-        return settings.DATABASE_APPS_MAPPING.get(model._meta.app_label)
+        return settings.DATABASE_APPS_MAPPING.get(model._meta.app_label)  # type: ignore[no-any-return]
 
     def db_for_read(self, model: Optional[Type[Model]], **hints: Any) -> Optional[str]:
         return DbRouter.select_db(model)
@@ -24,4 +24,4 @@ class DbRouter:
             return True
 
         mapped_db = settings.DATABASE_APPS_MAPPING.get(app_label)
-        return mapped_db == db
+        return bool(mapped_db == db)

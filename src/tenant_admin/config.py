@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Union
+from typing import Any, TYPE_CHECKING, Union
 
 from django.core.signals import setting_changed
 from django.db.models import Model
@@ -33,9 +33,7 @@ class AppSettings:
             value = getattr(settings, prefixed_name, default)
             self._set_attr(prefixed_name, value)
             setattr(settings, prefixed_name, value)
-            setting_changed.send(
-                self.__class__, setting=prefixed_name, value=value, enter=True
-            )
+            setting_changed.send(self.__class__, setting=prefixed_name, value=value, enter=True)
 
         setting_changed.connect(self._on_setting_changed)
 
@@ -55,13 +53,9 @@ class AppSettings:
     def tenant_model(self) -> Union[Model, type]:
         from django.apps import apps
 
-        return apps.get_model(
-            self.TENANT_MODEL
-        )  # type ignore [return-value,attr-defined]
+        return apps.get_model(self.TENANT_MODEL)  # type ignore [return-value,attr-defined]
 
-    def _on_setting_changed(
-        self, sender: Model, setting: str, value: Any, **kwargs
-    ) -> None:
+    def _on_setting_changed(self, sender: Model, setting: str, value: Any, **kwargs) -> None:
         if setting.startswith(self.prefix):
             self._set_attr(setting, value)
         for attr in ["tenant_model", "auth", "strategy"]:

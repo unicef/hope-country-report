@@ -1,3 +1,60 @@
+[project]
+name = ""
+version = ""
+description = ""
+authors = [
+    {name = "sax", email = "s.apostolico@gmail.com"},
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "Private"}
+
+dependencies = [
+    "django>=4.2.5",
+    "django-admin-extra-buttons>=1.5.6",
+    "django-adminactions>=2.1.0",
+    "django-adminfilters>=2.2.0",
+    "django-concurrency>=2.4",
+    "django-cors-headers>=4.2.0",
+    "django-debug-toolbar>=4.2.0",
+    "django-flags>=5.0.13",
+    "django-environ>=0.11.2",
+    "django-smart-admin>=2.6.0",
+    "django-tailwind>=3.6.0",
+    "psycopg2-binary>=2.9.7",
+    "social-auth-app-django>=5.3.0",
+    "unicef-security>=1.4.4",
+    "django-regex>=0.5.0",
+    "djangorestframework>=3.14.0",
+]
+[tool.pdm.scripts]
+lint = "pre-commit run --all-files"
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=7.4.2",
+    "django-webtest>=1.9.10",
+    "responses>=0.23.3",
+    "pytest-django>=4.5.2",
+    "pytest-cov>=4.1.0",
+]
+dev = [
+    "flake8>=6.1.0",
+    "pdbpp>=0.10.3",
+    "isort>=5.12.0",
+    "mypy>=1.5.1",
+    "black>=23.9.1",
+    "pre-commit>=3.4.0",
+    "types-freezegun>=1.1.10",
+    "types-requests>=2.31.0.2",
+    "types-python-dateutil>=2.8.19.14",
+    "types-pytz>=2023.3.0.1",
+    "types-redis>=4.6.0.5",
+    "django-stubs>=4.2.4",
+    "django-stubs-ext>=4.2.2",
+    "types-setuptools>=68.2.0.0",
+]
+
 [tool.black]
 line-length = 120
 include = '\.pyi?$'
@@ -17,88 +74,3 @@ exclude = '''
   | snapshots
 )/
 '''
-[tool.django-stubs]
-django_settings_module = "hope_country_report.config.settings"
-
-
-[tool.poetry]
-name = "HOPE Country Report"
-version = "2023.6.1"
-description = "Country Report on top of HOPE platform."
-authors = ['ddinicola']
-
-[tool.poetry.dependencies]
-python = "3.11.*"
-
-Django = "*"
-black = "*"
-celery = {extras = ["redis"], version = "*"}
-django-admin-extra-buttons = "*"
-django-admin-sync = "*"
-django-adminactions = "*"
-django-adminfilters = "*"
-django-advanced-filters = "*"
-django-celery-beat = "*"
-django-celery-results = "*"
-django-concurrency = "*"
-django-cors-headers = "*"
-django-csp = "*"
-django-debug-toolbar = "*"
-django-environ = "*"
-django-extensions = "*"
-django-filter = "*"
-django-import-export = "*"
-django-mptt = "*"
-django-smart-admin = "*"
-dj-static = "*"
-factory-boy = "*"
-gunicorn = "*"
-newrelic = "*"
-natural-keys = "*"
-pre_commit = "*"
-psycopg2 = "*"
-sentry-sdk = "*"
-social-auth-app-django = "*"
-social-auth-core = "*"
-tablib = "*"
-unicef-security = "*"
-unicef-power-query = "^0.3.1"
-django-regex = "^0.5.0"
-djangorestframework = "^3.14.0"
-django-flags = "^5.0.13"
-
-[tool.poetry.group.dev.dependencies]
-mypy = "0.982"
-django-stubs = "~1.12.0"  # more pypi
-django-stubs-ext = "^0.7.0"  # more pypi
-
-argh = "*"
-django-webtest = "*"
-faker = "*"
-flake8 = "*"
-flake8-bugbear = "*"
-flake8-formatter-junit-xml = "*"
-freezegun = "*"
-graphene-stubs = "*"
-ipdb = "*"
-isort = "*"
-openpyxl-stubs = "*"
-parameterized = "*"
-parso = "*"
-requests-mock = "*"
-responses = "*"
-snapshottest = "*"
-types-freezegun = "*"
-types-requests = "*"
-types-python-dateutil = "*"
-types-pytz = "*"
-types-redis = "*"
-unittest-xml-reporting = "*"
-watchdog = "*"
-pytest = "^7.4.1"
-pytest-django = "^4.5.2"
-pytest-cov = "^4.1.0"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"

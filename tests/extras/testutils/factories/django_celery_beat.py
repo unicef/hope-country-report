@@ -1,12 +1,7 @@
-import factory
 from django.utils import timezone
-from django_celery_beat.models import (
-    SOLAR_SCHEDULES,
-    ClockedSchedule,
-    IntervalSchedule,
-    PeriodicTask,
-    SolarSchedule,
-)
+
+import factory
+from django_celery_beat.models import ClockedSchedule, IntervalSchedule, PeriodicTask, SOLAR_SCHEDULES, SolarSchedule
 from factory.fuzzy import FuzzyChoice
 from testutils.factories import AutoRegisterModelFactory
 

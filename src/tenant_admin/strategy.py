@@ -22,22 +22,16 @@ class BaseTenantStrategy:
 
     def set_selected_tenant(self, response: HttpResponse, instance: Model) -> None:
         signer = get_cookie_signer()
-        response.set_cookie(
-            self.config.COOKIE_NAME, signer.sign(getattr(instance, self.pk))
-        )
+        response.set_cookie(self.config.COOKIE_NAME, signer.sign(getattr(instance, self.pk)))
 
     def get_selected_tenant(self, request: "django.http.HttpRequest") -> Model:
         cookie_value = request.COOKIES.get(self.config.COOKIE_NAME)
         signer = get_cookie_signer()
-        if (self._selected_tenant_value != cookie_value) or (
-            self._selected_tenant is None
-        ):
+        if (self._selected_tenant_value != cookie_value) or (self._selected_tenant is None):
             try:
                 filters = {self.pk: signer.unsign(cookie_value)}
                 self._selected_tenant_value = cookie_value
-                self._selected_tenant = self.config.auth.get_allowed_tenants(
-                    request
-                ).get(**filters)
+                self._selected_tenant = self.config.auth.get_allowed_tenants(request).get(**filters)
             except ObjectDoesNotExist:
                 self._selected_tenant = None
             except TypeError:

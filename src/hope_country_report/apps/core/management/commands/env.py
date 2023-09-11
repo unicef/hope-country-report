@@ -66,7 +66,11 @@ class Command(BaseCommand):
             help="Create .env/.envrc",
         )
         parser.add_argument(
-            "--check", action="store_true", dest="check", default=False, help="Check env for variable availability"
+            "--check",
+            action="store_true",
+            dest="check",
+            default=False,
+            help="Check env for variable availability",
         )
 
     def handle(self, *args: Any, **options: Any) -> None:

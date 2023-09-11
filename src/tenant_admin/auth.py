@@ -27,9 +27,7 @@ class BaseTenantAuth:
             to_user = get_field_to(related_field.model, get_user_model())
             permissions_query = "%s__%s" % (related_query_field, to_user.name)
             if request.user.is_authenticated:
-                allowed_tenants = conf.tenant_model.objects.filter(
-                    **{permissions_query: request.user}
-                )
+                allowed_tenants = conf.tenant_model.objects.filter(**{permissions_query: request.user})
             else:
                 allowed_tenants = conf.tenant_model.objects.none()
             request.user._allowed_tenants = allowed_tenants
@@ -55,14 +53,11 @@ class BaseTenantAuth:
         Return True if user_obj has any permissions in the given app_label.
         """
         return request.user.is_active and any(
-            perm[: perm.index(".")] == app_label
-            for perm in self.get_all_permissions(request)
+            perm[: perm.index(".")] == app_label for perm in self.get_all_permissions(request)
         )
 
     def get_all_permissions(self, request, obj=None):
-        perm_cache_name = "_tenant_%s_perm_cache" % str(
-            conf.strategy.get_selected_tenant(request)
-        )
+        perm_cache_name = "_tenant_%s_perm_cache" % str(conf.strategy.get_selected_tenant(request))
         if not hasattr(request.user, perm_cache_name):
             user_field, group_field, tenant_field = self._find_fks()
             user_groups_query = "%s__%s__%s" % (

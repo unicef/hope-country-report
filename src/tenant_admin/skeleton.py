@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Type, Union
+from typing import List, Type, TYPE_CHECKING, Union
 
 from django.contrib.admin import ModelAdmin
 
@@ -19,9 +19,7 @@ class Skeleton:
         "search_fields",
     ]
 
-    def __init__(
-        self, model_admin: Type[ModelAdmin], attrs: Union[None, List[str]] = None
-    ):
+    def __init__(self, model_admin: Type[ModelAdmin], attrs: Union[None, List[str]] = None):
         self.model_admin = model_admin
         self.attributes = self.default_attrs if attrs is None else attrs
 

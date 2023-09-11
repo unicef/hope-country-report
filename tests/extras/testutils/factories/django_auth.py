@@ -1,5 +1,6 @@
-import factory
 from django.contrib.auth.models import Permission
+
+import factory
 
 from .base import AutoRegisterModelFactory
 from .contenttypes import ContentTypeFactory

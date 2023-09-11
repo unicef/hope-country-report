@@ -1,14 +1,10 @@
 import typing
 
-from .base import (
-    AutoRegisterModelFactory,
-    TAutoRegisterModelFactory,
-    factories_registry,
-)
-from .user import *
+from .base import AutoRegisterModelFactory, factories_registry, TAutoRegisterModelFactory
 from .contenttypes import *
 from .django_auth import *
 from .django_celery_beat import *
+from .user import *
 
 
 def get_factory_for_model(_model) -> typing.Type[TAutoRegisterModelFactory]:

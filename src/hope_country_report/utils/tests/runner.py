@@ -1,8 +1,10 @@
+from typing import Any
+
 from django.test.runner import DiscoverRunner
 
 
 class UnManagedModelTestRunner(DiscoverRunner):
-    def setup_test_environment(self, *args, **kwargs):
+    def setup_test_environment(self, *args: Any, **kwargs: Any) -> None:
         from django.apps import apps
 
         get_models = apps.get_models
@@ -11,7 +13,7 @@ class UnManagedModelTestRunner(DiscoverRunner):
             m._meta.managed = True
         super(UnManagedModelTestRunner, self).setup_test_environment(*args, **kwargs)
 
-    def teardown_test_environment(self, *args, **kwargs):
+    def teardown_test_environment(self, *args: Any, **kwargs: Any) -> None:
         super(UnManagedModelTestRunner, self).teardown_test_environment(*args, **kwargs)
         for m in self.unmanaged_models:
             m._meta.managed = False

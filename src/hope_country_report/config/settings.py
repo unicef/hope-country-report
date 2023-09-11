@@ -38,7 +38,7 @@ DATABASE_APPS_MAPPING: Dict[str, str] = {
 MIGRATION_MODULES = {"hope": None}
 
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     "hope_country_report.web",
     "hope_country_report.apps.core.apps.AppConfig",
     "hope_country_report.apps.hope.apps.AppConfig",
@@ -70,9 +70,9 @@ INSTALLED_APPS = (
     "adminfilters.depot",
     "smart_admin.apps.SmartTemplateConfig",
     "import_export",
-)
+]
 
-MIDDLEWARE = (
+MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -82,7 +82,7 @@ MIDDLEWARE = (
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
-)
+]
 
 AUTHENTICATION_BACKENDS = (
     "unicef_security.backends.UNICEFAzureADB2COAuth2",
@@ -118,10 +118,10 @@ LOGOUT_REDIRECT_URL = "/"
 LANGUAGE_CODE = "en-us"
 ugettext = lambda s: s  # noqa
 LANGUAGES = (
-    ("es", ugettext("Spanish")),
-    ("fr", ugettext("French")),
-    ("en", ugettext("English")),
-    ("ar", ugettext("Arabic")),
+    ("es", ugettext("Spanish")),  # type: ignore[no-untyped-call]
+    ("fr", ugettext("French")),  # type: ignore[no-untyped-call]
+    ("en", ugettext("English")),  # type: ignore[no-untyped-call]
+    ("ar", ugettext("Arabic")),  # type: ignore[no-untyped-call]
 )
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

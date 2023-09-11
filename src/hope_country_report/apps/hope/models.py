@@ -1,4 +1,4 @@
-from typing import Optional, Iterable, Any, Tuple, Dict
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from django.db import models
 
@@ -17,8 +17,8 @@ class HopeModel(models.Model):
     ) -> None:
         pass
 
-    def delete(self, using: Any = ..., keep_parents: bool = ...) -> Tuple[int, Dict[str, int]]:
-        pass
+    def delete(self, using: Any = None, keep_parents: bool = False) -> Tuple[int, Dict[str, int]]:
+        return 0, {}
 
 
 class BusinessArea(HopeModel):

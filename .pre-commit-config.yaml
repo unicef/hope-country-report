@@ -8,7 +8,7 @@ repos:
     rev: 23.1.0
     hooks:
       - id: black
-        args: [--config=backend/pyproject.toml]
+        args: [--config=pyproject.toml]
         exclude: "migrations|snapshots"
         stages: [commit]
   - repo: https://github.com/PyCQA/flake8
@@ -18,3 +18,9 @@ repos:
         args: [--config=backend/.flake8]
         additional_dependencies: [flake8-bugbear==22.9.23]
         stages: [ commit ]
+  -   repo: https://github.com/pre-commit/mirrors-mypy
+      rev: 'v1.5.1'  # Use the sha / tag you want to point at
+      hooks:
+      -   id: mypy
+          additional_dependencies: []
+          args: [ "--config-file", ".mypy.ini" ]

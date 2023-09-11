@@ -2,7 +2,6 @@ from functools import update_wrapper
 from inspect import isclass
 from typing import List, Union
 
-from adminactions.helpers import AdminActionPermMixin
 from django.contrib.admin import ModelAdmin, TabularInline
 from django.contrib.admin.options import csrf_protect_m
 from django.contrib.auth import get_permission_codename
@@ -12,6 +11,8 @@ from django.forms.widgets import MediaDefiningClass
 from django.shortcuts import redirect
 from django.utils.functional import cached_property
 from django.views.generic import RedirectView
+
+from adminactions.helpers import AdminActionPermMixin
 from smart_admin.mixins import LinkedObjectsMixin
 from smart_admin.modeladmin import SmartModelAdmin
 
@@ -35,9 +36,7 @@ class TenantTabularInline(TabularInline):
 
     def get_tenant_filter(self, request):
         if not self.target_field:
-            raise ValueError(
-                f"Set 'target_field' on {self} or override `get_queryset()` to enable queryset filtering"
-            )
+            raise ValueError(f"Set 'target_field' on {self} or override `get_queryset()` to enable queryset filtering")
         return {self.tenant_filter_field: conf.strategy.get_selected_tenant(request).pk}
 
 
@@ -66,21 +65,16 @@ class BaseTenantModelAdmin(
         super().__init__(model, admin_site)
         if self.skeleton:
             if not (
-                (isclass(self.skeleton) and issubclass(self.skeleton, Skeleton))
-                or isinstance(self.skeleton, Skeleton)
+                (isclass(self.skeleton) and issubclass(self.skeleton, Skeleton)) or isinstance(self.skeleton, Skeleton)
             ):
                 self.skeleton = Skeleton(self.skeleton)
             self.skeleton.initialise(self)
 
     def get_inlines(self, request, obj=None):
-        flt = list(
-            filter(lambda x: not issubclass(x, TenantTabularInline), self.inlines)
-        )
+        flt = list(filter(lambda x: not issubclass(x, TenantTabularInline), self.inlines))
         if flt:
             raise ValueError(
-                f"{self}.inlines contains one or more invalid class(es). "
-                f" {flt} "
-                f"Only use `TenantTabularInline`"
+                f"{self}.inlines contains one or more invalid class(es). " f" {flt} " f"Only use `TenantTabularInline`"
             )
         return self.inlines
 
@@ -152,12 +146,7 @@ class BaseTenantModelAdmin(
             # For backwards compatibility (was the change url before 1.9)
             path(
                 "<path:object_id>/",
-                wrap(
-                    RedirectView.as_view(
-                        pattern_name="%s:%s_%s_change"
-                        % ((self.admin_site.name,) + info)
-                    )
-                ),
+                wrap(RedirectView.as_view(pattern_name="%s:%s_%s_change" % ((self.admin_site.name,) + info))),
             ),
         ]
         return self.get_extra_urls() + base_urls

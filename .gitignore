@@ -5,6 +5,7 @@
 !.isort.cfg
 !.pre-commit-config.yaml
 !.dockerignore
+!.mypy.ini
 *.pyc
 DATA/
 build
