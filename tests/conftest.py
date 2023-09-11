@@ -1,5 +1,4 @@
 # # import logging.config
-import logging
 import os
 import sys
 from pathlib import Path
@@ -92,10 +91,10 @@ def pytest_configure(config):
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""
 
-    setattr(config.option, "enable_selenium", "selenium" in config.option.markexpr)
+    config.option.enable_selenium = "selenium" in config.option.markexpr
 
     if not config.option.enable_selenium:
-        setattr(config.option, "markexpr", "not selenium")
+        config.option.markexpr = "not selenium"
 
     config.addinivalue_line("markers", "skip_if_ci: this mark skips the tests on GitlabCI")
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")

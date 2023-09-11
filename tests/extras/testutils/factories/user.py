@@ -1,5 +1,3 @@
-import random
-import uuid
 from uuid import uuid4
 
 from django.contrib.admin.models import LogEntry
