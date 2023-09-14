@@ -1,11 +1,7 @@
 from typing import TYPE_CHECKING
 
-from django.contrib import admin
-
-from smart_admin.mixins import DisplayAllMixin
-
 from hope_country_report.apps.hope.models import BusinessArea, Household, Individual
-from tenant_admin.options import TenantModelAdmin
+from tenant_admin.options import MainTenantModelAdmin, TenantModelAdmin
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -23,20 +19,19 @@ class ReadOnlyMixin:
         return False
 
 
-class HopeModelAdmin(ReadOnlyMixin, DisplayAllMixin, TenantModelAdmin):  # type: ignore
+class HopeModelAdmin(ReadOnlyMixin, TenantModelAdmin):  # type: ignore
     pass
 
 
-@admin.register(BusinessArea)
-class BusinessAreaAdmin(HopeModelAdmin):
-    pass
+class BusinessAreaAdmin(MainTenantModelAdmin):
+    model = BusinessArea
 
 
-@admin.register(Household)
 class HouseholdAdmin(HopeModelAdmin):
-    pass
+    model = Household
+    tenant_filter_field = "business_area"
 
 
-@admin.register(Individual)
 class IndividualAdmin(HopeModelAdmin):
-    pass
+    model = Individual
+    tenant_filter_field = "household__business_area"

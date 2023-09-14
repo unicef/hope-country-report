@@ -202,7 +202,9 @@ class TenantModelAdmin(BaseTenantModelAdmin):
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
     def get_exclude(self, request, obj=None):
-        return [self.tenant_field.name]
+        if self.tenant_field:
+            return [self.tenant_field.name]
+        return []
 
     def save_form(self, request, form, change):
         setattr(

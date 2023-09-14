@@ -3,10 +3,12 @@ from django.conf.urls import include
 from django.contrib import admin
 from django.urls import path
 
+import tenant_admin.sites
+
 urlpatterns = [
     path("", include("hope_country_report.web.urls")),
+    path("admin/", tenant_admin.sites.site.urls),
     path("admin/", admin.site.urls),
-    # path("t/", tenant_admin.sites.site.urls),
     path(r"security/", include("unicef_security.urls", namespace="security")),
     path(r"social/", include("social_django.urls", namespace="social")),
     path(r"accounts/", include("django.contrib.auth.urls")),

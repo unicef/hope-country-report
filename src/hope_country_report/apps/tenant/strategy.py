@@ -17,7 +17,7 @@ class Strategy(BaseTenantStrategy):
         # if request.user.is_authenticated:
         #     return BusinessArea.objects.filter(id__in=request.user.userrole.values_list("business_area", flat=True))
         # else:
-        return BusinessArea.objects.all()
+        return BusinessArea.objects.order_by("name")
 
     # def get_selected_tenant(self, request: "R") -> "M | None":
     #     cookie_value: str = str(request.COOKIES.get(self.config.COOKIE_NAME))
