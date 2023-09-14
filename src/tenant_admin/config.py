@@ -13,6 +13,10 @@ if TYPE_CHECKING:
 
 
 class AppSettings:
+    COOKIE_NAME: str
+    TENANT_MODEL: Model
+    STRATEGY: "BaseTenantStrategy"
+    AUTH: "BaseTenantAuth"
     defaults = {
         "TENANT_MODEL": None,
         "COOKIE_NAME": "selected_tenant",
@@ -43,16 +47,18 @@ class AppSettings:
 
     @cached_property
     def strategy(self) -> BaseTenantStrategy:
-        return import_string(self.STRATEGY)(self)
+        return import_string(self.STRATEGY)(self)  # type: ignore[no-any-return]
 
     @cached_property
     def auth(self) -> BaseTenantAuth:
-        return import_string(self.AUTH)()
+        return import_string(self.AUTH)()  # type: ignore[no-any-return]
 
     @cached_property
     def tenant_model(self) -> Union[Model, type]:
         from django.apps import apps
 
+        if not self.TENANT_MODEL:
+            raise ValueError(f"Please set settings.{self.prefix}_TENANT_MODEL")
         return apps.get_model(self.TENANT_MODEL)  # type ignore [return-value,attr-defined]
 
     def _on_setting_changed(self, sender: Model, setting: str, value: Any, **kwargs) -> None:

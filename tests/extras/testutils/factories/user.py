@@ -6,7 +6,10 @@ import factory
 from social_django.models import UserSocialAuth
 from testutils.factories.base import AutoRegisterModelFactory
 
-from hope_country_report.apps.core.models import User
+from hope_country_report.apps.core.models import User, UserRole
+
+from .django_auth import GroupFactory
+from .hope import BusinessAreaFactory
 
 
 class UserFactory(AutoRegisterModelFactory):
@@ -58,3 +61,12 @@ class LogEntryFactory(AutoRegisterModelFactory):
 
     class Meta:
         model = LogEntry
+
+
+class UserRoleFactory(AutoRegisterModelFactory):
+    business_area = factory.LazyFunction(lambda: BusinessAreaFactory().pk)
+    group = factory.SubFactory(GroupFactory)
+    user = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = UserRole

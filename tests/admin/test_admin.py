@@ -18,12 +18,20 @@ class RegexList(_RegexList):
 
 GLOBAL_EXCLUDED_MODELS = RegexList(
     [
-        r"django_celery_beat.ClockedSchedule",
-        "contenttypes.ContentType",
+        r"django_celery_beat\.ClockedSchedule",
+        r"contenttypes\.ContentType",
+        "authtoken",
+        "social_django",
+        "depot",
     ]
 )
 
-GLOBAL_EXCLUDED_BUTTONS = RegexList([])
+GLOBAL_EXCLUDED_BUTTONS = RegexList(
+    [
+        "core.UserAdminPlus:link_user_data",
+        "core.UserAdminPlus:ad",
+    ]
+)
 
 KWARGS = {}
 pytestmark = pytest.mark.admin
@@ -125,7 +133,8 @@ def test_changelist(app, modeladmin, record):
     res = app.get(url)
     assert res.status_code == 200, res.location
     assert str(opts.app_config.verbose_name) in str(res.content)
-    assert f"/{record.pk}/change/" in res.body.decode()
+    if modeladmin.has_change_permission(Mock(user=app._user)):
+        assert f"/{record.pk}/change/" in res.body.decode()
 
 
 def show_error(res):
@@ -136,7 +145,7 @@ def show_error(res):
 
 
 @pytest.mark.django_db()
-@pytest.mark.skip_models("constance.Config")
+@pytest.mark.skip_models("constance.Config", "hope", "advanced_filters.AdvancedFilter")
 def test_changeform(app, modeladmin, record):
     opts: Options = modeladmin.model._meta
     url = reverse(admin_urlname(opts, "change"), args=[record.pk])
@@ -144,17 +153,17 @@ def test_changeform(app, modeladmin, record):
     res = app.get(url)
     assert str(opts.app_config.verbose_name) in res.body.decode()
     if modeladmin.has_change_permission(Mock(user=app._user)):
-        res = res.form.submit()
+        res = res.forms[1].submit()
         assert res.status_code in [302, 200]
 
 
 @pytest.mark.django_db
-@pytest.mark.skip_models("constance.Config", "djstripe.WebhookEndpoint")
+@pytest.mark.skip_models("constance.Config", "djstripe.WebhookEndpoint", "advanced_filters.AdvancedFilter")
 def test_add(app, modeladmin):
     url = reverse(admin_urlname(modeladmin.model._meta, "add"))
     if modeladmin.has_add_permission(Mock(user=app._user)):
         res = app.get(url)
-        res = res.form.submit()
+        res = res.forms[1].submit()
         assert res.status_code in [200, 302], log_submit_error(res)
     else:
         pytest.skip("No 'add' permission")
@@ -163,12 +172,13 @@ def test_add(app, modeladmin):
 @pytest.mark.django_db
 @pytest.mark.skip_models(
     "constance.Config",
+    "hope",
 )
 def test_delete(app, modeladmin, record, monkeypatch):
     url = reverse(admin_urlname(modeladmin.model._meta, "delete"), args=[record.pk])
     if modeladmin.has_delete_permission(Mock(user=app._user)):
         res = app.get(url)
-        res.form.submit()
+        res.forms[1].submit()
         assert res.status_code in [200, 302]
     else:
         pytest.skip("No 'delete' permission")

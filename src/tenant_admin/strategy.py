@@ -1,13 +1,15 @@
 import logging
+from typing import TYPE_CHECKING
 
-import django.http
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import get_cookie_signer
-from django.db.models import Model
 from django.http import HttpResponse
 
 from . import state
 from .config import AppSettings
+
+if TYPE_CHECKING:
+    from hope_country_report.types.http import AuthHttpRequest, M
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +19,14 @@ class BaseTenantStrategy:
 
     def __init__(self, config: AppSettings):
         self.config = config
-        self._selected_tenant = None
+        self._selected_tenant: "M|None" = None
         self._selected_tenant_value = ""
 
-    def set_selected_tenant(self, response: HttpResponse, instance: Model) -> None:
+    def set_selected_tenant(self, response: "HttpResponse", instance: "M") -> None:
         signer = get_cookie_signer()
         response.set_cookie(self.config.COOKIE_NAME, signer.sign(getattr(instance, self.pk)))
 
-    def get_selected_tenant(self, request: "django.http.HttpRequest") -> Model:
+    def get_selected_tenant(self, request: "AuthHttpRequest") -> "M | None":
         cookie_value = request.COOKIES.get(self.config.COOKIE_NAME)
         signer = get_cookie_signer()
         if (self._selected_tenant_value != cookie_value) or (self._selected_tenant is None):

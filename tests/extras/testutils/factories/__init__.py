@@ -1,9 +1,14 @@
 import typing
 
 from .base import AutoRegisterModelFactory, factories_registry, TAutoRegisterModelFactory
+
+# isort: split
+from .adv_filters import AdvancedFilterFactory
 from .contenttypes import *
 from .django_auth import *
 from .django_celery_beat import *
+from .hope import *
+from .power_query import *
 from .user import *
 
 

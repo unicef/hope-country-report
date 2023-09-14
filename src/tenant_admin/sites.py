@@ -123,7 +123,7 @@ class TenantAdminSite(SmartAdminSite):
 
     @property
     def urls(self):
-        return self.get_urls(), "admin", self.name
+        return self.get_urls(), "tenant", self.name
 
 
 site: TenantAdminSite = TenantAdminSite()

@@ -28,6 +28,9 @@ class BusinessArea(HopeModel):
     class Meta:
         db_table = "core_businessarea"
 
+    def __str__(self) -> str:
+        return str(self.name)
+
 
 class Household(HopeModel):
     unicef_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)

@@ -1,11 +1,6 @@
-import datetime
 import os
 from pathlib import Path
 from typing import Dict
-
-import sentry_sdk
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.django import DjangoIntegration
 
 from . import env
 
@@ -33,10 +28,10 @@ DATABASES = {
 TEST_RUNNER = "hope_country_report.utils.tests.runner.UnManagedModelTestRunner"
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
 DATABASE_APPS_MAPPING: Dict[str, str] = {
+    "core": "default",
     "hope": "hope",
 }
 MIGRATION_MODULES = {"hope": None}
-
 
 INSTALLED_APPS = [
     "hope_country_report.web",
@@ -44,6 +39,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.hope.apps.AppConfig",
     "django.contrib.contenttypes",
     "flags",
+    "tenant_admin",
     "advanced_filters",
     "django_celery_beat",
     "power_query.apps.Config",
@@ -77,6 +73,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "tenant_admin.middleware.TenantAdminMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -89,7 +86,6 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
     "hope_country_report.utils.tests.backends.AnyUserAuthBackend",
 )
-
 
 # path
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -130,7 +126,6 @@ INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
 USE_I18N = True
 USE_TZ = True
-
 
 # CACHES = {
 #     "default": {
@@ -185,68 +180,6 @@ AUTH_USER_MODEL = "core.User"
 
 HOST = env("HOST", default="http://localhost:8000")
 
-CELERY_ACCEPT_CONTENT = ["pickle", "json", "application/text"]
-CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_BROKER_VISIBILITY_VAR = env("CELERY_VISIBILITY_TIMEOUT", default=1800)  # in seconds
-CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": int(CELERY_BROKER_VISIBILITY_VAR)}
-CELERY_RESULT_BACKEND = "django-db"
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
-# Sensible settings for celery
-CELERY_TASK_ALWAYS_EAGER = env("CELERY_TASK_ALWAYS_EAGER", default=False)
-CELERY_TASK_ACKS_LATE = True
-CELERY_TASK_PUBLISH_RETRY = True
-CELERY_WORKER_DISABLE_RATE_LIMITS = False
-CELERY_TASK_IGNORE_RESULT = True
-CELERY_SEND_TASK_ERROR_EMAILS = False
-CELERY_RESULT_EXPIRES = 600
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1
-
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-}
-
-# django-cors-headers: https://github.com/ottoyiu/django-cors-headers
-CORS_ORIGIN_ALLOW_ALL = env("CORS_ORIGIN_ALLOW_ALL", default=False)
-
-
-JWT_AUTH = {
-    "JWT_VERIFY": False,  # this requires private key
-    "JWT_VERIFY_EXPIRATION": True,
-    "JWT_LEEWAY": 60,
-    "JWT_EXPIRATION_DELTA": datetime.timedelta(seconds=30000),
-    "JWT_AUDIENCE": None,
-    "JWT_ISSUER": None,
-    "JWT_ALLOW_REFRESH": False,
-    "JWT_REFRESH_EXPIRATION_DELTA": datetime.timedelta(days=7),
-    "JWT_AUTH_HEADER_PREFIX": "JWT",
-    "JWT_SECRET_KEY": SECRET_KEY,
-    "JWT_DECODE_HANDLER": "rest_framework_jwt.utils.jwt_decode_handler",
-    # Keys will be set in core.apps.Config.ready()
-    "JWT_PUBLIC_KEY": "?",
-    # 'JWT_PRIVATE_KEY': wallet.get_private(),
-    # 'JWT_PRIVATE_KEY': None,
-    "JWT_ALGORITHM": "RS256",
-}
-SENTRY_DSN = env("SENTRY_DSN", default=None)  # noqa: F405
-
-if SENTRY_DSN:  # pragma: no cover
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        # by default this is False, must be set to True so the library attaches the request data to the event
-        send_default_pii=True,
-        integrations=[DjangoIntegration(), CeleryIntegration()],
-    )
-
-if DEBUG:  # pragma: no cover
-    INSTALLED_APPS += ("debug_toolbar",)  # noqa
-    MIDDLEWARE += ("debug_toolbar.middleware.DebugToolbarMiddleware",)  # noqa
-    DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TEMPLATE_CONTEXT": True,
-    }
-
-
 DEFAULT_FROM_EMAIL = "hope@unicef.org"
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
@@ -255,32 +188,9 @@ EMAIL_PORT = env("EMAIL_PORT", default=25)
 EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False)
 EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 
-KEY = SOCIAL_AUTH_KEY = env("AZURE_B2C_CLIENT_ID", default=None)
-SOCIAL_AUTH_SECRET = env("AZURE_B2C_CLIENT_SECRET", default=None)
-SOCIAL_AUTH_TENANT_NAME = env("TENANT_NAME", default="unicefpartners")
-SOCIAL_AUTH_TENANT_ID = f"{SOCIAL_AUTH_TENANT_NAME}.onmicrosoft.com"
-SOCIAL_AUTH_TENANT_B2C_URL = f"{SOCIAL_AUTH_TENANT_NAME}.b2clogin.com"
-
-SOCIAL_AUTH_URL_NAMESPACE = "social"
-SOCIAL_AUTH_SANITIZE_REDIRECTS = False
-SOCIAL_AUTH_JSONFIELD_ENABLED = True
-SOCIAL_AUTH_POLICY = env("AZURE_B2C_POLICY_NAME", default="B2C_1_UNICEF_SOCIAL_signup_signin")
-SOCIAL_AUTH_USER_MODEL = "core.User"
-
-SOCIAL_AUTH_PIPELINE = (
-    "unicef_security.pipeline.social_details",
-    "social_core.pipeline.social_auth.social_uid",
-    "social_core.pipeline.social_auth.auth_allowed",
-    "social_core.pipeline.social_auth.social_user",
-    "social_core.pipeline.user.get_username",
-    "social_core.pipeline.social_auth.associate_by_email",
-    "unicef_security.pipeline.create_unicef_user",
-    "social_core.pipeline.social_auth.associate_user",
-    "social_core.pipeline.social_auth.load_extra_data",
-    "social_core.pipeline.user.user_details",
-)
-
-USER_FIELDS = ["username", "email", "first_name", "last_name"]
-USERNAME_IS_FULL_EMAIL = True
-
-POWER_QUERY_DB_ALIAS = env("POWER_QUERY_DB_ALIAS", default="hope")
+from .fragments.admin_tenant import *  # noqa
+from .fragments.celery import *  # noqa
+from .fragments.power_query import *  # noqa
+from .fragments.rest_framework import *  # noqa
+from .fragments.sentry import *  # noqa
+from .fragments.social_auth import *  # noqa

@@ -13,4 +13,6 @@ ABOUT HOPE Country Report
 
     git clone https://github.com/unicef/hope-country-report 
     pdm venv create 3.11
+    pdm install
+    pre-commit install
     `./manage.py env --no-optional --check`

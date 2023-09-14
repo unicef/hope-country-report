@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
-from django.db.models import ForeignKey
+from django.db.models import ForeignKey, Model, QuerySet
 from django.db.models.options import Options
 
 from tenant_admin.config import conf
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 
 def get_field_to(model, destination):
@@ -18,7 +23,7 @@ def get_field_to(model, destination):
 class BaseTenantAuth:
     model = None
 
-    def get_allowed_tenants(self, request):
+    def get_allowed_tenants(self, request: "HttpRequest") -> "QuerySet[Model]":
         from tenant_admin.config import conf
 
         if not (allowed_tenants := getattr(request.user, "_allowed_tenants", None)):

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class AnyUserAuthBackend(ModelBackend):
     def authenticate(
         self, request: "Optional[HttpRequest]", username: str | None = None, password: str | None = None, **kwargs: Any
-    ) -> AbstractBaseUser | None:
+    ) -> "AbstractBaseUser | None":
         if username:
             user, __ = get_user_model().objects.update_or_create(
                 username=username,

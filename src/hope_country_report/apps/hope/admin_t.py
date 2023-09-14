@@ -5,6 +5,7 @@ from django.contrib import admin
 from smart_admin.mixins import DisplayAllMixin
 
 from hope_country_report.apps.hope.models import BusinessArea, Household, Individual
+from tenant_admin.options import TenantModelAdmin
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -22,13 +23,13 @@ class ReadOnlyMixin:
         return False
 
 
-class HopeModelAdmin(ReadOnlyMixin, DisplayAllMixin, admin.ModelAdmin):  # type: ignore
+class HopeModelAdmin(ReadOnlyMixin, DisplayAllMixin, TenantModelAdmin):  # type: ignore
     pass
 
 
 @admin.register(BusinessArea)
 class BusinessAreaAdmin(HopeModelAdmin):
-    search_fields = ("name",)
+    pass
 
 
 @admin.register(Household)
