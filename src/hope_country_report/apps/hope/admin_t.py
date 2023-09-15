@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from adminfilters.value import ValueFilter
+
 from hope_country_report.apps.hope.models import BusinessArea, Household, Individual
 from tenant_admin.options import MainTenantModelAdmin, TenantModelAdmin
 
@@ -30,8 +32,11 @@ class BusinessAreaAdmin(MainTenantModelAdmin):
 class HouseholdAdmin(HopeModelAdmin):
     model = Household
     tenant_filter_field = "business_area"
+    list_filter = (("unicef_id", ValueFilter),)
 
 
 class IndividualAdmin(HopeModelAdmin):
     model = Individual
     tenant_filter_field = "household__business_area"
+    search_fields = ("full_name",)
+    list_filter = (("household__unicef_id", ValueFilter), "relationship")
