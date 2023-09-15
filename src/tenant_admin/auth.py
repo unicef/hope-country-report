@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
@@ -9,6 +9,9 @@ from tenant_admin.config import conf
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
+
+    _M = TypeVar("_M", bound=Model)
+    _R = TypeVar("_R", bound=HttpRequest)
 
 
 def get_field_to(model, destination):
@@ -21,9 +24,9 @@ def get_field_to(model, destination):
 
 
 class BaseTenantAuth:
-    model = None
+    model: _M = None
 
-    def get_allowed_tenants(self, request: "HttpRequest") -> "QuerySet[Model]":
+    def get_allowed_tenants(self, request: "_R") -> "QuerySet[Model]":
         from tenant_admin.config import conf
 
         if not (allowed_tenants := getattr(request.user, "_allowed_tenants", None)):
@@ -61,7 +64,7 @@ class BaseTenantAuth:
             perm[: perm.index(".")] == app_label for perm in self.get_all_permissions(request)
         )
 
-    def get_all_permissions(self, request, obj=None):
+    def get_all_permissions(self, request: "_R", obj: "_M|None" = None):
         perm_cache_name = "_tenant_%s_perm_cache" % str(conf.strategy.get_selected_tenant(request))
         if not hasattr(request.user, perm_cache_name):
             user_field, group_field, tenant_field = self._find_fks()

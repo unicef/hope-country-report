@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "hope_country_report.web",
     "hope_country_report.apps.core.apps.AppConfig",
     "hope_country_report.apps.hope.apps.AppConfig",
+    "hope_country_report.apps.pq.apps.AppConfig",
     "django.contrib.contenttypes",
     "flags",
     "tenant_admin",
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     "power_query.apps.Config",
     "unicef_security",
     "django.contrib.auth",
+    "django.contrib.admindocs",
     "django.contrib.humanize",
     "django.contrib.messages",
     "django.contrib.sessions",
@@ -193,4 +195,5 @@ from .fragments.celery import *  # noqa
 from .fragments.power_query import *  # noqa
 from .fragments.rest_framework import *  # noqa
 from .fragments.sentry import *  # noqa
+from .fragments.smart_admin import *  # noqa
 from .fragments.social_auth import *  # noqa

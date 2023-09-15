@@ -21,7 +21,7 @@ repos:
       rev: 'v1.5.1'  # Use the sha / tag you want to point at
       hooks:
       -   id: mypy
-          exclude: "tests|docker"
+          exclude: "tests|docker|power_query|tenant_admin"
           additional_dependencies: []
           args: [ "--config-file", ".mypy.ini", "--follow-imports", "skip" ]
   - repo: https://github.com/pdm-project/pdm

@@ -9,7 +9,7 @@ from . import state
 from .config import AppSettings
 
 if TYPE_CHECKING:
-    from hope_country_report.types.http import AuthHttpRequest, M
+    from .types.http import _M, _R
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +19,14 @@ class BaseTenantStrategy:
 
     def __init__(self, config: AppSettings):
         self.config = config
-        self._selected_tenant: "M|None" = None
+        self._selected_tenant: "_M|None" = None
         self._selected_tenant_value = ""
 
-    def set_selected_tenant(self, response: "HttpResponse", instance: "M") -> None:
+    def set_selected_tenant(self, response: "HttpResponse", instance: "_M") -> None:
         signer = get_cookie_signer()
         response.set_cookie(self.config.COOKIE_NAME, signer.sign(getattr(instance, self.pk)))
 
-    def get_selected_tenant(self, request: "AuthHttpRequest") -> "M | None":
+    def get_selected_tenant(self, request: "_R") -> "_M | None":
         cookie_value = request.COOKIES.get(self.config.COOKIE_NAME)
         signer = get_cookie_signer()
         if (self._selected_tenant_value != cookie_value) or (self._selected_tenant is None):

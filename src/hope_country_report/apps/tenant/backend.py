@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 from django.contrib.auth.models import Permission
 
@@ -9,13 +9,13 @@ from tenant_admin.config import conf
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
-    from hope_country_report.types.http import AuthHttpRequest
+    from hope_country_report.types.http import _M, _R, AuthHttpRequest
 
 
 class Auth(BaseTenantAuth):
     model = BusinessArea
 
-    def get_all_permissions(self, request, obj=None):
+    def get_all_permissions(self, request: "_R", obj: "_M|None" = None) -> Any:
         perm_cache_name = "_tenant_%s_perm_cache" % str(conf.strategy.get_selected_tenant(request))
         if not hasattr(request.user, perm_cache_name):
             # user_field, group_field, tenant_field = self._find_fks()
@@ -34,7 +34,7 @@ class Auth(BaseTenantAuth):
             setattr(request.user, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})
         return getattr(request.user, perm_cache_name)
 
-    def has_module_perms(self, request, app_label):
+    def has_module_perms(self, request: "AuthHttpRequest", app_label: str) -> bool:
         """
         Return True if user_obj has any permissions in the given app_label.
         """
@@ -42,7 +42,7 @@ class Auth(BaseTenantAuth):
             perm[: perm.index(".")] == app_label for perm in self.get_all_permissions(request)
         )
 
-    def get_allowed_tenants(self, request: "AuthHttpRequest") -> "Optional[QuerySet[BusinessArea]]":  # type: ignore
+    def get_allowed_tenants(self, request: "AuthHttpRequest") -> "Optional[QuerySet[BusinessArea]]":
         from tenant_admin.config import conf
 
         allowed_tenants: "Optional[QuerySet[BusinessArea]]"
@@ -59,7 +59,7 @@ class Auth(BaseTenantAuth):
                 ids = list(request.user.userrole.values_list("business_area", flat=True))
                 allowed_tenants = BusinessArea.objects.filter(id__in=ids)
             else:
-                allowed_tenants = conf.tenant_model.objects.none()  # type: ignore
+                allowed_tenants = conf.tenant_model.objects.none()
             request.user._allowed_tenants = allowed_tenants
 
         return allowed_tenants

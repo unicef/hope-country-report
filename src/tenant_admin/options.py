@@ -1,6 +1,6 @@
 from functools import update_wrapper
 from inspect import isclass
-from typing import List, Union
+from typing import List, TypeVar, Union
 
 from django.contrib.admin import ModelAdmin, TabularInline
 from django.contrib.admin.options import csrf_protect_m
@@ -21,6 +21,8 @@ from .exceptions import InvalidTenantError, TenantAdminError
 from .skeleton import Skeleton
 
 model_admin_registry = []
+
+_M = TypeVar("_M", bound=Model)
 
 
 class AutoRegisterMetaClass(MediaDefiningClass):
@@ -51,7 +53,7 @@ class BaseTenantModelAdmin(
     TenantPermissinMixin,
     metaclass=AutoRegisterMetaClass,
 ):
-    model: Model = None
+    model: _M = None
     skeleton: Union[ModelAdmin, Skeleton] = None
     tenant_filter_field: str = ""
     change_list_template = "tenant_admin/change_list.html"
@@ -98,6 +100,8 @@ class BaseTenantModelAdmin(
             raise ValueError(
                 f"Set 'tenant_filter_field' on {self} or override `get_queryset()` to enable queryset filtering"
             )
+        if self.tenant_filter_field == "__none__":
+            return {}
         active_tenant = conf.strategy.get_selected_tenant(request)
         if not active_tenant:
             raise InvalidTenantError
@@ -237,7 +241,7 @@ class TenantModelAdmin(BaseTenantModelAdmin):
 
 
 class MainTenantModelAdmin(BaseTenantModelAdmin):
-    model: Model = None
+    model: _M = None
 
     @classmethod
     def check(cls, **kwargs):

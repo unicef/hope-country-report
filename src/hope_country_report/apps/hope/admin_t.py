@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from adminfilters.value import ValueFilter
 
-from hope_country_report.apps.hope.models import BusinessArea, Household, Individual
+from hope_country_report.apps.hope.models import Area, BusinessArea, Household, Individual
 from tenant_admin.options import MainTenantModelAdmin, TenantModelAdmin
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ class ReadOnlyMixin:
         return False
 
 
-class HopeModelAdmin(ReadOnlyMixin, TenantModelAdmin):  # type: ignore
+class HopeModelAdmin(ReadOnlyMixin, TenantModelAdmin):
     pass
 
 
@@ -40,3 +40,10 @@ class IndividualAdmin(HopeModelAdmin):
     tenant_filter_field = "household__business_area"
     search_fields = ("full_name",)
     list_filter = (("household__unicef_id", ValueFilter), "relationship")
+
+
+class AreaAdmin(HopeModelAdmin):
+    model = Area
+    tenant_filter_field = "__none__"
+    # search_fields = ("full_name",)
+    # list_filter = (("household__unicef_id", ValueFilter), "relationship")

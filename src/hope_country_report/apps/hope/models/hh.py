@@ -1,44 +1,9 @@
-from typing import Any, Dict, Iterable, Optional, Tuple
-
 from django.contrib.gis.db.models import PointField
-from django.contrib.postgres.fields import CICharField
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models import JSONField
 
-
-class HopeModel(models.Model):
-    class Meta:
-        abstract = True
-        managed = False
-
-    def save(
-        self,
-        force_insert: bool = ...,
-        force_update: bool = ...,
-        using: Optional[str] = ...,
-        update_fields: Optional[Iterable[str]] = ...,
-    ) -> None:
-        pass
-
-    def delete(self, using: Any = None, keep_parents: bool = False) -> Tuple[int, Dict[str, int]]:
-        return 0, {}
-
-
-class BusinessArea(HopeModel):
-    id = models.CharField(primary_key=True, max_length=100, editable=False)
-    name = models.CharField(max_length=100, editable=False)
-    active = models.BooleanField(default=False)
-    code = models.CharField(max_length=10, unique=True)
-    long_name = models.CharField(max_length=255)
-    region_code = models.CharField(max_length=8)
-    region_name = models.CharField(max_length=8)
-
-    class Meta:
-        db_table = "core_businessarea"
-
-    def __str__(self) -> str:
-        return str(self.name)
+from ._base import HopeModel
 
 
 class Household(HopeModel):
@@ -57,22 +22,22 @@ class Household(HopeModel):
     address = models.CharField(max_length=1024, blank=True, db_collation="…")
     zip_code = models.CharField(max_length=12, blank=True, null=True)
     """location contains lowest administrative area info"""
-    # admin_area = models.ForeignKey("geo.Area", null=True, on_delete=models.SET_NULL, blank=True)
-    # admin1 = models.ForeignKey("geo.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
-    # admin2 = models.ForeignKey("geo.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
-    # admin3 = models.ForeignKey("geo.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
-    # admin4 = models.ForeignKey("geo.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
+    admin_area = models.ForeignKey("hope.Area", null=True, on_delete=models.SET_NULL, blank=True)
+    admin1 = models.ForeignKey("hope.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
+    admin2 = models.ForeignKey("hope.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
+    admin3 = models.ForeignKey("hope.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
+    admin4 = models.ForeignKey("hope.Area", null=True, on_delete=models.SET_NULL, blank=True, related_name="+")
     geopoint = PointField(blank=True, null=True)
 
     size = models.PositiveIntegerField(db_index=True, null=True)
-    # representatives = models.ManyToManyField(
-    #     to="household.Individual",
-    #     through="household.IndividualRoleInHousehold",
-    #     help_text="""This is only used to track collector (primary or secondary) of a household.
-    #         They may still be a HOH of this household or any other household.
-    #         Through model will contain the role (ROLE_CHOICE) they are connected with on.""",
-    #     related_name="represented_households",
-    # )
+    representatives = models.ManyToManyField(
+        to="Individual",
+        through="IndividualRoleInHousehold",
+        help_text="""This is only used to track collector (primary or secondary) of a household.
+            They may still be a HOH of this household or any other household.
+            Through model will contain the role (ROLE_CHOICE) they are connected with on.""",
+        related_name="represented_households",
+    )
     female_age_group_0_5_count = models.PositiveIntegerField(default=None, null=True)
     female_age_group_6_11_count = models.PositiveIntegerField(default=None, null=True)
     female_age_group_12_17_count = models.PositiveIntegerField(default=None, null=True)
@@ -137,6 +102,7 @@ class Household(HopeModel):
     total_cash_received = models.DecimalField(null=True, decimal_places=2, max_digits=64, blank=True)
 
     family_id = models.CharField(max_length=100, blank=True, null=True)  # eDopomoga household id
+
     # storage_obj = models.ForeignKey(StorageFile, on_delete=models.SET_NULL, blank=True, null=True)
 
     class Meta:
@@ -146,10 +112,10 @@ class Household(HopeModel):
 class Individual(HopeModel):
     id = models.CharField(primary_key=True, max_length=100, editable=False)
     unicef_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)
-    full_name = CICharField(max_length=255, db_index=True)
-    given_name = CICharField(max_length=85, blank=True, db_index=True)
-    middle_name = CICharField(max_length=85, blank=True, db_index=True)
-    family_name = CICharField(max_length=85, blank=True, db_index=True)
+    full_name = models.CharField(max_length=255, db_index=True, db_collation="…")
+    given_name = models.CharField(max_length=85, blank=True, db_index=True, db_collation="…")
+    middle_name = models.CharField(max_length=85, blank=True, db_index=True, db_collation="…")
+    family_name = models.CharField(max_length=85, blank=True, db_index=True, db_collation="…")
     relationship = models.CharField(
         max_length=255,
         blank=True,
@@ -212,3 +178,16 @@ class Individual(HopeModel):
 
     class Meta:
         db_table = "household_individual"
+
+
+class IndividualRoleInHousehold(HopeModel):
+    individual = models.ForeignKey(Individual, on_delete=models.CASCADE, related_name="households_and_roles")
+    household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name="individuals_and_roles")
+    role = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ("role", "household")
+        db_table = "household_individualroleinhousehold"
+
+    def __str__(self) -> str:
+        return f"{self.individual.full_name} - {self.role}"
