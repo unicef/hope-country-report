@@ -19,7 +19,7 @@ class Household(HopeModel):
 
     # country_origin = models.ForeignKey("Country", related_name="+", blank=True, null=True, on_delete=models.PROTECT)
     # country = models.ForeignKey("Country", related_name="+", blank=True, null=True, on_delete=models.PROTECT)
-    address = models.CharField(max_length=1024, blank=True, db_collation="…")
+    address = models.CharField(max_length=1024, blank=True)
     zip_code = models.CharField(max_length=12, blank=True, null=True)
     """location contains lowest administrative area info"""
     admin_area = models.ForeignKey("hope.Area", null=True, on_delete=models.SET_NULL, blank=True)
@@ -112,10 +112,10 @@ class Household(HopeModel):
 class Individual(HopeModel):
     id = models.CharField(primary_key=True, max_length=100, editable=False)
     unicef_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)
-    full_name = models.CharField(max_length=255, db_index=True, db_collation="…")
-    given_name = models.CharField(max_length=85, blank=True, db_index=True, db_collation="…")
-    middle_name = models.CharField(max_length=85, blank=True, db_index=True, db_collation="…")
-    family_name = models.CharField(max_length=85, blank=True, db_index=True, db_collation="…")
+    full_name = models.CharField(max_length=255, db_index=True)
+    given_name = models.CharField(max_length=85, blank=True, db_index=True)
+    middle_name = models.CharField(max_length=85, blank=True, db_index=True)
+    family_name = models.CharField(max_length=85, blank=True, db_index=True)
     relationship = models.CharField(
         max_length=255,
         blank=True,

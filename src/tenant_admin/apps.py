@@ -9,5 +9,5 @@ class Config(AppConfig):
         from .options import model_admin_registry
         from .sites import site
 
-        for opt in model_admin_registry:
+        for __, opt in model_admin_registry.items():
             site.register(opt)

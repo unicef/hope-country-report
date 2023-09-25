@@ -33,10 +33,10 @@ class TenantAdminSite(SmartAdminSite):
 
     def __init__(self, name="tenant_admin") -> None:
         super().__init__(name)
-        from .options import model_admin_registry
-
-        for opt in model_admin_registry:
-            self.register(opt)
+        # from .options import model_admin_registry
+        #
+        # for __, opt in model_admin_registry.items():
+        #     self.register(opt)
 
     def reverse(self, name):
         return reverse(f"{self.name}:{name}")
@@ -105,7 +105,6 @@ class TenantAdminSite(SmartAdminSite):
         ret["site_name"] = self.name
         ret["site_url"] = "site_url"
         ret["selected_tenant"] = selected_tenant
-        # ret["current_app"] = self.name
         ret["tenant_form"] = SelectTenantForm(initial={"tenant": selected_tenant}, request=request)
         return ret  # type: ignore
 

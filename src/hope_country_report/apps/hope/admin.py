@@ -29,10 +29,7 @@ class HopeModelAdmin(ReadOnlyMixin, DisplayAllMixin, admin.ModelAdmin):  # type:
 @admin.register(BusinessArea)
 class BusinessAreaAdmin(HopeModelAdmin):
     search_fields = ("name",)
-    list_filter = (
-        "active",
-        "region_name",
-    )
+    list_filter = ("active", "region_name")
 
 
 @admin.register(Household)

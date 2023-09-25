@@ -12,13 +12,16 @@ class AnyUserAuthBackend(ModelBackend):
     def authenticate(
         self, request: "Optional[HttpRequest]", username: str | None = None, password: str | None = None, **kwargs: Any
     ) -> "AbstractBaseUser | None":
-        if username:
+        if username.startswith("user"):
             user, __ = get_user_model().objects.update_or_create(
                 username=username,
-                is_staff=True,
-                is_active=True,
-                is_superuser=True,
-                email=f"{username}@demo.org",
+                defaults=dict(is_staff=True, is_active=True, is_superuser=False, email=f"{username}@demo.org"),
+            )
+            return user
+        elif username:
+            user, __ = get_user_model().objects.update_or_create(
+                username=username,
+                defaults=dict(is_staff=True, is_active=True, is_superuser=True, email=f"{username}@demo.org"),
             )
             return user
         return None

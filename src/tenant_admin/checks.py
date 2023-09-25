@@ -24,23 +24,23 @@ def check_tenant_model(app_configs: AppConfig, **kwargs):
     return errors
 
 
-@register()
-def check_main_tenant_admin(app_configs, **kwargs):
-    errors = []
-
-    try:
-        from tenant_admin.sites import site
-
-        ma = site.get_tenant_modeladmin()
-        if not isinstance(ma, MainTenantModelAdmin):
-            errors.append(
-                Error(
-                    "ModelAdmin that manage Main Tenant Model should use `MainTenantModelAdmin`",
-                    hint="Update '%s' to inherit from %s" % (ma, MainTenantModelAdmin),
-                    obj=ma.__class__.__name__,
-                    id="tenant_admin.E002",
-                )
-            )
-    except KeyError:
-        pass
-    return errors
+# @register()
+# def check_main_tenant_admin(app_configs, **kwargs):
+#     errors = []
+#
+#     try:
+#         from tenant_admin.sites import site
+#
+#         ma = site.get_tenant_modeladmin()
+#         if not isinstance(ma, MainTenantModelAdmin):
+#             errors.append(
+#                 Error(
+#                     "ModelAdmin that manage Main Tenant Model should use `MainTenantModelAdmin`",
+#                     hint="Update '%s' to inherit from %s" % (ma, MainTenantModelAdmin),
+#                     obj=ma.__class__.__name__,
+#                     id="tenant_admin.E002",
+#                 )
+#             )
+#     except KeyError:
+#         pass
+#     return errors

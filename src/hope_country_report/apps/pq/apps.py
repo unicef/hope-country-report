@@ -1,7 +1,7 @@
-from django.apps import AppConfig as BaseAppConfig
+from django.apps import AppConfig
 
 
-class AppConfig(BaseAppConfig):
+class Config(AppConfig):
     name = __name__.rpartition(".")[0]
     verbose_name = "PQ"
 

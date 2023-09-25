@@ -20,16 +20,16 @@ from .config import conf
 from .exceptions import InvalidTenantError, TenantAdminError
 from .skeleton import Skeleton
 
-model_admin_registry = []
+model_admin_registry = {}
 
 _M = TypeVar("_M", bound=Model)
 
 
 class AutoRegisterMetaClass(MediaDefiningClass):
     def __new__(mcs, class_name, bases, attrs):
-        new_class = super().__new__(mcs, class_name, bases, attrs)
+        new_class: "BaseTenantModelAdmin" = super().__new__(mcs, class_name, bases, attrs)
         if new_class.model:
-            model_admin_registry.append(new_class)
+            model_admin_registry[new_class.model] = new_class
         return new_class
 
 
@@ -56,21 +56,39 @@ class BaseTenantModelAdmin(
     model: _M = None
     skeleton: Union[ModelAdmin, Skeleton] = None
     tenant_filter_field: str = ""
-    change_list_template = "tenant_admin/change_list.html"
-    change_form_template = "tenant_admin/change_form.html"
-    linked_objects_template = "tenant_admin/linked_objects.html"
+    # change_list_template = "tenant_admin/change_list.html"
+    # change_form_template = "tenant_admin/change_form.html"
+    # linked_objects_template = "tenant_admin/linked_objects.html"
+    # add_form_template = "tenant_admin/change_form.html"
+    # delete_confirmation_template = "delete_confirmation"
+    # delete_selected_confirmation_template = None
+    # object_history_template = None
+    # popup_response_template = None
+
     writeable_fields: List[str] = []
     exclude: List[str] = []
     linked_objects_hide_empty = True
 
-    def __init__(self, model, admin_site):
-        super().__init__(model, admin_site)
-        if self.skeleton:
-            if not (
-                (isclass(self.skeleton) and issubclass(self.skeleton, Skeleton)) or isinstance(self.skeleton, Skeleton)
-            ):
-                self.skeleton = Skeleton(self.skeleton)
-            self.skeleton.initialise(self)
+    @property
+    def change_list_template(self):
+        return "tenant_admin/change_list.html"
+
+    @property
+    def change_form_template(self):
+        return "tenant_admin/change_form.html"
+
+    @property
+    def linked_objects_template(self):
+        return "tenant_admin/linked_objects.html"
+
+    # def __init__(self, model, admin_site):
+    #     super().__init__(model, admin_site)
+    #     if self.skeleton:
+    #         if not (
+    #             (isclass(self.skeleton) and issubclass(self.skeleton, Skeleton)) or isinstance(self.skeleton, Skeleton)
+    #         ):
+    #             self.skeleton = Skeleton(self.skeleton)
+    #         self.skeleton.initialise(self)
 
     def get_inlines(self, request, obj=None):
         flt = list(filter(lambda x: not issubclass(x, TenantTabularInline), self.inlines))
@@ -191,12 +209,7 @@ class TenantModelAdmin(BaseTenantModelAdmin):
     def check(cls, **kwargs):
         errors = super().check(**kwargs)
         if cls.model == conf.tenant_model:
-            errors.append(
-                Error(
-                    f'"{cls.__name__}.model cannot be {conf.tenant_model}" ',
-                    id="admin_tenant.E101",
-                )
-            )
+            errors.append(Error(f'"{cls.__name__}.model cannot be {conf.tenant_model}" ', id="admin_tenant.E101"))
         return errors
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
@@ -211,11 +224,12 @@ class TenantModelAdmin(BaseTenantModelAdmin):
         return []
 
     def save_form(self, request, form, change):
-        setattr(
-            form.instance,
-            self.tenant_field.name,
-            conf.strategy.get_selected_tenant(request),
-        )
+        if self.tenant_field.name != "__none__":
+            setattr(
+                form.instance,
+                self.tenant_field.name,
+                conf.strategy.get_selected_tenant(request),
+            )
         return super().save_form(request, form, change)
 
     def get_adding_fields(self, request, obj=None):
@@ -233,11 +247,16 @@ class TenantModelAdmin(BaseTenantModelAdmin):
 
     @cached_property
     def tenant_field(self):
-        fields = self.model._meta.get_fields()
-        for f in fields:
-            if isinstance(f, ForeignKey):
-                if f.related_model == conf.tenant_model:
-                    return f
+        if self.tenant_filter_field == "__none__":
+            return None
+        elif "." not in self.tenant_filter_field:
+            return getattr(self.model, self.tenant_filter_field).field
+        else:
+            fields = self.model._meta.get_fields()
+            for f in fields:
+                if isinstance(f, ForeignKey):
+                    if f.related_model == conf.tenant_model:
+                        return f
 
 
 class MainTenantModelAdmin(BaseTenantModelAdmin):

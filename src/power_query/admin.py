@@ -21,7 +21,6 @@ from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from celery.result import AsyncResult
 from import_export import fields, resources
-from import_export.admin import ImportExportMixin
 from import_export.widgets import ForeignKeyWidget
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
@@ -74,7 +73,7 @@ class CeleryEnabledMixin:
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
 
-@register(Query)
+# @register(Query)
 class QueryAdmin(
     AdminFiltersMixin,
     LinkedObjectsMixin,
@@ -181,7 +180,7 @@ class QueryAdmin(
         }
 
 
-@register(Dataset)
+# @register(Dataset)
 class DatasetAdmin(
     AdminFiltersMixin,
     ExtraButtonsMixin,
@@ -241,9 +240,8 @@ class FormatterResource(resources.ModelResource):
         import_id_fields = ("name",)
 
 
-@register(Formatter)
+# @register(Formatter)
 class FormatterAdmin(
-    ImportExportMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
@@ -298,7 +296,7 @@ class ReportResource(resources.ModelResource):
         import_id_fields = ("name",)
 
 
-@register(Report)
+# @register(Report)
 class ReportAdmin(
     AdminFiltersMixin,
     CeleryEnabledMixin,
@@ -369,7 +367,7 @@ class ReportAdmin(
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
 
-@register(Parametrizer)
+# @register(Parametrizer)
 class QueryArgsAdmin(
     LinkedObjectsMixin,
     ExtraButtonsMixin,
@@ -393,7 +391,7 @@ class QueryArgsAdmin(
         obj.refresh()
 
 
-@register(ReportDocument)
+# @register(ReportDocument)
 class ReportDocumentAdmin(
     AdminFiltersMixin,
     LinkedObjectsMixin,

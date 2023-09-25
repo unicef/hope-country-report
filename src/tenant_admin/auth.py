@@ -24,7 +24,7 @@ def get_field_to(model, destination):
 
 
 class BaseTenantAuth:
-    model: _M = None
+    model: "_M" = None
 
     def get_allowed_tenants(self, request: "_R") -> "QuerySet[Model]":
         from tenant_admin.config import conf

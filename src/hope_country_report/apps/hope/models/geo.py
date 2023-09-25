@@ -22,8 +22,8 @@ class ValidityManager(TreeManager):
 
 
 class Country(MPTTModel, HopeModel):
-    name = models.CharField(max_length=255, db_index=True, db_collation="…")
-    short_name = models.CharField(max_length=255, db_index=True, db_collation="…")
+    name = models.CharField(max_length=255, db_index=True)
+    short_name = models.CharField(max_length=255, db_index=True)
     iso_code2 = models.CharField(max_length=2, unique=True)
     iso_code3 = models.CharField(max_length=3, unique=True)
     iso_num = models.CharField(max_length=4, unique=True)
@@ -55,7 +55,7 @@ class Country(MPTTModel, HopeModel):
 
 
 class AreaType(MPTTModel, HopeModel):
-    name = models.CharField(max_length=255, db_index=True, db_collation="…")
+    name = models.CharField(max_length=255, db_index=True)
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
     area_level = models.PositiveIntegerField(default=1)
     parent = TreeForeignKey("self", db_index=True, null=True, on_delete=models.CASCADE)

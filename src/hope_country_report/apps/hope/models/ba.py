@@ -4,8 +4,8 @@ from hope_country_report.apps.hope.models._base import HopeModel
 
 
 class BusinessArea(HopeModel):
-    id = models.CharField(primary_key=True, max_length=100, editable=False)
-    name = models.CharField(max_length=100, editable=False)
+    id = models.CharField(primary_key=True, max_length=100)
+    name = models.CharField(max_length=100)
     active = models.BooleanField(default=False)
     code = models.CharField(max_length=10, unique=True)
     long_name = models.CharField(max_length=255)

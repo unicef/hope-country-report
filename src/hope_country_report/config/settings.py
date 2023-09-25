@@ -11,39 +11,45 @@ DEVELOPMENT_DIR = PACKAGE_DIR.parent.parent
 DEBUG = env.bool("DEBUG")
 
 RO_CONN = dict(**env.db("DATABASE_HOPE_URL")).copy()
-RO_CONN.update(
-    {
-        "OPTIONS": {"options": "-c default_transaction_read_only=on"},
-        "TEST": {
-            "READ_ONLY": True,  # Do not manage this database during tests
-        },
-    }
-)
+# RO_CONN.update(
+#     {
+#         "OPTIONS": {"options": "-c default_transaction_read_only=on"},
+#         "TEST": {
+#             "OPTIONS": {"options": ""},
+#         },
+#     }
+# )
 
 DATABASES = {
     "default": env.db(),
-    "hope_no_use": env.db(var="DATABASE_HOPE_URL", default="psql://postgres:pass@db:5432/postgres"),
-    "hope": RO_CONN,
+    # "hope_no_use": env.db(var="DATABASE_HOPE_URL", default="psql://postgres:pass@db:5432/postgres"),
+    "hope_ro": RO_CONN,
 }
 TEST_RUNNER = "hope_country_report.utils.tests.runner.UnManagedModelTestRunner"
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
 DATABASE_APPS_MAPPING: Dict[str, str] = {
     "core": "default",
-    "hope": "hope",
+    "hope": "hope_ro",
 }
 MIGRATION_MODULES = {"hope": None}
 
 INSTALLED_APPS = [
+    # "hope_country_report.apps.c",
     "hope_country_report.web",
-    "hope_country_report.apps.core.apps.AppConfig",
-    "hope_country_report.apps.hope.apps.AppConfig",
-    "hope_country_report.apps.pq.apps.AppConfig",
+    "hope_country_report.web.theme",
+    "hope_country_report.apps.tenant.apps.Config",
+    "hope_country_report.apps.core.apps.Config",
+    "hope_country_report.apps.hope.apps.Config",
+    "hope_country_report.apps.pq.apps.Config",
     "django.contrib.contenttypes",
-    "flags",
-    "tenant_admin",
+    "smart_admin.apps.SmartTemplateConfig",  # templates
+    "smart_admin",  # use this instead of 'django.contrib.admin'
+    "smart_admin.apps.SmartLogsConfig",  # optional:  log application
+    "smart_admin.apps.SmartAuthConfig",  # optional: django.contrib.auth enhancements
+    # "tenant_admin",
     "advanced_filters",
     "django_celery_beat",
-    "power_query.apps.Config",
+    # "power_query.apps.Config",
     "unicef_security",
     "django.contrib.auth",
     "django.contrib.admindocs",
@@ -55,9 +61,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.gis",
     "django.contrib.postgres",
-    "django.contrib.admin",
+    # "django.contrib.admin",
     "django_extensions",
     "django_filters",
+    "flags",
+    "silk",
+    "tailwind",
+    "push_notifications",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -66,7 +76,6 @@ INSTALLED_APPS = [
     "adminactions",
     "adminfilters",
     "adminfilters.depot",
-    "smart_admin.apps.SmartTemplateConfig",
     "import_export",
 ]
 
@@ -81,6 +90,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
+    "hope_country_report.apps.tenant.middleware.TenantAdminMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -181,7 +191,7 @@ LOGGING = {
 AUTH_USER_MODEL = "core.User"
 
 HOST = env("HOST", default="http://localhost:8000")
-
+SIGNING_BACKEND = env("SIGNING_BACKEND")
 DEFAULT_FROM_EMAIL = "hope@unicef.org"
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
@@ -192,8 +202,12 @@ EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 
 from .fragments.admin_tenant import *  # noqa
 from .fragments.celery import *  # noqa
+from .fragments.debug_toolbar import *  # noqa
+from .fragments.flags import *  # noqa
 from .fragments.power_query import *  # noqa
+from .fragments.push_notifications import *  # noqa
 from .fragments.rest_framework import *  # noqa
 from .fragments.sentry import *  # noqa
 from .fragments.smart_admin import *  # noqa
 from .fragments.social_auth import *  # noqa
+from .fragments.tailwind import *  # noqa
