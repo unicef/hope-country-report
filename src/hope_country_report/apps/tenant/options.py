@@ -1,12 +1,11 @@
 from functools import update_wrapper
-from inspect import isclass
-from typing import List, TypeVar, Union
+from typing import Dict, List, TYPE_CHECKING, TypeVar
 
 from django.contrib.admin import ModelAdmin, TabularInline
 from django.contrib.admin.options import csrf_protect_m
 from django.contrib.auth import get_permission_codename
 from django.core.checks import Error
-from django.db.models import ForeignKey, Model
+from django.db.models import ForeignKey, Model, QuerySet
 from django.forms.widgets import MediaDefiningClass
 from django.shortcuts import redirect
 from django.utils.functional import cached_property
@@ -18,6 +17,9 @@ from smart_admin.modeladmin import SmartModelAdmin
 
 from .config import conf
 from .exceptions import InvalidTenantError, TenantAdminError
+
+if TYPE_CHECKING:
+    from ...types.http import AuthHttpRequest
 
 # from .skeleton import Skeleton
 
@@ -86,7 +88,8 @@ class BaseTenantModelAdmin(
     #     super().__init__(model, admin_site)
     #     if self.skeleton:
     #         if not (
-    #             (isclass(self.skeleton) and issubclass(self.skeleton, Skeleton)) or isinstance(self.skeleton, Skeleton)
+    #             (isclass(self.skeleton) and issubclass(self.skeleton, Skeleton)) or
+    #             isinstance(self.skeleton, Skeleton)
     #         ):
     #             self.skeleton = Skeleton(self.skeleton)
     #         self.skeleton.initialise(self)
@@ -275,7 +278,7 @@ class MainTenantModelAdmin(BaseTenantModelAdmin):
             )
         return errors
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: "AuthHttpRequest") -> QuerySet[_M]:
         qs = self.model._default_manager.get_queryset()
         active_tenant = conf.strategy.get_selected_tenant(request)
         if not active_tenant:
@@ -283,12 +286,12 @@ class MainTenantModelAdmin(BaseTenantModelAdmin):
         return qs.filter(pk=active_tenant.pk)
 
     @csrf_protect_m
-    def changelist_view(self, request, extra_context=None):
+    def changelist_view(self, request: "AuthHttpRequest", extra_context: "Dict|None" = None):
         object_id = str(conf.strategy.get_selected_tenant(request).pk)
         return super().change_view(request, object_id)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: "AuthHttpRequest") -> bool:
         return False
 
-    def has_delete_permission(self, request, obj=None):
+    def has_delete_permission(self, request: "AuthHttpRequest", obj=None) -> bool:
         return False

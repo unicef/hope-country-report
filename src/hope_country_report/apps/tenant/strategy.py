@@ -1,19 +1,15 @@
 import logging
 from typing import TYPE_CHECKING
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import get_cookie_signer
+from django.http import HttpResponse
 
-from hope_country_report.apps.hope.models import BusinessArea
 from hope_country_report.apps.tenant.config import AppSettings
 
-from ..core.models import CountryOffice
 from .state import state
 
 if TYPE_CHECKING:
-    from django.db.models import QuerySet
-
-    from hope_country_report.types.http import AuthHttpRequest
+    from hope_country_report.types.django import _M, _R
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +39,8 @@ class BaseTenantStrategy:
             # except TypeError:
             #     self._selected_tenant = None
             except Exception as e:  # pragma: no cover
+                logger.exception(e)
                 raise
-                # logger.exception(e)
                 # self._selected_tenant = None
         state.tenant = self._selected_tenant
         return self._selected_tenant

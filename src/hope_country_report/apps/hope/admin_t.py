@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from adminfilters.value import ValueFilter
 
 from hope_country_report.apps.hope import models
-from tenant_admin.options import MainTenantModelAdmin, TenantModelAdmin
+from tenant_admin.options import TenantModelAdmin
 
 if TYPE_CHECKING:
     from django.db.models import Model

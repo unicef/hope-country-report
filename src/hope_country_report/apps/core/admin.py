@@ -7,7 +7,6 @@ from smart_admin.mixins import DisplayAllMixin
 from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 
 from hope_country_report.apps.core.models import CountryOffice, User, UserRole
-from hope_country_report.apps.hope.models import BusinessArea
 
 
 class ReportAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):

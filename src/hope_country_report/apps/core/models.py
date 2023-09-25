@@ -17,7 +17,7 @@ class CountryOffice(models.Model):
         ordering = ("name",)
 
     @classmethod
-    def sync(self):
+    def sync(cls) -> None:
         from hope_country_report.apps.hope.models import BusinessArea
 
         for el in BusinessArea.objects.all():

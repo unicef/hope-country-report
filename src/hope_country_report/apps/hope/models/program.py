@@ -1,8 +1,6 @@
 from django.db import models
 
-from hope_country_report.apps.hope.models import BusinessArea, HopeModel
-
-from .dct import DataCollectingType
+from hope_country_report.apps.hope.models import HopeModel
 
 
 class Program(HopeModel):

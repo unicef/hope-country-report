@@ -1,7 +1,5 @@
 from django.apps import AppConfig
 
-from smart_admin.decorators import smart_register
-
 
 class Config(AppConfig):
     name = __name__.rpartition(".")[0]

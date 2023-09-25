@@ -1,12 +1,12 @@
-from django.core.signing import base64_hmac, Signer
+from django.core.signing import Signer
 
 
 class DebugSigner(Signer):
-    def signature(self, value, key=None):
-        return value
-
-    def sign(self, value):
+    def signature(self, value: bytes | str, key: "str| None" = None) -> str:
         return str(value)
 
-    def unsign(self, signed_value):
+    def sign(self, value: str) -> str:
+        return str(value)
+
+    def unsign(self, signed_value: str) -> str:
         return signed_value

@@ -1,14 +1,17 @@
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.db.models import ForeignKey, Model, QuerySet
 from django.db.models.options import Options
 
 from hope_country_report.apps.core.models import CountryOffice
+from hope_country_report.apps.hope.models import BusinessArea
+from hope_country_report.types.http import AuthHttpRequest
 from tenant_admin.config import conf
 
 if TYPE_CHECKING:
+    from typing import Any, Optional, TYPE_CHECKING, TypeVar
+
     from django.http import HttpRequest
 
     _M = TypeVar("_M", bound=Model)
