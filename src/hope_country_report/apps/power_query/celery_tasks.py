@@ -4,10 +4,9 @@ from typing import Any, Dict, Tuple, Type, Union
 import celery
 from billiard.einfo import ExceptionInfo
 from celery import Task
-from sentry_sdk import capture_exception
-
 from power_query.models import Query, QueryResult, Report, ReportResult
 from power_query.utils import sentry_tags, should_run
+from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
 

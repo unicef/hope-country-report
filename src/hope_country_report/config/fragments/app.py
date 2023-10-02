@@ -1,0 +1,1 @@
+REPORTERS_GROUP_NAME = "Reporters"

@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Sequence, TYPE_CHECKING
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin import ModelAdmin, register
+from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import QuerySet
@@ -22,13 +22,12 @@ from adminfilters.mixin import AdminFiltersMixin
 from celery.result import AsyncResult
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
-from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
-
 from power_query.celery_tasks import refresh_report, refresh_reports, run_background_query
 from power_query.forms import FormatterTestForm
-from power_query.models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument
+from power_query.models import CeleryEnabled, Formatter, Query, Report, ReportDocument
 from power_query.utils import to_dataset
 from power_query.widget import FormatterEditor, PythonFormatterEditor
+from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 logger = logging.getLogger(__name__)
 

@@ -162,14 +162,9 @@ class Command(BaseCommand):
                         verbosity=self.verbosity - 1,
                         interactive=False,
                     )
-            from django.contrib.auth.models import Group, Permission
+            from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
-            reporter: "Group" = Group.objects.get_or_create(name="Reporters")[0]
-            for perm in Permission.objects.order_by("codename").filter(
-                content_type__app_label="hope", codename__startswith="view_"
-            ):
-                reporter.permissions.add(perm)
-
+            get_or_create_reporter_group()
             echo("Upgrade completed", style_func=self.style.SUCCESS)
         except ValidationError as e:
             self.halt("\n- ".join(["Wrong argument(s):", *e.messages]))

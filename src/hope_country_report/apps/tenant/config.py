@@ -46,11 +46,17 @@ class AppSettings:
         setattr(self, name, value)
 
     @cached_property
-    def strategy(self) -> BaseTenantStrategy:
-        return import_string(self.STRATEGY)(self)  # type: ignore[no-any-return]
+    def strategy(self) -> "BaseTenantStrategy":
+        from .strategy import BaseTenantStrategy
+
+        return BaseTenantStrategy(self)
+        # return import_string(self.STRATEGY)(self)  # type: ignore[no-any-return]
 
     @cached_property
-    def auth(self) -> BaseTenantAuth:
+    def auth(self) -> "BaseTenantAuth":
+        from .auth import BaseTenantAuth
+
+        return BaseTenantAuth()
         return import_string(self.AUTH)()  # type: ignore[no-any-return]
 
     @cached_property

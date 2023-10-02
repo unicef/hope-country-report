@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
 
 if TYPE_CHECKING:
-    from django.http import HttpRequest, HttpResponse
+    from django.http import HttpRequest
 
 
-def index(request: "HttpRequest") -> "HttpResponse":
-    return render(request, "home.html")
+def index(request: "HttpRequest") -> "HttpResponseRedirect":
+    return HttpResponseRedirect("/t/")

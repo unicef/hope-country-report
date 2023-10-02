@@ -136,19 +136,13 @@ def pytest_configure(config):
 #         backend.client.clear()
 #
 #
-# @pytest.fixture
-# def user():
-#     from testutils.factories import CustomerFactory, GroupFactory, UserFactory
-#
-#     user = UserFactory(username="user@example.com", is_active=True)
-#     user.is_active = True
-#     # user.save()
-#     CustomerFactory(subscriber=user)
-#     GroupFactory(user=user, name="default")
-#     assert user._password
-#     assert user.is_active
-#     return user
-#
+@pytest.fixture
+def user():
+    from testutils.factories import UserFactory
+
+    return UserFactory(username="user@example.com", is_active=True)
+
+
 #
 # @pytest.fixture()
 # def django_app_admin(django_app_factory, monkeypatch):

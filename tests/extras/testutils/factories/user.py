@@ -6,7 +6,7 @@ import factory
 from social_django.models import UserSocialAuth
 from testutils.factories.base import AutoRegisterModelFactory
 
-from hope_country_report.apps.core.models import User, UserRole
+from hope_country_report.apps.core.models import CountryOffice, User, UserRole
 
 from .django_auth import GroupFactory
 from .hope import BusinessAreaFactory
@@ -63,8 +63,32 @@ class LogEntryFactory(AutoRegisterModelFactory):
         model = LogEntry
 
 
+class CountryOfficeFactory(AutoRegisterModelFactory):
+    class Meta:
+        model = CountryOffice
+        django_get_or_create = ("name",)
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        # Create the prerequisite data here.
+        # Use `UserFactory.create_batch(n)` if multiple instances are needed.
+        ba = BusinessAreaFactory()
+        values = {
+            "hope_id": str(ba.id),
+            "name": ba.name,
+            "active": ba.active,
+            "code": ba.code,
+            "long_name": ba.long_name,
+            "region_code": ba.region_code,
+        }
+        co = CountryOffice(**values)
+        co.save()
+
+        return co
+
+
 class UserRoleFactory(AutoRegisterModelFactory):
-    business_area = factory.LazyFunction(lambda: BusinessAreaFactory().pk)
+    country_office = factory.SubFactory(CountryOfficeFactory)
     group = factory.SubFactory(GroupFactory)
     user = factory.SubFactory(UserFactory)
 

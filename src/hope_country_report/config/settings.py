@@ -46,10 +46,9 @@ INSTALLED_APPS = [
     "smart_admin",  # use this instead of 'django.contrib.admin'
     "smart_admin.apps.SmartLogsConfig",  # optional:  log application
     "smart_admin.apps.SmartAuthConfig",  # optional: django.contrib.auth enhancements
-    # "tenant_admin",
     "advanced_filters",
     "django_celery_beat",
-    # "power_query.apps.Config",
+    "hope_country_report.apps.power_query.apps.Config",
     "unicef_security",
     "django.contrib.auth",
     "django.contrib.admindocs",
@@ -90,7 +89,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
-    "hope_country_report.apps.tenant.middleware.TenantAdminMiddleware",
+    "hope_country_report.middleware.state.StateMiddleware",
+    "hope_country_report.middleware.tenant.TenantAdminMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -201,6 +201,7 @@ EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False)
 EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 
 from .fragments.admin_tenant import *  # noqa
+from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa

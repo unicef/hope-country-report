@@ -8,7 +8,7 @@ from hope_country_report.apps.tenant.sites import TenantAdminSite
 tenant_admin = TenantAdminSite()
 
 urlpatterns = [
-    # path("", include("hope_country_report.web.urls")),
+    path("", include("hope_country_report.web.urls")),
     # path("", tenant_admin.sites.site.urls),
     path("t/", tenant_admin.urls),
     path("admin/", admin.site.urls),

@@ -47,3 +47,6 @@ class UserRole(models.Model):
 
     class Meta:
         app_label = "core"
+
+    def __str__(self):
+        return "%s %s" % (self.user.username, self.group.name)

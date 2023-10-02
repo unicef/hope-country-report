@@ -72,7 +72,7 @@ class TenantAdminSite(SmartAdminSite):
                     response = redirect(request.GET["next"])
                 else:
                     response = redirect(f"{self.name}:index")
-                conf.strategy.set_selected_tenant(response, form.cleaned_data["tenant"])
+                conf.strategy.set_selected_tenant(form.cleaned_data["tenant"], response)
                 return response
         form = SelectTenantForm(request=request)
         context["form"] = form
