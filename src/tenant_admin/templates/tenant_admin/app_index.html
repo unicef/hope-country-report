@@ -1,4 +1,4 @@
-{% extends admin_site.name|add:"/index.html" %}
+{% extends admin_site.name|add:"/index2.html" %}
 {% load i18n %}
 
 {% block bodyclass %}{{ block.super }} app-{{ app_label }}{% endblock %}
@@ -6,7 +6,7 @@
 {% if not is_popup %}
 {% block breadcrumbs %}
 <div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+<a href="{% url 'tenant_admin:index' %}">{% translate 'Home' %}</a>
 &rsaquo;
 {% for app in app_list %}
 {{ app.name }}

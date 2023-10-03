@@ -8,7 +8,7 @@
     "build": "npm run build:clean && npm run build:tailwind",
     "build:clean": "rimraf ../static/css",
     "build:tailwind": "cross-env NODE_ENV=production tailwindcss --postcss -i ./src/styles.scss -o ../static/css/styles.css --minify",
-    "dev": "cross-env NODE_ENV=development tailwindcss --postcss -i ./src/styles.css -o ../static/css/dist/styles.css -w",
+    "dev": "cross-env NODE_ENV=development tailwindcss --postcss -i ./src/styles.scss -o ../static/css/styles.css -w",
     "tailwindcss": "node ./node_modules/tailwindcss/lib/cli.js"
   },
   "keywords": [],

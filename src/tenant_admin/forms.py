@@ -16,6 +16,7 @@ class TenantAuthenticationForm(AdminAuthenticationForm):
 
 class SelectTenantForm(forms.Form):
     tenant = forms.ModelChoiceField(queryset=None)
+    next = forms.CharField(required=False)
 
     def __init__(self, *args, **kwargs) -> None:
         self.request = kwargs.pop("request")

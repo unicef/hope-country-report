@@ -1,8 +1,8 @@
 {% extends admin_site.name|add:"/index.html" %}
 {% load i18n static %}
-{% block branding %}
-    <h1 id="site-name"><a href="{% url 'admin:index' %}">Control Panel</a></h1>
-{% endblock %}
+{#{% block branding %}#}
+{#    <h1 id="site-name"><a href="{% url 'admin:index' %}"></a></h1>#}
+{#{% endblock %}#}
 
 {% block extrastyle %}{{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static "admin/css/dashboard.css" %}">{% endblock %}
@@ -12,15 +12,13 @@
 {% block bodyclass %}{{ block.super }} dashboard{% endblock %}
 
 {% block breadcrumbs %}{% endblock %}
-{% block nav-sidebar %}
-    {% include "admin/nav_sidebar.html" %}
-{% endblock %}
+{% block nav-sidebar %}{% endblock %}
 {% block select_ba_form %}{% endblock %}
 
 
 {% block content %}
     <div id="content-main">
-        {% if  form.fields.tenant.queryset.exists %}
+    {% if  form.fields.tenant.queryset.exists %}
         <form method="post">
             <table>
                 {% csrf_token %}
@@ -29,7 +27,7 @@
             <input type="submit">
         </form>
     {% else %}
-            Seems you do not have any permissions here.
+            Seems you do not have any tenant enabled.
     {% endif %}
     </div>
 {% endblock %}

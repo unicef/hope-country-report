@@ -4,10 +4,11 @@ from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
 from django.db.models import QuerySet
 
+# FIXME: use DIP here
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.hope.models import BusinessArea
+from hope_country_report.state import state
 
-from ...state import state
 from .config import conf
 
 if TYPE_CHECKING:
@@ -20,44 +21,44 @@ if TYPE_CHECKING:
 class BaseTenantAuth(BaseBackend):
     model: "_M" = None
 
-    def get_selected_tenant(self, request: "_R") -> "_M":
+    def get_selected_tenant(self) -> "_M":
         return conf.strategy.get_selected_tenant()
 
-    def get_all_permissions(self, request: "_R", obj: "_M|None" = None) -> set[str]:
-        tenant: "_M" = self.get_selected_tenant(request)
+    def get_all_permissions(self, user: "User", obj: "_M|None" = None) -> set[str]:
+        tenant: "_M" = self.get_selected_tenant()
         if not tenant:
             return []
-        if request.user.is_anonymous:
+        if user.is_anonymous:
             return []
         perm_cache_name = "_tenant_%s_perm_cache" % str(tenant.pk)
-        if not hasattr(request.user, perm_cache_name):
+        if not hasattr(user, perm_cache_name):
             qs = Permission.objects.all()
-            if not request.user.is_superuser:
+            if not user.is_superuser:
                 qs = qs.filter(
                     **{
-                        "group__userrole__user": request.user,
+                        "group__userrole__user": user,
                         "group__userrole__country_office": tenant,
                     }
                 )
             perms = qs.values_list("content_type__app_label", "codename").order_by()
-            setattr(request.user, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})
-        return getattr(request.user, perm_cache_name)
+            setattr(user, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})
+        return getattr(user, perm_cache_name)
 
-    def has_module_perms(self, request: "AuthHttpRequest", app_label: str) -> bool:
-        tenant: "_M" = self.get_selected_tenant(request)
-        if not tenant:
-            return []
+    # def has_module_perms(self, user: "User", app_label: str) -> bool:
+    #     tenant: "_M" = self.get_selected_tenant()
+    #     if not tenant:
+    #         return []
+    #
+    #     if user.is_superuser:
+    #         return True
+    #     return user.is_active and any(
+    #         perm[: perm.index(".")] == app_label for perm in self.get_all_permissions(user)
+    #     )
 
-        if request.user.is_superuser:
-            return True
-        return request.user.is_active and any(
-            perm[: perm.index(".")] == app_label for perm in self.get_all_permissions(request)
-        )
-
-    def get_allowed_tenants(self) -> "Optional[QuerySet[BusinessArea]]":
+    def get_allowed_tenants(self, request: "_R|None" = None) -> "Optional[QuerySet[BusinessArea]]":
         from .config import conf
 
-        request = state.request
+        request = request or state.request
         allowed_tenants: "Optional[QuerySet[BusinessArea]]"
         if request.user.is_superuser:
             allowed_tenants = CountryOffice.objects.all()

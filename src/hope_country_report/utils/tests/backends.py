@@ -15,7 +15,7 @@ class AnyUserAuthBackend(ModelBackend):
         if username.startswith("user"):
             user, __ = get_user_model().objects.update_or_create(
                 username=username,
-                defaults=dict(is_staff=True, is_active=True, is_superuser=False, email=f"{username}@demo.org"),
+                defaults=dict(is_staff=False, is_active=True, is_superuser=False, email=f"{username}@demo.org"),
             )
             return user
         elif username:

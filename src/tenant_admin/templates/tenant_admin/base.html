@@ -1,4 +1,4 @@
-{% extends "admin/base.html" %}
+{% extends "admin/base.html" %}{% load i18n %}
 {#{% load i18n static %}<!DOCTYPE html>#}
 {#{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}#}
 {#<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">#}
@@ -47,10 +47,9 @@
 {#                                <strong>{% firstof user.get_short_name user.get_username %}</strong>.#}
 {#                            {% endblock %}#}
 {% block userlinks %}
-    {{ block.super }}
     {% block select_ba_form %}
-        <form id="select_tenant_form" method="post"
-              action="{% url "tenant_admin:select_tenant" %}?next={{ request.path }}">
+        <div style="display: inline-flex">
+        <form id="select_tenant_form" method="post"  action="{% url "tenant_admin:select_tenant" %}">
             {% csrf_token %}{{ tenant_form }}
             <script>
                 document.querySelector('#id_tenant').addEventListener('change', function () {
@@ -58,8 +57,16 @@
                 });
             </script>
         </form>
+        </div>
     {% endblock %}
+        <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+        {% csrf_token %}
+        <button type="submit">{% translate 'Log out' %}</button>
+    </form>
+
 {% endblock %}
+{% block footer %}<div id="footer">Tenant</div>{% endblock %}
+
 {#                                {% if site_url %}#}
 {#                                    <a href="{{ site_url }}">{% translate 'View site' %}</a> /#}
 {#                                {% endif %}#}

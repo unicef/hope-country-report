@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from functools import cached_property
 from typing import Any, TYPE_CHECKING, Union
 
@@ -19,6 +17,7 @@ class AppSettings:
     AUTH: "BaseTenantAuth"
     defaults = {
         "TENANT_MODEL": None,
+        "NAMESPACE": "tenant_admin",
         "COOKIE_NAME": "selected_tenant",
         "STRATEGY": "tenant_admin.strategy.DefaultStrategy",
         "AUTH": "tenant_admin.auth.BaseTenantAuth",

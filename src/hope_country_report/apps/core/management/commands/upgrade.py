@@ -165,6 +165,9 @@ class Command(BaseCommand):
             from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
             get_or_create_reporter_group()
+            from hope_country_report.apps.core.models import CountryOffice
+
+            CountryOffice.sync()
             echo("Upgrade completed", style_func=self.style.SUCCESS)
         except ValidationError as e:
             self.halt("\n- ".join(["Wrong argument(s):", *e.messages]))

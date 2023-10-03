@@ -7,6 +7,7 @@ from django.http import HttpResponse
 
 class State(local):
     request = None
+    tenant = None
     cookies = {}
 
     def __init__(self):

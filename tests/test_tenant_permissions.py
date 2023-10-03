@@ -65,7 +65,7 @@ def user_role(request, db):
 
 @contextlib.contextmanager
 def active_tenant(tenant: "CountryOffice"):
-    from hope_country_report.apps.tenant.config import conf
+    from tenant_admin.config import conf
 
     current = conf.strategy.get_selected_tenant()
     if tenant:
@@ -76,7 +76,7 @@ def active_tenant(tenant: "CountryOffice"):
 
 @pytest.mark.parametrize("u", ["user", "admin_user", "anonymous"])
 def test_tenant_backend_get_all_permissions(request, country_office, req, u, user_role, django_assert_max_num_queries):
-    from hope_country_report.apps.tenant.auth import BaseTenantAuth
+    from tenant_admin.auth import BaseTenantAuth
 
     req.user = request.getfixturevalue(u)
     b: BaseTenantAuth = BaseTenantAuth()
@@ -99,7 +99,7 @@ def test_tenant_backend_get_all_permissions(request, country_office, req, u, use
 def test_tenant_backend_get_all_permissions_no_tenant(
     request, country_office, req, u, user_role, django_assert_max_num_queries
 ):
-    from hope_country_report.apps.tenant.auth import BaseTenantAuth
+    from tenant_admin.auth import BaseTenantAuth
 
     req.user = request.getfixturevalue(u)
     b: BaseTenantAuth = BaseTenantAuth()
@@ -176,7 +176,7 @@ def test_tenant_backend_get_all_permissions_no_tenant(
 #
 @pytest.mark.parametrize("u", ["user", "admin_user", "anonymous"])
 def test_tenant_backend_has_module_perms(request, country_office, req, u, user_role, django_assert_max_num_queries):
-    from hope_country_report.apps.tenant.auth import BaseTenantAuth
+    from tenant_admin.auth import BaseTenantAuth
 
     req.user = request.getfixturevalue(u)
     b: BaseTenantAuth = BaseTenantAuth()
@@ -195,7 +195,7 @@ def test_tenant_backend_has_module_perms(request, country_office, req, u, user_r
 
 @pytest.mark.parametrize("u", ["user", "admin_user", "anonymous"])
 def test_tenant_backend_get_allowed_tenants(request, country_office, req, u, user_role, django_assert_max_num_queries):
-    from hope_country_report.apps.tenant.auth import BaseTenantAuth
+    from tenant_admin.auth import BaseTenantAuth
 
     req.user = request.getfixturevalue(u)
     b: BaseTenantAuth = BaseTenantAuth()

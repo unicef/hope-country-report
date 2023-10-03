@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     # "hope_country_report.apps.c",
     "hope_country_report.web",
     "hope_country_report.web.theme",
-    "hope_country_report.apps.tenant.apps.Config",
+    "tenant_admin.apps.Config",
     "hope_country_report.apps.core.apps.Config",
     "hope_country_report.apps.hope.apps.Config",
     "hope_country_report.apps.pq.apps.Config",
@@ -83,18 +83,18 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "tenant_admin.middleware.TenantAdminMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
     "hope_country_report.middleware.state.StateMiddleware",
-    "hope_country_report.middleware.tenant.TenantAdminMiddleware",
+    "tenant_admin.middleware.TenantAdminMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
     "unicef_security.backends.UNICEFAzureADB2COAuth2",
+    "tenant_admin.auth.BaseTenantAuth",
     "django.contrib.auth.backends.ModelBackend",
     "hope_country_report.utils.tests.backends.AnyUserAuthBackend",
 )
@@ -168,6 +168,7 @@ TEMPLATES = [
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
             ],
+            "builtins": ["tenant_admin.templatetags.tenant_admin"],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
                 "i18n": "django.templatetags.i18n",

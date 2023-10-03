@@ -1,5 +1,6 @@
 from django.contrib.auth.models import Group
 from django.db import models
+from django.utils.text import slugify
 
 from unicef_security.models import AbstractUser
 
@@ -12,6 +13,7 @@ class CountryOffice(models.Model):
     region_code = models.CharField(max_length=8, blank=True)
     region_name = models.CharField(max_length=8, blank=True)
     hope_id = models.CharField(unique=True, max_length=100, blank=True)
+    slug = models.SlugField()
 
     class Meta:
         ordering = ("name",)
@@ -28,6 +30,7 @@ class CountryOffice(models.Model):
                 "code": el.code,
                 "long_name": el.long_name,
                 "region_code": el.region_code,
+                "slug": slugify(el.name),
             }
             CountryOffice.objects.update_or_create(hope_id=el.id, defaults=values)
 

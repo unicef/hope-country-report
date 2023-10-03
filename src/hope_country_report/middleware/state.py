@@ -1,6 +1,6 @@
 import logging
 
-from sos.state import state
+from hope_country_report.state import state
 
 logger = logging.getLogger(__name__)
 
