@@ -2,14 +2,13 @@ from typing import TYPE_CHECKING
 
 from django import template
 from django.template import Context as Context, TemplateSyntaxError
-from django.template.base import FilterExpression
-from django.template.defaulttags import kwarg_re, url as _url, URLNode
+from django.template.defaulttags import kwarg_re, URLNode
 from django.urls import reverse
 
 from tenant_admin.config import conf
 
 if TYPE_CHECKING:
-    from django.db.models.options import Options
+    ...
 
 register = template.Library()
 

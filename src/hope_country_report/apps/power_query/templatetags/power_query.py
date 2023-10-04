@@ -5,7 +5,8 @@ from django import template
 from django.utils.safestring import mark_safe
 
 from adminactions.utils import get_attr
-from power_query.utils import get_sentry_url, sizeof
+
+from ..utils import get_sentry_url, sizeof
 
 register = template.Library()
 

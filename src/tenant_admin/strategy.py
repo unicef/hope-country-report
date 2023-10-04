@@ -1,7 +1,6 @@
 import logging
 from typing import TYPE_CHECKING
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import get_cookie_signer
 from django.http import HttpResponse
 from django.utils.functional import cached_property
@@ -51,35 +50,35 @@ class BaseTenantStrategy:
             raise InvalidTenantError
         return {model_admin.tenant_filter_field: active_tenant.hope_id}
 
-    def read_selected_tenant(self, request: "_R|None" = None) -> "_M | None":
-        self._selected_tenant = None
-        from django.urls import resolve
+    # def read_selected_tenant(self, request: "_R|None" = None) -> "_M | None":
+    #     self._selected_tenant = None
+    #     from django.urls import resolve
+    #
+    #     args = resolve(request.path)
+    #     request = request or state.request
+    #     # if request:
+    #     #     signer = get_cookie_signer()
+    #     #     cookie_value = request.COOKIES.get(self.config.COOKIE_NAME)
+    #     #     if cookie_value:
+    #     #         try:
+    #     #             filters = {self.pk: signer.unsign(cookie_value)}
+    #     #             self._selected_tenant_value = cookie_value
+    #     #             self._selected_tenant = self.auth.get_allowed_tenants().get(**filters)
+    #     #         except (ValueError, ObjectDoesNotExist):
+    #     #             self._selected_tenant = None
+    #     #         # except TypeError:
+    #     #         #     self._selected_tenant = None
+    #     #         except Exception as e:  # pragma: no cover
+    #     #             logger.exception(e)
+    #     #             raise
+    #     return self._selected_tenant
 
-        args = resolve(request.path)
-        request = request or state.request
-        # if request:
-        #     signer = get_cookie_signer()
-        #     cookie_value = request.COOKIES.get(self.config.COOKIE_NAME)
-        #     if cookie_value:
-        #         try:
-        #             filters = {self.pk: signer.unsign(cookie_value)}
-        #             self._selected_tenant_value = cookie_value
-        #             self._selected_tenant = self.auth.get_allowed_tenants().get(**filters)
-        #         except (ValueError, ObjectDoesNotExist):
-        #             self._selected_tenant = None
-        #         # except TypeError:
-        #         #     self._selected_tenant = None
-        #         except Exception as e:  # pragma: no cover
-        #             logger.exception(e)
-        #             raise
-        return self._selected_tenant
-
-    def get_selected_tenant(self, request: "_R|None" = None) -> "_M | None | NONE":
+    def get_selected_tenant(self, request: "_R|None" = None) -> "_M | None":
         # if self._selected_tenant is NONE:
         #     self.read_selected_tenant(request)
         request = request or state.request
         if request.user.is_authenticated and state.tenant:
-            filters = {"code": state.tenant}
+            filters = {"slug": state.tenant}
             return self.auth.get_allowed_tenants().get(**filters)
         return self._selected_tenant
 

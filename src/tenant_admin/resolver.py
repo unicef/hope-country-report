@@ -1,17 +1,15 @@
-import logging
 import re
 
 from django.urls import URLResolver
 
 from hope_country_report.state import state
-from tenant_admin.config import conf
-from tenant_admin.utils import get_tenant_from_path, get_tenant_from_request
+
+from .utils import TENANT_PREFiX
 
 
 class TenantPrefixPattern:
     def __init__(self):
         self.converters = {}
-        self.regex_pattern = "(?P<prefix>t/(?P<tenant>[0-9]*))/"
 
     @property
     def regex(self):
@@ -27,9 +25,9 @@ class TenantPrefixPattern:
     @property
     def tenant_prefix(self):
         try:
-            prefix = get_tenant_from_path(state.request.path)
-            return "%s/" % (prefix or "")
-        except:
+            prefix = state.tenant
+            return f"{TENANT_PREFiX}%s/" % (prefix or "")
+        except Exception:
             return ""
 
     def match(self, path):
@@ -60,9 +58,9 @@ class TenantPrefixPattern:
         return self.tenant_prefix
 
 
+class TenantURLResolver(URLResolver):
+    ...
+
+
 def tenant_patterns(*urls, namespace=None, app_name=None):
-    """
-    Add the language code prefix to every URL pattern within this function.
-    This may only be used in the root URLconf, not in an included URLconf.
-    """
-    return [URLResolver(TenantPrefixPattern(), list(urls), namespace=namespace, app_name=app_name)]
+    return [TenantURLResolver(TenantPrefixPattern(), list(urls), namespace=namespace, app_name=app_name)]

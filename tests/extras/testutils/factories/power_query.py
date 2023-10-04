@@ -1,8 +1,9 @@
 import factory
-from power_query.models import Dataset, Formatter, Query, Report, ReportDocument
 
-from . import ContentTypeFactory
+from hope_country_report.apps.power_query.models import Dataset, Formatter, Query, Report, ReportDocument
+
 from .base import AutoRegisterModelFactory
+from .contenttypes import ContentTypeFactory
 from .user import UserFactory
 
 

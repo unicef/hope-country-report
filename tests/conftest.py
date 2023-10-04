@@ -137,10 +137,17 @@ def pytest_configure(config):
 #
 #
 @pytest.fixture
-def user():
+def user(db):
     from testutils.factories import UserFactory
 
     return UserFactory(username="user@example.com", is_active=True)
+
+
+@pytest.fixture
+def office(db):
+    from testutils.factories import CountryOfficeFactory
+
+    return CountryOfficeFactory()
 
 
 #

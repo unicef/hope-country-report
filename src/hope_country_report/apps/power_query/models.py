@@ -22,11 +22,12 @@ import swapper
 from celery import states
 from celery.result import AsyncResult
 from natural_keys import NaturalKeyModel
-from power_query.exceptions import QueryRunError
-from power_query.json import PQJSONEncoder
-from power_query.utils import dict_hash, to_dataset
-from power_query.validators import FrequencyValidator
 from sentry_sdk import capture_exception, configure_scope
+
+from .exceptions import QueryRunError
+from .json import PQJSONEncoder
+from .utils import dict_hash, to_dataset
+from .validators import FrequencyValidator
 
 logger = logging.getLogger(__name__)
 

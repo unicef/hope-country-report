@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 
-from power_query.utils import should_run
+from .utils import should_run
 
 
 @deconstructible

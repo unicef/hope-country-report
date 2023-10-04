@@ -34,21 +34,20 @@ DATABASE_APPS_MAPPING: Dict[str, str] = {
 MIGRATION_MODULES = {"hope": None}
 
 INSTALLED_APPS = [
-    # "hope_country_report.apps.c",
     "hope_country_report.web",
     "hope_country_report.web.theme",
     "tenant_admin.apps.Config",
     "hope_country_report.apps.core.apps.Config",
     "hope_country_report.apps.hope.apps.Config",
     "hope_country_report.apps.pq.apps.Config",
+    "hope_country_report.apps.power_query.apps.Config",
     "django.contrib.contenttypes",
     "smart_admin.apps.SmartTemplateConfig",  # templates
     "smart_admin",  # use this instead of 'django.contrib.admin'
     "smart_admin.apps.SmartLogsConfig",  # optional:  log application
-    "smart_admin.apps.SmartAuthConfig",  # optional: django.contrib.auth enhancements
+    # "smart_admin.apps.SmartAuthConfig",  # optional: django.contrib.auth enhancements
     "advanced_filters",
     "django_celery_beat",
-    "hope_country_report.apps.power_query.apps.Config",
     "unicef_security",
     "django.contrib.auth",
     "django.contrib.admindocs",
@@ -61,8 +60,8 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "django.contrib.postgres",
     # "django.contrib.admin",
-    "django_extensions",
-    "django_filters",
+    # "django_extensions",
+    # "django_filters",
     "flags",
     "silk",
     "tailwind",
@@ -75,21 +74,21 @@ INSTALLED_APPS = [
     "adminactions",
     "adminfilters",
     "adminfilters.depot",
-    "import_export",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # "django.middleware.locale.LocaleMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "tenant_admin.middleware.TenantAdminMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
     "hope_country_report.middleware.state.StateMiddleware",
-    "tenant_admin.middleware.TenantAdminMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -204,6 +203,7 @@ EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 from .fragments.admin_tenant import *  # noqa
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
+from .fragments.constance import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
 from .fragments.power_query import *  # noqa

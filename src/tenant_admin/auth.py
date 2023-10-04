@@ -5,8 +5,8 @@ from django.contrib.auth.models import Permission
 from django.db.models import QuerySet
 
 # FIXME: use DIP here
-from hope_country_report.apps.core.models import CountryOffice
-from hope_country_report.apps.hope.models import BusinessArea
+# from hope_country_report.apps.core.models import CountryOffice
+# from hope_country_report.apps.hope.models import BusinessArea
 from hope_country_report.state import state
 
 from .config import conf
@@ -14,8 +14,10 @@ from .config import conf
 if TYPE_CHECKING:
     from typing import Optional, TYPE_CHECKING
 
+    from django.db import Model
+
+    from hope_country_report.apps.core.models import User
     from hope_country_report.types.django import _M, _R
-    from hope_country_report.types.http import AuthHttpRequest
 
 
 class BaseTenantAuth(BaseBackend):
@@ -55,15 +57,15 @@ class BaseTenantAuth(BaseBackend):
     #         perm[: perm.index(".")] == app_label for perm in self.get_all_permissions(user)
     #     )
 
-    def get_allowed_tenants(self, request: "_R|None" = None) -> "Optional[QuerySet[BusinessArea]]":
+    def get_allowed_tenants(self, request: "_R|None" = None) -> "Optional[QuerySet[Model]]":
         from .config import conf
 
         request = request or state.request
-        allowed_tenants: "Optional[QuerySet[BusinessArea]]"
+        allowed_tenants: "Optional[QuerySet[Model]]"
         if request.user.is_superuser:
-            allowed_tenants = CountryOffice.objects.all()
+            allowed_tenants = conf.tenant_model.objects.all()
         elif request.user.is_authenticated:
-            allowed_tenants = CountryOffice.objects.filter(userrole__user=request.user)
+            allowed_tenants = conf.tenant_model.objects.filter(userrole__user=request.user)
         else:
             allowed_tenants = conf.tenant_model.objects.none()
 

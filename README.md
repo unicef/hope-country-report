@@ -15,4 +15,4 @@ ABOUT HOPE Country Report
     pdm venv create 3.11
     pdm install
     pre-commit install
-    `./manage.py env --no-optional --check`
+    ./manage.py env --template

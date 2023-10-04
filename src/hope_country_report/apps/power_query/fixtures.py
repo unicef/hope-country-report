@@ -7,7 +7,8 @@ from django.contrib.contenttypes.models import ContentType
 
 import factory
 from factory.django import DjangoModelFactory
-from power_query.models import Dataset, Formatter, Parametrizer, Query, Report, ReportDocument
+
+from .models import Dataset, Formatter, Parametrizer, Query, Report, ReportDocument
 
 
 class UserFactory(DjangoModelFactory):

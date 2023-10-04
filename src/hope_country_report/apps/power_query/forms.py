@@ -1,8 +1,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from power_query.models import Formatter, Query
-from power_query.widget import ContentTypeChoiceField, PythonFormatterEditor
+from .models import Formatter, Query
+from .widget import ContentTypeChoiceField, PythonFormatterEditor
 
 
 class ExportForm(forms.Form):

@@ -4,7 +4,8 @@ from django.shortcuts import render
 
 from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
-from power_query.models import Query
+
+from .models import Query
 
 
 class PowerQueryMixin(ExtraButtonsMixin):

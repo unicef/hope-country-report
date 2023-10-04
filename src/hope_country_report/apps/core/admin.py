@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from django import forms
 from django.contrib import admin
 
@@ -8,8 +10,11 @@ from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 
 from hope_country_report.apps.core.models import CountryOffice, User, UserRole
 
+if TYPE_CHECKING:
+    from hope_country_report.types.http import _R
 
-class ReportAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):
+
+class ReportAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: ignore[type-arg]
     pass
 
 
@@ -27,7 +32,7 @@ class UserRoleForm(forms.ModelForm):  # type: ignore
 
 
 @admin.register(UserRole)
-class UserRoleAdmin(ReportAdmin):  # type: ignore
+class UserRoleAdmin(ReportAdmin):
     list_display = ("user", "group", "country_office")
     list_filter = ("country_office",)
     form = UserRoleForm
@@ -35,10 +40,10 @@ class UserRoleAdmin(ReportAdmin):  # type: ignore
 
 
 @admin.register(CountryOffice)
-class CountryOfficeAdmin(ReportAdmin):  # type: ignore
+class CountryOfficeAdmin(ReportAdmin):
     search_fields = ("name",)
     list_filter = ("active",)
 
     @button()
-    def sync(self, request):
+    def sync(self, request: "_R") -> None:
         CountryOffice.sync()

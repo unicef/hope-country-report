@@ -1,24 +1,35 @@
 import os
 import uuid
+from typing import TYPE_CHECKING
 
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand, CommandError, CommandParser
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, Tuple, Type
 
 
 class Command(BaseCommand):
     requires_migrations_checks = False
     requires_system_checks = []
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: "CommandParser") -> None:
         parser.add_argument(
-            "--template", action="store_true", dest="template", default=False, help="Only dumps keys, without values"
+            "-t",
+            "--template",
+            action="store_true",
+            dest="template",
+            default=False,
+            help="Only dumps keys, without values",
         )
         parser.add_argument(
+            "-g",
             "--group",
             choices=("mandatory", "optional", "all", "develop"),
             default="mandatory",
             help="Dump all or partial keys",
         )
         parser.add_argument(
+            "-s",
             "--style",
             choices=("dotenv", "direnv", "env"),
             default="env",
@@ -34,13 +45,10 @@ class Command(BaseCommand):
             "--check", action="store_true", dest="check", default=False, help="Check env for variable availability"
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: "Any", **options: "Any") -> str | None:
         from hope_country_report.config import MANDATORY, OPTIONAL
 
-        if options["comment"] and options["group"] not in ["all", "develop"]:
-            raise CommandError("Please use `--group all` with `--comment-optinal`")
-
-        VARIABLES = {**MANDATORY, **OPTIONAL}
+        VARIABLES: "Dict[str,Tuple[Type[str], str]]" = {**MANDATORY, **OPTIONAL}
 
         DEVELOP = {
             "DEBUG": True,
@@ -70,7 +78,7 @@ class Command(BaseCommand):
         elif options["style"] == "dotenv":
             pattern = "export {key}=${{{key}}}"
 
-        for k, v in sorted(selected.items()):
+        for k, __ in sorted(selected.items()):
             if options["template"]:
                 value = ""
             elif options["defaults"]:

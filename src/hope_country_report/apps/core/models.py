@@ -34,7 +34,7 @@ class CountryOffice(models.Model):
             }
             CountryOffice.objects.update_or_create(hope_id=el.id, defaults=values)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -51,5 +51,5 @@ class UserRole(models.Model):
     class Meta:
         app_label = "core"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "%s %s" % (self.user.username, self.group.name)

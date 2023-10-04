@@ -1,5 +1,5 @@
 from functools import update_wrapper
-from typing import Dict, List, TYPE_CHECKING, TypeVar
+from typing import Dict, List, TYPE_CHECKING
 
 from django.contrib.admin import ModelAdmin, TabularInline
 from django.contrib.admin.options import csrf_protect_m
@@ -22,13 +22,10 @@ from .config import conf
 from .exceptions import InvalidTenantError, TenantAdminError
 
 if TYPE_CHECKING:
+    from hope_country_report.types.django import _M, _R
     from hope_country_report.types.http import AuthHttpRequest
 
-# from .skeleton import Skeleton
-
 model_admin_registry = {}
-
-_M = TypeVar("_M", bound=Model)
 
 
 class AutoRegisterMetaClass(MediaDefiningClass):
@@ -69,7 +66,7 @@ class BaseTenantModelAdmin(
     TenantPermissinMixin,
     metaclass=AutoRegisterMetaClass,
 ):
-    model: _M = None
+    model: "_M" = None
     # skeleton: Union[ModelAdmin, Skeleton] = None
     tenant_filter_field: str = ""
     # change_list_template = "tenant_admin/change_list.html"
@@ -272,7 +269,7 @@ class TenantModelAdmin(BaseTenantModelAdmin):
 
 
 class MainTenantModelAdmin(BaseTenantModelAdmin):
-    model: _M = None
+    model: "_M" = None
 
     @classmethod
     def check(cls, **kwargs):
@@ -286,7 +283,7 @@ class MainTenantModelAdmin(BaseTenantModelAdmin):
             )
         return errors
 
-    def get_queryset(self, request: "AuthHttpRequest") -> QuerySet[_M]:
+    def get_queryset(self, request: "AuthHttpRequest") -> "QuerySet[_M]":
         qs = self.model._default_manager.get_queryset()
         active_tenant = conf.strategy.get_selected_tenant(request)
         if not active_tenant:

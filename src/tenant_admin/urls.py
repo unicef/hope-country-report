@@ -10,8 +10,8 @@ from tenant_admin.views import set_tenant
 def is_tenant_prefix_patterns_used(urlconf):
     for url_pattern in get_resolver(urlconf).url_patterns:
         if isinstance(url_pattern.pattern, TenantPrefixPattern):
-            return True, False
-    return False, False
+            return True
+    return False
 
 
 urlpatterns = [

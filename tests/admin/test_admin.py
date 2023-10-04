@@ -9,6 +9,8 @@ import pytest
 from admin_extra_buttons.handlers import ChoiceHandler
 from django_regex.utils import RegexList as _RegexList
 
+pytestmark = pytest.mark.admin
+
 
 class RegexList(_RegexList):
     def extend(self, __iterable) -> None:
@@ -34,7 +36,6 @@ GLOBAL_EXCLUDED_BUTTONS = RegexList(
 )
 
 KWARGS = {}
-pytestmark = pytest.mark.admin
 
 
 def log_submit_error(res):
@@ -116,7 +117,7 @@ def app(django_app_factory, mocked_responses, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_index(app):
+def test_admin_index(app):
     url = reverse("admin:index")
 
     res = app.get(url)
@@ -127,7 +128,7 @@ def test_index(app):
 @pytest.mark.skip_models(
     "constance.Config",
 )
-def test_changelist(app, modeladmin, record):
+def test_admin_changelist(app, modeladmin, record):
     url = reverse(admin_urlname(modeladmin.model._meta, "changelist"))
     opts: Options = modeladmin.model._meta
     res = app.get(url)
@@ -146,7 +147,7 @@ def show_error(res):
 
 @pytest.mark.django_db()
 @pytest.mark.skip_models("constance.Config", "hope", "advanced_filters.AdvancedFilter")
-def test_changeform(app, modeladmin, record):
+def test_admin_changeform(app, modeladmin, record):
     opts: Options = modeladmin.model._meta
     url = reverse(admin_urlname(opts, "change"), args=[record.pk])
 
@@ -159,7 +160,7 @@ def test_changeform(app, modeladmin, record):
 
 @pytest.mark.django_db
 @pytest.mark.skip_models("constance.Config", "djstripe.WebhookEndpoint", "advanced_filters.AdvancedFilter")
-def test_add(app, modeladmin):
+def test_admin_add(app, modeladmin):
     url = reverse(admin_urlname(modeladmin.model._meta, "add"))
     if modeladmin.has_add_permission(Mock(user=app._user)):
         res = app.get(url)
@@ -174,7 +175,7 @@ def test_add(app, modeladmin):
     "constance.Config",
     "hope",
 )
-def test_delete(app, modeladmin, record, monkeypatch):
+def test_admin_delete(app, modeladmin, record, monkeypatch):
     url = reverse(admin_urlname(modeladmin.model._meta, "delete"), args=[record.pk])
     if modeladmin.has_delete_permission(Mock(user=app._user)):
         res = app.get(url)
@@ -186,7 +187,7 @@ def test_delete(app, modeladmin, record, monkeypatch):
 
 @pytest.mark.django_db
 @pytest.mark.skip_buttons()
-def test_buttons(app, modeladmin, button_handler, record, monkeypatch):
+def test_admin_buttons(app, modeladmin, button_handler, record, monkeypatch):
     from admin_extra_buttons.handlers import LinkHandler
 
     if isinstance(button_handler, ChoiceHandler):

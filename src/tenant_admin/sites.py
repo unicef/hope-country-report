@@ -1,21 +1,20 @@
 from functools import update_wrapper
 from typing import Callable, TYPE_CHECKING
 
-from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse, URLPattern, URLResolver
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
 
 from smart_admin.site import SmartAdminSite
+
+from hope_country_report.state import state
 
 from .config import conf
 from .exceptions import TenantAdminError
 from .forms import SelectTenantForm, TenantAuthenticationForm
 from .resolver import tenant_patterns
-from .utils import tenantize_url
+from .utils import replace_tenant
 from .views import set_tenant
 
 if TYPE_CHECKING:
@@ -28,6 +27,7 @@ class TenantAdminSite(SmartAdminSite):
     index_title = site_header = site_title = "HOPE Reporting"
     enable_nav_sidebar = False
     smart_index_template = "tenant_admin/smart_index.html"
+    app_index_template = "tenant_admin/app_index.html"
     index_template = "tenant_admin/index.html"
     login_template = "tenant_admin/login.html"
     login_form = TenantAuthenticationForm
@@ -74,7 +74,7 @@ class TenantAdminSite(SmartAdminSite):
             path("select/", wrap(self.select_tenant), name="select_tenant"),
         ]
         urlpatterns += [
-            *tenant_patterns(*super().get_urls(), namespace="tenant_admin", app_name="tenant_admin"),
+            *tenant_patterns(*super().get_urls()),
         ]
 
         return urlpatterns
@@ -95,43 +95,42 @@ class TenantAdminSite(SmartAdminSite):
             for mdata in data["models"]:
                 model = mdata["model"]
                 info = (app_label, model._meta.model_name)
-                # mdata["admin_url"] = reverse("tenant_admin:%s_%s_changelist" % info, current_app=self.name)
-                mdata["add_url"] = ""
+                if mdata["admin_url"]:
+                    tenant_url = reverse("tenant_admin:%s_%s_changelist" % info, current_app="tenant_admin")
+                    mdata["admin_url"] = replace_tenant(tenant_url, state.tenant)
+                # mdata["name"] += f"  {state.tenant} {mdata['admin_url']}"
         return original
 
-    @method_decorator(never_cache)
-    def login(self, request, extra_context=None):
-        """
-        Display the login form for the given HttpRequest.
-        """
-        if request.method == "GET" and self.has_permission(request):
-            # Already logged-in, redirect to admin index
-            index_path = reverse("tenant_admin:select_tenant", current_app=self.name)
-            return HttpResponseRedirect(index_path)
-        # Since this module gets imported in the application's root package,
-        # it cannot import models from other applications at the module level,
-        # and django.contrib.admin.forms eventually imports User.
-        from django.contrib.admin.forms import AdminAuthenticationForm
-        from django.contrib.auth.views import LoginView
-
-        context = {
-            **self.each_context(request),
-            "title": "Log in ",
-            "subtitle": None,
-            "app_path": request.get_full_path(),
-            "username": request.user.get_username(),
-        }
-        if REDIRECT_FIELD_NAME not in request.GET and REDIRECT_FIELD_NAME not in request.POST:
-            context[REDIRECT_FIELD_NAME] = reverse("tenant_admin:select_tenant", current_app=self.name)
-        context.update(extra_context or {})
-
-        defaults = {
-            "extra_context": context,
-            "authentication_form": self.login_form or AdminAuthenticationForm,
-            "template_name": self.login_template or "tenant_admin/login.html",
-        }
-        request.current_app = self.name
-        return LoginView.as_view(**defaults)(request)
+    # @method_decorator(never_cache)
+    # def login(self, request, extra_context=None):
+    #     if request.method == "GET" and self.has_permission(request):
+    #         # Already logged-in, redirect to admin index
+    #         index_path = reverse("tenant_admin:select_tenant", current_app=self.name)
+    #         return HttpResponseRedirect(index_path)
+    #     # Since this module gets imported in the application's root package,
+    #     # it cannot import models from other applications at the module level,
+    #     # and django.contrib.admin.forms eventually imports User.
+    #     from django.contrib.admin.forms import AdminAuthenticationForm
+    #     from django.contrib.auth.views import LoginView
+    #
+    #     context = {
+    #         **self.each_context(request),
+    #         "title": "Log in ",
+    #         "subtitle": None,
+    #         "app_path": request.get_full_path(),
+    #         "username": request.user.get_username(),
+    #     }
+    #     if REDIRECT_FIELD_NAME not in request.GET and REDIRECT_FIELD_NAME not in request.POST:
+    #         context[REDIRECT_FIELD_NAME] = reverse("tenant_admin:select_tenant", current_app=self.name)
+    #     context.update(extra_context or {})
+    #
+    #     defaults = {
+    #         "extra_context": context,
+    #         "authentication_form": self.login_form or AdminAuthenticationForm,
+    #         "template_name": self.login_template or "tenant_admin/login.html",
+    #     }
+    #     request.current_app = self.name
+    #     return LoginView.as_view(**defaults)(request)
 
     def index(self, request: "AuthHttpRequest", extra_context: "Dict|None" = None) -> "HttpResponse":
         """
@@ -159,11 +158,9 @@ class TenantAdminSite(SmartAdminSite):
         if request.method == "POST":
             form = SelectTenantForm(request.POST, request=request)
             if form.is_valid():
-                print("src/tenant_admin/sites.py: 160", form.cleaned_data["tenant"], form.cleaned_data["tenant"].code)
-                next_url = request.META.get("HTTP_REFERER")
-                url = tenantize_url("/", form.cleaned_data["tenant"].code)
-                # return HttpResponse(url)
-                return HttpResponseRedirect(url)
+                response = set_tenant(request)
+                return response
+
         form = SelectTenantForm(request=request, initial={"next": "/"})
         context["form"] = form
         return TemplateResponse(request, "tenant_admin/select_tenant.html", context)

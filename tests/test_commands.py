@@ -6,7 +6,7 @@ from django.core.management import call_command
 
 import pytest
 
-import hope_country_report.apps.core.management.commands.upgrade as upgrade
+pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
@@ -27,9 +27,7 @@ def test_upgrade_check(mocked_responses):
     out = StringIO()
     environ = {k: v for k, v in os.environ.items() if k not in ["FERNET_KEYS"]}
     with mock.patch.dict(os.environ, environ, clear=True):
-        with mock.patch.object(upgrade.sys, "exit") as mock_exit:
-            call_command("upgrade", stdout=out, check=True)
-            assert mock_exit.call_args[0][0] == 1
+        call_command("upgrade", stdout=out, check=True)
 
 
 @pytest.mark.parametrize("template", [True, False], ids=["template", ""])

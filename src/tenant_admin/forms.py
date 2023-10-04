@@ -8,10 +8,7 @@ from .config import conf
 class TenantAuthenticationForm(AdminAuthenticationForm):
     def confirm_login_allowed(self, user):
         if not user.is_active:
-            raise ValidationError(
-                self.error_messages["inactive"],
-                code="inactive",
-            )
+            raise ValidationError(self.error_messages["inactive"], code="inactive")
 
 
 class SelectTenantForm(forms.Form):

@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from django.contrib.admin.models import LogEntry
+from django.utils.text import slugify
 
 import factory
 from social_django.models import UserSocialAuth
@@ -80,6 +81,7 @@ class CountryOfficeFactory(AutoRegisterModelFactory):
             "code": ba.code,
             "long_name": ba.long_name,
             "region_code": ba.region_code,
+            "slug": slugify(ba.name),
         }
         co = CountryOffice(**values)
         co.save()
