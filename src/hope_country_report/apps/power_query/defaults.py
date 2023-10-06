@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 def create_defaults() -> None:
     if get_user_model().objects.filter(is_superuser=True).first() is None:
         return
-    from power_query.models import Formatter
+    from hope_country_report.apps.power_query.models import Formatter
 
     Formatter.objects.get_or_create(
         name="Dataset To HTML",

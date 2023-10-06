@@ -1,0 +1,29 @@
+#header {
+  background-color: rgb(30, 58, 138);
+}
+
+nav {
+  .breadcrumbs {
+    background-color: rgb(31 41 55);
+  }
+}
+
+.module caption, .module h2 {
+  background-color: rgb(30, 58, 138);
+
+}
+
+
+.theme-toggle {
+  svg.theme-icon-when-auto, svg.theme-icon-when-dark, svg.theme-icon-when-light {
+    color: rgb(30, 58, 138);
+  }
+}
+
+#id_code_container {
+  width: 100%;
+
+  .CodeMirror {
+    width: 100%;
+  }
+}

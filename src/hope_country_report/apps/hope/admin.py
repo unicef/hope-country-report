@@ -23,7 +23,9 @@ class ReadOnlyMixin:
 
 
 class HopeModelAdmin(ReadOnlyMixin, DisplayAllMixin, admin.ModelAdmin):  # type: ignore
-    pass
+    def has_module_permission(self, request: "HttpRequest") -> bool:
+        return True
+        # return super().has_module_permission(request)
 
 
 @admin.register(BusinessArea)

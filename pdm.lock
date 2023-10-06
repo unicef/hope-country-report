@@ -6,7 +6,7 @@ groups = ["default", "code", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:782bcc64bf78d0747dc9a25c2085fd22162600012224648708e0b1fd196f1ac9"
+content_hash = "sha256:16511fb556fb09e7c5a8df01b2b9a82163fcf9cb1f1f1f0c66c55686944ce2af"
 
 [[package]]
 name = "amqp"
@@ -29,6 +29,16 @@ summary = "ASGI specs, helper code, and adapters"
 files = [
     {file = "asgiref-3.7.2-py3-none-any.whl", hash = "sha256:89b2ef2247e3b562a16eef663bc0e2e703ec6468e2fa8a5cd61cd449786d4f6e"},
     {file = "asgiref-3.7.2.tar.gz", hash = "sha256:9e0ce3aa93a819ba5b45120216b23878cf6e8525eb3848653452b4192b92afed"},
+]
+
+[[package]]
+name = "async-timeout"
+version = "4.0.3"
+requires_python = ">=3.7"
+summary = "Timeout context manager for asyncio programs"
+files = [
+    {file = "async-timeout-4.0.3.tar.gz", hash = "sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f"},
+    {file = "async_timeout-4.0.3-py3-none-any.whl", hash = "sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028"},
 ]
 
 [[package]]
@@ -412,7 +422,7 @@ files = [
 
 [[package]]
 name = "django"
-version = "4.2.5"
+version = "4.2.6"
 requires_python = ">=3.8"
 summary = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 dependencies = [
@@ -421,8 +431,8 @@ dependencies = [
     "tzdata; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "Django-4.2.5-py3-none-any.whl", hash = "sha256:b6b2b5cae821077f137dc4dade696a1c2aa292f892eca28fa8d7bfdf2608ddd4"},
-    {file = "Django-4.2.5.tar.gz", hash = "sha256:5e5c1c9548ffb7796b4a8a4782e9a2e5a3df3615259fc1bfd3ebc73b646146c1"},
+    {file = "Django-4.2.6-py3-none-any.whl", hash = "sha256:a64d2487cdb00ad7461434320ccc38e60af9c404773a2f95ab0093b4453a3215"},
+    {file = "Django-4.2.6.tar.gz", hash = "sha256:08f41f468b63335aea0d904c5729e0250300f6a1907bf293a65499496cdbc68f"},
 ]
 
 [[package]]
@@ -734,6 +744,19 @@ dependencies = [
 files = [
     {file = "django-sysinfo-2.6.2.tar.gz", hash = "sha256:2efe6c1a3bedc5766549b8872c7d8b3266ecb45db9a6423b94365d7d089c86dd"},
     {file = "django_sysinfo-2.6.2-py3-none-any.whl", hash = "sha256:9589d4bff0605ed7681a2ca22ce2326a4b64db768038da39180a2ba31ab3ffea"},
+]
+
+[[package]]
+name = "django-taggit"
+version = "4.0.0"
+requires_python = ">=3.6"
+summary = "django-taggit is a reusable Django application for simple tagging."
+dependencies = [
+    "Django>=3.2",
+]
+files = [
+    {file = "django-taggit-4.0.0.tar.gz", hash = "sha256:4d52de9d37245a9b9f98c0ec71fdccf1d2283e38e8866d40a7ae6a3b6787a161"},
+    {file = "django_taggit-4.0.0-py3-none-any.whl", hash = "sha256:eb800dabef5f0a4e047ab0751f82cf805bc4a9e972037ef12bf519f52cd92480"},
 ]
 
 [[package]]
@@ -1405,6 +1428,19 @@ files = [
     {file = "PyYAML-6.0.1-cp312-cp312-win32.whl", hash = "sha256:d483d2cdf104e7c9fa60c544d92981f12ad66a457afae824d146093b8c294c54"},
     {file = "PyYAML-6.0.1-cp312-cp312-win_amd64.whl", hash = "sha256:0d3304d8c0adc42be59c5f8a4d9e3d7379e6955ad754aa9d6ab7a398b59dd1df"},
     {file = "PyYAML-6.0.1.tar.gz", hash = "sha256:bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43"},
+]
+
+[[package]]
+name = "redis"
+version = "5.0.1"
+requires_python = ">=3.7"
+summary = "Python client for Redis database and key-value store"
+dependencies = [
+    "async-timeout>=4.0.2; python_full_version <= \"3.11.2\"",
+]
+files = [
+    {file = "redis-5.0.1-py3-none-any.whl", hash = "sha256:ed4802971884ae19d640775ba3b03aa2e7bd5e8fb8dfaed2decce4d0fc48391f"},
+    {file = "redis-5.0.1.tar.gz", hash = "sha256:0dab495cd5753069d3bc650a0dde8a8f9edde16fc5691b689a566eda58100d0f"},
 ]
 
 [[package]]

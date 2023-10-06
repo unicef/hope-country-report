@@ -4,6 +4,7 @@ MANDATORY = {
     "DATABASE_HOPE_URL": (str, ""),
     "DATABASE_URL": (str, ""),
     "SECRET_KEY": (str, ""),
+    "REDIS_URL": (str, "redis://localhost:6379/0"),
 }
 
 OPTIONAL = {
@@ -16,10 +17,11 @@ OPTIONAL = {
     "EMAIL_HOST_PASSWORD": (str, ""),
     "EMAIL_HOST_USER": (str, ""),
     "SILK": (bool, False),
-    "STATIC_ROOT": (str, "static/"),
+    "STATIC_ROOT": (str, "/tmp/static/"),
     "WP_PRIVATE_KEY": (str, ""),
     "WP_APPLICATION_SERVER_KEY": (str, ""),
     "WP_CLAIMS": (str, '{"sub": "mailto: hope@unicef.org","aud": "https://android.googleapis.com"}'),
+    "TENANT_IS_MASTER": (bool, False),
 }
 
 

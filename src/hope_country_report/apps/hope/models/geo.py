@@ -39,6 +39,9 @@ class Country(MPTTModel, HopeModel):
         ordering = ("name",)
         db_table = "geo_country"
 
+    class Tenant:
+        tenant_filter_field = "__all__"
+
     def __str__(self) -> str:
         return self.name
 
@@ -69,6 +72,9 @@ class AreaType(MPTTModel, HopeModel):
         verbose_name_plural = "Area Types"
         db_table = "geo_areatype"
 
+    class Tenant:
+        tenant_filter_field = "__all__"
+
     def __str__(self) -> str:
         return self.name
 
@@ -88,3 +94,6 @@ class Area(MPTTModel, HopeModel):
 
     class Meta:
         db_table = "geo_area"
+
+    class Tenant:
+        tenant_filter_field = "__all__"

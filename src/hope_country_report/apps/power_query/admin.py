@@ -1,10 +1,9 @@
 import logging
 from typing import Any, Dict, Optional, Sequence, TYPE_CHECKING
 
-from django import forms
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.admin import ModelAdmin, register
+from django.contrib import admin, messages
+from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import QuerySet
@@ -20,15 +19,17 @@ from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from celery.result import AsyncResult
+from constance import config
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
+from silk.models import Profile
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from .celery_tasks import refresh_report, refresh_reports, run_background_query
-from .forms import FormatterTestForm
-from .models import CeleryEnabled, Dataset, Formatter, Query, Report, ReportDocument
+from .forms import FormatterTestForm, QueryForm
+from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument
 from .utils import to_dataset
-from .widget import FormatterEditor, PythonFormatterEditor
+from .widget import FormatterEditor
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class CeleryEnabledMixin:
             ctx,
         )
 
-    @button()
+    @button(permission=False)
     def queue(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore
         obj: Optional[Any]
         try:
@@ -73,10 +74,9 @@ class CeleryEnabledMixin:
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
 
-@register(Query)
+@admin.register(Query)
 class QueryAdmin(
     AdminFiltersMixin,
-    LinkedObjectsMixin,
     CeleryEnabledMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
@@ -91,28 +91,43 @@ class QueryAdmin(
         "active",
         "last_run",
     )
+    linked_objects_template = None
     autocomplete_fields = ("target", "owner")
     readonly_fields = ("sentry_error_id", "error_message", "info")
     change_form_template = None
     ordering = ["-last_run"]
+    form = QueryForm
 
     def success(self, obj: Query) -> bool:
         return not bool(obj.error_message)
 
     success.boolean = True
 
-    def formfield_for_dbfield(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Optional[forms.fields.Field]:
-        if db_field.name == "code":
-            kwargs = {"widget": PythonFormatterEditor}
-        elif db_field.name == "description":
-            kwargs = {"widget": forms.Textarea(attrs={"rows": 2, "style": "width:80%"})}
-        elif db_field.name == "owner":
-            kwargs = {"widget": forms.HiddenInput}
-
-        return super().formfield_for_dbfield(db_field, request, **kwargs)
+    # def get_form(
+    #     self, request: "HttpRequest", obj: "_ModelT|None" = None, change: bool = False, **kwargs: Any
+    # ) -> "type[ModelForm[_ModelT]]":
+    #     # kwargs["initial"] = {"project": get_selected_tenant()}
+    #     return super().get_form(request, obj, change, **kwargs)
+    #
+    # def formfield_for_dbfield(self,
+    # db_field: Any, request: HttpRequest, **kwargs: Any) -> Optional[forms.fields.Field]:
+    #     if db_field.name == "code":
+    #         kwargs = {"widget": PythonFormatterEditor}
+    #     elif db_field.name == "description":
+    #         kwargs = {"widget": forms.Textarea(attrs={"rows": 2, "style": "width:80%"})}
+    #     elif db_field.name == "project":
+    #         from hope_country_report.apps.tenant.config import conf
+    #
+    #         db_field.queryset = conf.auth.get_allowed_tenants()
+    #     elif db_field.name == "owner":
+    #         kwargs = {"widget": forms.HiddenInput}
+    #
+    #     return super().formfield_for_dbfield(db_field, request, **kwargs)
 
     def has_change_permission(self, request: HttpRequest, obj: Optional[Any] = None) -> bool:
-        return request.user.is_superuser or bool(obj and obj.owner == request.user)
+        return super().has_change_permission(request, obj)
+        # if isinstance(obj, int):
+        # return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
     @button()
     def datasets(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
@@ -142,29 +157,30 @@ class QueryAdmin(
 
     @button()
     def preview(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore[return]
-        obj = self.get_object(request, str(pk))
+        obj: Query = self.get_object(request, str(pk))
         try:
             context = self.get_common_context(request, pk, title="Results")
             if obj.parametrizer:
                 args = obj.parametrizer.get_matrix()[0]
             else:
                 args = {}
-            ret, extra = obj.run(False, args, use_existing=True)
+            ret, extra = obj.run(False, args, use_existing=True, preview=True)
+
             context["type"] = type(ret).__name__
             context["raw"] = ret
             context["info"] = extra
             context["title"] = f"Result of {obj.name} ({type(ret).__name__})"
+            context["silk_profile"] = Profile.objects.filter(name=obj.silk_name).first()
             if isinstance(ret, QuerySet):
-                ret = ret[:100]
+                ret = ret[: config.PQ_SAMPLE_PAGE_SIZE]
                 context["queryset"] = ret
             elif isinstance(ret, tablib.Dataset):
-                context["dataset"] = ret[:100]
+                context["dataset"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
             elif isinstance(ret, (dict, list, tuple)):
-                context["result"] = ret[:100]
+                context["result"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
             else:
                 self.message_user(
-                    request,
-                    f"Query does not returns a valid result. It returned {type(ret)}",
+                    request, f"Query does not returns a valid result. It returned {type(ret)}", messages.WARNING
                 )
             return render(request, "admin/power_query/query/preview.html", context)
         except Exception as e:
@@ -180,7 +196,7 @@ class QueryAdmin(
         }
 
 
-@register(Dataset)
+@admin.register(Dataset)
 class DatasetAdmin(
     AdminFiltersMixin,
     ExtraButtonsMixin,
@@ -240,7 +256,7 @@ class FormatterResource(resources.ModelResource):
         import_id_fields = ("name",)
 
 
-@register(Formatter)
+@admin.register(Formatter)
 class FormatterAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
@@ -296,7 +312,7 @@ class ReportResource(resources.ModelResource):
         import_id_fields = ("name",)
 
 
-@register(Report)
+@admin.register(Report)
 class ReportAdmin(
     AdminFiltersMixin,
     CeleryEnabledMixin,
@@ -367,7 +383,7 @@ class ReportAdmin(
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
 
-# @register(Parametrizer)
+@admin.register(Parametrizer)
 class QueryArgsAdmin(
     LinkedObjectsMixin,
     ExtraButtonsMixin,
@@ -391,7 +407,7 @@ class QueryArgsAdmin(
         obj.refresh()
 
 
-# @register(ReportDocument)
+@admin.register(ReportDocument)
 class ReportDocumentAdmin(
     AdminFiltersMixin,
     LinkedObjectsMixin,

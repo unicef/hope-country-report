@@ -65,7 +65,7 @@ def user_role(request, db):
 
 @contextlib.contextmanager
 def active_tenant(tenant: "CountryOffice"):
-    from tenant_admin.config import conf
+    from hope_country_report.apps.tenant.config import conf
 
     current = conf.strategy.get_selected_tenant()
     if tenant:
@@ -76,10 +76,10 @@ def active_tenant(tenant: "CountryOffice"):
 
 @pytest.mark.parametrize("u", ["user", "admin_user", "anonymous"])
 def test_tenant_backend_get_all_permissions(request, country_office, req, u, user_role, django_assert_max_num_queries):
-    from tenant_admin.auth import BaseTenantAuth
+    from hope_country_report.apps.tenant.backend import TenantBackend
 
     req.user = request.getfixturevalue(u)
-    b: BaseTenantAuth = BaseTenantAuth()
+    b: TenantBackend = TenantBackend()
     if hasattr(req.user, "_tenant_%s_perm_cache" % country_office.pk):
         delattr(req.user, "_tenant_%s_perm_cache" % country_office.pk)
 
@@ -99,10 +99,10 @@ def test_tenant_backend_get_all_permissions(request, country_office, req, u, use
 def test_tenant_backend_get_all_permissions_no_tenant(
     request, country_office, req, u, user_role, django_assert_max_num_queries
 ):
-    from tenant_admin.auth import BaseTenantAuth
+    from hope_country_report.apps.tenant.backend import TenantBackend
 
     req.user = request.getfixturevalue(u)
-    b: BaseTenantAuth = BaseTenantAuth()
+    b: TenantBackend = TenantBackend()
     if hasattr(req.user, "_tenant_%s_perm_cache" % country_office.pk):
         delattr(req.user, "_tenant_%s_perm_cache" % country_office.pk)
 
@@ -195,10 +195,10 @@ def test_tenant_backend_get_all_permissions_no_tenant(
 
 @pytest.mark.parametrize("u", ["user", "admin_user", "anonymous"])
 def test_tenant_backend_get_allowed_tenants(request, country_office, req, u, user_role, django_assert_max_num_queries):
-    from tenant_admin.auth import BaseTenantAuth
+    from hope_country_report.apps.tenant.backend import TenantBackend
 
     req.user = request.getfixturevalue(u)
-    b: BaseTenantAuth = BaseTenantAuth()
+    b: TenantBackend = TenantBackend()
 
     # with django_assert_max_num_queries(1):
     if req.user.is_authenticated:

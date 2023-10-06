@@ -11,5 +11,8 @@ class DataCollectingType(HopeModel):
     class Meta:
         db_table = "core_datacollectingtype"
 
+    class Tenant:
+        tenant_filter_field = "__all__"
+
     def __str__(self) -> str:
         return f"{self.code} - {self.description}"

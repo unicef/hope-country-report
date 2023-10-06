@@ -2,12 +2,17 @@ from typing import Any, Dict, Iterable, Optional, Tuple
 
 from django.db import models
 
+from hope_country_report.apps.tenant.db import TenantModel
 
-class HopeModel(models.Model):
+
+class HopeModel(TenantModel, models.Model):
     class Meta:
         abstract = True
         managed = False
         app_label = "hope"
+
+    class Tenant:
+        tenant_filter_field = None
 
     def save(
         self,

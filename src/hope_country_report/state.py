@@ -1,6 +1,8 @@
+import contextlib
 import json
-from threading import local
-from typing import TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
+
+from hope_country_report.utils.singleton import Singleton
 
 if TYPE_CHECKING:
     from typing import Any, List
@@ -9,14 +11,34 @@ if TYPE_CHECKING:
 
     from hope_country_report.types.http import _R
 
+not_set = object()
 
-class State(local):
+
+# class State(local):
+class State(metaclass=Singleton):
     request: "_R|None" = None
     tenant: "str|None" = None
     cookies: "dict[str, List[Any]]" = {}
+    filters: "List[str]" = []
 
     def __repr__(self) -> str:
         return f"<State {id(self)}>"
+
+    @contextlib.contextmanager
+    def set(self, **kwargs: "Dict[str,Any]") -> None:
+        pre = {}
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                pre[k] = getattr(self, k)
+            else:
+                pre[k] = not_set
+            setattr(self, k, v)
+        yield
+        for k, v in pre.items():
+            if v is not_set:
+                delattr(self, k)
+            else:
+                setattr(self, k, v)
 
     def add_cookies(
         self,
@@ -36,6 +58,12 @@ class State(local):
     def set_cookies(self, response: "HttpResponse") -> None:
         for name, args in self.cookies.items():
             response.set_cookie(name, *args)
+
+    def reset(self) -> None:
+        self.tenant = None
+        self.request = None
+        self.cookies = {}
+        self.filters = []
 
 
 state = State()

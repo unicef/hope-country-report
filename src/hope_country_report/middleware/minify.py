@@ -58,7 +58,7 @@ class HtmlMinMiddleware:
 
     def ignore_path(self, path: str) -> bool:
         if self.ignore_regex:
-            return self.ignore_regex.match(path)
+            return bool(self.ignore_regex.match(path))
         return False
 
     def can_minify(self, request: "_R", response: "HttpResponse") -> bool:

@@ -121,7 +121,7 @@ def test_admin_index(app):
     url = reverse("admin:index")
 
     res = app.get(url)
-    assert res.status_code == 200
+    assert res.status_code == 302
 
 
 @pytest.mark.django_db

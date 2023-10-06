@@ -51,6 +51,15 @@ class PythonFormatterEditor(FormatterEditor):
         )
 
 
+class SQLFormatterEditor(FormatterEditor):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.attrs["class"] = "sql-editor"
+
+    class Media(FormatterEditor.Media):
+        js = FormatterEditor.Media.js + (static("admin/power_query/codemirror/sql.js"),)
+
+
 class ContentTypeChoiceField(forms.ModelChoiceField):
     def __init__(
         self,

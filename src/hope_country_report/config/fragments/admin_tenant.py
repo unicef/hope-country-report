@@ -1,4 +1,9 @@
+from ..settings import env
+
+TENANT_IS_MASTER = env("TENANT_IS_MASTER")
 TENANT_TENANT_MODEL = "core.CountryOffice"
-# TENANT_NAMESPACE = "tenant_admin"
-# TENANT_STRATEGY = "tenant_admin.strategy.Strategy"
-# TENANT_AUTH = "hope_country_report.apps.tenant.auth.Auth"
+
+if TENANT_IS_MASTER:
+    SESSION_COOKIE_NAME = "m_hcr_sid"
+else:
+    SESSION_COOKIE_NAME = "t_hcr_sid"

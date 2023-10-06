@@ -36,21 +36,20 @@ MIGRATION_MODULES = {"hope": None}
 INSTALLED_APPS = [
     "hope_country_report.web",
     "hope_country_report.web.theme",
-    "tenant_admin.apps.Config",
-    "hope_country_report.apps.core.apps.Config",
-    "hope_country_report.apps.hope.apps.Config",
-    "hope_country_report.apps.pq.apps.Config",
-    "hope_country_report.apps.power_query.apps.Config",
+    "hope_country_report.apps.hope",
+    "hope_country_report.apps.tenant",
+    "hope_country_report.apps.power_query",
     "django.contrib.contenttypes",
-    "smart_admin.apps.SmartTemplateConfig",  # templates
-    "smart_admin",  # use this instead of 'django.contrib.admin'
-    "smart_admin.apps.SmartLogsConfig",  # optional:  log application
+    # "smart_admin.apps.SmartTemplateConfig",  # templates
+    # "smart_admin",  # use this instead of 'django.contrib.admin'
+    # "smart_admin.apps.SmartLogsConfig",  # optional:  log application
     # "smart_admin.apps.SmartAuthConfig",  # optional: django.contrib.auth enhancements
-    "advanced_filters",
+    # "advanced_filters",
+    "constance",
+    "taggit",
     "django_celery_beat",
-    "unicef_security",
+    # "unicef_security",
     "django.contrib.auth",
-    "django.contrib.admindocs",
     "django.contrib.humanize",
     "django.contrib.messages",
     "django.contrib.sessions",
@@ -59,13 +58,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.gis",
     "django.contrib.postgres",
+    "hope_country_report.apps.admin",
     # "django.contrib.admin",
-    # "django_extensions",
-    # "django_filters",
+    # # "django_extensions",
+    # # "django_filters",
     "flags",
     "silk",
     "tailwind",
-    "push_notifications",
+    # "push_notifications",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -74,26 +74,27 @@ INSTALLED_APPS = [
     "adminactions",
     "adminfilters",
     "adminfilters.depot",
+    "hope_country_report.apps.core",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # "django.middleware.locale.LocaleMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "hope_country_report.middleware.state.StateMiddleware",
+    "hope_country_report.middleware.tenant.TenantMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "tenant_admin.middleware.TenantAdminMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
-    "hope_country_report.middleware.state.StateMiddleware",
+    "hope_country_report.middleware.exception.ExceptionMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
     "unicef_security.backends.UNICEFAzureADB2COAuth2",
-    "tenant_admin.auth.BaseTenantAuth",
+    "hope_country_report.apps.tenant.backend.TenantBackend",
     "django.contrib.auth.backends.ModelBackend",
     "hope_country_report.utils.tests.backends.AnyUserAuthBackend",
 )
@@ -138,12 +139,12 @@ INTERNAL_IPS = ["127.0.0.1", "localhost"]
 USE_I18N = True
 USE_TZ = True
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-#         "LOCATION": env("REDIS_URL", default="redis://localhost:6379/0"),
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+    }
+}
 
 ROOT_URLCONF = "hope_country_report.config.urls"
 WSGI_APPLICATION = "hope_country_report.config.wsgi.application"
@@ -167,7 +168,6 @@ TEMPLATES = [
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
             ],
-            "builtins": ["tenant_admin.templatetags.tenant_admin"],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
                 "i18n": "django.templatetags.i18n",
@@ -200,7 +200,6 @@ EMAIL_PORT = env("EMAIL_PORT", default=25)
 EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False)
 EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 
-from .fragments.admin_tenant import *  # noqa
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
 from .fragments.constance import *  # noqa
@@ -210,6 +209,8 @@ from .fragments.power_query import *  # noqa
 from .fragments.push_notifications import *  # noqa
 from .fragments.rest_framework import *  # noqa
 from .fragments.sentry import *  # noqa
+from .fragments.silk import *  # noqa
 from .fragments.smart_admin import *  # noqa
 from .fragments.social_auth import *  # noqa
+from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa

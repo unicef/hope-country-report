@@ -2,12 +2,12 @@
 <html>
 <head>
     <title>HOPE - Reporting</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static '/admin/hr.css' %}">
 </head>
 <body class="h-screen bg-gray-800 dark:text-gray-200">
 <div id="main-container" class="mx-auto max-w-screen-xl h-screen mb-auto">
     <div class="flex content-center">
-        <a class="m-auto bg-blue-500 p-3 rounded" href="{% url "tenant_admin:login" %}?next={% url "tenant_admin:select_tenant" %}">Login</a>
+        <a class="m-auto bg-blue-500 p-3 rounded" href="{% url "admin:login" %}?next={% url "admin:select_tenant" %}">Login</a>
     </div>
 </div>
 </body>

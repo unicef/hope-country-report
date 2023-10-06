@@ -108,6 +108,9 @@ class Household(HopeModel):
     class Meta:
         db_table = "household_household"
 
+    class Tenant:
+        tenant_filter_field = "business_area"
+
 
 class Individual(HopeModel):
     id = models.CharField(primary_key=True, max_length=100, editable=False)
@@ -179,6 +182,9 @@ class Individual(HopeModel):
     class Meta:
         db_table = "household_individual"
 
+    class Tenant:
+        tenant_filter_field = "business_area"
+
 
 class IndividualRoleInHousehold(HopeModel):
     individual = models.ForeignKey(Individual, on_delete=models.CASCADE, related_name="households_and_roles")
@@ -188,6 +194,9 @@ class IndividualRoleInHousehold(HopeModel):
     class Meta:
         unique_together = ("role", "household")
         db_table = "household_individualroleinhousehold"
+
+    class Tenant:
+        tenant_filter_field = "household__business_area"
 
     def __str__(self) -> str:
         return f"{self.individual.full_name} - {self.role}"

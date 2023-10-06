@@ -8,8 +8,8 @@ from django.core.exceptions import ValidationError
 from django.core.management import BaseCommand, call_command
 from django.core.management.base import CommandError, SystemCheckError
 from django.core.validators import validate_email
-from django.db.transaction import atomic
 
+from hope_country_report.apps.power_query.defaults import create_defaults
 from hope_country_report.config import env
 
 if TYPE_CHECKING:
@@ -134,14 +134,13 @@ class Command(BaseCommand):
                     static_root.mkdir(parents=True)
                 call_command("collectstatic", **extra)
 
-            with atomic():
-                if self.migrate:
-                    echo("Run migrations")
-                    call_command("migrate", **extra)
-                    call_command("create_extra_permissions")
+            if self.migrate:
+                echo("Run migrations")
+                call_command("migrate", **extra)
+                call_command("create_extra_permissions")
 
-                echo("Remove stale contenttypes")
-                call_command("remove_stale_contenttypes", **extra)
+            echo("Remove stale contenttypes")
+            call_command("remove_stale_contenttypes", **extra)
 
             if self.admin_email:
                 if User.objects.filter(email=self.admin_email).exists():
@@ -164,10 +163,16 @@ class Command(BaseCommand):
                     )
             from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
+            echo("Create default group")
             get_or_create_reporter_group()
             from hope_country_report.apps.core.models import CountryOffice
 
+            echo("Sync Country Offices")
             CountryOffice.sync()
+
+            echo("Create default formatters")
+            create_defaults()
+
             echo("Upgrade completed", style_func=self.style.SUCCESS)
         except ValidationError as e:
             self.halt("\n- ".join(["Wrong argument(s):", *e.messages]))

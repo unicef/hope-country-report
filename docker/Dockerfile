@@ -1,34 +1,126 @@
-# build stage
-FROM python:3.11-alpine AS builder
-RUN apk add gcc python3-dev
+# syntax=docker/dockerfile:1.3
+ARG PYTHON_VER=3.11
+ARG PKG_DIR=/code/__pypackages__/$PYTHON_VER/lib
+ARG BUILD_DATE
+ARG CHECKSUM
 
-# install PDM
-RUN pip install -U pip setuptools wheel
-RUN pip install pdm
+FROM python:${PYTHON_VER}-slim-bullseye AS python
 
-# copy files
-COPY pyproject.toml pdm.toml pdm.lock README.md /project/
-COPY src/ /project/src
+FROM python AS base
+ARG PKG_DIR
+ENV ADMINS="" \
+    UWSGI_PROCESSES=4 \
+    VERSION=${VERSION}
 
-# install dependencies and project into the local packages directory
-WORKDIR /project
-RUN mkdir __pypackages__ && pdm sync --prod --no-editable
+ENV PYTHONPATH=$PKG_DIR:/code/src/ \
+    PATH=${PATH}:$PKG_DIR/../bin/
+
+RUN ln -s -f /bin/true /usr/bin/chfn \
+    && groupadd --gid 1024 sos \
+    && adduser --disabled-login --disabled-password --no-create-home --ingroup sos -q www
 
 
-# run stage
-FROM python:3.11-alpine
+FROM python AS cache
+ARG PKG_DIR
+ENV BUILD_DATE=$BUILD_DATE \
+    VERSION=$VERSION \
+    PYTHONDONTWRITEBYTECODE=1
+ENV buildDeps="build-essential gcc libjpeg-dev zlib1g-dev libffi-dev libssl-dev libpq-dev "
+ENV runtimeDeps="postgresql-client "
+RUN rm -f /etc/apt/apt.conf.d/docker-clean \
+    && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# retrieve packages from build stage
-ENV PYTHONPATH=/project/pkgs
-COPY --from=builder /project/__pypackages__/3.11/lib /project/pkgs
+RUN apt-get update
 
-# retrieve executables
-COPY --from=builder /project/__pypackages__/3.11/bin/* /bin/
+RUN apt-get install -y --no-install-recommends $buildDeps
 
-ADD . /code/
-ADD ./docker/conf/nginx/* /var/nginx/
-ADD ./docker/conf/* /conf/
-ADD ./docker/bin/* /usr/local/bin/
+RUN apt-get install -y --no-install-recommends $runtimeDeps
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-EXPOSE 8000
+RUN rm -rf /var/lib/apt/lists/*
+RUN pip install -U pip setuptools && pip install pdm
+
+FROM cache AS builder
+ARG PKG_DIR
+ARG CHECKSUM
+WORKDIR /code/
+COPY pyproject.toml pdm.lock README.md /code/
+RUN mkdir __pypackages__ \
+    && pdm sync --prod --no-editable --no-self
+
+RUN echo $CHECKSUM > /CHECKSUM
+
+
+FROM builder AS builder-test
+ARG PKG_DIR
+WORKDIR /code/
+ENV PYTHONPATH=$PKG_DIR:/code/src/ \
+    PATH=${PATH}:$PKG_DIR/../bin/
+
+RUN pdm sync --no-editable --no-self
+
+
+FROM base AS dist
+ARG PKG_DIR
+COPY docker/bin/* /usr/local/bin/
+COPY docker/conf/* /conf/
+WORKDIR /code/
+COPY --from=builder /code/__pypackages__ /code/__pypackages__
+COPY --from=builder /CHECKSUM /CHECKSUM
+COPY ./src /code/src
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["run"]
+
+
+FROM base AS test
+ARG PKG_DIR
+COPY docker/bin/* /usr/local/bin/
+COPY docker/conf/* /conf/
+WORKDIR /code/
+COPY --from=builder-test /code/__pypackages__ /code/__pypackages__
+COPY --from=builder /CHECKSUM /CHECKSUM
+COPY . /code/
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["run"]
+
+#COPY docker/bin/* /usr/local/bin/
+#COPY docker/conf/* /conf/
+#COPY pyproject.toml pdm.lock README.md /code/
+#
+#ENTRYPOINT ["docker-entrypoint.sh"]
+#CMD ["run"]
+#
+#
+#FROM builder as builder-test
+#ARG PKG_DIR
+#ENV PYTHONPATH=$PKG_DIR:/code/src/
+#ENV PATH=${PATH}:$PKG_DIR/../bin/
+#
+#RUN ls -al \
+#    && pdm config python.use_venv False \
+#    && pdm sync --no-editable -vv -g
+#
+#
+## Test image
+#FROM python as test
+#ARG PKG_DIR
+#ENV PYTHONPATH=$PKG_DIR:/code/src/
+#ENV PATH=${PATH}:$PKG_DIR/../bin/
+#COPY --from=builder-test /code/__pypackages__ /code/
+#
+#COPY . /code/
+#
+##
+## Dist image
+#FROM python as dist
+#ARG PKG_DIR
+#ENV PYTHONPATH=$PKG_DIR:/code/src/ \
+#    PATH=${PATH}:$PKG_DIR/../bin/
+#COPY docker/bin/* /usr/local/bin/
+#COPY docker/conf/* /conf/
+#WORKDIR /code/
+#COPY --from=builder /code/__pypackages__ /code/__pypackages__
+#COPY ./src /code/
+#
+#ENTRYPOINT ["docker-entrypoint.sh"]

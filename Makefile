@@ -37,3 +37,4 @@ reset-migrations: ## reset django migrations
 	isort src/hope_country_report/apps/core/migrations/0001_initial.py
 	black src/hope_country_report/apps/core/migrations/0001_initial.py
 	$(MAKE) bootstrap
+	python manage.py demo

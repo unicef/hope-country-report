@@ -40,6 +40,8 @@ dependencies = [
     "natural-keys>=2.1.0",
     "tablib>=3.5.0",
     "django-import-export>=3.3.1",
+    "redis>=5.0.1",
+    "django-taggit>=4.0.0",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"
@@ -69,6 +71,7 @@ code = [
     "django-stubs-ext>=4.2.2",
     "types-setuptools>=68.2.0.0",
 ]
+
 
 [tool.black]
 line-length = 120

@@ -1,0 +1,29 @@
+{% extends "admin/base.html" %}{% load i18n static %}
+{% block extrastyle %}{% if active_tenant %}
+    <link rel="stylesheet" href="{% static 'admin/hr.css' %}">{% endif %}
+{% endblock %}
+
+{% block userlinks %}
+    {% if active_tenant %}
+        {% block select_ba_form %}
+            <div style="display: inline-flex">
+                <form id="select_tenant_form" method="post" action="{% url "admin:select_tenant" %}">
+                    {% csrf_token %}{{ tenant_form }}
+                    <script>
+                        document.querySelector('#id_tenant').addEventListener('change', function () {
+                            document.getElementById('select_tenant_form').submit();
+                        });
+                    </script>
+                </form>
+            </div>
+        {% endblock %}
+        <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+            {% csrf_token %}
+            <button type="submit">{% translate 'Log out' %}</button>
+        </form>
+        {% include "admin/color_theme_toggle.html" %}
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+{% block footer %}<div id="footer">{{ active_tenant|default_if_none:"" }}</div>{% endblock %}

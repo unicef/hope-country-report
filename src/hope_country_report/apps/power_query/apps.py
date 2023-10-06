@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class Config(AppConfig):
-    name = "hope_country_report.apps.power_query"
+    name = __name__.rpartition(".")[0]
     verbose_name = "Power Query"

@@ -8,12 +8,15 @@ class Program(HopeModel):
     name = models.CharField(max_length=100)
     # active = models.BooleanField(default=False)
     # data_collecting_type = models.ForeignKey(
-    #     DataCollectingType, related_name="programs", on_delete=models.PROTECT, null=True, blank=True
+    #     "DataCollectingType", related_name="programs", on_delete=models.PROTECT, null=True, blank=True
     # )
     business_area = models.ForeignKey("BusinessArea", on_delete=models.CASCADE)
 
     class Meta:
         db_table = "program_program"
+
+    class Tenant:
+        tenant_filter_field = "business_area"
 
     def __str__(self) -> str:
         return str(self.name)

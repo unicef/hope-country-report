@@ -2,8 +2,16 @@ from typing import TYPE_CHECKING
 
 from django_regex.utils import RegexList
 
+from ..settings import INSTALLED_APPS, MIDDLEWARE
+
 if TYPE_CHECKING:
     from hope_country_report.types.http import AuthHttpRequest
+INSTALLED_APPS += [
+    "debug_toolbar",
+]
+MIDDLEWARE += [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+]
 
 
 def show_ddt(request: "AuthHttpRequest") -> bool:  # pragma: no-cover
@@ -20,6 +28,7 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 # INTERNAL_IPS = env.list("INTERNAL_IPS")
 DEBUG_TOOLBAR_PANELS = [
+    "hope_country_report.utils.ddt.StateDebugPanel",
     "debug_toolbar.panels.history.HistoryPanel",
     "debug_toolbar.panels.versions.VersionsPanel",
     "debug_toolbar.panels.timer.TimerPanel",

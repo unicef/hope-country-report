@@ -5,6 +5,8 @@ from django.contrib import admin
 
 from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
+from adminfilters.autocomplete import AutoCompleteFilter
+from adminfilters.mixin import AdminFiltersMixin
 from smart_admin.mixins import DisplayAllMixin
 from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 
@@ -24,7 +26,7 @@ class UserAdminPlus(_UserAdminPlus):  # type: ignore
 
 
 class UserRoleForm(forms.ModelForm):  # type: ignore
-    country_office = forms.ModelChoiceField(queryset=CountryOffice.objects.all())
+    country_office = forms.ModelChoiceField(queryset=CountryOffice.objects)
 
     class Meta:
         model = UserRole
@@ -32,15 +34,19 @@ class UserRoleForm(forms.ModelForm):  # type: ignore
 
 
 @admin.register(UserRole)
-class UserRoleAdmin(ReportAdmin):
+class UserRoleAdmin(AdminFiltersMixin, ReportAdmin):
     list_display = ("user", "group", "country_office")
-    list_filter = ("country_office",)
-    form = UserRoleForm
+    list_filter = (
+        ("country_office", AutoCompleteFilter),
+        ("group", AutoCompleteFilter),
+        ("user", AutoCompleteFilter),
+    )
+    # form = UserRoleForm
     autocomplete_fields = ("user", "group", "country_office")
 
 
 @admin.register(CountryOffice)
-class CountryOfficeAdmin(ReportAdmin):
+class CountryOfficeAdmin(AdminFiltersMixin, ReportAdmin):
     search_fields = ("name",)
     list_filter = ("active",)
 
