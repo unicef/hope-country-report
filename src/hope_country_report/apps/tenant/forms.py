@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError
 from .config import conf
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from django.contrib.auth.base_user import AbstractBaseUser
 
 
@@ -20,7 +22,7 @@ class SelectTenantForm(forms.Form):
     tenant = forms.ModelChoiceField(queryset=None)
     next = forms.CharField(required=False, widget=forms.HiddenInput)
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: "Any", **kwargs: "Any") -> None:
         self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
         self.fields["tenant"].queryset = conf.auth.get_allowed_tenants(self.request)

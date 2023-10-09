@@ -26,4 +26,5 @@
         {{ block.super }}
     {% endif %}
 {% endblock %}
-{% block footer %}<div id="footer">{{ active_tenant|default_if_none:"" }}</div>{% endblock %}
+{% block footer %}{% include "admin/_footer.html" %}{% endblock %}
+

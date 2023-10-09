@@ -7,7 +7,7 @@ from django.forms import Field
 from ..tenant.config import conf
 from ..tenant.utils import get_selected_tenant
 from .models import Formatter, Query
-from .widget import ContentTypeChoiceField, PythonFormatterEditor, SQLFormatterEditor
+from .widget import ContentTypeChoiceField, PythonFormatterEditor
 
 
 class ExportForm(forms.Form):
@@ -22,7 +22,6 @@ class QueryForm(forms.ModelForm):
     name = forms.CharField(required=True, widget=forms.TextInput(attrs={"style": "width:80%"}))
     target = ContentTypeChoiceField()
     code = forms.CharField(widget=PythonFormatterEditor)
-    sql = forms.CharField(widget=SQLFormatterEditor)
     owner = forms.ModelChoiceField(queryset=get_user_model().objects, widget=forms.HiddenInput)  # type: ignore
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2, "style": "width:80%"}))
     project = forms.ModelChoiceField(queryset=None, required=True, blank=False)

@@ -24,7 +24,7 @@ help:
 	psql -h ${DATABASE_HOST} -p ${DATABASE_PORT} -U ${DATABASE_USER} -c "CREATE DATABASE ${DATABASE_NAME}"
 
 bootstrap:
-	python manage.py upgrade
+	python manage.py upgrade --admin-email admin@unicef.org --admin-password 123
 
 reset-migrations: ## reset django migrations
 	./manage.py check

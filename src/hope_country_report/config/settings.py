@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from typing import Dict
 
@@ -11,14 +12,15 @@ DEVELOPMENT_DIR = PACKAGE_DIR.parent.parent
 DEBUG = env.bool("DEBUG")
 
 RO_CONN = dict(**env.db("DATABASE_HOPE_URL")).copy()
-# RO_CONN.update(
-#     {
-#         "OPTIONS": {"options": "-c default_transaction_read_only=on"},
-#         "TEST": {
-#             "OPTIONS": {"options": ""},
-#         },
-#     }
-# )
+RO_CONN.update(
+    **{
+        "OPTIONS": {"options": "-c default_transaction_read_only=on"},
+        "TEST": {
+            "NAME": "AAAA",
+            "OPTIONS": {"options": ""},
+        },
+    }
+)
 
 DATABASES = {
     "default": env.db(),
@@ -31,8 +33,22 @@ DATABASE_APPS_MAPPING: Dict[str, str] = {
     "core": "default",
     "hope": "hope_ro",
 }
+is_test = "tests" in sys.argv or "pytest" in sys.argv[0]
+# Orrible. but seems Django is not respecting TEST[OPTIONS]
+if is_test:
+    DATABASES["hope_ro"]["OPTIONS"] = {}
+    del DATABASE_ROUTERS
+
 MIGRATION_MODULES = {"hope": None}
 
+STORAGES = {
+    "default": {
+        "BACKEND": env("DEFAULT_FILE_STORAGE"),
+    },
+    "staticfiles": {
+        "BACKEND": env("STATIC_FILE_STORAGE"),
+    },
+}
 INSTALLED_APPS = [
     "hope_country_report.web",
     "hope_country_report.web.theme",
@@ -44,11 +60,12 @@ INSTALLED_APPS = [
     # "smart_admin",  # use this instead of 'django.contrib.admin'
     # "smart_admin.apps.SmartLogsConfig",  # optional:  log application
     # "smart_admin.apps.SmartAuthConfig",  # optional: django.contrib.auth enhancements
-    # "advanced_filters",
+    "advanced_filters",
     "constance",
     "taggit",
     "django_celery_beat",
-    # "unicef_security",
+    "unicef_security",
+    "debug_toolbar",
     "django.contrib.auth",
     "django.contrib.humanize",
     "django.contrib.messages",
@@ -81,8 +98,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "hope_country_report.middleware.state.StateMiddleware",
-    "hope_country_report.middleware.tenant.TenantMiddleware",
+    "hope_country_report.middleware.state.StateSetMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -90,6 +107,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
     "hope_country_report.middleware.exception.ExceptionMiddleware",
+    "hope_country_report.middleware.state.StateClearMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -167,6 +185,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
+                "hope_country_report.web.context_processors.state",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",

@@ -1,24 +1,11 @@
-from typing import Any, Dict, List
-
 from django.contrib.gis.db import models
 from django.db.models import JSONField
 from django.utils.translation import gettext_lazy as _
 
 from mptt.fields import TreeForeignKey
-from mptt.managers import TreeManager
 from mptt.models import MPTTModel
-from mptt.querysets import TreeQuerySet
 
 from ._base import HopeModel
-
-
-class ValidityQuerySet(TreeQuerySet):
-    def active(self, *args: Any, **kwargs: Any) -> Any:
-        return super().filter(valid_until__isnull=True).filter(*args, **kwargs)
-
-
-class ValidityManager(TreeManager):
-    _queryset_class = ValidityQuerySet
 
 
 class Country(MPTTModel, HopeModel):
@@ -32,8 +19,6 @@ class Country(MPTTModel, HopeModel):
     valid_until = models.DateTimeField(blank=True, null=True)
     extras = JSONField(default=dict, blank=True)
 
-    objects = ValidityManager()
-
     class Meta:
         verbose_name_plural = "Countries"
         ordering = ("name",)
@@ -45,17 +30,6 @@ class Country(MPTTModel, HopeModel):
     def __str__(self) -> str:
         return self.name
 
-    @classmethod
-    def get_choices(cls) -> List[Dict[str, Any]]:
-        queryset = cls.objects.all().order_by("name")
-        return [
-            {
-                "label": {"English(EN)": country.name},
-                "value": country.iso_code3,
-            }
-            for country in queryset
-        ]
-
 
 class AreaType(MPTTModel, HopeModel):
     name = models.CharField(max_length=255, db_index=True)
@@ -66,11 +40,10 @@ class AreaType(MPTTModel, HopeModel):
     valid_until = models.DateTimeField(blank=True, null=True)
     extras = JSONField(default=dict, blank=True)
 
-    objects = ValidityManager()
-
     class Meta:
         verbose_name_plural = "Area Types"
         db_table = "geo_areatype"
+        unique_together = ("country", "area_level", "name")
 
     class Tenant:
         tenant_filter_field = "__all__"
@@ -94,6 +67,7 @@ class Area(MPTTModel, HopeModel):
 
     class Meta:
         db_table = "geo_area"
+        unique_together = ("name", "p_code")
 
     class Tenant:
         tenant_filter_field = "__all__"

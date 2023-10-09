@@ -1,6 +1,7 @@
 import itertools
 import logging
 import pickle
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.apps import apps as django_apps
@@ -9,11 +10,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import JSONField
+from django.db.models import JSONField, Q
 from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.datetime_safe import strftime
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
@@ -23,12 +23,14 @@ from celery import states
 from celery.result import AsyncResult
 from natural_keys import NaturalKeyModel
 from sentry_sdk import capture_exception, configure_scope
+from silk.profiling.profiler import silk_profile
 from taggit.managers import TaggableManager
 
 from ...state import state
+from ...utils.perf import profile
 from ..tenant.db import TenantModel
 from ..tenant.exceptions import InvalidTenantError
-from ..tenant.utils import get_selected_tenant, is_tenant_active
+from ..tenant.utils import get_selected_tenant, must_tenant
 from .exceptions import QueryRunError
 from .json import PQJSONEncoder
 from .utils import dict_hash, to_dataset
@@ -44,6 +46,7 @@ mimetype_map = {
     "xls": "application/vnd.ms-excel",
     "xml": "application/xml",
     "yaml": "text/yaml",
+    "pdf": "application/pdf",
 }
 
 MIMETYPES = ((k, v) for k, v in mimetype_map.items())
@@ -108,26 +111,34 @@ class CeleryEnabled(models.Model):
 
 class PowerQueryManager(models.Manager):
     def get_tenant_filter(self):
-        if not is_tenant_active():
-            return {}
+        if not must_tenant():
+            return Q()
+        _filter = None
         tenant_filter_field = self.model.Tenant.tenant_filter_field
         if not tenant_filter_field:
             raise ValueError(
                 f"Set 'tenant_filter_field' on {self} or override `get_queryset()` to enable queryset filtering"
             )
+
         if tenant_filter_field == "__all__":
             return {}
-        if tenant_filter_field == "__none__":
+        elif tenant_filter_field == "__none__":
             return {"pk__lt": -1}
-        active_tenant = get_selected_tenant()
-        if not active_tenant:
-            raise InvalidTenantError
-        return {tenant_filter_field: active_tenant}
+        elif tenant_filter_field == "__shared__":
+            active_tenant = get_selected_tenant()
+            _filter = Q(**{tenant_filter_field: active_tenant}) or Q({f"{tenant_filter_field}__isnull": True})
+        else:
+            active_tenant = get_selected_tenant()
+            if not active_tenant:
+                raise InvalidTenantError
+            _filter = Q(**{tenant_filter_field: active_tenant})
+        breakpoint()
+        return _filter
 
     def get_queryset(self):
         flt = self.get_tenant_filter()
         state.filters.append(str(flt))
-        return super().get_queryset().filter(**flt)
+        return super().get_queryset().filter(flt)
 
 
 class PowerQueryModel(TenantModel):
@@ -137,8 +148,17 @@ class PowerQueryModel(TenantModel):
     objects = PowerQueryManager()
 
 
-class Parametrizer(NaturalKeyModel, models.Model):
+class ProjectRelatedModel(PowerQueryModel):
     project = models.ForeignKey(swapper.get_model_name("power_query", "Project"), on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        abstract = True
+
+    class Tenant:
+        tenant_filter_field = "project"
+
+
+class Parametrizer(NaturalKeyModel, ProjectRelatedModel, models.Model):
     code = models.SlugField(max_length=255, unique=True, editable=False)
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(
@@ -199,11 +219,10 @@ class Project(models.Model):
         swappable = swapper.swappable_setting("power_query", "Project")
 
 
-class Query(PowerQueryModel, CeleryEnabled, models.Model):
+class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
-    project = models.ForeignKey(swapper.get_model_name("power_query", "Project"), on_delete=models.CASCADE, null=True)
-
+    parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="power_queries")
     target = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     code = models.TextField(default="qs=conn.all()", blank=True)
@@ -241,7 +260,7 @@ class Query(PowerQueryModel, CeleryEnabled, models.Model):
     def silk_name(self):
         return "Query %s #%s" % (self.name, self.pk)
 
-    def _invoke(self, query_id: int, arguments: Dict) -> Dict:
+    def _invoke(self, query_id: int, arguments: Dict) -> Tuple[Any, Any]:
         query = Query.objects.get(id=query_id)
         result = query.run(persist=False, arguments=arguments, use_existing=True)
         return result
@@ -265,7 +284,7 @@ class Query(PowerQueryModel, CeleryEnabled, models.Model):
         self.last_run = None
         self.info = {}
 
-        results: QueryMatrixResult = {"timestamp": strftime(timezone.now(), "%Y-%m-%d %H:%M")}
+        results: QueryMatrixResult = {"timestamp": datetime.strftime(timezone.now(), "%Y-%m-%d %H:%M")}
         with configure_scope() as scope:
             scope.set_tag("power_query", True)
             scope.set_tag("power_query.name", self.name)
@@ -291,7 +310,6 @@ class Query(PowerQueryModel, CeleryEnabled, models.Model):
         self, persist: bool = False, arguments: "Dict|None" = None, use_existing: bool = False, preview: bool = False
     ) -> QueryResult:
         model = self.target.model_class()
-
         connections_model = [get_user_model()]
         if settings.POWER_QUERY_EXTRA_CONNECTIONS:
             connections_model.extend(
@@ -320,16 +338,19 @@ class Query(PowerQueryModel, CeleryEnabled, models.Model):
             if use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
                 return_value = ds, ds.extra
             else:
-                # with state.set(preview=True):
-                # with silk_profile(name=self.silk_name):
-                exec(self.code, globals(), locals_)
+                with state.set(preview=True):
+                    with profile() as perfs:
+                        with silk_profile(name=self.silk_name):
+                            exec(self.code, globals(), locals_)
+
                 result = locals_.get("result", None)
                 extra = locals_.get("extra", None)
 
-                if persist:
+                if result and persist:
                     info = {
                         "type": type(result).__name__,
                         "arguments": arguments,
+                        "timing": perfs,
                     }
                     dataset, __ = Dataset.objects.update_or_create(
                         query=self,
@@ -363,6 +384,8 @@ class Dataset(PowerQueryModel, models.Model):
     description = models.CharField(max_length=100)
     query = models.ForeignKey(Query, on_delete=models.CASCADE, related_name="datasets")
     value = models.BinaryField(null=True, blank=True)
+    file = models.FileField(null=True, blank=True, upload_to="datasets")
+
     info = JSONField(default=dict, blank=True)
     extra = models.BinaryField(null=True, blank=True, help_text="Any other attribute to pass to the formatter")
 
@@ -385,21 +408,34 @@ class Dataset(PowerQueryModel, models.Model):
         return self.info.get("arguments", {})
 
 
-class Formatter(PowerQueryModel, models.Model):
+class PDFForm(ProjectRelatedModel, models.Model):
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    pfd = models.FileField()
+
+    def render(self):
+        pass
+
+
+class Formatter(ProjectRelatedModel, models.Model):
+    name = models.CharField(max_length=255, unique=True)
     content_type = models.CharField(max_length=5, choices=MIMETYPES)  # type: ignore # internal mypy error
     code = models.TextField(blank=True, null=True)
+    template = models.ForeignKey(PDFForm, on_delete=models.CASCADE, blank=True, null=True)
 
-    class Tenant:
-        tenant_filter_field = "__all__"
+    def __str__(self) -> str:
+        return self.name
 
-    def __str__(self) -> str:  # TODO: name is a nullable charfield?
-        return self.name or ""
+    def clean(self):
+        if self.content_type == "pdf" and not self.template:
+            raise ValidationError({"You must provide a template with PDF ContentType"})
 
     def render(self, context: Dict) -> str:
         if self.content_type == "xls":
             dt = to_dataset(context["dataset"].data)
             return dt.export("xls")
+
+        elif self.content_type == "pdf":
+            raise NotImplementedError
 
         if self.code:
             tpl = Template(self.code)
@@ -415,24 +451,11 @@ class Formatter(PowerQueryModel, models.Model):
         return tpl.render(Context(context))
 
 
-class PDFForm(PowerQueryModel, models.Model):
-    name = models.CharField(max_length=255, blank=True, null=True, unique=True)
-    project = models.ForeignKey(swapper.get_model_name("power_query", "Project"), on_delete=models.CASCADE, null=True)
-    pfd = models.FileField()
-
-    class Tenant:
-        tenant_filter_field = "project"
-
-    def render(self):
-        pass
-
-
-class Report(PowerQueryModel, CeleryEnabled, models.Model):
-    name = models.CharField(max_length=255, blank=True, null=True, unique=True)
-    document_title = models.CharField(max_length=255, blank=True, null=True)
+class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
+    title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")
+    name = models.CharField(max_length=255, blank=True, null=True)
     query = models.ForeignKey(Query, on_delete=models.CASCADE)
     formatter = models.ForeignKey(Formatter, on_delete=models.CASCADE, blank=True, null=True)
-    pdf = models.ForeignKey(PDFForm, on_delete=models.CASCADE, blank=True, null=True)
     active = models.BooleanField(default=True)
     owner = models.ForeignKey(
         get_user_model(),
@@ -453,7 +476,7 @@ class Report(PowerQueryModel, CeleryEnabled, models.Model):
     last_run = models.DateTimeField(null=True, blank=True)
     validity_days = models.IntegerField(default=365)
 
-    tags = TaggableManager()
+    tags = TaggableManager(blank=True)
 
     class Tenant:
         tenant_filter_field = "query__project"
@@ -465,8 +488,8 @@ class Report(PowerQueryModel, CeleryEnabled, models.Model):
         using: Optional[Any] = None,
         update_fields: Optional[Any] = None,
     ) -> None:
-        if not self.document_title:
-            self.document_title = self.name
+        if not self.name:
+            self.name = slugify(self.title)
         super().save(force_insert, force_update, using, update_fields)
 
     def execute(self, run_query: bool = False) -> ReportResult:

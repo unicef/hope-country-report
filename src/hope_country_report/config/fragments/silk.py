@@ -17,7 +17,6 @@ SILKY_INTERCEPT_FUNC = lambda request: request.path.startswith("/power_query/")
 
 SILKY_META = True
 
-
 MIDDLEWARE += [
     SILKY_MIDDLEWARE_CLASS,
 ]

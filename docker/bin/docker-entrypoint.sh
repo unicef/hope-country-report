@@ -21,9 +21,7 @@ if [ $# -eq 0 ]; then
     django-admin upgrade --no-input
 
     nginx -c /conf/nginx.conf
-    redis-server /conf/redis.conf
     exec uwsgi --ini /conf/uwsgi.ini
-#   exec gunicorn aurora.config.wsgi -c /conf/gunicorn_config.py
 else
     case "$1" in
         "dev")

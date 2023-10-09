@@ -1,12 +1,14 @@
 from django.db import models
+from django.db.models import QuerySet
 
 from hope_country_report.apps.hope.models._base import HopeModel
-from hope_country_report.apps.tenant.utils import get_selected_tenant, is_tenant_active
+from hope_country_report.apps.tenant.db import TenantManager
+from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tenant
 
 
-class BusinessAreaManager(models.Manager):
-    def get_queryset(self):
-        if is_tenant_active():
+class BusinessAreaManager(TenantManager["BusinessArea"]):
+    def get_queryset(self) -> "QuerySet[BusinessArea]":
+        if must_tenant():
             active_tenant = get_selected_tenant()
             return super().get_queryset().filter(id=active_tenant.hope_id)
         return super().get_queryset()

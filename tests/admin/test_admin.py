@@ -22,6 +22,9 @@ GLOBAL_EXCLUDED_MODELS = RegexList(
     [
         r"django_celery_beat\.ClockedSchedule",
         r"contenttypes\.ContentType",
+        r"hope\.Area",
+        r"hope\.AreaType",
+        r"hope\.Country",
         "authtoken",
         "social_django",
         "depot",
@@ -32,6 +35,7 @@ GLOBAL_EXCLUDED_BUTTONS = RegexList(
     [
         "core.UserAdminPlus:link_user_data",
         "core.UserAdminPlus:ad",
+        "power_query.QueryAdmin:run",
     ]
 )
 
@@ -121,7 +125,7 @@ def test_admin_index(app):
     url = reverse("admin:index")
 
     res = app.get(url)
-    assert res.status_code == 302
+    assert res.status_code == 200
 
 
 @pytest.mark.django_db

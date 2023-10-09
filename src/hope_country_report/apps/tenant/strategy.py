@@ -12,7 +12,7 @@ from hope_country_report.state import state
 from .config import AppSettings
 
 if TYPE_CHECKING:
-    from hope_country_report.types.django import _M, _R
+    from hope_country_report.types.django import _R, AnyModel
 
     from .backend import TenantBackend
 
@@ -24,10 +24,10 @@ class BaseTenantStrategy:
 
     def __init__(self, config: AppSettings):
         self.config = config
-        self._selected_tenant: "_M|None" = None
+        self._selected_tenant: "AnyModel|None" = None
         self._selected_tenant_value = ""
 
-    def set_selected_tenant(self, instance: "_M", response: "HttpResponse|None" = None) -> None:
+    def set_selected_tenant(self, instance: "AnyModel", response: "HttpResponse|None" = None) -> None:
         self._selected_tenant = instance
         if response:
             signer = get_cookie_signer()
@@ -73,7 +73,7 @@ class BaseTenantStrategy:
     #     #             raise
     #     return self._selected_tenant
 
-    def get_selected_tenant(self, request: "_R|None" = None) -> "_M | None":
+    def get_selected_tenant(self, request: "_R|None" = None) -> "AnyModel | None":
         # if self._selected_tenant is NONE:
         #     self.read_selected_tenant(request)
         request = request or state.request

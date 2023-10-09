@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from django.core.management import BaseCommand, CommandError, CommandParser
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Tuple, Type
+    from typing import Any, Dict
 
 
 class Command(BaseCommand):
@@ -45,10 +45,10 @@ class Command(BaseCommand):
             "--check", action="store_true", dest="check", default=False, help="Check env for variable availability"
         )
 
-    def handle(self, *args: "Any", **options: "Any") -> str | None:
+    def handle(self, *args: "Any", **options: "Any") -> None:
         from hope_country_report.config import MANDATORY, OPTIONAL
 
-        VARIABLES: "Dict[str,Tuple[Type[str], str]]" = {**MANDATORY, **OPTIONAL}
+        VARIABLES: "Dict[str, Any]" = {**MANDATORY, **OPTIONAL}
 
         DEVELOP = {
             "DEBUG": True,
@@ -72,19 +72,26 @@ class Command(BaseCommand):
             selected.update(**DEVELOP)
 
         check_failure = False
-        pattern = "{key}={value}"
+        pattern = "{key}={value}{help}"
         if options["style"] == "direnv":
-            pattern = "export {key}={value}"
+            pattern = "export {key}={value}{help}"
         elif options["style"] == "dotenv":
             pattern = "export {key}=${{{key}}}"
+        value: Any
+        help: str
 
         for k, __ in sorted(selected.items()):
+            help = ""
             if options["template"]:
                 value = ""
             elif options["defaults"]:
                 value = VARIABLES[k][1]
+                if len(VARIABLES[k]) > 2:
+                    help = f"  # {VARIABLES[k][2]}"
             else:
-                value = os.environ.get(k, "")
+                value = os.environ.get(k, VARIABLES[k][1])
+                if len(VARIABLES[k]) > 2:
+                    help = f"  # {VARIABLES[k][2]}"
 
             if options["check"]:
                 try:
@@ -94,9 +101,9 @@ class Command(BaseCommand):
                     check_failure = True
             else:
                 if k in OPTIONAL.keys() and options["comment"]:
-                    self.stdout.write(("# %s" % pattern).format(key=k, value=value))
+                    self.stdout.write(("# %s" % pattern).format(key=k, value=value, help=help))
                 else:
-                    self.stdout.write(pattern.format(key=k, value=value))
+                    self.stdout.write(pattern.format(key=k, value=value, help=help))
 
         if check_failure:
             raise CommandError("Env check command failure!")

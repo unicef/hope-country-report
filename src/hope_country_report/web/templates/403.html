@@ -1,9 +1,14 @@
 {% extends "admin/base.html" %}{% load static %}
-{% block extrastyle %}{% if active_tenant %}
-    <link rel="stylesheet" href="{% static 'admin/hr.css' %}">{% endif %}
-{% endblock %}
+{% block extrastyle %}<link rel="stylesheet" href="{% static 'admin/hr.css' %}">{% endblock %}
 {% block branding %}HOPE Reporting{% endblock  %}
 {% block breadcrumbs %}{% endblock  %}
 {% block content %}
-    <h1>403</h1>
+    <div class="container">
+{#    <div class="center-h w-screen">#}
+{#        <h1>403</h1>#}
+{#    </div>#}
+    <div class="center-h w-screen">
+        <a href="{% url "admin:select_tenant" %}">Select Tenant</a>
+    </div>
+    </div>
 {% endblock  %}

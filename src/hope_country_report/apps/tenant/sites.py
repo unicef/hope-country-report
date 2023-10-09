@@ -1,17 +1,18 @@
 from functools import update_wrapper
 from typing import Callable, TYPE_CHECKING
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, URLResolver
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 
 from smart_admin.site import SmartAdminSite
 
 from .config import conf
 from .forms import SelectTenantForm
-from .utils import is_tenant_active
-from .views import set_tenant
+from .utils import is_tenant_valid, must_tenant, set_selected_tenant
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -20,8 +21,6 @@ if TYPE_CHECKING:
 
 
 class TenantAdminSite(SmartAdminSite):
-    index_title = site_header = site_title = "HOPE Reporting"
-
     enable_nav_sidebar = False
 
     # smart_index_template = "tenant_admin/smart_index.html"
@@ -36,31 +35,32 @@ class TenantAdminSite(SmartAdminSite):
 
     def each_context(self, request: "AuthHttpRequest") -> "Dict[str, Any]":
         ret = super().each_context(request)
-        if is_tenant_active():
+        if must_tenant():
             selected_tenant = conf.strategy.get_selected_tenant(request)
             ret["tenant_form"] = SelectTenantForm(initial={"tenant": selected_tenant}, request=request)
             ret["active_tenant"] = selected_tenant
+            # ret["tenant"] = selected_tenant
         else:
             ret["active_tenant"] = None
         return ret  # type: ignore
 
     def is_smart_enabled(self, request: "AuthHttpRequest") -> bool:
-        if is_tenant_active():
+        if must_tenant():
             return False
         return super().is_smart_enabled(request)
 
     def has_permission(self, request: "AuthHttpRequest") -> bool:
-        if request.user.is_staff:
-            return super().has_permission(request)
-        return request.user.is_active
+        if must_tenant():
+            return request.user.is_active
+        return super().has_permission(request)
 
     def get_urls(self) -> "list[URLResolver | URLPattern]":
         from django.urls import path
 
         urlpatterns: "list[URLResolver | URLPattern]"
 
-        def wrap(view: "Callable[[Any], Any]", cacheable: bool = False) -> "Callable":
-            def wrapper(*args, **kwargs):
+        def wrap(view: "Callable[[Any], Any]", cacheable: bool = False) -> "Callable[[Any], Any]":
+            def wrapper(*args: "Any", **kwargs: "Any") -> "Callable[[], Any]":
                 return self.admin_view(view, cacheable)(*args, **kwargs)
 
             wrapper.admin_site = self  # type: ignore
@@ -131,12 +131,15 @@ class TenantAdminSite(SmartAdminSite):
     #     request.current_app = self.name
     #     return LoginView.as_view(**defaults)(request)
 
-    def index(self, request: "AuthHttpRequest", extra_context: "Dict[str,Any]|None" = None, **kwargs) -> "HttpResponse":
+    @method_decorator(never_cache)
+    def index(
+        self, request: "AuthHttpRequest", extra_context: "Dict[str,Any]|None" = None, **kwargs: "Any"
+    ) -> "HttpResponse":
         """
         Display the main admin index page, which lists all of the installed
         apps that have been registered in this site.
         """
-        if not conf.strategy.get_selected_tenant(request):
+        if must_tenant() and not is_tenant_valid():
             return redirect(f"{self.name}:select_tenant")
         return super().index(request, extra_context, **kwargs)
         # app_list = self.get_app_list(request)
@@ -153,13 +156,16 @@ class TenantAdminSite(SmartAdminSite):
         #
         # return TemplateResponse(request, self.index_template, context)
 
+    @method_decorator(never_cache)
     def select_tenant(self, request: "AuthHttpRequest") -> "HttpResponse":
+        if not must_tenant() and not is_tenant_valid():
+            return redirect(f"{self.name}:index")
         context = self.each_context(request)
         if request.method == "POST":
             form = SelectTenantForm(request.POST, request=request)
             if form.is_valid():
-                response = set_tenant(request)
-                return response
+                set_selected_tenant(form.cleaned_data["tenant"])
+                return HttpResponseRedirect("/")
 
         form = SelectTenantForm(request=request, initial={"next": "/"})
         context["form"] = form

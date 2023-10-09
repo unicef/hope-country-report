@@ -25,6 +25,7 @@ from import_export.widgets import ForeignKeyWidget
 from silk.models import Profile
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
+from ...utils.perf import profile
 from .celery_tasks import refresh_report, refresh_reports, run_background_query
 from .forms import FormatterTestForm, QueryForm
 from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument
@@ -54,7 +55,7 @@ class CeleryEnabledMixin:
     @button(visible=settings.DEBUG)
     def monitor(self, request: HttpRequest) -> HttpResponse:
         ctx = self.get_common_context(request, title="Celery Monitor")
-        ctx["flower_address"] = settings.FLOWER_ADDRESS
+        ctx["flower_address"] = settings.POWER_QUERY_FLOWER_ADDRESS
         ctx["queries"] = Query.objects.all()
         ctx["reports"] = Report.objects.all()
         return render(
@@ -164,13 +165,15 @@ class QueryAdmin(
                 args = obj.parametrizer.get_matrix()[0]
             else:
                 args = {}
-            ret, extra = obj.run(False, args, use_existing=True, preview=True)
+            with profile() as timing:
+                ret, extra = obj.run(False, args, use_existing=True, preview=True)
 
             context["type"] = type(ret).__name__
             context["raw"] = ret
             context["info"] = extra
             context["title"] = f"Result of {obj.name} ({type(ret).__name__})"
             context["silk_profile"] = Profile.objects.filter(name=obj.silk_name).first()
+            context["timing"] = timing
             if isinstance(ret, QuerySet):
                 ret = ret[: config.PQ_SAMPLE_PAGE_SIZE]
                 context["queryset"] = ret
@@ -238,11 +241,19 @@ class DatasetAdmin(
         return obj.query.target
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
+    def analyze(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore[return]
+        context = self.get_common_context(request, pk, title="Results")
+        return render(request, "admin/power_query/query/analyze.html", context)
+
+    @button(visible=lambda btn: "change" in btn.context["request"].path)
     def preview(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore[return]
         obj = self.get_object(request, str(pk))
         try:
             context = self.get_common_context(request, pk, title="Results")
-            context["dataset"] = to_dataset(obj.data)
+            data = obj.data
+            with profile() as timing:
+                context["dataset"] = to_dataset(data)
+            context["timing"] = timing
             return render(request, "admin/power_query/query/preview.html", context)
         except Exception as e:
             logger.exception(e)

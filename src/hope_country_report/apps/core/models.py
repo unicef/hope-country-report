@@ -8,7 +8,7 @@ from unicef_security.models import AbstractUser
 from hope_country_report.apps.hope.models import BusinessArea
 
 
-class CountryOfficeManager(models.Manager):
+class CountryOfficeManager(models.Manager["CountryOffice"]):
     ...
     # def get_queryset(self):
     #     if is_tenant_active():
@@ -28,13 +28,13 @@ class CountryOffice(models.Model):
     hope_id = models.CharField(unique=True, max_length=100, blank=True)
     slug = models.SlugField()
 
-    # objects = CountryOfficeManager()
+    objects = CountryOfficeManager()
 
     class Meta:
         ordering = ("name",)
 
     @cached_property
-    def business_area(self):
+    def business_area(self) -> "BusinessArea|None":
         return BusinessArea.objects.filter(id=self.hope_id).first()
 
     @classmethod
@@ -66,6 +66,7 @@ class UserRole(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="roles")
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE)
+    expires = models.DateField(blank=True, null=True)
 
     class Meta:
         app_label = "core"

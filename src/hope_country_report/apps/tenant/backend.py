@@ -1,31 +1,33 @@
-from typing import TYPE_CHECKING
+from typing import Set, TYPE_CHECKING
 
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
+
+from dateutil.utils import today
 
 from hope_country_report.state import state
 
 from .utils import get_selected_tenant
 
 if TYPE_CHECKING:
-    from typing import List, Optional, TYPE_CHECKING
+    from typing import Optional, TYPE_CHECKING
 
     from django.db import Model
 
     from hope_country_report.apps.core.models import User
-    from hope_country_report.types.django import _AnyUser, _M, _R
+    from hope_country_report.types.django import _R, AnyModel, AnyUser
 
 
 class TenantBackend(BaseBackend):
-    model: "_M" = None
+    model: "AnyModel" = None
 
-    def get_all_permissions(self, user: "_AnyUser", obj: "_M|None" = None) -> set[str]:
-        tenant: "_M" = get_selected_tenant()
+    def get_all_permissions(self, user: "AnyUser", obj: "AnyModel|None" = None) -> set[str]:
+        tenant: "AnyModel" = get_selected_tenant()
         if not tenant:
-            return []
+            return set()
         if user.is_anonymous:
-            return []
+            return set()
         perm_cache_name = "_tenant_%s_perm_cache" % str(tenant.pk)
         if not hasattr(user, perm_cache_name):
             qs = Permission.objects.all()
@@ -40,11 +42,11 @@ class TenantBackend(BaseBackend):
             setattr(user, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})
         return getattr(user, perm_cache_name)
 
-    def get_available_modules(self, user: "User") -> "List[str]":
+    def get_available_modules(self, user: "User") -> "Set[str]":
         return {perm[: perm.index(".")] for perm in self.get_all_permissions(user)}
 
     def has_module_perms(self, user: "User", app_label: str) -> bool:
-        tenant: "_M" = get_selected_tenant()
+        tenant: "AnyModel" = get_selected_tenant()
         if not tenant:
             return []
 
@@ -63,7 +65,11 @@ class TenantBackend(BaseBackend):
         if request.user.is_superuser:
             allowed_tenants = conf.tenant_model.objects.all()
         elif request.user.is_authenticated:
-            allowed_tenants = conf.tenant_model.objects.filter(userrole__user=request.user).distinct()
+            allowed_tenants = (
+                conf.tenant_model.objects.filter(userrole__user=request.user)
+                .filter(Q(userrole__expires=None) | Q(userrole__expires__gt=today()))
+                .distinct()
+            )
         else:
             allowed_tenants = conf.tenant_model.objects.none()
 

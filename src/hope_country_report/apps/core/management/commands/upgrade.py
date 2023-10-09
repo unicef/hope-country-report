@@ -170,8 +170,13 @@ class Command(BaseCommand):
             echo("Sync Country Offices")
             CountryOffice.sync()
 
-            echo("Create default formatters")
-            create_defaults()
+            created = create_defaults()
+            if not created:
+                echo("WARNING:  default formatters not created")
+            else:
+                echo("Created default formatters")
+                for f in created:
+                    echo(f.name)
 
             echo("Upgrade completed", style_func=self.style.SUCCESS)
         except ValidationError as e:

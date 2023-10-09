@@ -5,11 +5,11 @@ from django.urls import path
 
 urlpatterns = [
     # path("", include("hope_country_report.web.urls")),
-    # path(r"security/", include("unicef_security.urls", namespace="security")),
-    # path(r"social/", include("social_django.urls", namespace="social")),
-    # path(r"accounts/", include("django.contrib.auth.urls")),
-    # path(r"adminactions/", include("adminactions.urls")),
-    # path(r"power_query/", include("hope_country_report.apps.power_query.urls")),
+    path(r"security/", include("unicef_security.urls", namespace="security")),
+    path(r"social/", include("social_django.urls", namespace="social")),
+    path(r"accounts/", include("django.contrib.auth.urls")),
+    path(r"adminactions/", include("adminactions.urls")),
+    path(r"power_query/", include("hope_country_report.apps.power_query.urls")),
     path("silk/", include("silk.urls", namespace="silk")),
 ]
 

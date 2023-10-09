@@ -1,12 +1,19 @@
+from typing import TYPE_CHECKING
+
 from django.contrib.auth import get_user_model
 
+if TYPE_CHECKING:
+    from typing import List
 
-def create_defaults() -> None:
-    if get_user_model().objects.filter(is_superuser=True).first() is None:
-        return
     from hope_country_report.apps.power_query.models import Formatter
 
-    Formatter.objects.get_or_create(
+
+def create_defaults() -> "List[Formatter]":
+    if get_user_model().objects.filter(is_superuser=True).first() is None:
+        return []
+    from hope_country_report.apps.power_query.models import Formatter
+
+    f1, __ = Formatter.objects.get_or_create(
         name="Dataset To HTML",
         defaults={
             "code": """
@@ -38,4 +45,6 @@ def create_defaults() -> None:
         },
     )
 
-    Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "content_type": "xls"})
+    f2, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "content_type": "xls"})
+
+    return [f1, f2]

@@ -1,6 +1,7 @@
 from typing import Any, TYPE_CHECKING
 
 from django.apps import AppConfig
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from adminfilters.utils import parse_bool
@@ -21,12 +22,17 @@ class Config(AppConfig):
                 raise ValidationError("Enter a valid bool")
 
         @conditions.register("superuser", validator=validate_bool)
-        def superuser_condition(value: str, request: "AuthHttpRequest|None" = None, **kwargs: "Any") -> bool:
+        def superuser(value: str, request: "AuthHttpRequest|None" = None, **kwargs: "Any") -> bool:
             return request.user.is_superuser == parse_bool(value)
+
+        @conditions.register("debug", validator=validate_bool)
+        def debug(value: str, request: "AuthHttpRequest|None" = None, **kwargs: "Any") -> bool:
+            return settings.DEBUG == parse_bool(value)
 
         @conditions.register("Server IP")
         def server_ip(value: str, request: "AuthHttpRequest|None" = None, **kwargs: "Any") -> bool:
-            return request.META.get("REMOTE_ADDR") in value.split(",")
+            if request:
+                return request.META.get("REMOTE_ADDR") in value.split(",")
 
         @conditions.register("hostname")
         def hostname(value: str, request: "AuthHttpRequest|None" = None, **kwargs: "Any") -> bool:

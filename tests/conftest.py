@@ -6,6 +6,10 @@ from pathlib import Path
 import pytest
 import responses
 
+here = Path(__file__).parent
+sys.path.insert(0, str(here / "../src"))
+sys.path.insert(0, str(here / "extras"))
+
 
 def _setup_models():
     import django
@@ -59,34 +63,14 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    here = Path(__file__).parent
-    sys.path.insert(0, str(here / "../src"))
-    sys.path.insert(0, str(here / "extras"))
     os.environ.update(
         ADMINS="",
         ALLOWED_HOSTS="*",
-        ADMIN_URL_PREFIX="acdc/",
-        ACCESS_RESTRICTED="false",
         DJANGO_SETTINGS_MODULE="hope_country_report.config.settings",
-        ASGI_SERVER="http://testserver:8001",
-        CELERY_ALWAYS_EAGER="1",
         CELERY_TASK_ALWAYS_EAGER="1",
         CSRF_COOKIE_SECURE="False",
-        FERNET_KEYS="123",
-        FRONT_DOOR_ENABLED="False",
-        # CACHE_CHAT=
-        # STRIPE_SECRET_KEY=os.os.environ['STRIPE_SECRET_KEY'],
-        # STRIPE_PUBLIC_KEY=os.os.environ['STRIPE_SECRET_KEY'],
-        # STRIPE_JS_URL="http://localhost:8420/js.stripe.com/v3/",
-        # STRIPE_WEBHOOK_SECRET="whsec_aaaa",
-        TWILIO_SID="twilio-sid",
-        TWILIO_TOKEN="twilio-token",
-        TWILIO_SERVICE="twilio-service",
-        EMAIL_SUBJECT_PREFIX="[Bob-test] ",
-        FERNET_USE_HKDF="true",
         SECRET_KEY="123",
         SESSION_COOKIE_SECURE="False",
-        STRIPE_SECRET_KEY="sk_test_ithKZS91q4FgBxCJGEqwauqwau",
     )
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""
@@ -98,7 +82,7 @@ def pytest_configure(config):
 
     config.addinivalue_line("markers", "skip_if_ci: this mark skips the tests on GitlabCI")
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
-    _setup_models()
+    # _setup_models()
 
 
 #
@@ -148,6 +132,15 @@ def office(db):
     from testutils.factories import CountryOfficeFactory
 
     return CountryOfficeFactory()
+
+
+@pytest.fixture
+def reporters(db, country_office, user):
+    from django.conf import settings
+
+    from testutils.factories import UserRoleFactory
+
+    return UserRoleFactory(country_office=country_office, user=user, group=settings.REPORTERS_GROUP_NAME)
 
 
 #

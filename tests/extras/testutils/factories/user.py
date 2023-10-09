@@ -93,6 +93,8 @@ class UserRoleFactory(AutoRegisterModelFactory):
     country_office = factory.SubFactory(CountryOfficeFactory)
     group = factory.SubFactory(GroupFactory)
     user = factory.SubFactory(UserFactory)
+    expires = None
 
     class Meta:
         model = UserRole
+        django_get_or_create = ("country_office", "group", "user")
