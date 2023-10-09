@@ -1,8 +1,12 @@
-from typing import Any, Dict
+from typing import TYPE_CHECKING
 
 from hope_country_report.apps.tenant.utils import get_selected_tenant
 from hope_country_report.state import state as global_state
-from hope_country_report.types.http import AuthHttpRequest
+
+if TYPE_CHECKING:
+    from typing import Any, Dict
+
+    from hope_country_report.types.http import AuthHttpRequest
 
 
 def state(request: "AuthHttpRequest") -> "Dict[str, Any]":

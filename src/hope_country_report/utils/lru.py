@@ -11,7 +11,7 @@ def lru_cache_not_none(maxsize: int = 128, typed: bool = False) -> "Callable[Any
 
     def decorator(func: "Callable[Any]") -> "Callable[Any]":
         @lru_cache(maxsize=maxsize, typed=typed)
-        def raise_exception_wrapper(*args: "Any", **kwargs: "Any") -> Any:
+        def raise_exception_wrapper(*args: "Any", **kwargs: "Any") -> "Any":
             value = func(*args, **kwargs)
             if value is None:
                 raise ValueIsNone

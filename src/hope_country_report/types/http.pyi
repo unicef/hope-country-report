@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 
 from hope_country_report.apps.core.models import User
 
-_R = TypeVar("_R", bound=HttpRequest)
+AnyRequest = TypeVar("AnyRequest", bound=HttpRequest, covariant=True)
 AnyResponse = TypeVar("AnyResponse", bound=HttpResponse, covariant=True)
 
 class AuthHttpRequest(HttpRequest):

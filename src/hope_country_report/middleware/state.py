@@ -9,7 +9,7 @@ from hope_country_report.state import state
 if TYPE_CHECKING:
     from typing import Callable, TYPE_CHECKING
 
-    from hope_country_report.types.http import _R, AuthHttpRequest
+    from hope_country_report.types.http import AuthHttpRequest
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class StateClearMiddleware:
     def __init__(self, get_response: "Callable[[HttpRequest],HttpResponse]") -> None:
         self.get_response = get_response
 
-    def __call__(self, request: "_R") -> "HttpResponse":
+    def __call__(self, request: "AuthHttpRequest") -> "HttpResponse":
         response = self.get_response(request)
 
         state.set_cookies(response)

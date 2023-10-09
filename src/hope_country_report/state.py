@@ -7,14 +7,14 @@ if TYPE_CHECKING:
     from typing import Any, Iterator, List
 
     from hope_country_report.types.django import AnyModel
-    from hope_country_report.types.http import _R
+    from hope_country_report.types.http import AnyRequest, AnyResponse
 
 not_set = object()
 
 
 class State(local):
     # class State(metaclass=Singleton):
-    request: "_R|None" = None
+    request: "AnyRequest|None" = None
     tenant: "str|None" = None
     tenant_instance: "AnyModel|None" = None
     must_tenant: "bool|None" = None
@@ -56,7 +56,7 @@ class State(local):
             value = json.dumps(value)
         self.cookies[key] = [value, max_age, expires, path, domain, secure, httponly, samesite]
 
-    def set_cookies(self, response: "_R") -> None:
+    def set_cookies(self, response: "AnyResponse") -> None:
         for name, args in self.cookies.items():
             response.set_cookie(name, *args)
 

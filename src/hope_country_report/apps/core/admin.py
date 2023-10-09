@@ -13,7 +13,7 @@ from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 from hope_country_report.apps.core.models import CountryOffice, User, UserRole
 
 if TYPE_CHECKING:
-    from hope_country_report.types.http import _R
+    from hope_country_report.types.http import AuthHttpRequest
 
 
 class ReportAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: ignore[type-arg]
@@ -51,5 +51,5 @@ class CountryOfficeAdmin(AdminFiltersMixin, ReportAdmin):
     list_filter = ("active",)
 
     @button()
-    def sync(self, request: "_R") -> None:
+    def sync(self, request: "AuthHttpRequest") -> None:
         CountryOffice.sync()

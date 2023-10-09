@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 
 from django.core.signing import get_cookie_signer
 
-from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.exceptions import InvalidTenantError
 from hope_country_report.state import state
 from hope_country_report.utils.lru import lru_cache_not_none
 
 if TYPE_CHECKING:
+    from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.types.django import AnyModel
     from hope_country_report.types.http import AuthHttpRequest
 
