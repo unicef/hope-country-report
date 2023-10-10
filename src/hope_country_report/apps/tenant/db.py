@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 
 class TenantManager(models.Manager["AnyModel"]):
     def get_tenant_filter(self) -> "Dict[str, Any]":
+        return {}
         if not must_tenant():
             return {}
-
         tenant_filter_field = self.model.Tenant.tenant_filter_field
         if not tenant_filter_field:
             raise ValueError(
@@ -33,7 +33,8 @@ class TenantManager(models.Manager["AnyModel"]):
 
     def get_queryset(self) -> "QuerySet[AnyModel]":
         flt = self.get_tenant_filter()
-        state.filters.append(str(flt))
+        if flt:
+            state.filters.append(str(flt))
         return super().get_queryset().filter(**flt)
 
 

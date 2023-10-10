@@ -132,12 +132,12 @@ class PowerQueryManager(models.Manager):
             if not active_tenant:
                 raise InvalidTenantError
             _filter = Q(**{tenant_filter_field: active_tenant})
-        breakpoint()
         return _filter
 
     def get_queryset(self):
         flt = self.get_tenant_filter()
-        state.filters.append(str(flt))
+        if flt:
+            state.filters.append(str(flt))
         return super().get_queryset().filter(flt)
 
 
@@ -225,7 +225,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="power_queries")
     target = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    code = models.TextField(default="qs=conn.all()", blank=True)
+    code = models.TextField(default="result=conn.all()", blank=True)
     info = JSONField(default=dict, blank=True, encoder=PQJSONEncoder)
     parametrizer = models.ForeignKey(Parametrizer, on_delete=models.CASCADE, blank=True, null=True)
     sentry_error_id = models.CharField(max_length=400, blank=True, null=True)
@@ -338,7 +338,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
             if use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
                 return_value = ds, ds.extra
             else:
-                with state.set(preview=True):
+                with state.set(preview=preview):
                     with profile() as perfs:
                         with silk_profile(name=self.silk_name):
                             exec(self.code, globals(), locals_)

@@ -7,11 +7,11 @@
     {% if active_tenant %}
         {% block select_ba_form %}
             <div style="display: inline-flex">
-                <form id="select_tenant_form" method="post" action="{% url "admin:select_tenant" %}">
+                <form id="select-tenant" method="post" action="{% url "admin:select_tenant" %}">
                     {% csrf_token %}{{ tenant_form }}
                     <script>
                         document.querySelector('#id_tenant').addEventListener('change', function () {
-                            document.getElementById('select_tenant_form').submit();
+                            document.getElementById('select-tenant').submit();
                         });
                     </script>
                 </form>

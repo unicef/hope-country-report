@@ -6,7 +6,6 @@ from django.core.signing import get_cookie_signer
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.exceptions import InvalidTenantError
 from hope_country_report.state import state
-from hope_country_report.utils.lru import lru_cache_not_none
 
 if TYPE_CHECKING:
     from hope_country_report.apps.core.models import CountryOffice
@@ -16,7 +15,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@lru_cache_not_none()
 def get_selected_tenant() -> "AnyModel | None":
     if state.tenant and state.tenant_instance is None:
         filters = {"slug": state.tenant}

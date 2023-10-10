@@ -33,7 +33,6 @@ class StateClearMiddleware:
 
     def __call__(self, request: "AuthHttpRequest") -> "HttpResponse":
         response = self.get_response(request)
-
         state.set_cookies(response)
         state.reset()
         return response

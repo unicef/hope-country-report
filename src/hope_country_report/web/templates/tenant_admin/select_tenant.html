@@ -20,7 +20,7 @@
 {% block content %}
     <div id="content-main" class="">
     {% if  form.fields.tenant.queryset.exists %}
-        <form method="post">
+        <form id="select-tenant" method="post">
             <table>
                 {% csrf_token %}
                 {{ form }}

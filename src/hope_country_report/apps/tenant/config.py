@@ -8,13 +8,14 @@ if TYPE_CHECKING:
     from typing import Any, Union
 
     from .backend import TenantBackend
-    from .strategy import BaseTenantStrategy
+
+    # from .strategy import BaseTenantStrategy
 
 
 class AppSettings:
     COOKIE_NAME: str
     TENANT_MODEL: str
-    STRATEGY: "BaseTenantStrategy"
+    # STRATEGY: "BaseTenantStrategy"
     AUTH: "TenantBackend"
     defaults = {
         "TENANT_MODEL": None,
@@ -41,12 +42,11 @@ class AppSettings:
         name = prefixed_name[len(self.prefix) + 1 :]
         setattr(self, name, value)
 
-    @cached_property
-    def strategy(self) -> "BaseTenantStrategy":
-        from .strategy import BaseTenantStrategy
-
-        return BaseTenantStrategy(self)
-        # return import_string(self.STRATEGY)(self)  # type: ignore[no-any-return]
+    # @cached_property
+    # def strategy(self) -> "BaseTenantStrategy":
+    #     from .strategy import BaseTenantStrategy
+    #
+    #     return BaseTenantStrategy(self)
 
     @cached_property
     def auth(self) -> "TenantBackend":

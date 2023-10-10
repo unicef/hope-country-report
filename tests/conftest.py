@@ -11,28 +11,28 @@ sys.path.insert(0, str(here / "../src"))
 sys.path.insert(0, str(here / "extras"))
 
 
-def _setup_models():
-    import django
-    from django.conf import settings
-    from django.db import connection
-    from django.db.backends.utils import truncate_name
-
-    settings.DATABASE_ROUTERS = []
-
-    from django.apps import apps
-
-    django.setup()
-
-    for m in apps.get_app_config("hope").get_models():
-        if m._meta.proxy:
-            opts = m._meta.proxy_for_model._meta
-        else:
-            opts = m._meta
-        if opts.app_label not in ("contenttypes", "sites"):
-            db_table = ("hope_ro__{0.app_label}_{0.model_name}".format(opts)).lower()
-            m._meta.db_table = truncate_name(db_table, connection.ops.max_name_length())
-            m._meta.db_tablespace = ""
-            m._meta.managed = True
+#
+# def _setup_models():
+#     import django
+#     from django.conf import settings
+#     from django.db import connection
+#     from django.db.backends.utils import truncate_name
+#
+#
+#     from django.apps import apps
+#
+#     django.setup()
+#
+#     for m in apps.get_app_config("hope").get_models():
+#         if m._meta.proxy:
+#             opts = m._meta.proxy_for_model._meta
+#         else:
+#             opts = m._meta
+#         if opts.app_label not in ("contenttypes", "sites"):
+#             db_table = ("hope_ro__{0.app_label}_{0.model_name}".format(opts)).lower()
+#             m._meta.db_table = truncate_name(db_table, connection.ops.max_name_length())
+#             m._meta.db_tablespace = ""
+#             m._meta.managed = True
 
 
 def pytest_addoption(parser):
@@ -83,6 +83,11 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "skip_if_ci: this mark skips the tests on GitlabCI")
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
     # _setup_models()
+    from django.conf import settings
+
+    settings.DATABASES["default"]["NAME"] = "_hcr"
+    settings.DATABASES["hope_ro"]["NAME"] = "_hope"
+    settings.DATABASES["hope_ro"]["OPTIONS"] = {}
 
 
 #
@@ -128,7 +133,7 @@ def user(db):
 
 
 @pytest.fixture
-def office(db):
+def country_office(db):
     from testutils.factories import CountryOfficeFactory
 
     return CountryOfficeFactory()
@@ -136,28 +141,20 @@ def office(db):
 
 @pytest.fixture
 def reporters(db, country_office, user):
-    from django.conf import settings
+    from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
-    from testutils.factories import UserRoleFactory
-
-    return UserRoleFactory(country_office=country_office, user=user, group=settings.REPORTERS_GROUP_NAME)
+    return get_or_create_reporter_group()
 
 
-#
-# @pytest.fixture()
-# def django_app_admin(django_app_factory, monkeypatch):
-#     from testutils.factories import SuperUserFactory
-#
-#     django_app = django_app_factory(csrf_checks=False)
-#     monkeypatch.setattr("sos.models.User.create_trial", lambda s: True)
-#     admin_user = SuperUserFactory(username="superuser")
-#     # admin_user.is_active = True
-#     # admin_user.is_staff = True
-#     # admin_user.is_superuser = True
-#     # admin_user.save()
-#     django_app.set_user(admin_user)
-#     return django_app
-#
+@pytest.fixture()
+def tenant_user(country_office, reporters):
+    from testutils.factories import UserFactory, UserRoleFactory
+
+    u = UserFactory(username="user", is_staff=False, is_superuser=False, is_active=True)
+    u.set_password(u.password)
+    u.password = "password"
+    UserRoleFactory(country_office=country_office, group=reporters, user=u)
+    return u
 
 
 @pytest.yield_fixture()

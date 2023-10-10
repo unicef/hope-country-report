@@ -1,18 +1,17 @@
 from functools import update_wrapper
 from typing import Callable, TYPE_CHECKING
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
-from django.urls import URLPattern, URLResolver
+from django.urls import reverse, URLPattern, URLResolver
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
 from smart_admin.site import SmartAdminSite
 
-from .config import conf
 from .forms import SelectTenantForm
-from .utils import is_tenant_valid, must_tenant, set_selected_tenant
+from .utils import get_selected_tenant, is_tenant_valid, must_tenant, set_selected_tenant
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -36,7 +35,7 @@ class TenantAdminSite(SmartAdminSite):
     def each_context(self, request: "AuthHttpRequest") -> "Dict[str, Any]":
         ret = super().each_context(request)
         if must_tenant():
-            selected_tenant = conf.strategy.get_selected_tenant(request)
+            selected_tenant = get_selected_tenant()
             ret["tenant_form"] = SelectTenantForm(initial={"tenant": selected_tenant}, request=request)
             ret["active_tenant"] = selected_tenant
             # ret["tenant"] = selected_tenant
@@ -50,9 +49,9 @@ class TenantAdminSite(SmartAdminSite):
         return super().is_smart_enabled(request)
 
     def has_permission(self, request: "AuthHttpRequest") -> bool:
-        if must_tenant():
-            return request.user.is_active
-        return super().has_permission(request)
+        # if must_tenant():
+        return request.user.is_active
+        # return super().has_permission(request)
 
     def get_urls(self) -> "list[URLResolver | URLPattern]":
         from django.urls import path
@@ -78,6 +77,14 @@ class TenantAdminSite(SmartAdminSite):
         # ]
 
         return urlpatterns
+
+    def login(
+        self, request: "HttpRequest", extra_context: "dict[str, Any] | None" = None
+    ) -> "HttpResponse|HttpResponseRedirect":
+        response = super().login(request, extra_context)
+        if request.method == "POST" and request.user.roles.exists():
+            return HttpResponseRedirect(reverse("admin:select_tenant"))
+        return response
 
     # @property
     # def urls(self) -> "tuple[list[URLResolver | URLPattern], str, str]":

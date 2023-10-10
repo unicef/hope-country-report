@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 from typing import Dict
 
@@ -15,10 +14,6 @@ RO_CONN = dict(**env.db("DATABASE_HOPE_URL")).copy()
 RO_CONN.update(
     **{
         "OPTIONS": {"options": "-c default_transaction_read_only=on"},
-        "TEST": {
-            "NAME": "AAAA",
-            "OPTIONS": {"options": ""},
-        },
     }
 )
 
@@ -33,11 +28,6 @@ DATABASE_APPS_MAPPING: Dict[str, str] = {
     "core": "default",
     "hope": "hope_ro",
 }
-is_test = "tests" in sys.argv or "pytest" in sys.argv[0]
-# Orrible. but seems Django is not respecting TEST[OPTIONS]
-if is_test:
-    DATABASES["hope_ro"]["OPTIONS"] = {}
-    del DATABASE_ROUTERS
 
 MIGRATION_MODULES = {"hope": None}
 
@@ -119,10 +109,10 @@ AUTHENTICATION_BACKENDS = (
 
 # path
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-MEDIA_ROOT = env("MEDIA_ROOT", default="/tmp/media/")
-STATIC_ROOT = env("STATIC_ROOT", default=os.path.join(BASE_DIR, "static"))
-MEDIA_URL = "/dm-media/"
-STATIC_URL = env("STATIC_URL", default="/static/")
+MEDIA_ROOT = env("MEDIA_ROOT")
+MEDIA_URL = env("MEDIA_URL")
+STATIC_ROOT = env("STATIC_ROOT")
+STATIC_URL = env("STATIC_URL")
 STATICFILES_DIRS = []
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",

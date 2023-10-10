@@ -10,7 +10,10 @@ from .user import UserFactory
 class QueryFactory(AutoRegisterModelFactory):
     name = factory.Sequence(lambda n: "Query %s" % n)
     owner = factory.SubFactory(UserFactory)
-    target = factory.SubFactory(ContentTypeFactory)
+    target = factory.SubFactory(ContentTypeFactory, app_label="hope", model="household")
+    code = "result=conn.all()"
+    parent = None
+    active = True
 
     class Meta:
         model = Query

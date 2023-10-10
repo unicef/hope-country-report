@@ -13,7 +13,6 @@ not_set = object()
 
 
 class State(local):
-    # class State(metaclass=Singleton):
     request: "AnyRequest|None" = None
     tenant: "str|None" = None
     tenant_instance: "AnyModel|None" = None
@@ -63,6 +62,7 @@ class State(local):
     def reset(self) -> None:
         self.tenant = None
         self.tenant_instance = None
+        self.must_tenant = None
         self.request = None
         self.cookies = {}
         self.filters = []

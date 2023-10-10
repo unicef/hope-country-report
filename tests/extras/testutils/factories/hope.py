@@ -1,7 +1,7 @@
 import uuid
 
 import factory
-from factory import fuzzy
+from factory import fuzzy, post_generation
 from faker import Faker
 from testutils.factories import AutoRegisterModelFactory
 
@@ -48,3 +48,25 @@ class AreaFactory(AutoRegisterModelFactory):
 
     class Meta:
         model = models.Area
+
+
+class HouseholdFactory(AutoRegisterModelFactory):
+    id = factory.Sequence(lambda x: str(x))
+    business_area = factory.SubFactory(BusinessAreaFactory)
+
+    class Meta:
+        model = models.Household
+
+    @post_generation
+    def set_head_of_household(self, create, extracted, **kwargs):
+        if not create:
+            return
+        self.head_of_household = IndividualFactory(household=self)
+        self.save()
+
+
+class IndividualFactory(AutoRegisterModelFactory):
+    household = factory.SubFactory(HouseholdFactory)
+
+    class Meta:
+        model = models.Individual
