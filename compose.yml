@@ -7,9 +7,9 @@ services:
   backend:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
       target: dev
-    command: run
+    command: dev
     environment:
       - SECRET_KEY=secret-key
       - DATABASE_URL=postgres://postgres:postgres@db:5432/hcr
