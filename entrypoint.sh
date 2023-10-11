@@ -2,7 +2,7 @@
 
 set -eou pipefail
 
-export PYTHONPATH=/code/src # without this, uwsgi can't load python modules
+export PYTHONPATH="$PYTHONPATH:/code/src" # without this, uwsgi can't load python modules
 
 production() {
     python3 manage.py upgrade --all

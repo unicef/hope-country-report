@@ -13,15 +13,17 @@ RUN apt-get update \
     && chown -R hcr:hcr /code /tmp /data
 
 ENV PYTHONPYCACHEPREFIX=/tmp/pycache
+ENV PYTHONPATH=$PYTHONPATH:/packages/.venv/lib/python3.11/site-packages
 
 WORKDIR /code
 
 FROM base as builder
 
-WORKDIR /tmp
+WORKDIR /packages
 RUN pip install pdm==2.9.3
-ADD pdm.toml /tmp
-ADD pdm.lock /tmp
+ADD pyproject.toml /packages
+ADD pdm.toml /packages
+ADD pdm.lock /packages
 RUN pdm sync --prod --no-editable --no-self
 
 FROM builder AS dev
