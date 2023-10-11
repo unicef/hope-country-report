@@ -12,14 +12,16 @@ RUN apt-get update \
     && mkdir -p /code /tmp /data \
     && chown -R hcr:hcr /code /tmp /data
 
+ENV PACKAGES_DIR=/packages
+ENV VIRTUAL_ENV=$PACKAGES_DIR/.venv/lib/python3.11/site-packages
 ENV PYTHONPYCACHEPREFIX=/tmp/pycache
-ENV PYTHONPATH=$PYTHONPATH:/packages/.venv/lib/python3.11/site-packages
+ENV PYTHONPATH=$PYTHONPATH:$VIRTUAL_ENV
 
 WORKDIR /code
 
 FROM base as builder
 
-WORKDIR /packages
+WORKDIR $PACKAGES_DIR
 RUN pip install pdm==2.9.3
 ADD pyproject.toml /packages
 ADD pdm.toml /packages

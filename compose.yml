@@ -14,6 +14,7 @@ services:
       - SECRET_KEY=secret-key
       - DATABASE_URL=postgres://postgres:postgres@db:5432/hcr
       - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=backend,
     ports:
       - 8000:8000
     volumes:
