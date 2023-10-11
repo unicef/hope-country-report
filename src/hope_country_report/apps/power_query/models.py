@@ -27,7 +27,7 @@ from silk.profiling.profiler import silk_profile
 from taggit.managers import TaggableManager
 
 from ...state import state
-from ...utils.perf import profile
+from ...utils.perf import profile, profile_db
 from ..tenant.db import TenantModel
 from ..tenant.exceptions import InvalidTenantError
 from ..tenant.utils import get_selected_tenant, must_tenant
@@ -507,24 +507,27 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
                     context.update(pickle.loads(dataset.extra) or {})
 
                 title = (self.document_title % context) if self.document_title else self.document_title
-                output = self.formatter.render(
-                    {
-                        "dataset": dataset,
-                        "report": self,
-                        "title": title,
-                        "context": context,
-                    }
-                )
-                res, __ = ReportDocument.objects.update_or_create(
-                    report=self,
-                    dataset=dataset,
-                    defaults={
-                        "title": title,
-                        "content_type": self.formatter.content_type,
-                        "output": pickle.dumps(output),
-                        "arguments": dataset.arguments,
-                    },
-                )
+                with profile() as perfs:
+                    with profile_db():
+                        output = self.formatter.render(
+                            {
+                                "dataset": dataset,
+                                "report": self,
+                                "title": title,
+                                "context": context,
+                            }
+                        )
+                    res, __ = ReportDocument.objects.update_or_create(
+                        report=self,
+                        dataset=dataset,
+                        defaults={
+                            "title": title,
+                            "content_type": self.formatter.content_type,
+                            "output": pickle.dumps(output),
+                            "arguments": dataset.arguments,
+                            "info": perfs,
+                        },
+                    )
                 result.append((res.pk, len(res.output)))
             except Exception as e:
                 logger.exception(e)
@@ -563,7 +566,7 @@ class ReportDocument(PowerQueryModel, models.Model):
     arguments = models.JSONField(default=dict, encoder=PQJSONEncoder)
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
     content_type = models.CharField(max_length=5, choices=MIMETYPES)  # type: ignore # internal mypy error
-
+    info = models.JSONField(default={}, blank=True, null=False)
     objects = ReportDocumentManager()
 
     class Meta:

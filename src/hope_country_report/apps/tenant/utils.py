@@ -1,6 +1,5 @@
-import contextlib
 import logging
-from typing import Iterator, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from django.core.signing import get_cookie_signer
 
@@ -80,8 +79,8 @@ class RequestHandler:
             state.set_cookies(response)
         state.reset()
 
-    @contextlib.contextmanager
-    def context(self, request: "AuthHttpRequest", response: "HttpResponse|None" = None) -> "Iterator[None]":
-        self.process_request(request)
-        yield
-        self.process_response(request, response)
+    # @contextlib.contextmanager
+    # def context(self, request: "AuthHttpRequest", response: "HttpResponse|None" = None) -> "Iterator[None]":
+    #     self.process_request(request)
+    #     yield
+    #     self.process_response(request, response)

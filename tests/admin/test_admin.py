@@ -25,6 +25,8 @@ GLOBAL_EXCLUDED_MODELS = RegexList(
         r"hope\.Area",
         r"hope\.AreaType",
         r"hope\.Country",
+        r"power_query\.Dataset",
+        r"power_query\.ReportDocument",
         "authtoken",
         "social_django",
         "depot",

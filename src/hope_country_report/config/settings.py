@@ -90,6 +90,8 @@ MIDDLEWARE = [
     "hope_country_report.middleware.state.StateSetMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.common.CommonMiddleware",
+    # "silk.middleware.SilkyMiddleware",
+    "hope_country_report.middleware.silk.SilkMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -216,9 +218,11 @@ EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
 from .fragments.constance import *  # noqa
+from .fragments.cors import *  # noqa
 from .fragments.csp import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
+from .fragments.hijack import *  # noqa
 from .fragments.power_query import *  # noqa
 from .fragments.push_notifications import *  # noqa
 from .fragments.rest_framework import *  # noqa
@@ -226,5 +230,6 @@ from .fragments.sentry import *  # noqa
 from .fragments.silk import *  # noqa
 from .fragments.smart_admin import *  # noqa
 from .fragments.social_auth import *  # noqa
+from .fragments.storage import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa

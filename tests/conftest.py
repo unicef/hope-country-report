@@ -9,6 +9,7 @@ import responses
 here = Path(__file__).parent
 sys.path.insert(0, str(here / "../src"))
 sys.path.insert(0, str(here / "extras"))
+# os.environ["DJANGO_SETTINGS_MODULE"] = "hope_country_report.config.settings"
 
 
 def _setup_models():

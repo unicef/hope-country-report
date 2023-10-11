@@ -4,7 +4,7 @@ import pytest
 
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.utils import RequestHandler
-from hope_country_report.state import State
+from hope_country_report.state import State, state
 
 
 @pytest.fixture()
@@ -43,6 +43,20 @@ def test_set_cookie():
     assert r.cookies["test"]
 
 
-def test_handler(req):
-    h = RequestHandler()
-    h.process_request(req)
+def test_handler_request(req):
+    with state.configure():
+        h = RequestHandler()
+        h.process_request(req)
+        assert state.request == req
+        assert state.tenant_cookie == req.user.roles.first().country_office.slug
+
+
+def test_handler_response(req):
+    response = HttpResponse()
+    with state.configure(tenant="abc", x=123):
+        h = RequestHandler()
+        h.process_response(req, response)
+        assert state.tenant is None
+        assert state.request is None
+        assert state.tenant_cookie is None
+        assert state.x == 123

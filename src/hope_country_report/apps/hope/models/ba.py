@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 from django.db.models import QuerySet
 from django.utils.functional import cached_property
@@ -5,6 +7,9 @@ from django.utils.functional import cached_property
 from hope_country_report.apps.hope.models._base import HopeModel
 from hope_country_report.apps.tenant.db import TenantManager
 from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tenant
+
+if TYPE_CHECKING:
+    from hope_country_report.apps.core.models import CountryOffice
 
 
 class BusinessAreaManager(TenantManager["BusinessArea"]):
@@ -36,7 +41,7 @@ class BusinessArea(HopeModel):
         tenant_filter_field = "id"
 
     @cached_property
-    def country_office(self):
+    def country_office(self) -> "CountryOffice":
         from hope_country_report.apps.core.models import CountryOffice
 
         return CountryOffice.objects.get(hope_id=self.id)
