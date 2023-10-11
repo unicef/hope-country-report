@@ -15,6 +15,7 @@ ABOUT HOPE Country Report
     git clone https://github.com/unicef/hope-country-report 
     pdm venv create 3.11
     pdm install
+    pdm venv activate in-project
     pre-commit install
 
 ### configure your environment

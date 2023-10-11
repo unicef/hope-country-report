@@ -9,7 +9,7 @@ SOCIAL_AUTH_TENANT_B2C_URL = f"{SOCIAL_AUTH_TENANT_NAME}.b2clogin.com"
 SOCIAL_AUTH_URL_NAMESPACE = "social"
 SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
-SOCIAL_AUTH_POLICY = env("AZURE_B2C_POLICY_NAME", default="B2C_1_UNICEF_SOCIAL_signup_signin")
+# SOCIAL_AUTH_POLICY = env("AZURE_B2C_POLICY_NAME", default="B2C_1_UNICEF_SOCIAL_signup_signin")
 SOCIAL_AUTH_USER_MODEL = "core.User"
 
 SOCIAL_AUTH_PIPELINE = (
@@ -24,6 +24,18 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
 )
+SOCIAL_AUTH_AZUREAD_B2C_OAUTH2_USER_FIELDS = [
+    "email",
+    "fullname",
+]
+
+SOCIAL_AUTH_AZUREAD_B2C_OAUTH2_SCOPE = [
+    "openid",
+    "email",
+    "profile",
+]
 
 USER_FIELDS = ["username", "email", "first_name", "last_name"]
 USERNAME_IS_FULL_EMAIL = True
+
+SOCIAL_AUTH_JWT_LEEWAY = env.int("JWT_LEEWAY", 0)

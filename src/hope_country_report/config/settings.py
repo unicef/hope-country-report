@@ -22,7 +22,6 @@ DATABASES = {
     # "hope_no_use": env.db(var="DATABASE_HOPE_URL", default="psql://postgres:pass@db:5432/postgres"),
     "hope_ro": RO_CONN,
 }
-TEST_RUNNER = "hope_country_report.utils.tests.runner.UnManagedModelTestRunner"
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
 DATABASE_APPS_MAPPING: Dict[str, str] = {
     "core": "default",
@@ -95,6 +94,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "csp.middleware.CSPMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
     "hope_country_report.middleware.exception.ExceptionMiddleware",
     "hope_country_report.middleware.state.StateClearMiddleware",
@@ -121,6 +121,10 @@ STATICFILES_FINDERS = [
 
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+
+SECURE_HSTS_SECONDS = 60
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
@@ -212,6 +216,7 @@ EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
 from .fragments.constance import *  # noqa
+from .fragments.csp import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
 from .fragments.power_query import *  # noqa

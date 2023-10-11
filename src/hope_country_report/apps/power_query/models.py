@@ -113,7 +113,7 @@ class PowerQueryManager(models.Manager):
     def get_tenant_filter(self):
         if not must_tenant():
             return Q()
-        _filter = None
+        _filter = {}
         tenant_filter_field = self.model.Tenant.tenant_filter_field
         if not tenant_filter_field:
             raise ValueError(
@@ -125,8 +125,8 @@ class PowerQueryManager(models.Manager):
         elif tenant_filter_field == "__none__":
             return {"pk__lt": -1}
         elif tenant_filter_field == "__shared__":
-            active_tenant = get_selected_tenant()
-            _filter = Q(**{tenant_filter_field: active_tenant}) or Q({f"{tenant_filter_field}__isnull": True})
+            if active_tenant := get_selected_tenant():
+                _filter = Q(**{tenant_filter_field: active_tenant}) or Q({f"{tenant_filter_field}__isnull": True})
         else:
             active_tenant = get_selected_tenant()
             if not active_tenant:
@@ -335,7 +335,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
                 **connections,
             }
             signature = dict_hash({"query": self.pk, **(arguments if arguments else {})})
-            if use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
+            if not preview and use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
                 return_value = ds, ds.extra
             else:
                 with state.set(preview=preview):

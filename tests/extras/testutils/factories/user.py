@@ -14,32 +14,19 @@ from .hope import BusinessAreaFactory
 
 
 class UserFactory(AutoRegisterModelFactory):
+    _password = "password"
     username = factory.Sequence(lambda n: "m%03d@example.com" % n)
+    password = factory.django.Password(_password)
+    email = factory.Sequence(lambda n: "m%03d@example.com" % n)
     first_name = "Jhon"
     last_name = "Doe"
-    email = factory.Sequence(lambda n: "m%03d@example.com" % n)
     is_superuser = False
     is_active = True
     is_staff = False
 
-    _password = "password"
-    _original_params = {}
-
     class Meta:
         model = User
         django_get_or_create = ("username", "is_active", "is_staff")
-
-    @classmethod
-    def _generate(cls, strategy, params):
-        instance = super()._generate(strategy, params)
-        instance._password = UserFactory._password
-        return instance
-
-    @factory.post_generation
-    def post1(obj, create, extracted, **kwargs):
-        obj._password = UserFactory._password
-        obj.set_password(obj._password)
-        obj.save()
 
 
 class SuperUserFactory(UserFactory):
@@ -65,28 +52,34 @@ class LogEntryFactory(AutoRegisterModelFactory):
 
 
 class CountryOfficeFactory(AutoRegisterModelFactory):
+    name = factory.Iterator(["Afghanistan", "Ukraine", "Niger", "South Sudan"])
+    code = factory.Sequence(lambda x: str(x))
+
     class Meta:
         model = CountryOffice
         django_get_or_create = ("name",)
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        # Create the prerequisite data here.
-        # Use `UserFactory.create_batch(n)` if multiple instances are needed.
-        ba = BusinessAreaFactory()
+        if ba := kwargs.pop("business_area", None):
+            pass
+        else:
+            ba = BusinessAreaFactory(name=kwargs["name"])
+
         values = {
             "hope_id": str(ba.id),
             "name": ba.name,
             "active": ba.active,
-            "code": ba.code,
+            "code": kwargs["code"],
             "long_name": ba.long_name,
             "region_code": ba.region_code,
             "slug": slugify(ba.name),
         }
-        co = CountryOffice(**values)
-        co.save()
+        if cls._meta.django_get_or_create:
+            return cls._get_or_create(model_class, *args, **values)
 
-        return co
+        manager = cls._get_manager(model_class)
+        return manager.create(*args, **values)
 
 
 class UserRoleFactory(AutoRegisterModelFactory):

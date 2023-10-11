@@ -1,6 +1,5 @@
 from django.contrib.auth.models import Group
 from django.db import models
-from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 from unicef_security.models import AbstractUser
@@ -33,7 +32,7 @@ class CountryOffice(models.Model):
     class Meta:
         ordering = ("name",)
 
-    @cached_property
+    @property
     def business_area(self) -> "BusinessArea|None":
         return BusinessArea.objects.filter(id=self.hope_id).first()
 

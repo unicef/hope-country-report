@@ -4,10 +4,11 @@ from django.db import models
 from django.db.models import JSONField
 
 from ._base import HopeModel
+from .ba import BusinessArea
 
 
 class Household(HopeModel):
-    business_area = models.ForeignKey("BusinessArea", on_delete=models.CASCADE)
+    business_area = models.ForeignKey(BusinessArea, on_delete=models.CASCADE)
     unicef_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)
     id = models.CharField(primary_key=True, max_length=100, editable=False)
     withdrawn = models.BooleanField(default=False, db_index=True)
