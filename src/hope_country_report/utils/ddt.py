@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from debug_toolbar.panels import Panel
 
 from hope_country_report.apps.tenant.config import conf
-from hope_country_report.apps.tenant.utils import get_selected_tenant, get_tenant_from_request, must_tenant
+from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tenant
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -84,7 +84,7 @@ class StateDebugPanel(Panel):
                 "conf": conf,
                 "active_tenant": get_selected_tenant(),
                 "tenant_status": must_tenant(),
-                "cookie": get_tenant_from_request(state.request),
+                # "cookie": get_tenant_from_request(state.request),
                 # "perms": state.request.user.get_all_permissions(),
                 # "modules": conf.auth.get_available_modules(state.request.user),
             }

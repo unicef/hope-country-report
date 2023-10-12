@@ -9,7 +9,7 @@ class DataCollectingType(HopeModel):
     compatible_types = models.ManyToManyField("self", blank=True)
 
     class Meta:
-        db_table = "core_datacollectingtype"
+        db_table = "program_datacollectingtype"
 
     class Tenant:
         tenant_filter_field = "__all__"

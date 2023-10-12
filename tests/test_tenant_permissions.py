@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from hope_country_report.apps.tenant.utils import get_selected_tenant
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -10,11 +9,6 @@ if TYPE_CHECKING:
 
     from hope_country_report.apps.core.models import CountryOffice, UserRole
     from hope_country_report.types.http import AuthHttpRequest
-
-
-@pytest.fixture()
-def country_office(office):
-    return office
 
 
 @pytest.fixture()
@@ -41,7 +35,6 @@ def tenant_user(request):
 
 @pytest.fixture()
 def req(request, rf) -> "AuthHttpRequest":
-    get_selected_tenant.cache_clear()
     req: "AuthHttpRequest" = rf.get("/")
     current = state.request
     state.request = req
@@ -72,7 +65,7 @@ def test_tenant_backend_get_all_permissions(request, country_office, req, u, dja
     if hasattr(req.user, "_tenant_%s_perm_cache" % country_office.pk):
         delattr(req.user, "_tenant_%s_perm_cache" % country_office.pk)
 
-    with state.set(tenant=country_office.slug):
+    with state.set(tenant=country_office):
         with django_assert_max_num_queries(2):
             if req.user.is_authenticated:
                 assert b.get_all_permissions(req.user)

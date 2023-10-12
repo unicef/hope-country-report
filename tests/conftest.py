@@ -9,30 +9,40 @@ import responses
 here = Path(__file__).parent
 sys.path.insert(0, str(here / "../src"))
 sys.path.insert(0, str(here / "extras"))
+# os.environ["DJANGO_SETTINGS_MODULE"] = "hope_country_report.config.settings"
 
 
-#
-# def _setup_models():
-#     import django
-#     from django.conf import settings
-#     from django.db import connection
-#     from django.db.backends.utils import truncate_name
-#
-#
-#     from django.apps import apps
-#
-#     django.setup()
-#
-#     for m in apps.get_app_config("hope").get_models():
-#         if m._meta.proxy:
-#             opts = m._meta.proxy_for_model._meta
-#         else:
-#             opts = m._meta
-#         if opts.app_label not in ("contenttypes", "sites"):
-#             db_table = ("hope_ro__{0.app_label}_{0.model_name}".format(opts)).lower()
-#             m._meta.db_table = truncate_name(db_table, connection.ops.max_name_length())
-#             m._meta.db_tablespace = ""
-#             m._meta.managed = True
+def _setup_models():
+    import django
+    from django.apps import apps
+    from django.conf import settings
+    from django.db import connection
+    from django.db.backends.utils import truncate_name
+    from django.db.models import Model
+
+    settings.POWER_QUERY_DB_ALIAS = "default"
+    settings.DATABASES["default"]["NAME"] = "_hcr"
+    settings.DATABASES["default"]["TEST"] = {"NAME": "_hcr"}
+    settings.DATABASE_ROUTERS = ()
+    del settings.DATABASES["hope_ro"]
+
+    # settings.DATABASES["hope_ro"]["NAME"] = "_hope"
+    # settings.DATABASES["hope_ro"]["TEST"] = {"NAME": "_hope"}
+    # settings.DATABASES["hope_ro"]["OPTIONS"] = {}
+
+    django.setup()
+
+    for m in apps.get_app_config("hope").get_models():
+        if m._meta.proxy:
+            opts = m._meta.proxy_for_model._meta
+        else:
+            opts = m._meta
+        if opts.app_label not in ("contenttypes", "sites"):
+            db_table = ("_hope_ro__{0.app_label}_{0.model_name}".format(opts)).lower()
+            m._meta.db_table = truncate_name(db_table, connection.ops.max_name_length())
+            # m._meta.db_tablespace = ""
+            m._meta.managed = True
+            m.save = Model.save
 
 
 def pytest_addoption(parser):
@@ -82,12 +92,7 @@ def pytest_configure(config):
 
     config.addinivalue_line("markers", "skip_if_ci: this mark skips the tests on GitlabCI")
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
-    # _setup_models()
-    from django.conf import settings
-
-    settings.DATABASES["default"]["NAME"] = "_hcr"
-    settings.DATABASES["hope_ro"]["NAME"] = "_hope"
-    settings.DATABASES["hope_ro"]["OPTIONS"] = {}
+    _setup_models()
 
 
 #
@@ -148,16 +153,33 @@ def reporters(db, country_office, user):
 
 @pytest.fixture()
 def tenant_user(country_office, reporters):
+    """User with access to a tenant"""
     from testutils.factories import UserFactory, UserRoleFactory
 
     u = UserFactory(username="user", is_staff=False, is_superuser=False, is_active=True)
-    u.set_password(u.password)
-    u.password = "password"
     UserRoleFactory(country_office=country_office, group=reporters, user=u)
     return u
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
+def pending_user(db):
+    """User with no tenants configured"""
+
+    from testutils.factories import UserFactory
+
+    u = UserFactory(username="pending_user", is_staff=False, is_superuser=False, is_active=True)
+    return u
+
+
+@pytest.fixture()
 def mocked_responses():
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         yield rsps
+
+
+@pytest.fixture(autouse=True)
+def state_context():
+    from hope_country_report.state import state
+
+    with state.configure():
+        yield

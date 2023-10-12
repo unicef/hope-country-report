@@ -82,8 +82,10 @@ class TenantAdminSite(SmartAdminSite):
         self, request: "HttpRequest", extra_context: "dict[str, Any] | None" = None
     ) -> "HttpResponse|HttpResponseRedirect":
         response = super().login(request, extra_context)
-        if request.method == "POST" and request.user.roles.exists():
-            return HttpResponseRedirect(reverse("admin:select_tenant"))
+        if request.method == "POST":
+            if request.user.is_authenticated and not request.user.is_staff:
+                return HttpResponseRedirect(reverse("admin:select_tenant"))
+
         return response
 
     # @property
@@ -165,8 +167,8 @@ class TenantAdminSite(SmartAdminSite):
 
     @method_decorator(never_cache)
     def select_tenant(self, request: "AuthHttpRequest") -> "HttpResponse":
-        if not must_tenant() and not is_tenant_valid():
-            return redirect(f"{self.name}:index")
+        # if not must_tenant():
+        #     return redirect(f"{self.name}:index")
         context = self.each_context(request)
         if request.method == "POST":
             form = SelectTenantForm(request.POST, request=request)

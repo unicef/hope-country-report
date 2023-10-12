@@ -1,6 +1,5 @@
 import base64
 import hashlib
-import inspect
 import json
 import logging
 from datetime import datetime
@@ -15,30 +14,29 @@ from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
 import tablib
-from concurrency.utils import get_classname
 from constance import config
 from sentry_sdk import configure_scope
 
 logger = logging.getLogger(__name__)
 
 
-def fqn(o: Any) -> str:
-    parts = []
-
-    if inspect.isclass(o):
-        cls = o
-    else:
-        cls = type(o)
-    if hasattr(o, "__module__"):
-        parts.append(o.__module__)
-        parts.append(get_classname(o))
-    elif inspect.ismodule(o):
-        return o.__name__
-    else:
-        parts.append(cls.__name__)
-    if not parts:
-        raise ValueError(f"Invalid argument `{o}`")
-    return ".".join(parts)
+# def fqn(o: Any) -> str:
+#     parts = []
+#
+#     if inspect.isclass(o):
+#         cls = o
+#     else:
+#         cls = type(o)
+#     if hasattr(o, "__module__"):
+#         parts.append(o.__module__)
+#         parts.append(get_classname(o))
+#     elif inspect.ismodule(o):
+#         return o.__name__
+#     else:
+#         parts.append(cls.__name__)
+#     if not parts:
+#         raise ValueError(f"Invalid argument `{o}`")
+#     return ".".join(parts)
 
 
 def to_dataset(result: Any) -> tablib.Dataset:

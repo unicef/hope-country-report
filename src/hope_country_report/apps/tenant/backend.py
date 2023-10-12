@@ -23,7 +23,7 @@ class TenantBackend(BaseBackend):
     model: "AnyModel" = None
 
     def get_all_permissions(self, user: "AnyUser", obj: "AnyModel|None" = None) -> set[str]:
-        tenant: "AnyModel" = get_selected_tenant()
+        tenant: "AnyModel|None" = state.tenant
         if not tenant:
             return set()
         if user.is_anonymous:
