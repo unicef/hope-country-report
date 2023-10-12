@@ -1,5 +1,6 @@
-import logging
 from typing import Any, Dict, Optional, Sequence, TYPE_CHECKING
+
+import logging
 
 from django.conf import settings
 from django.contrib import admin, messages

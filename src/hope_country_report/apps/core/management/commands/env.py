@@ -1,6 +1,7 @@
+from typing import TYPE_CHECKING
+
 import os
 import uuid
-from typing import TYPE_CHECKING
 
 from django.core.management import BaseCommand, CommandError, CommandParser
 

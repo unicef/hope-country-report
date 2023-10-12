@@ -1,21 +1,26 @@
+from typing import Any, Callable, Dict
+
 import base64
+import contextlib
 import hashlib
 import json
 import logging
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict
 
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.db import ProgrammingError
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
 import tablib
 from constance import config
+from flags.state import flag_enabled
 from sentry_sdk import configure_scope
+from silk.profiling.profiler import silk_profile as _s
+
+from hope_country_report.state import state
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +55,12 @@ def to_dataset(result: Any) -> tablib.Dataset:
             for obj in result.using(settings.POWER_QUERY_DB_ALIAS).all()[: config.PQ_SAMPLE_PAGE_SIZE]:
                 line = []
                 for f in fields:
-                    try:
-                        if isinstance(obj, dict):
-                            line.append(obj[f])
-                        else:
-                            line.append(str(getattr(obj, f)))
-                    except ProgrammingError:
-                        line.append("FK not available: user select_related()")
+                    # if isinstance(obj, dict):
+                    #     line.append(obj[f])
+                    if isinstance(obj, tuple):
+                        line.append(str(obj))
+                    else:
+                        line.append(str(getattr(obj, f)))
                 data.append(line)
                 # data.append([obj[f] if isinstance(obj, dict) else str(getattr(obj, f)) for f in fields])
         except Exception as e:
@@ -161,3 +165,12 @@ def sentry_tags(func: Callable) -> Callable:
             return func(*args, **kwargs)
 
     return wrapper
+
+
+@contextlib.contextmanager
+def silk_profile(*args, **kwargs):
+    if settings.DEBUG or flag_enabled("SILK_PROFILING", request=state.request):
+        with _s(*args, **kwargs):
+            yield
+    else:
+        yield

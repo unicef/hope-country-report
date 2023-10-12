@@ -1,8 +1,9 @@
+from typing import Any, Dict, TYPE_CHECKING
+
 import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.core.management import BaseCommand, call_command

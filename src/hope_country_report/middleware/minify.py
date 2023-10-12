@@ -1,7 +1,8 @@
+from typing import TYPE_CHECKING
+
 import logging
 import re
 from enum import IntFlag, unique
-from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.utils.functional import cached_property

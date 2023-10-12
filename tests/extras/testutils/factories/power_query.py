@@ -84,7 +84,7 @@ class ReportDocumentFactory(AutoRegisterModelFactory):
 
 
 class ParametrizerFactory(AutoRegisterModelFactory):
-    code = "active-business-areas"
+    code = "active-programs"
     source = None
 
     class Meta:

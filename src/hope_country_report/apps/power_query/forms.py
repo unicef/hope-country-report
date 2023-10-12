@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.forms import Field
 
+from ...state import state
 from ..tenant.config import conf
 from ..tenant.utils import get_selected_tenant
 from .models import Formatter, Query
@@ -19,16 +20,26 @@ class FormatterTestForm(forms.Form):
 
 
 class QueryForm(forms.ModelForm):
+    project = forms.ModelChoiceField(queryset=None, required=False, blank=True)
     name = forms.CharField(required=True, widget=forms.TextInput(attrs={"style": "width:80%"}))
     target = ContentTypeChoiceField()
     code = forms.CharField(widget=PythonFormatterEditor)
-    owner = forms.ModelChoiceField(queryset=get_user_model().objects, widget=forms.HiddenInput)  # type: ignore
+    owner = forms.ModelChoiceField(
+        queryset=get_user_model().objects, widget=forms.HiddenInput, required=False
+    )  # type: ignore
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2, "style": "width:80%"}))
-    project = forms.ModelChoiceField(queryset=None, required=True, blank=False)
 
     class Meta:
         model = Query
-        fields = ("name", "target", "description", "code")
+        exclude = ()
+        fields = (
+            "project",
+            "name",
+            "description",
+            "target",
+            "parametrizer",
+            "code",
+        )
 
     def __init__(self, *args, **kwargs) -> None:
         from django.contrib.contenttypes.models import ContentType
@@ -40,4 +51,11 @@ class QueryForm(forms.ModelForm):
     def get_initial_for_field(self, field: Field, field_name: str) -> Any:
         if field_name == "project":
             return get_selected_tenant()
+        if field_name == "owner":
+            return state.request.user
         return super().get_initial_for_field(field, field_name)
+
+    def clean_owner(self):
+        if not self.cleaned_data.get("owner"):
+            return state.request.user
+        return self.cleaned_data.get("owner")

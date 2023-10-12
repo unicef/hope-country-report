@@ -46,6 +46,7 @@ dependencies = [
     "django-zen-queries>=2.1.0",
     "django-csp>=3.7",
     "django-hijack>=3.4.1",
+    "sqlparse>=0.4.4",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"
@@ -59,6 +60,7 @@ test = [
     "pytest-cov>=4.1.0",
     "factory-boy>=3.3.0",
     "pyquery>=2.0.0",
+    "freezegun>=1.2.2",
 ]
 code = [
     "flake8>=6.1.0",
@@ -97,3 +99,19 @@ exclude = '''
   | snapshots
 )/
 '''
+
+[tool.isort]
+combine_as_imports = true
+default_section = "THIRDPARTY"
+include_trailing_comma = true
+known_django = "django"
+known_typing = ["typing"]
+known_tests = ["unittest", "pytest"]
+known_app = "hope_country_report"
+sections = ["FUTURE", 'TYPING', 'STDLIB',"TESTS",'DJANGO','THIRDPARTY','APP','LOCALFOLDER']
+multi_line_output = 3
+line_length = 120
+balanced_wrapping = true
+order_by_type = false
+skip_glob = ["**/migrations/**"]
+

@@ -1,9 +1,9 @@
-# # import logging.config
 import os
 import sys
 from pathlib import Path
 
 import pytest
+
 import responses
 
 here = Path(__file__).parent

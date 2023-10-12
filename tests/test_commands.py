@@ -1,10 +1,10 @@
 import os
 from io import StringIO
+
+import pytest
 from unittest import mock
 
 from django.core.management import call_command
-
-import pytest
 
 pytestmark = pytest.mark.django_db
 
