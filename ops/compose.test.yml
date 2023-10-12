@@ -1,46 +1,27 @@
 version: '3.8'
 
-volumes:
-  postgres_data:
-
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: dev
-    command: dev
+    image: ${backend_image}
+    command: tests
     environment:
       - SECRET_KEY=secret-key
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/hcr
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - REDIS_URL=redis://redis:6379/0
-      - ALLOWED_HOSTS=backend,localhost
-      - STATIC_ROOT=/
-      - STATIC_URL=/static/
     ports:
       - 8000:8000
-    volumes:
-      - .:/code
-    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://backend:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   db:
     image: postgres:15
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=hcr
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - POSTGRES_DB=postgres
     ports:
       - 5432:5432
     restart: always
@@ -59,6 +40,7 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       start_period: 5s
+      start_interval: 1s
       interval: 5s
       timeout: 4s
       retries: 5
