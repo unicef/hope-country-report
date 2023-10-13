@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING
 
-from django.contrib.auth import get_user_model
-
 if TYPE_CHECKING:
     from typing import Any, Dict, List
 
@@ -9,8 +7,8 @@ if TYPE_CHECKING:
 
 
 def create_defaults() -> "List[Formatter]":
-    if get_user_model().objects.filter(is_superuser=True).first() is None:
-        return []
+    # if get_user_model().objects.filter(is_superuser=True).first() is None:
+    #     return []
     from django.contrib.contenttypes.models import ContentType
 
     from hope_country_report.apps.hope.models import Program
@@ -37,7 +35,7 @@ def create_defaults() -> "List[Formatter]":
         },
     )
 
-    Formatter.objects.get_or_create(
+    f2, __ = Formatter.objects.get_or_create(
         name="Queryset To HTML",
         defaults={
             "code": """
@@ -55,7 +53,7 @@ def create_defaults() -> "List[Formatter]":
         },
     )
 
-    f2, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "content_type": "xls"})
+    f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "content_type": "xls"})
 
     for code, params in SYSTEM_PARAMETRIZER.items():
         Parametrizer.objects.update_or_create(
@@ -64,12 +62,12 @@ def create_defaults() -> "List[Formatter]":
     q, __ = Query.objects.get_or_create(
         name="Households for Program",
         target=ContentType.objects.get(app_label="hope", model="household"),
-        parametrizer__code="active-programs",
+        parametrizer=Parametrizer.objects.get(code="active-programs"),
         code="result=conn.filter()",
     )
     Report.objects.update_or_create(
-        name="Household by BusinessArea",
-        defaults={"query": q, "formatter": f2, "title": "Household by BusinessArea: %(business_area)s"},
+        name="Household by Program",
+        defaults={"query": q, "formatter": f2, "title": "Household by BusinessArea: {program}"},
     )
 
-    return [f1, f2]
+    return [f1, f2, f3]

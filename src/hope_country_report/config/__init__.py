@@ -21,6 +21,8 @@ OPTIONAL = {
     "AZURE_ACCOUNT_NAME": (str, ""),
     "AZURE_CONTAINER": (str, ""),
     "CELERY_BROKER_URL": (str, ""),
+    "CELERY_VISIBILITY_TIMEOUT": (int, 1800),
+    "CELERY_TASK_ALWAYS_EAGER": (bool, True),
     "DEBUG": (bool, False, "Django DEBUG "),
     "DEFAULT_FILE_STORAGE": (str, "django.core.files.storage.FileSystemStorage"),
     "EMAIL_HOST_PASSWORD": (str, ""),

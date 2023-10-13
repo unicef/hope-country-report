@@ -1,11 +1,10 @@
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
 
 import itertools
 import logging
 import pickle
 from datetime import datetime
 
-from django.apps import apps as django_apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -232,18 +231,14 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
-    owner = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, blank=True, null=True, related_name="power_queries"
-    )
+    owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, blank=True, null=True, related_name="queries")
     target = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     code = models.TextField(default="result=conn.all()", blank=True)
     info = JSONField(default=dict, blank=True, encoder=PQJSONEncoder)
     parametrizer = models.ForeignKey(Parametrizer, on_delete=models.CASCADE, blank=True, null=True)
     sentry_error_id = models.CharField(max_length=400, blank=True, null=True)
     error_message = models.CharField(max_length=400, blank=True, null=True)
-
     last_run = models.DateTimeField(null=True, blank=True)
-
     active = models.BooleanField(default=True)
 
     def __str__(self) -> str:
@@ -260,8 +255,8 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         self,
         force_insert: bool = False,
         force_update: bool = False,
-        using: "Optional[Any]" = None,
-        update_fields: "Optional[Any]" = None,
+        using: str | None = None,
+        update_fields: "Iterable[str] | None" = None,
     ) -> None:
         if not self.code:
             self.code = "result=conn.all().order_by('pk')"
@@ -287,7 +282,8 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         if self.parametrizer:
             args = self.parametrizer.get_matrix()
             if not args:
-                raise ValueError("No valid arguments provided")
+                args = [{}]
+                # raise ValueError("No valid arguments provided")
         else:
             args = [{}]
         self.error_message = None
@@ -321,20 +317,21 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         self, persist: bool = False, arguments: "Dict|None" = None, use_existing: bool = False, preview: bool = False
     ) -> "QueryResult":
         model = self.target.model_class()
-        connections_model = [get_user_model()]
-        if settings.POWER_QUERY_EXTRA_CONNECTIONS:
-            connections_model.extend(
-                [django_apps.get_model(label2model) for label2model in settings.POWER_QUERY_EXTRA_CONNECTIONS]
-            )
-        connections = {
-            f"{model._meta.object_name}Manager": model._default_manager.using(settings.POWER_QUERY_DB_ALIAS)
-            for model in connections_model
-        }
+        connections = {}
+        # connections_model = [get_user_model()]
+        # if settings.POWER_QUERY_EXTRA_CONNECTIONS:
+        #     connections_model.extend(
+        #         [django_apps.get_model(label2model) for label2model in settings.POWER_QUERY_EXTRA_CONNECTIONS]
+        #     )
+        # connections = {
+        #     f"{model._meta.object_name}Manager": model._default_manager.using(settings.POWER_QUERY_DB_ALIAS)
+        #     for model in connections_model
+        # }
         return_value: QueryResult
-        if self.owner.is_superuser:
-            connections["QueryManager"] = Query.objects.filter()
+        if state.tenant:
+            connections["QueryManager"] = Query.objects.filter(project=state.tenant)
         else:
-            connections["QueryManager"] = Query.objects.filter(owner=self.owner)
+            connections["QueryManager"] = Query.objects.filter()
         debug = []
         try:
             with profile() as perfs:
@@ -458,7 +455,7 @@ class Formatter(ProjectRelatedModel, models.Model):
             dt = to_dataset(context["dataset"].data)
             return dt.export("yaml")
         else:
-            raise ValueError("Unable to render")
+            raise ValueError("Unable to render. No code and/or unknown content_type")
 
         return tpl.render(Context(context))
 
@@ -518,7 +515,11 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
                 if dataset.extra:
                     context.update(pickle.loads(dataset.extra) or {})
 
-                title = (self.title % context) if self.title else self.title
+                # title = (self.title % context) if self.title else self.title
+                try:
+                    title = self.title.format(**context)
+                except KeyError:
+                    title = self.title
                 with profile() as perfs:
                     output = self.formatter.render(
                         {
@@ -559,7 +560,7 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
 
         res = refresh_report.delay(self.id)
         self.celery_task = res.id
-        self.save()
+        self.save(update_fields=["celery_task"])
         return res.id
 
 

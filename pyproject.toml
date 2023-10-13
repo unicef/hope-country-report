@@ -61,6 +61,7 @@ test = [
     "factory-boy>=3.3.0",
     "pyquery>=2.0.0",
     "freezegun>=1.2.2",
+    "pytest-celery>=0.0.0",
 ]
 code = [
     "flake8>=6.1.0",

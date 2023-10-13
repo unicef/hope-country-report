@@ -15,8 +15,8 @@ ENV ADMINS="" \
 ENV PYTHONPATH=$PKG_DIR:/code/src/ \
     PATH=${PATH}:$PKG_DIR/../bin/
 
-RUN groupadd --gid 1024 sos \
-    && adduser --system  --disabled-login --disabled-password --no-create-home --ingroup sos -q www
+RUN groupadd --gid 1024 hcr \
+    && adduser --system  --disabled-login --disabled-password --no-create-home --ingroup hcr -q --gecos www
 
 
 FROM python AS cache

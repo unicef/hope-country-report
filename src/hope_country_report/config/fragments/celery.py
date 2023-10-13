@@ -1,13 +1,13 @@
 from ..settings import env  # type: ignore[attr-defined]
 
 CELERY_ACCEPT_CONTENT = ["pickle", "json", "application/text"]
-CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_BROKER_VISIBILITY_VAR = env("CELERY_VISIBILITY_TIMEOUT", default=1800)  # in seconds
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_BROKER_VISIBILITY_VAR = env("CELERY_VISIBILITY_TIMEOUT")
 CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": int(CELERY_BROKER_VISIBILITY_VAR)}
-CELERY_RESULT_BACKEND = "django-db"
+# CELERY_RESULT_BACKEND = "django-db"
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 # Sensible settings for celery
-CELERY_TASK_ALWAYS_EAGER = env("CELERY_TASK_ALWAYS_EAGER", default=False)
+CELERY_TASK_ALWAYS_EAGER = env("CELERY_TASK_ALWAYS_EAGER")
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_PUBLISH_RETRY = True
 CELERY_WORKER_DISABLE_RATE_LIMITS = False
