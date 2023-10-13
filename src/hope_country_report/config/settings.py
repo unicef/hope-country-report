@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     # "django.contrib.admin",
     # # "django_extensions",
     # # "django_filters",
+    "django_select2",
     "flags",
     "silk",
     "tailwind",
@@ -158,7 +159,11 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": env("REDIS_URL"),
-    }
+    },
+    "select2": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+    },
 }
 
 ROOT_URLCONF = "hope_country_report.config.urls"
@@ -227,6 +232,7 @@ from .fragments.hijack import *  # noqa
 from .fragments.power_query import *  # noqa
 from .fragments.push_notifications import *  # noqa
 from .fragments.rest_framework import *  # noqa
+from .fragments.select2 import *  # noqa
 from .fragments.sentry import *  # noqa
 from .fragments.silk import *  # noqa
 from .fragments.smart_admin import *  # noqa

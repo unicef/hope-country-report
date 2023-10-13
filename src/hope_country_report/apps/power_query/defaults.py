@@ -1,5 +1,9 @@
 from typing import TYPE_CHECKING
 
+from strategy_field.utils import fqn
+
+from hope_country_report.apps.power_query.processors import ToHTML, ToXLS
+
 if TYPE_CHECKING:
     from typing import Any, Dict, List
 
@@ -12,7 +16,7 @@ def create_defaults() -> "List[Formatter]":
     from django.contrib.contenttypes.models import ContentType
 
     from hope_country_report.apps.hope.models import Program
-    from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, Report
+    from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, Report, ReportTemplate
 
     SYSTEM_PARAMETRIZER: Dict[str, Dict[str, Any]] = {
         "active-programs": {
@@ -31,7 +35,8 @@ def create_defaults() -> "List[Formatter]":
 {% for row in dataset.data %}<tr>{% for col in row %}<td>{{ col }}</td>{% endfor %}</tr>
 {% endfor %}
     </table>
-"""
+""",
+            "processor": fqn(ToHTML),
         },
     )
 
@@ -49,11 +54,9 @@ def create_defaults() -> "List[Formatter]":
 {% endfor %}
     </table>
 """,
-            "content_type": "html",
+            "processor": fqn(ToHTML),
         },
     )
-
-    f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "content_type": "xls"})
 
     for code, params in SYSTEM_PARAMETRIZER.items():
         Parametrizer.objects.update_or_create(
@@ -69,5 +72,9 @@ def create_defaults() -> "List[Formatter]":
         name="Household by Program",
         defaults={"query": q, "formatter": f2, "title": "Household by BusinessArea: {program}"},
     )
+
+    f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "processor": fqn(ToXLS)})
+
+    ReportTemplate.load()
 
     return [f1, f2, f3]

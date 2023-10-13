@@ -3,8 +3,12 @@ from django.conf.urls import include
 from django.contrib import admin
 from django.urls import path
 
+from hope_country_report.apps.power_query.views import download
+
 urlpatterns = [
     # path("", include("hope_country_report.web.urls")),
+    path(r"media/<str:path>/", download),
+    path("s2/", include("django_select2.urls")),
     path(r"security/", include("unicef_security.urls", namespace="security")),
     path(r"social/", include("social_django.urls", namespace="social")),
     path(r"accounts/", include("django.contrib.auth.urls")),

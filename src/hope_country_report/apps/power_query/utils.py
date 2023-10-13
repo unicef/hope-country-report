@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime
 from functools import wraps
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -42,6 +43,16 @@ logger = logging.getLogger(__name__)
 #     if not parts:
 #         raise ValueError(f"Invalid argument `{o}`")
 #     return ".".join(parts)
+
+
+def is_valid_template(filename: Path):
+    if filename.suffix not in [".docx", ".pdf"]:
+        return False
+    if filename.stem.startswith("~"):
+        return False
+    if filename.stem.startswith("."):
+        return False
+    return True
 
 
 def to_dataset(result: Any) -> tablib.Dataset:

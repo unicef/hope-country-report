@@ -4,11 +4,19 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.forms import Field
 
+from strategy_field.forms import StrategyFormField
+
 from ...state import state
 from ..tenant.config import conf
 from ..tenant.utils import get_selected_tenant
-from .models import Formatter, Query
+from .models import Dataset, Formatter, Query
+from .processors import registry
 from .widget import ContentTypeChoiceField, PythonFormatterEditor
+
+
+class SelectDatasetForm(forms.Form):
+    dataset = forms.ModelChoiceField(queryset=Dataset.objects)
+    processor = StrategyFormField(registry=registry, choices=registry.as_choices())
 
 
 class ExportForm(forms.Form):

@@ -101,7 +101,8 @@ class IndividualFactory(AutoRegisterModelFactory):
 
 
 class HouseholdFactory(AutoRegisterModelFactory):
-    id = factory.Sequence(lambda x: str(x))
+    id = factory.Sequence(lambda x: str(x + 1))
+    unicef_id = factory.Sequence(lambda x: str((x + 1) * 1000))
     business_area = factory.SubFactory(BusinessAreaFactory)
     head_of_household = factory.SubFactory(IndividualFactory)
     first_registration_date = factory.Faker("date_time", tzinfo=pytz.UTC)

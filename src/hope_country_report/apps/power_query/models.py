@@ -4,14 +4,15 @@ import itertools
 import logging
 import pickle
 from datetime import datetime
+from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.db import models, transaction
 from django.db.models import JSONField, Q
-from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -23,6 +24,8 @@ from celery import states
 from celery.result import AsyncResult
 from natural_keys import NaturalKeyModel
 from sentry_sdk import capture_exception, configure_scope
+from strategy_field.fields import StrategyField
+from strategy_field.utils import fqn
 from taggit.managers import TaggableManager
 
 from ...state import state
@@ -32,7 +35,8 @@ from ..tenant.exceptions import InvalidTenantError
 from ..tenant.utils import get_selected_tenant, must_tenant
 from .exceptions import QueryRunError
 from .json import PQJSONEncoder
-from .utils import dict_hash, to_dataset
+from .processors import mimetype_map, ProcessorStrategy, registry, ToHTML
+from .utils import dict_hash, is_valid_template
 from .validators import FrequencyValidator
 
 if TYPE_CHECKING:
@@ -43,19 +47,8 @@ if TYPE_CHECKING:
     QueryResult = Tuple[Any, Dict]
     QueryMatrixResult = Dict[str, Union[int, str]]
 
-
 logger = logging.getLogger(__name__)
 
-mimetype_map = {
-    "csv": "text/csv",
-    "html": "text/html",
-    "json": "application/json",
-    "txt": "text/plain",
-    "xls": "application/vnd.ms-excel",
-    "xml": "application/xml",
-    "yaml": "text/yaml",
-    "pdf": "application/pdf",
-}
 
 MIMETYPES = ((k, v) for k, v in mimetype_map.items())
 
@@ -245,7 +238,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         return self.name or ""
 
     class Meta:
-        verbose_name_plural = "Power Queries"
+        verbose_name_plural = "Queries"
         ordering = ("name",)
 
     class Tenant:
@@ -365,6 +358,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
                             query=self,
                             hash=signature,
                             defaults={
+                                "size": len(result),
                                 "info": info,
                                 "last_run": timezone.now(),
                                 "value": pickle.dumps(result),
@@ -395,6 +389,7 @@ class Dataset(PowerQueryModel, models.Model):
     value = models.BinaryField(null=True, blank=True)
     file = models.FileField(null=True, blank=True, upload_to="datasets")
 
+    size = models.IntegerField(default=0)
     info = JSONField(default=dict, blank=True)
     extra = models.BinaryField(null=True, blank=True, help_text="Any other attribute to pass to the formatter")
 
@@ -409,58 +404,86 @@ class Dataset(PowerQueryModel, models.Model):
         return pickle.loads(self.value)
 
     @property
-    def size(self) -> int:
-        return len(self.value)
-
-    @property
     def arguments(self) -> Dict:
         return self.info.get("arguments", {})
 
 
-class PDFForm(ProjectRelatedModel, models.Model):
+class ReportTemplate(ProjectRelatedModel, models.Model):
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)
-    pfd = models.FileField()
+    doc = models.FileField()
+    suffix = models.CharField(max_length=20)
 
-    def render(self):
-        pass
+    @classmethod
+    def load(self):
+        template_dir = Path(settings.PACKAGE_DIR) / "apps" / "power_query" / "templates"
+        for filenaame in (template_dir / "reports").glob("*.*"):
+            if is_valid_template(filenaame):
+                record_name = f"{slugify(filenaame.stem)}{filenaame.suffix}"
+                ReportTemplate.objects.get_or_create(
+                    name=record_name,
+                    defaults={"doc": File(filenaame.open("rb"), record_name), "suffix": filenaame.suffix},
+                )
+
+    def save(
+        self,
+        force_insert: bool = False,
+        force_update: bool = False,
+        using: str | None = None,
+        update_fields: Iterable[str] | None = None,
+    ) -> None:
+        self.suffix = Path(self.doc.name).suffix
+        super().save(force_insert, force_update, using, update_fields)
+
+    def as_bytes(self):
+        return self.doc.read()
 
 
 class Formatter(ProjectRelatedModel, models.Model):
+    processor: "ProcessorStrategy"
     name = models.CharField(max_length=255, unique=True)
-    content_type = models.CharField(max_length=5, choices=MIMETYPES)  # type: ignore # internal mypy error
+    # content_type = models.CharField(max_length=5, choices=MIMETYPES)  # type: ignore # internal mypy error
     code = models.TextField(blank=True, null=True)
-    template = models.ForeignKey(PDFForm, on_delete=models.CASCADE, blank=True, null=True)
+    template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, blank=True, null=True)
+    processor = StrategyField(registry=registry, default=fqn(ToHTML))
 
     def __str__(self) -> str:
         return self.name
 
     def clean(self):
-        if self.content_type == "pdf" and not self.template:
-            raise ValidationError({"You must provide a template with PDF ContentType"})
+        if self.code and self.template:
+            raise ValidationError({"You cannot set both 'template' and 'code'"})
+        # if self.content_type == "pdf" and not self.template:
+        #     raise ValidationError({"You must provide a template with PDF ContentType"})
+
+    @property
+    def content_type(self):
+        return self.processor.content_type
 
     def render(self, context: Dict) -> str:
-        if self.content_type == "xls":
-            dt = to_dataset(context["dataset"].data)
-            return dt.export("xls")
-
-        elif self.content_type == "pdf":
-            raise NotImplementedError
-
-        if self.code:
-            tpl = Template(self.code)
-        elif self.content_type == "json":
-            dt = to_dataset(context["dataset"].data)
-            return dt.export("json")
-        elif self.content_type == "yaml":
-            dt = to_dataset(context["dataset"].data)
-            return dt.export("yaml")
-        else:
-            raise ValueError("Unable to render. No code and/or unknown content_type")
-
-        return tpl.render(Context(context))
+        return self.processor.process(context)
+        # if self.content_type == "xls":
+        #     dt = to_dataset(context["dataset"].data)
+        #     return dt.export("xls")
+        #
+        # elif self.content_type == "pdf":
+        #     raise NotImplementedError
+        #
+        # if self.code:
+        #     tpl = Template(self.code)
+        # elif self.content_type == "json":
+        #     dt = to_dataset(context["dataset"].data)
+        #     return dt.export("json")
+        # elif self.content_type == "yaml":
+        #     dt = to_dataset(context["dataset"].data)
+        #     return dt.export("yaml")
+        # else:
+        #     raise ValueError("Unable to render. No code and/or unknown content_type")
+        #
+        # return tpl.render(Context(context))
 
 
 class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
+    formatter: "Formatter"
     title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")
     name = models.CharField(max_length=255, blank=True, null=True)
     query = models.ForeignKey(Query, on_delete=models.CASCADE)
@@ -534,7 +557,7 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
                     dataset=dataset,
                     defaults={
                         "title": title,
-                        "content_type": self.formatter.content_type,
+                        "content_type": self.formatter.processor.mime_type,
                         "output": pickle.dumps(output),
                         "arguments": dataset.arguments,
                         "info": perfs,

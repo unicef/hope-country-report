@@ -2,7 +2,15 @@ from typing import TYPE_CHECKING
 
 import factory
 
-from hope_country_report.apps.power_query.models import Dataset, Formatter, Parametrizer, Query, Report, ReportDocument
+from hope_country_report.apps.power_query.models import (
+    Dataset,
+    Formatter,
+    Parametrizer,
+    Query,
+    Report,
+    ReportDocument,
+    ReportTemplate,
+)
 
 from .base import AutoRegisterModelFactory
 from .contenttypes import ContentTypeFactory
@@ -25,8 +33,17 @@ class QueryFactory(AutoRegisterModelFactory):
         django_get_or_create = ("name",)
 
 
+class ReportTemplateFactory(AutoRegisterModelFactory):
+    name = factory.Sequence(lambda n: "ReportTemplate %s" % n)
+
+    class Meta:
+        model = ReportTemplate
+        django_get_or_create = ("name",)
+
+
 class FormatterFactory(AutoRegisterModelFactory):
     name = "Queryset To HTML"
+    template = factory.SubFactory(ReportTemplateFactory)
 
     class Meta:
         model = Formatter

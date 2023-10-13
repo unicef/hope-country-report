@@ -2,6 +2,8 @@ from typing import Any, Dict, Optional, Sequence, TYPE_CHECKING
 
 import logging
 
+from unittest.mock import Mock
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
@@ -23,24 +25,24 @@ from celery.result import AsyncResult
 from constance import config
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
-from silk.models import Profile
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...utils.perf import profile
 from .celery_tasks import refresh_report, refresh_reports, run_background_query
-from .forms import FormatterTestForm, QueryForm
-from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument
+from .forms import FormatterTestForm, QueryForm, SelectDatasetForm
+from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
+from .processors import ProcessorStrategy
 from .utils import to_dataset
 from .widget import FormatterEditor
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from django.contrib.admin import _ModelT
+    from ...types.django import AnyModel
 
 
 class CeleryEnabledMixin:
-    def get_readonly_fields(self, request: HttpRequest, obj: Optional["_ModelT"] = None) -> Sequence[str]:
+    def get_readonly_fields(self, request: HttpRequest, obj: Optional["AnyModel"] = None) -> Sequence[str]:
         ret = list(super().get_readonly_fields(request, obj))
         ret.append("celery_task")
         return ret
@@ -99,6 +101,9 @@ class QueryAdmin(
     change_form_template = None
     ordering = ["-last_run"]
     form = QueryForm
+
+    def get_queryset(self, request: HttpRequest) -> "QuerySet[AnyModel]":
+        return super().get_queryset(request).select_related("target", "owner")
 
     def success(self, obj: Query) -> bool:
         return not bool(obj.error_message)
@@ -173,7 +178,6 @@ class QueryAdmin(
             context["raw"] = ret
             context["info"] = extra
             context["title"] = f"Result of {obj.name} ({type(ret).__name__})"
-            context["silk_profile"] = Profile.objects.filter(name=obj.silk_name).first()
             context["timing"] = timing
             if isinstance(ret, QuerySet):
                 ret = ret[: config.PQ_SAMPLE_PAGE_SIZE]
@@ -227,7 +231,7 @@ class DatasetAdmin(
     date_hierarchy = "last_run"
 
     def get_queryset(self, request: HttpRequest):  # type: ignore[no-untyped-def]
-        return super().get_queryset(request).defer("extra", "value")
+        return super().get_queryset(request).select_related("query", "query__target").defer("extra", "value")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
@@ -275,15 +279,18 @@ class FormatterAdmin(
     AdminActionPermMixin,
     ModelAdmin,
 ):
-    list_display = ("name", "content_type")
+    list_display = ("name", "strategy", "content_type")
     search_fields = ("name",)
-    list_filter = ("content_type",)
+    list_filter = ("processor",)
     resource_class = FormatterResource
     change_form_template = None
 
     formfield_overrides = {
         models.TextField: {"widget": FormatterEditor(theme="abcdef")},
     }
+
+    def strategy(self, obj: Formatter):
+        return obj.processor.label
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def test(self, request: HttpRequest, pk: int) -> HttpResponse:
@@ -322,6 +329,31 @@ class ReportResource(resources.ModelResource):
         model = Report
         fields = ("name", "query", "formatter")
         import_id_fields = ("name",)
+
+
+@admin.register(ReportTemplate)
+class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin):
+    list_display = ("name", "doc", "suffix")
+    search_fields = ("name",)
+    list_filter = ("suffix",)
+    autocomplete_fields = ("project",)
+
+    # readonly_fields = ("suffix", )
+
+    @button()
+    def preview(self, request, pk):
+        context = self.get_common_context(request, pk)
+        if request.method == "POST":
+            form = SelectDatasetForm(request.POST)
+            if form.is_valid():
+                processor: "ProcessorStrategy" = form.cleaned_data["processor"]
+                fmt = Mock()
+                fmt.doc = self.object
+                content = processor().process({"dataset": form.cleaned_data["dataset"]})
+                return HttpResponse(content, content_type=processor.content_type)
+        else:
+            context["form"] = SelectDatasetForm()
+        return render(request, "admin/power_query/reporttemplate/preview.html", context)
 
 
 @admin.register(Report)

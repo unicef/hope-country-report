@@ -1,10 +1,12 @@
+import os
 from calendar import timegm
 from hashlib import md5
 from uuid import UUID
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.cache import get_conditional_response
 from django.utils.http import http_date
@@ -76,3 +78,13 @@ def data(request: HttpRequest, pk: UUID) -> HttpResponse:
         return HttpResponse(doc.data, content_type=report.formatter.get_content_type_display())
     else:
         return HttpResponseForbidden()
+
+
+def download(request, path):
+    file_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as fh:
+            response = HttpResponse(fh.read())
+            response["Content-Disposition"] = "inline; filename=" + os.path.basename(file_path)
+            return response
+    raise Http404(file_path)

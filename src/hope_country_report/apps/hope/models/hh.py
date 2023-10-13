@@ -112,6 +112,9 @@ class Household(HopeModel):
     class Tenant:
         tenant_filter_field = "business_area"
 
+    def __str__(self):
+        return self.unicef_id
+
 
 class Individual(HopeModel):
     id = models.CharField(primary_key=True, max_length=100, editable=False)
