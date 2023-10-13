@@ -6,7 +6,7 @@ groups = ["default", "code", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:cae76deaab1e8615f334e63913ab046efdd4e560dd85b590ffe02fe58a15a718"
+content_hash = "sha256:09cbca5b43fa687396f7e0c0460314ae2e776416833abd20171eced4de62b7df"
 
 [[package]]
 name = "amqp"
@@ -1003,6 +1003,19 @@ files = [
 ]
 
 [[package]]
+name = "freezegun"
+version = "1.2.2"
+requires_python = ">=3.6"
+summary = "Let your Python tests travel through time"
+dependencies = [
+    "python-dateutil>=2.7",
+]
+files = [
+    {file = "freezegun-1.2.2-py3-none-any.whl", hash = "sha256:ea1b963b993cb9ea195adbd893a48d573fda951b0da64f60883d7e988b606c9f"},
+    {file = "freezegun-1.2.2.tar.gz", hash = "sha256:cd22d1ba06941384410cd967d8a99d5ae2442f57dfafeff2fda5de8dc5c05446"},
+]
+
+[[package]]
 name = "gprof2dot"
 version = "2022.7.29"
 requires_python = ">=2.7"
@@ -1502,6 +1515,18 @@ dependencies = [
 files = [
     {file = "pytest-7.4.2-py3-none-any.whl", hash = "sha256:1d881c6124e08ff0a1bb75ba3ec0bfd8b5354a01c194ddd5a0a870a48d99b002"},
     {file = "pytest-7.4.2.tar.gz", hash = "sha256:a766259cfab564a2ad52cb1aae1b881a75c3eb7e34ca3779697c23ed47c47069"},
+]
+
+[[package]]
+name = "pytest-celery"
+version = "0.0.0"
+summary = "pytest-celery a shim pytest plugin to enable celery.contrib.pytest"
+dependencies = [
+    "celery>=4.4.0",
+]
+files = [
+    {file = "pytest-celery-0.0.0.tar.gz", hash = "sha256:cfd060fc32676afa1e4f51b2938f903f7f75d952186b8c6cf631628c4088f406"},
+    {file = "pytest_celery-0.0.0-py2.py3-none-any.whl", hash = "sha256:63dec132df3a839226ecb003ffdbb0c2cb88dd328550957e979c942766578060"},
 ]
 
 [[package]]

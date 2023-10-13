@@ -15,9 +15,8 @@ ENV ADMINS="" \
 ENV PYTHONPATH=$PKG_DIR:/code/src/ \
     PATH=${PATH}:$PKG_DIR/../bin/
 
-RUN ln -s -f /bin/true /usr/bin/chfn \
-    && groupadd --gid 1024 sos \
-    && adduser --disabled-login --disabled-password --no-create-home --ingroup sos -q www
+RUN groupadd --gid 1024 hcr \
+    && adduser --system  --disabled-login --disabled-password --no-create-home --ingroup hcr -q --gecos www
 
 
 FROM python AS cache
@@ -26,7 +25,7 @@ ENV BUILD_DATE=$BUILD_DATE \
     VERSION=$VERSION \
     PYTHONDONTWRITEBYTECODE=1
 ENV buildDeps="build-essential gcc libjpeg-dev zlib1g-dev libffi-dev libssl-dev libpq-dev "
-ENV runtimeDeps="postgresql-client "
+ENV runtimeDeps="postgresql-client gettext"
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
@@ -64,6 +63,7 @@ ARG PKG_DIR
 COPY docker/bin/* /usr/local/bin/
 COPY docker/conf/* /conf/
 WORKDIR /code/
+COPY --from=cache /usr/bin/envsubst /usr/bin/
 COPY --from=builder /code/__pypackages__ /code/__pypackages__
 COPY --from=builder /CHECKSUM /CHECKSUM
 COPY ./src /code/src

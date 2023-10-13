@@ -1,5 +1,6 @@
-import logging
 from typing import TYPE_CHECKING
+
+import logging
 
 from django.core.signing import get_cookie_signer
 

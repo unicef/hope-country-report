@@ -22,6 +22,7 @@ class QueryFactory(AutoRegisterModelFactory):
 
     class Meta:
         model = Query
+        django_get_or_create = ("name",)
 
 
 class FormatterFactory(AutoRegisterModelFactory):
@@ -30,13 +31,6 @@ class FormatterFactory(AutoRegisterModelFactory):
     class Meta:
         model = Formatter
         django_get_or_create = ("name",)
-
-    @classmethod
-    def _create(cls, model_class, *args, **kwargs):
-        from hope_country_report.apps.power_query.defaults import create_defaults
-
-        create_defaults()
-        return super()._create(model_class, *args, **kwargs)
 
 
 class DatasetFactory(AutoRegisterModelFactory):
@@ -56,9 +50,10 @@ class DatasetFactory(AutoRegisterModelFactory):
 
 class ReportFactory(AutoRegisterModelFactory):
     name = factory.Sequence(lambda n: "Report %s" % n)
+    title = factory.Sequence(lambda n: "Report %s" % n)
     query = factory.SubFactory(QueryFactory)
     formatter = factory.SubFactory(FormatterFactory)
-    owner = factory.SubFactory(UserFactory, is_superuser=True, is_staff=True, password="123")
+    owner = factory.SubFactory(UserFactory)
     frequence = "mon,tue,wed,thu,fri,sat,sun"
 
     class Meta:
@@ -84,7 +79,7 @@ class ReportDocumentFactory(AutoRegisterModelFactory):
 
 
 class ParametrizerFactory(AutoRegisterModelFactory):
-    code = "active-business-areas"
+    code = factory.Sequence(lambda n: "params-%s" % n)
     source = None
 
     class Meta:

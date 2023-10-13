@@ -1,17 +1,25 @@
 from typing import TYPE_CHECKING
 
-from django.contrib.auth import get_user_model
-
 if TYPE_CHECKING:
-    from typing import List
+    from typing import Any, Dict, List
 
     from hope_country_report.apps.power_query.models import Formatter
 
 
 def create_defaults() -> "List[Formatter]":
-    if get_user_model().objects.filter(is_superuser=True).first() is None:
-        return []
-    from hope_country_report.apps.power_query.models import Formatter
+    # if get_user_model().objects.filter(is_superuser=True).first() is None:
+    #     return []
+    from django.contrib.contenttypes.models import ContentType
+
+    from hope_country_report.apps.hope.models import Program
+    from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, Report
+
+    SYSTEM_PARAMETRIZER: Dict[str, Dict[str, Any]] = {
+        "active-programs": {
+            "name": "Active Programs",
+            "value": lambda: {"partner": list(Program.objects.filter(status="ACTIVE").values_list("name", flat=True))},
+        },
+    }
 
     f1, __ = Formatter.objects.get_or_create(
         name="Dataset To HTML",
@@ -27,7 +35,7 @@ def create_defaults() -> "List[Formatter]":
         },
     )
 
-    Formatter.objects.get_or_create(
+    f2, __ = Formatter.objects.get_or_create(
         name="Queryset To HTML",
         defaults={
             "code": """
@@ -45,6 +53,21 @@ def create_defaults() -> "List[Formatter]":
         },
     )
 
-    f2, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "content_type": "xls"})
+    f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "content_type": "xls"})
 
-    return [f1, f2]
+    for code, params in SYSTEM_PARAMETRIZER.items():
+        Parametrizer.objects.update_or_create(
+            name=params["name"], code=code, defaults={"system": True, "value": params["value"]()}
+        )
+    q, __ = Query.objects.get_or_create(
+        name="Households for Program",
+        target=ContentType.objects.get(app_label="hope", model="household"),
+        parametrizer=Parametrizer.objects.get(code="active-programs"),
+        code="result=conn.filter()",
+    )
+    Report.objects.update_or_create(
+        name="Household by Program",
+        defaults={"query": q, "formatter": f2, "title": "Household by BusinessArea: {program}"},
+    )
+
+    return [f1, f2, f3]

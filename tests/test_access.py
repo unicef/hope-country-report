@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
-from django.urls import reverse
-
 import pytest
+
+from django.urls import reverse
 
 from hope_country_report.state import state
 

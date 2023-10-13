@@ -1,6 +1,6 @@
-from django.http import HttpResponse
-
 import pytest
+
+from django.http import HttpResponse
 
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.utils import RequestHandler

@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import Mock
 
 from django.contrib.admin.sites import site
@@ -5,7 +6,6 @@ from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.db.models.options import Options
 from django.urls import reverse
 
-import pytest
 from admin_extra_buttons.handlers import ChoiceHandler
 from django_regex.utils import RegexList as _RegexList
 

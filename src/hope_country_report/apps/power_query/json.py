@@ -1,4 +1,5 @@
 from typing import Any
+
 from uuid import UUID
 
 from django.contrib.gis.gdal.geometries import Point as GdalPoint

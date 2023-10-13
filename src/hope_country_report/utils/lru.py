@@ -1,5 +1,6 @@
-from functools import lru_cache, wraps
 from typing import TYPE_CHECKING
+
+from functools import lru_cache, wraps
 
 if TYPE_CHECKING:
     from typing import Any, Callable

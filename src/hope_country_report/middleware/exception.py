@@ -1,5 +1,6 @@
-import logging
 from typing import TYPE_CHECKING
+
+import logging
 
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import reverse

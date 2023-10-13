@@ -17,6 +17,8 @@ class Config(AppConfig):
     def ready(self) -> None:
         from flags import conditions
 
+        from ...config.celery import app  # noqa
+
         def validate_bool(value: str) -> None:
             if not value.lower() in ["true", "1", "yes", "t", "y", "false", "0", "no", "f", "n"]:
                 raise ValidationError("Enter a valid bool")

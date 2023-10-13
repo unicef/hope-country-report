@@ -1,14 +1,16 @@
-# # import logging.config
 import os
 import sys
 from pathlib import Path
 
 import pytest
+
 import responses
 
 here = Path(__file__).parent
 sys.path.insert(0, str(here / "../src"))
 sys.path.insert(0, str(here / "extras"))
+
+
 # os.environ["DJANGO_SETTINGS_MODULE"] = "hope_country_report.config.settings"
 
 
@@ -178,8 +180,11 @@ def mocked_responses():
 
 
 @pytest.fixture(autouse=True)
-def state_context():
+def state_context(db):
+    from hope_country_report.apps.power_query.defaults import create_defaults
     from hope_country_report.state import state
+
+    create_defaults()
 
     with state.configure():
         yield

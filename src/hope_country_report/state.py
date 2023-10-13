@@ -1,7 +1,8 @@
+from typing import Dict, TYPE_CHECKING
+
 import contextlib
 from copy import copy
 from threading import local
-from typing import Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Iterator, List

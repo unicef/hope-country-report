@@ -1,19 +1,23 @@
-import logging
-from typing import Any, Dict, Tuple, Type, Union
+from typing import Any, Dict, Tuple, Type, TYPE_CHECKING, Union
 
-import celery
+import logging
+
 from billiard.einfo import ExceptionInfo
 from celery import Task
 from sentry_sdk import capture_exception
 
-from .models import Query, QueryResult, Report, ReportResult
+from ...config.celery import app
+from .models import Query, Report
 from .utils import sentry_tags, should_run
+
+if TYPE_CHECKING:
+    from .models import QueryResult, ReportResult
 
 logger = logging.getLogger(__name__)
 
 
 class AbstractPowerQueryTask(Task):
-    model: Union[Type[Query], Type[Report]]
+    model: "Union[Type[Query], Type[Report]]"
 
     def on_success(self, retval: Any, task_id: str, args: Tuple[Any], kwargs: Dict[str, Any]) -> None:
         """
@@ -54,9 +58,9 @@ class ReportTask(AbstractPowerQueryTask):
     model = Report
 
 
-@celery.current_app.task(base=PowerQueryTask)
+@app.task(base=PowerQueryTask)
 @sentry_tags
-def run_background_query(query_id: int) -> QueryResult:
+def run_background_query(query_id: int) -> "QueryResult":
     try:
         query = Query.objects.get(pk=query_id)
         return query.execute_matrix()
@@ -65,10 +69,10 @@ def run_background_query(query_id: int) -> QueryResult:
         raise
 
 
-@celery.current_app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
+@app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
-def refresh_report(self: Any, id: int) -> ReportResult:
-    result: ReportResult = []
+def refresh_report(self: Any, id: int) -> "ReportResult":
+    result: "ReportResult" = []
     try:
         report: Report = Report.objects.get(id=id)
         result = report.execute(run_query=True)
@@ -80,13 +84,15 @@ def refresh_report(self: Any, id: int) -> ReportResult:
     return result
 
 
-@celery.current_app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
+@app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def refresh_reports(self: Any) -> Any:
     results: Any = []
     report: Report
     try:
-        for report in Report.objects.filter(active=True, frequence__isnull=False):
+        for report in Report.objects.select_related("owner", "query", "formatter").filter(
+            active=True, frequence__isnull=False
+        ):
             if should_run(report.frequence):
                 ret = report.queue()
                 results.append(ret)

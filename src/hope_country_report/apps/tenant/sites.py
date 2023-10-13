@@ -1,5 +1,6 @@
-from functools import update_wrapper
 from typing import Callable, TYPE_CHECKING
+
+from functools import update_wrapper
 
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
