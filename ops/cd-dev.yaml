@@ -52,7 +52,7 @@ stages:
               arguments: "--timeout 600s"
               overrideValues: "
                 image.repository=$(Docker.url)/$(Docker.backend.repository),\
-                image.tag=trn-$(tag),\
+                image.tag=dev-$(tag),\
                 ingress.annotations.appgw\\.ingress\\.kubernetes\\.io/appgw-ssl-certificate=kv-cert-unitst,\
                 secret.DATABASE_URL=$(DATABASE_URL),\
                 secret.SECRET_KEY=$(SECRET_KEY)
