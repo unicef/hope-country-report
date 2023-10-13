@@ -51,6 +51,7 @@ dependencies = [
     "pyhtml2pdf>=0.0.7",
     "django-strategy-field>=3.0.0",
     "django-select2>=8.1.2",
+    "pypdf>=3.16.4",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"

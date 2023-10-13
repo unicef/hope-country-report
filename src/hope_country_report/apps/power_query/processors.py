@@ -1,10 +1,13 @@
 from typing import TYPE_CHECKING
 
+import io
 from io import BytesIO
 
 from django.template import Context, Template
 from django.utils.functional import classproperty
 
+from pypdf import PdfReader, PdfWriter
+from pypdf.constants import FieldFlag
 from strategy_field.registry import Registry
 
 from .utils import to_dataset
@@ -106,6 +109,25 @@ class ToPDF(ProcessorStrategy):
         doc.save("generated_doc.docx")
 
 
+class ToFormPDF(ProcessorStrategy):
+    mime_type = "pdf"
+
+    def process(self, context: "Dict[str, Any]"):
+        tpl = self.formatter.template
+
+        reader = PdfReader(tpl.doc)
+        writer = PdfWriter()
+        ds = to_dataset(context["dataset"].data).dict
+        for entry in ds:
+            writer.append(reader)
+            writer.update_page_form_field_values(writer.pages[-1], entry, flags=FieldFlag.READ_ONLY)
+
+        output_stream = io.BytesIO()
+        writer.write(output_stream)
+        output_stream.seek(0)
+        return output_stream
+
+
 class ProcessorRegistry(Registry):
     pass
 
@@ -117,3 +139,4 @@ registry.register(ToHTML)
 registry.register(ToYAML)
 registry.register(ToXLS)
 registry.register(ToPDF)
+registry.register(ToFormPDF)

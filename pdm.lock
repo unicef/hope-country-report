@@ -6,7 +6,7 @@ groups = ["default", "code", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:4e1ab03b010d1931064e74b77274a544312da9448ad30d202bae7cccad301121"
+content_hash = "sha256:79c496ef98c03130c534a03e33c4ebc624d358dce73bc2fb730d556c0d5f9734"
 
 [[package]]
 name = "amqp"
@@ -1628,6 +1628,16 @@ summary = "JSON Web Token implementation in Python"
 files = [
     {file = "PyJWT-2.8.0-py3-none-any.whl", hash = "sha256:59127c392cc44c2da5bb3192169a91f429924e17aff6534d70fdc02ab3e04320"},
     {file = "PyJWT-2.8.0.tar.gz", hash = "sha256:57e28d156e3d5c10088e0c68abb90bfac3df82b40a71bd0daa20c65ccd5c23de"},
+]
+
+[[package]]
+name = "pypdf"
+version = "3.16.4"
+requires_python = ">=3.6"
+summary = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
+files = [
+    {file = "pypdf-3.16.4-py3-none-any.whl", hash = "sha256:a9b1eaf2db4c2edd93093470d33c3f353235c4a694f8a426a92a8ce77cea9eb7"},
+    {file = "pypdf-3.16.4.tar.gz", hash = "sha256:01927771b562d4ba84939ef95b393f0179166da786c5db710d07f807c52f480d"},
 ]
 
 [[package]]

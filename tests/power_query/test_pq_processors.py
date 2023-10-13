@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import pickle
+from pathlib import Path
 
 import pytest
 from unittest.mock import Mock
@@ -93,4 +94,16 @@ def test_processor_docx(dataset):
 
     result = processors.ToWord(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
     # Path("AAAA.docx").write_bytes(result)
+    assert result
+
+
+def test_processor_pdfform(dataset, tmpdir):
+    from testutils.factories import ReportTemplateFactory
+
+    tpl = ReportTemplateFactory(name="program_receipt.pdf")
+
+    fmt = Mock()
+    fmt.template = tpl
+    result = processors.ToFormPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
+    Path("AAAA.pdf").write_bytes(result.read())
     assert result
