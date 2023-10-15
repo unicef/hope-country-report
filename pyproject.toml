@@ -52,6 +52,8 @@ dependencies = [
     "django-strategy-field>=3.0.0",
     "django-select2>=8.1.2",
     "pypdf>=3.16.4",
+    "pdfkit>=1.0.0",
+    "docx2pdf>=0.1.8",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"
@@ -67,6 +69,7 @@ test = [
     "pyquery>=2.0.0",
     "freezegun>=1.2.2",
     "pytest-celery>=0.0.0",
+    "fs>=2.4.16",
 ]
 code = [
     "flake8>=6.1.0",

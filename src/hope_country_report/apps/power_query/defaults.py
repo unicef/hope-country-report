@@ -5,7 +5,7 @@ from strategy_field.utils import fqn
 from hope_country_report.apps.power_query.processors import ToHTML, ToXLS
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
+    from typing import List
 
     from hope_country_report.apps.power_query.models import Formatter
 
@@ -15,15 +15,7 @@ def create_defaults() -> "List[Formatter]":
     #     return []
     from django.contrib.contenttypes.models import ContentType
 
-    from hope_country_report.apps.hope.models import Program
     from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, Report, ReportTemplate
-
-    SYSTEM_PARAMETRIZER: Dict[str, Dict[str, Any]] = {
-        "active-programs": {
-            "name": "Active Programs",
-            "value": lambda: {"partner": list(Program.objects.filter(status="ACTIVE").values_list("name", flat=True))},
-        },
-    }
 
     f1, __ = Formatter.objects.get_or_create(
         name="Dataset To HTML",
@@ -57,20 +49,29 @@ def create_defaults() -> "List[Formatter]":
             "processor": fqn(ToHTML),
         },
     )
+    q1, __ = Query.objects.get_or_create(
+        name="Active Programs",
+        defaults={
+            "target": ContentType.objects.get(app_label="hope", model="program"),
+            "code": "result=conn.filter(status='ACTIVE').values_list('name', flat=True)",
+        },
+    )
+    q1.run(True)
+    p1, __ = Parametrizer.objects.get_or_create(
+        code="active-programs", defaults={"name": "Active Programs", "source": q1, "system": True}
+    )
+    p1.refresh()
 
-    for code, params in SYSTEM_PARAMETRIZER.items():
-        Parametrizer.objects.update_or_create(
-            name=params["name"], code=code, defaults={"system": True, "value": params["value"]()}
-        )
-    q, __ = Query.objects.get_or_create(
+    q2, __ = Query.objects.get_or_create(
         name="Households for Program",
         target=ContentType.objects.get(app_label="hope", model="household"),
-        parametrizer=Parametrizer.objects.get(code="active-programs"),
+        parametrizer=None,
         code="result=conn.filter()",
     )
-    Report.objects.update_or_create(
+
+    Report.objects.get_or_create(
         name="Household by Program",
-        defaults={"query": q, "formatter": f2, "title": "Household by BusinessArea: {program}"},
+        defaults={"query": q2, "formatter": f2, "title": "Household by BusinessArea: {program}"},
     )
 
     f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "processor": fqn(ToXLS)})

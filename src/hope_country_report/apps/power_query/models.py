@@ -35,8 +35,8 @@ from ..tenant.exceptions import InvalidTenantError
 from ..tenant.utils import get_selected_tenant, must_tenant
 from .exceptions import QueryRunError
 from .json import PQJSONEncoder
-from .processors import mimetype_map, ProcessorStrategy, registry, ToHTML
-from .utils import dict_hash, is_valid_template
+from .processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_LIST, TYPES
+from .utils import dict_hash, is_valid_template, to_dataset
 from .validators import FrequencyValidator
 
 if TYPE_CHECKING:
@@ -44,13 +44,12 @@ if TYPE_CHECKING:
 
     DocumentResult = Tuple[int, Union[str, int]]
     ReportResult = List[Union[DocumentResult, Any, str]]
-    QueryResult = Tuple[Any, Dict]
+    QueryResult = "Tuple[Dataset, Dict]"
     QueryMatrixResult = Dict[str, Union[int, str]]
 
 logger = logging.getLogger(__name__)
 
-
-MIMETYPES = ((k, v) for k, v in mimetype_map.items())
+MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
 def validate_queryargs(value: Any) -> None:
@@ -105,32 +104,31 @@ class CeleryEnabled(models.Model):
         return ""
 
 
-class PowerQueryManager(models.Manager):
-    def get_tenant_filter(self):
-        if not must_tenant():
-            return Q()
-        _filter = {}
-        tenant_filter_field = self.model.Tenant.tenant_filter_field
-        if not tenant_filter_field:
-            raise ValueError(
-                f"Set 'tenant_filter_field' on {self} or override `get_queryset()` to enable queryset filtering"
-            )
+class PowerQueryManager(models.Manager["PowerQueryModel"]):
+    def get_tenant_filter(self) -> "Any":
+        _filter = Q()
+        if must_tenant():
+            tenant_filter_field = self.model.Tenant.tenant_filter_field
+            if not tenant_filter_field:
+                raise ValueError(
+                    f"Set 'tenant_filter_field' on {self} or override `get_queryset()` to enable queryset filtering"
+                )
 
-        if tenant_filter_field == "__all__":
-            return {}
-        elif tenant_filter_field == "__none__":
-            return {"pk__lt": -1}
-        elif tenant_filter_field == "__shared__":
-            if active_tenant := get_selected_tenant():
-                _filter = Q(**{tenant_filter_field: active_tenant}) or Q({f"{tenant_filter_field}__isnull": True})
-        else:
-            active_tenant = get_selected_tenant()
-            if not active_tenant:
-                raise InvalidTenantError
-            _filter = Q(**{tenant_filter_field: active_tenant})
+            if tenant_filter_field == "__all__":
+                return {}
+            # elif tenant_filter_field == "__none__":
+            #     return {"pk__lt": -1}
+            elif tenant_filter_field == "__shared__":
+                if active_tenant := get_selected_tenant():
+                    _filter = Q(**{tenant_filter_field: active_tenant}) or Q({f"{tenant_filter_field}__isnull": True})
+            else:
+                active_tenant = get_selected_tenant()
+                if not active_tenant:
+                    raise InvalidTenantError
+                _filter = Q(**{tenant_filter_field: active_tenant})
         return _filter
 
-    def get_queryset(self):
+    def get_queryset(self) -> "QuerySet[PowerQueryModel]":
         flt = self.get_tenant_filter()
         if flt:
             state.filters.append(str(flt))
@@ -180,9 +178,13 @@ class Parametrizer(NaturalKeyModel, ProjectRelatedModel, models.Model):
     def clean(self) -> None:
         validate_queryargs(self.value)
 
-    def get_matrix(self) -> List[Dict]:
-        product = list(itertools.product(*self.value.values()))
-        return [dict(zip(self.value.keys(), e)) for e in product]
+    def get_matrix(self) -> "List[Dict[str,str]]":
+        if isinstance(self.value, dict):
+            product = list(itertools.product(*self.value.values()))
+            return [dict(zip(self.value.keys(), e)) for e in product]
+        else:
+            param = slugify(self.code).replace("-", "_")
+            return [{param: e} for e in self.value]
 
     def save(
         self,
@@ -198,7 +200,7 @@ class Parametrizer(NaturalKeyModel, ProjectRelatedModel, models.Model):
     def refresh(self) -> None:
         if self.source:
             out, __ = self.source.run(use_existing=True)
-            self.value = out
+            self.value = list(out.data)
             self.save()
 
     def __str__(self) -> str:
@@ -256,7 +258,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         super().save(force_insert, force_update, using, update_fields)
 
     @property
-    def silk_name(self):
+    def silk_name(self) -> str:
         return "Query %s #%s" % (self.name, self.pk)
 
     def _invoke(self, query_id: int, arguments: Dict) -> Tuple[Any, Any]:
@@ -308,7 +310,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
 
     def run(
         self, persist: bool = False, arguments: "Dict|None" = None, use_existing: bool = False, preview: bool = False
-    ) -> "QueryResult":
+    ) -> "Tuple[Dataset, Dict]":
         model = self.target.model_class()
         connections = {}
         # connections_model = [get_user_model()]
@@ -320,7 +322,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         #     f"{model._meta.object_name}Manager": model._default_manager.using(settings.POWER_QUERY_DB_ALIAS)
         #     for model in connections_model
         # }
-        return_value: QueryResult
+        return_value: Tuple[Dataset, Dict]
         if state.tenant:
             connections["QueryManager"] = Query.objects.filter(project=state.tenant)
         else:
@@ -333,6 +335,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
                     "query": self,
                     "args": arguments,
                     "arguments": arguments,
+                    "to_dataset": to_dataset,
                     "invoke": self._invoke,
                     "debug": lambda *a: debug.append((timezone.now().strftime("%H:%M:%S"), *a)),
                     **connections,
@@ -351,23 +354,34 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
                         "arguments": arguments,
                         "perfs": perfs,
                         "debug": debug,
-                        "extra": extra,
                     }
-                    if result and persist:
-                        dataset, __ = Dataset.objects.update_or_create(
-                            query=self,
-                            hash=signature,
-                            defaults={
-                                "size": len(result),
-                                "info": info,
-                                "last_run": timezone.now(),
-                                "value": pickle.dumps(result),
-                                "extra": pickle.dumps(extra),
-                            },
-                        )
-                        return_value = dataset, info
+                    defaults = {
+                        "size": len(result),
+                        "info": info,
+                        "last_run": timezone.now(),
+                        "value": pickle.dumps(result),
+                        "extra": pickle.dumps(extra),
+                    }
+                    if persist:
+                        dataset, __ = Dataset.objects.update_or_create(query=self, hash=signature, defaults=defaults)
                     else:
-                        return_value = result, info
+                        dataset = Dataset(query=self, hash=signature, **defaults)
+
+                    # if result and persist:
+                    #     dataset, __ = Dataset.objects.update_or_create(
+                    #         query=self,
+                    #         hash=signature,
+                    #         defaults={
+                    #             "size": len(result),
+                    #             "info": info,
+                    #             "last_run": timezone.now(),
+                    #             "value": pickle.dumps(result),
+                    #             "extra": pickle.dumps(extra),
+                    #         },
+                    #     )
+                    return_value = dataset, extra
+                    # else:
+                    #     return_value = result, info
         except Exception as e:
             raise QueryRunError(e) from e
         return return_value
@@ -412,16 +426,21 @@ class ReportTemplate(ProjectRelatedModel, models.Model):
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)
     doc = models.FileField()
     suffix = models.CharField(max_length=20)
+    content_type = models.CharField(max_length=200, choices=MIMETYPES)  # type: ignore # internal mypy error
 
     @classmethod
     def load(self):
         template_dir = Path(settings.PACKAGE_DIR) / "apps" / "power_query" / "templates"
-        for filenaame in (template_dir / "reports").glob("*.*"):
-            if is_valid_template(filenaame):
-                record_name = f"{slugify(filenaame.stem)}{filenaame.suffix}"
+        for filename in (template_dir / "reports").glob("*.*"):
+            if is_valid_template(filename):
+                record_name = f"{slugify(filename.stem)}{filename.suffix}"
                 ReportTemplate.objects.get_or_create(
                     name=record_name,
-                    defaults={"doc": File(filenaame.open("rb"), record_name), "suffix": filenaame.suffix},
+                    defaults={
+                        "doc": File(filename.open("rb"), record_name),
+                        "content_type": filename.suffix,
+                        "suffix": filename.suffix,
+                    },
                 )
 
     def save(
@@ -434,33 +453,41 @@ class ReportTemplate(ProjectRelatedModel, models.Model):
         self.suffix = Path(self.doc.name).suffix
         super().save(force_insert, force_update, using, update_fields)
 
-    def as_bytes(self):
-        return self.doc.read()
+    def __str__(self) -> str:
+        return str(self.name)
 
 
 class Formatter(ProjectRelatedModel, models.Model):
     processor: "ProcessorStrategy"
     name = models.CharField(max_length=255, unique=True)
-    # content_type = models.CharField(max_length=5, choices=MIMETYPES)  # type: ignore # internal mypy error
     code = models.TextField(blank=True, null=True)
     template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, blank=True, null=True)
+
+    content_type = models.CharField(max_length=5, choices=MIMETYPES)
     processor = StrategyField(registry=registry, default=fqn(ToHTML))
+    type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
 
     def __str__(self) -> str:
         return self.name
 
     def clean(self):
         if self.code and self.template:
-            raise ValidationError({"You cannot set both 'template' and 'code'"})
-        # if self.content_type == "pdf" and not self.template:
-        #     raise ValidationError({"You must provide a template with PDF ContentType"})
+            raise ValidationError("You cannot set both 'template' and 'code'")
+        if self.processor.mime_type and self.processor.mime_type != self.content_type:
+            raise ValidationError(f"Incompatible Content-Type: {self.processor.mime_type} {self.content_type}")
+        self.processor.validate()
 
-    @property
-    def content_type(self):
-        return self.processor.content_type
-
-    def render(self, context: Dict) -> str:
-        return self.processor.process(context)
+    def render(self, context: Dict) -> bytearray:
+        if self.type == TYPE_LIST:
+            return self.processor.process(context)
+        else:
+            ret = bytearray()
+            ds = context.pop("dataset")
+            for page, entry in enumerate(ds.data, 1):
+                context["page"] = page
+                context["record"] = entry
+                ret.extend(self.processor.process(context))
+            return ret
         # if self.content_type == "xls":
         #     dt = to_dataset(context["dataset"].data)
         #     return dt.export("xls")
@@ -557,7 +584,7 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
                     dataset=dataset,
                     defaults={
                         "title": title,
-                        "content_type": self.formatter.processor.mime_type,
+                        "content_type": self.formatter.content_type,
                         "output": pickle.dumps(output),
                         "arguments": dataset.arguments,
                         "info": perfs,
@@ -587,8 +614,8 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
         return res.id
 
 
-class ReportDocumentManager(models.Manager):
-    def get_queryset(self) -> models.QuerySet:
+class ReportDocumentManager(models.Manager[PowerQueryModel]):
+    def get_queryset(self) -> "models.QuerySe[ReportDocument]":
         return super().get_queryset().select_related("report")
 
 

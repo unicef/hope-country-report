@@ -6,7 +6,6 @@ import pytest
 
 from django.conf import settings
 
-import sqlparse
 from flags import state as flag_state
 from freezegun import freeze_time
 
@@ -49,10 +48,10 @@ def data(reporters) -> "_DATA":
         co1: "CountryOffice" = CountryOfficeFactory(name="Afghanistan")
         co2: "CountryOffice" = CountryOfficeFactory(name="Niger")
 
-        h11: "Household" = HouseholdFactory(business_area=co1.business_area, withdrawn=True)
-        h12: "Household" = HouseholdFactory(business_area=co1.business_area, withdrawn=False)
-        h21: "Household" = HouseholdFactory(business_area=co2.business_area, withdrawn=True)
-        h22: "Household" = HouseholdFactory(business_area=co2.business_area, withdrawn=False)
+        h11: "Household" = HouseholdFactory(unicef_id="u1", business_area=co1.business_area, withdrawn=True)
+        h12: "Household" = HouseholdFactory(unicef_id="u2", business_area=co1.business_area, withdrawn=False)
+        h21: "Household" = HouseholdFactory(unicef_id="u3", business_area=co2.business_area, withdrawn=True)
+        h22: "Household" = HouseholdFactory(unicef_id="u4", business_area=co2.business_area, withdrawn=False)
 
         user = UserFactory(username="user", is_staff=False, is_superuser=False, is_active=True)
         UserRoleFactory(country_office=co1, group=reporters, user=user)
@@ -111,11 +110,12 @@ def formatter() -> "Formatter":
     return FormatterFactory(name="Queryset To HTML")
 
 
-@pytest.fixture()
-def report(query1, formatter):
-    from testutils.factories import ReportFactory
-
-    return ReportFactory(formatter=formatter, query=query1)
+#
+# @pytest.fixture()
+# def report(query1, formatter):
+#     from testutils.factories import ReportFactory
+#
+#     return ReportFactory(formatter=formatter, query=query1)
 
 
 @pytest.fixture()
@@ -134,9 +134,9 @@ def test_filter_query(req, data: "_DATA"):
 
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
         q: "Query" = QueryFactory(owner=data["user"], project=state.tenant)
-        qs, extra = q.run()
-        assert qs.count() == 2
-        assert qs.first() == data["hh1"][0]
+        ds, extra = q.run()
+        assert ds.data.count() == 2
+        assert ds.data.first() == data["hh1"][0]
 
 
 def test_query_execution(query1: "Query"):
@@ -145,7 +145,7 @@ def test_query_execution(query1: "Query"):
     assert Household.objects.count() == 4
     result = query1.run(persist=True)
     assert query1.datasets.exists()
-    assert result[0].pk
+    assert result[0].data[0].pk
 
 
 def test_nested_query(query2: "Query"):
@@ -169,14 +169,13 @@ def test_query_silk(query1: "Query", data):
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
-        qs, info = query1.run()
-    assert qs.count() == 2
-    assert qs.first() == data["hh1"][0]
-    db_info = info["perfs"]["db"][settings.POWER_QUERY_DB_ALIAS]
+        ds, extra = query1.run()
+    assert ds.data.count() == 2
+    assert ds.data.first() == data["hh1"][0]
+    db_info = ds.info["perfs"]["db"][settings.POWER_QUERY_DB_ALIAS]
     assert db_info["count"] == 1
     assert db_info["queries"][0][1] == (tenant_slug,)
-    parsed = sqlparse.parse(db_info["queries"][0][0])[0]
-    assert parsed[-1].value == 'WHERE "_hope_ro__hope_household"."business_area_id" = %s'
+    assert 'WHERE "_hope_ro__hope_household"."business_area_id" = %s' in db_info["queries"][0][0]
 
 
 @freeze_time("2012-01-14 08:00:00")
@@ -184,7 +183,7 @@ def test_query_log(query_log: "Query", data):
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
-        qs, info = query_log.run()
-    assert qs.count() == 2
-    assert qs.first() == data["hh1"][0]
-    assert info["debug"] == [("08:00:00", "start"), ("08:00:00", "end")]
+        ds, extra = query_log.run()
+    assert ds.data.count() == 2
+    assert ds.data.first() == data["hh1"][0]
+    assert ds.info["debug"] == [("08:00:00", "start"), ("08:00:00", "end")]

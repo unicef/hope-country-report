@@ -108,12 +108,13 @@ class Household(HopeModel):
 
     class Meta:
         db_table = "household_household"
+        ordering = ("unicef_id",)
 
     class Tenant:
         tenant_filter_field = "business_area"
 
-    def __str__(self):
-        return self.unicef_id
+    def __str__(self) -> str:
+        return str(self.unicef_id)
 
 
 class Individual(HopeModel):

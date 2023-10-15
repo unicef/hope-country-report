@@ -35,6 +35,7 @@ class Cycle(HopeModel):
 
     class Meta:
         db_table = "program_programcycle"
+        ordering = ("start_date",)
 
     class Tenant:
         tenant_filter_field = "program__business_area"

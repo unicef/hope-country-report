@@ -33,17 +33,25 @@ class BusinessAreaFactory(AutoRegisterModelFactory):
 
 
 class CountryFactory(AutoRegisterModelFactory):
+    id = factory.LazyFunction(lambda: str(uuid.uuid4()))
     name = factory.Iterator(["Afghanistan", "Ukraine", "Niger", "South Sudan"])
     short_name = factory.Iterator(["Afghanistan", "Ukraine", "Niger", "South Sudan"])
     iso_code2 = factory.Iterator(["af", "ua", "ne", "ss"])
     iso_code3 = factory.Iterator(["afg", "ukr", "nga", "sso"])
-    iso_num = factory.Iterator(["004", "562", "728", "728"])
+    iso_num = factory.Iterator(["004", "804", "562", "728"])
+    parent = None
+    lft = 0
+    rght = 0
+    level = 0
+    tree_id = 0
 
     class Meta:
         model = models.Country
+        django_get_or_create = ("name",)
 
 
 class AreaTypeFactory(AutoRegisterModelFactory):
+    id = factory.LazyFunction(uuid.uuid4)
     name = factory.LazyFunction(faker.domain_word)
     country = factory.SubFactory(CountryFactory, parent=None)
     area_level = fuzzy.FuzzyChoice([1, 2, 3, 4])
@@ -55,6 +63,7 @@ class AreaTypeFactory(AutoRegisterModelFactory):
 
 
 class AreaFactory(AutoRegisterModelFactory):
+    id = factory.LazyFunction(uuid.uuid4)
     name = factory.Sequence(lambda x: "Area #%s" % x)
     area_type = factory.SubFactory(AreaTypeFactory, parent=None)
     parent = None
@@ -64,6 +73,8 @@ class AreaFactory(AutoRegisterModelFactory):
 
 
 class DataCollectingTypeFactory(AutoRegisterModelFactory):
+    name = factory.Iterator(["Afghanistan", "Ukraine", "Niger", "South Sudan"])
+
     class Meta:
         model = models.DataCollectingType
 

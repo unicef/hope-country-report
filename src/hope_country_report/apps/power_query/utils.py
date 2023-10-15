@@ -125,11 +125,15 @@ def basicauth(view: Callable) -> Callable:
 
 
 def sizeof(num: float, suffix: str = "") -> str:
-    for unit in ["&nbsp;&nbsp;", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb"]:
+    for unit in ["b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb"]:
+        if num % 1 == 0:
+            n = f"{abs(num):.0f}"
+        else:
+            n = f"{num:3.1f}"
         if abs(num) < 1024.0:
-            return f"{num:3.1f} {unit}{suffix} "
+            return f"{n} {unit}{suffix}".strip()
         num /= 1024.0
-    return f"{num:.1f}Yi{suffix}"
+    return f"{num:.1f}Yi{suffix}".strip()
 
 
 def dict_hash(dictionary: Dict[str, Any]) -> str:
@@ -180,7 +184,7 @@ def sentry_tags(func: Callable) -> Callable:
 
 @contextlib.contextmanager
 def silk_profile(*args, **kwargs):
-    if settings.DEBUG or flag_enabled("SILK_PROFILING", request=state.request):
+    if flag_enabled("SILK_PROFILING", request=state.request):
         with _s(*args, **kwargs):
             yield
     else:

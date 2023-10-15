@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Sequence, TYPE_CHECKING
+from typing import Any, Dict, Optional, Sequence, Type, TYPE_CHECKING
 
 import logging
 
@@ -31,7 +31,7 @@ from ...utils.perf import profile
 from .celery_tasks import refresh_report, refresh_reports, run_background_query
 from .forms import FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
-from .processors import ProcessorStrategy
+from .processors import ProcessorStrategy, registry
 from .utils import to_dataset
 from .widget import FormatterEditor
 
@@ -172,7 +172,8 @@ class QueryAdmin(
             else:
                 args = {}
             with profile() as timing:
-                ret, extra = obj.run(False, args, use_existing=True, preview=True)
+                ds, extra = obj.run(False, args, use_existing=True, preview=True)
+            ret = ds.data
 
             context["type"] = type(ret).__name__
             context["raw"] = ret
@@ -300,20 +301,18 @@ class FormatterAdmin(
             if request.method == "POST":
                 form = FormatterTestForm(request.POST)
                 if form.is_valid():
-                    obj: Formatter = context["original"]
+                    obj: Formatter = self.object
                     ctx = {
                         "dataset": form.cleaned_data["query"].datasets.first(),
                         "report": "None",
                     }
-                    if obj.content_type == "xls":
+                    if obj.content_type == ".xls":
                         output = obj.render(ctx)
                         response = HttpResponse(output, content_type=obj.content_type)
                         response["Content-Disposition"] = "attachment; filename=Report.xls"
                         return response
                     else:
-                        context["results"] = str(obj.render(ctx))
-                else:
-                    form = FormatterTestForm()
+                        context["results"] = obj.render(ctx).decode()
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
@@ -333,7 +332,7 @@ class ReportResource(resources.ModelResource):
 
 @admin.register(ReportTemplate)
 class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin):
-    list_display = ("name", "doc", "suffix")
+    list_display = ("name", "doc", "suffix", "content_type")
     search_fields = ("name",)
     list_filter = ("suffix",)
     autocomplete_fields = ("project",)
@@ -345,11 +344,12 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
         context = self.get_common_context(request, pk)
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
+            form.fields["processor"].choices = registry.as_choices(lambda x: x.content_type == self.object.content_type)
             if form.is_valid():
-                processor: "ProcessorStrategy" = form.cleaned_data["processor"]
+                processor: "Type[ProcessorStrategy]" = form.cleaned_data["processor"]
                 fmt = Mock()
                 fmt.doc = self.object
-                content = processor().process({"dataset": form.cleaned_data["dataset"]})
+                content = processor(fmt).process({"dataset": form.cleaned_data["dataset"]})
                 return HttpResponse(content, content_type=processor.content_type)
         else:
             context["form"] = SelectDatasetForm()

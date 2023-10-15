@@ -1,3 +1,5 @@
+from typing import Any
+
 import os
 
 from django.conf import settings
@@ -13,5 +15,5 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS, related_name="celery_tas
 
 
 @signals.celeryd_init.connect
-def init_sentry(**_kwargs):
+def init_sentry(**_kwargs: Any) -> None:
     sentry_sdk.set_tag("celery", True)

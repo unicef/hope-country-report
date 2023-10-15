@@ -1,11 +1,12 @@
 from typing import TYPE_CHECKING
 
 import pickle
-from pathlib import Path
 
 import pytest
 from unittest.mock import Mock
 
+from docxtpl import DocxTemplate
+from pypdf import PdfReader
 from testutils.factories import DatasetFactory
 
 from hope_country_report.apps.power_query import processors
@@ -59,32 +60,32 @@ def dataset(data, report):
     return DatasetFactory(value=pickle.dumps(Household.objects.all()))
 
 
-def test_processor_html(dataset):
+def test_processor_html(dataset, tmp_path):
     from testutils.factories import FormatterFactory
 
     fmt = FormatterFactory(name="Queryset To HTML")
     assert processors.ToHTML(fmt).process({"dataset": dataset})
 
 
-def test_processor_xls(dataset):
+def test_processor_xls(dataset, tmp_path):
     result = processors.ToXLS(Mock()).process({"dataset": dataset})
     # Path("AAAA.xls").write_bytes(result)
     assert result
 
 
-def test_processor_yml(dataset):
+def test_processor_yml(dataset, tmp_path):
     result = processors.ToYAML(Mock()).process({"dataset": dataset})
     # Path("AAAA.yml").write_text(result)
     assert result
 
 
-def test_processor_json(dataset):
+def test_processor_json(dataset, tmp_path):
     result = processors.ToJSON(Mock()).process({"dataset": dataset})
     # Path("AAAA.json").write_text(result)
     assert result
 
 
-def test_processor_docx(dataset):
+def test_processor_docx(dataset, tmp_path):
     from testutils.factories import ReportTemplateFactory
 
     tpl = ReportTemplateFactory(name="households.docx")
@@ -93,11 +94,27 @@ def test_processor_docx(dataset):
     fmt.template = tpl
 
     result = processors.ToWord(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
-    # Path("AAAA.docx").write_bytes(result)
+    # try ti save and open
+    output = tmp_path / "AAAA.docx"
+    output.write_bytes(result.read())
+    DocxTemplate(output)
     assert result
 
 
-def test_processor_pdfform(dataset, tmpdir):
+def test_processor_pdf(dataset, tmp_path):
+    from testutils.factories import FormatterFactory
+
+    code = FormatterFactory(name="Queryset To HTML").code
+    fmt = FormatterFactory(name="aaa", code=code)
+
+    result = processors.ToPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
+    output = tmp_path / "AAAA.pdf"
+    output.write_bytes(result)
+    PdfReader(output)
+    assert result
+
+
+def test_processor_pdfform(dataset, tmp_path):
     from testutils.factories import ReportTemplateFactory
 
     tpl = ReportTemplateFactory(name="program_receipt.pdf")
@@ -105,5 +122,8 @@ def test_processor_pdfform(dataset, tmpdir):
     fmt = Mock()
     fmt.template = tpl
     result = processors.ToFormPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
-    Path("AAAA.pdf").write_bytes(result.read())
+    # try ti save and open
+    output = tmp_path / "AAAA.pdf"
+    output.write_bytes(result.read())
+    PdfReader(output)
     assert result

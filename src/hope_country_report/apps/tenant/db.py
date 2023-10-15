@@ -26,8 +26,8 @@ class TenantManager(models.Manager["AnyModel"]):
             )
         if tenant_filter_field == "__all__":
             return {}
-        if tenant_filter_field == "__none__":
-            return {"pk__lt": -1}
+        # if tenant_filter_field == "__none__":
+        #     return {"pk__lt": -1}
         if not state.tenant:
             raise InvalidTenantError("State does not have any active tenant")
         return {tenant_filter_field: state.tenant.hope_id}

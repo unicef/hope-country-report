@@ -16,7 +16,7 @@ ENV PYTHONPATH=$PKG_DIR:/code/src/ \
     PATH=${PATH}:$PKG_DIR/../bin/
 
 RUN groupadd --gid 1024 hcr \
-    && adduser --system  --disabled-login --disabled-password --no-create-home --ingroup hcr -q --gecos www
+    && adduser --system  --disabled-login --disabled-password --no-create-home --group hcr -q --gecos www
 
 
 FROM python AS cache
@@ -25,7 +25,7 @@ ENV BUILD_DATE=$BUILD_DATE \
     VERSION=$VERSION \
     PYTHONDONTWRITEBYTECODE=1
 ENV buildDeps="build-essential gcc libjpeg-dev zlib1g-dev libffi-dev libssl-dev libpq-dev "
-ENV runtimeDeps="postgresql-client gettext"
+ENV runtimeDeps="postgresql-client gettext wkhtmltopdf"
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 

@@ -36,6 +36,7 @@ class BusinessArea(HopeModel):
 
     class Meta:
         db_table = "core_businessarea"
+        ordering = ("name",)
 
     class Tenant:
         tenant_filter_field = "id"

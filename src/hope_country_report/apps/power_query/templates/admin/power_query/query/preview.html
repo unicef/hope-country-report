@@ -8,7 +8,7 @@
         {% if result %}
             <h2>Dataset is: {{ type }}</h2>
             {% if result.fields %}
-                <table>
+                <table id="query-results">
                     <tr>{% for field in result.fields %}
                         <th>{{ field }}</th>{% endfor %}</tr>
                     {% for obj in result.data %}
@@ -18,7 +18,7 @@
                         </tr>{% endfor %}
                 </table>
             {% elif type == "list" %}
-                <table>
+                <table id="query-results">
                     <tr>
                         <th>Records</th>
                     </tr>
@@ -28,7 +28,7 @@
                         </tr>{% endfor %}
                 </table>
             {% elif type == "tuple" %}
-                <table>
+                <table id="query-results">
                     <tr>
                         <th>Records</th>
                     </tr>
@@ -42,7 +42,8 @@
                 {{ result }}
             {% endif %}
         {% elif queryset %}
-            <table>
+            <h2>Queryset:</h2>
+            <table id="query-results">
                 <tr>
                     <th>id</th>
                     <th>record</th>
@@ -54,7 +55,7 @@
                     </tr>{% endfor %}
             </table>
         {% elif dataset %}
-            <table>
+            <table id="query-results">
                 <tr>{% for fname in dataset.headers %}
                     <th>{{ fname }}</th>{% endfor %}</tr>
                 {% for row in dataset %}
