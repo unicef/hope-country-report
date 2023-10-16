@@ -11,6 +11,10 @@ MANDATORY = {
 
 DEVELOPMENT = {
     "DEBUG": (bool, True),
+    "SECURE_SSL_REDIRECT": (bool, False),
+    "SECURE_HSTS_PRELOAD": (bool, False),
+    "CSRF_COOKIE_SECURE": (bool, False),
+    "SESSION_COOKIE_SECURE": (bool, False),
 }
 
 OPTIONAL = {
@@ -22,18 +26,29 @@ OPTIONAL = {
     "AZURE_CONTAINER": (str, ""),
     "CELERY_BROKER_URL": (str, ""),
     "CELERY_VISIBILITY_TIMEOUT": (int, 1800),
-    "CELERY_TASK_ALWAYS_EAGER": (bool, True),
-    "DEBUG": (bool, False, "Django DEBUG "),
+    "CELERY_TASK_ALWAYS_EAGER": (bool, False),
+    "CELERY_TASK_EAGER_PROPAGATES": (bool, True),
+    "CSRF_COOKIE_SECURE": (bool, True),
+    "DEBUG": (bool, False, "Django DEBUG"),
     # "DEFAULT_FILE_STORAGE": (str, "django.core.files.storage.FileSystemStorage"),
     "DEFAULT_FILE_STORAGE": (str, "hope_country_report.apps.power_query.storage.DataSetStorage"),
     "EMAIL_HOST_PASSWORD": (str, ""),
     "EMAIL_HOST_USER": (str, ""),
+    "SECURE_HSTS_SECONDS": (int, 60),
+    "SESSION_COOKIE_HTTPONLY": (bool, True),
+    "SECURE_SSL_REDIRECT": (bool, True),
+    "SECURE_HSTS_PRELOAD": (bool, True),
     "SIGNING_BACKEND": (str, "django.core.signing.TimestampSigner"),
     "STATIC_FILE_STORAGE": (str, "django.contrib.staticfiles.storage.StaticFilesStorage"),
     "MEDIA_URL": (str, "/media/"),
     "MEDIA_ROOT": (str, "/tmp/media/"),
+    "SESSION_COOKIE_DOMAIN": (str, "unicef.org"),
+    "SESSION_COOKIE_NAME": (str, "hcr_session"),
+    "SESSION_COOKIE_PATH": (str, "/"),
+    "SESSION_COOKIE_SECURE": (bool, True),
     "STATIC_URL": (str, "/static/"),
     "STATIC_ROOT": (str, "/tmp/static/"),
+    "TIME_ZONE": (str, "UTC"),
     "WP_APPLICATION_SERVER_KEY": (str, ""),
     "WP_CLAIMS": (str, '{"sub": "mailto: hope@unicef.org","aud": "https://android.googleapis.com"}'),
     "WP_PRIVATE_KEY": (str, ""),
@@ -46,4 +61,4 @@ class SmartEnv(Env):
         super().__init__(**{k: v[:2] for k, v in scheme.items()})
 
 
-env = SmartEnv(**{**DEVELOPMENT, **MANDATORY, **OPTIONAL})  # type: ignore[arg-type, no-untyped-call]
+env = SmartEnv(**{**DEVELOPMENT, **MANDATORY, **OPTIONAL})  # type: ignore[no-untyped-call]

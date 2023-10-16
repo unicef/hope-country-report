@@ -1,15 +1,16 @@
 # CSP
 SOURCES = (
     "'self'",
-    "inline",
-    "unsafe-inline",
-    "data:",
-    "blob:",
+    "'unsafe-eval'",
+    # "inline",
+    # "unsafe-inline",
+    # "data:",
+    # "blob:",
     "'unsafe-inline'",
-    "localhost:8000",
-    "unpkg.com",
-    "browser.sentry-cdn.com",
-    "cdnjs.cloudflare.com",
+    # "localhost:8000",
+    # "unpkg.com",
+    # "browser.sentry-cdn.com",
+    # "cdnjs.cloudflare.com",
 )
 CSP_DEFAULT_SRC = SOURCES
 CSP_FRAME_SRC = []

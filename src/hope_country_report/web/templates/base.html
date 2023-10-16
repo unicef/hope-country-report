@@ -4,7 +4,7 @@
     <title>HOPE - Reporting</title>
     <link rel="stylesheet" href="{% static '/admin/hr.css' %}">
 </head>
-<body class="h-screen bg-gray-800 dark:text-gray-200">
+<body class="h-screen bg-gray-800 dark:text-gray-200" data-tenant="{% if active_tenant %}*{% endif %}">
 <div id="main-container" class="mx-auto max-w-screen-xl h-screen mb-auto">
     <div class="flex content-center">
         <a class="m-auto bg-blue-500 p-3 rounded" href="{% url "admin:login" %}?next={% url "admin:select_tenant" %}">Login</a>

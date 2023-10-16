@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.core.management import BaseCommand, CommandParser
+from django.core.management import BaseCommand, CommandError, CommandParser
 
 
 class Command(BaseCommand):
@@ -24,6 +24,8 @@ class Command(BaseCommand):
             action="store_true",
             default=False,
         )
+        queue = subparsers.add_parser("queue")
+        queue.add_argument("id")
 
         run = subparsers.add_parser("run")
         run.add_argument("id")
@@ -45,8 +47,10 @@ class Command(BaseCommand):
     def _list(self, *args: Any, **options: Any) -> None:
         from hope_country_report.apps.power_query.models import Query as PowerQuery
 
+        line = "#{id:>5}   {name:<32} {status:<25} {last_run} "
+        self.stdout.write(line.format(id="id", name="name", status="status", last_run="last run"))
         for q in PowerQuery.objects.all():
-            self.stdout.write(f"#{q.id:>5}   {q.name[:30]:<32} {q.last_run}")
+            self.stdout.write(line.format(id=q.id, name=q.name[:30], status=q.status, last_run=q.last_run))
 
     def _test(self, *args: Any, **options: Any) -> None:
         from hope_country_report.apps.power_query.models import Query as PowerQuery
@@ -59,6 +63,20 @@ class Command(BaseCommand):
         result, info = pq.run(persist=False, arguments=arguments)
         for entry in result:
             print(type(entry), entry)
+
+    def _queue(self, *args: Any, **options: Any) -> None:
+        from hope_country_report.apps.power_query.models import Query as PowerQuery
+
+        pq = PowerQuery.objects.get(pk=options["id"])
+        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 68 - celery_task", pq.celery_task)
+        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 68 - async_result", pq.async_result)
+        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 69 - status", pq.status)
+        res = pq.queue()
+        pq.refresh_from_db()
+        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 72 - res", res)
+        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 72 - celery_task", pq.celery_task)
+        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 73 - async_result", pq.async_result)
+        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 74 - status", pq.status)
 
     def _run(self, *args: Any, **options: Any) -> None:
         from hope_country_report.apps.power_query.models import Query as PowerQuery
@@ -93,11 +111,16 @@ class Command(BaseCommand):
             raise
 
     def handle(self, *args: Any, **options: Any) -> None:
-        if options["command"] == "list":
+        cmd = options["command"]
+        if cmd == "list":
             self._list(*args, **options)
-        elif options["command"] == "execute":
+        elif cmd == "execute":
             self._execute(*args, **options)
-        elif options["command"] == "test":
+        elif cmd == "test":
             self._test(*args, **options)
-        elif options["command"] == "run":
+        elif cmd == "run":
             self._run(*args, **options)
+        elif cmd == "queue":
+            self._queue(*args, **options)
+        else:
+            raise CommandError(cmd)

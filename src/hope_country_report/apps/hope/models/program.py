@@ -1,7 +1,7 @@
 from django.db import models
 
 from ._base import HopeModel
-from .ba import BusinessArea
+from .core import BusinessArea
 
 
 class Program(HopeModel):

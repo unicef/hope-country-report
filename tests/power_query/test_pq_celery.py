@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from hope_country_report.apps.power_query.celery_tasks import refresh_report, refresh_reports, run_background_query
+from hope_country_report.apps.power_query.celery_tasks import refresh_report, run_background_query
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -50,12 +50,6 @@ def report(query1: "Query"):
 def test_run_background_query(query1: "Query") -> None:
     run_background_query.delay(query1.pk)
     assert query1.datasets.exists()
-
-
-def test_refresh_reports(report: "Report") -> None:
-    assert report.query.owner
-    refresh_reports.delay()
-    assert report.documents.exists()
 
 
 def test_refresh_report(report: "Report") -> None:

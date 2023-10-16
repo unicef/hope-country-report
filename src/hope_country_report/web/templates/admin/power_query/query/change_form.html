@@ -1,0 +1,45 @@
+{% extends "admin_extra_buttons/change_form.html" %}{% load power_query admin_urls %}
+{% block breadcrumbs %}
+    {{ block.super }}
+
+    <div id="celery-status">Status:
+        {% if original.pk %}
+        {{ original.status }}{% if original.status == 'SUCCESS' %} on {{ original.last_run }}{% endif %}
+        {% if original.celery_task %}
+            - Task:<a target="flower"
+                      href="{{ flower_address }}/task/{{ original.celery_task }}">{{ original.celery_task }}</a>
+            {% if original.status == 'PENDING' %}
+                - <a href="{% url opts|admin_urlname:'revoke' original.pk %}">Revoke</a>
+            {% endif %}
+        {% else %}
+            - <a href="{% url opts|admin_urlname:'queue' original.pk %}">Queue</a>
+        {% endif %}
+        {% if original.status == 'SUCCESS' %}
+            - <a href="{% url opts|admin_urlname:'queue' original.pk %}">Queue</a>
+        {% endif %}
+        - <a href="{% url "admin:django_celery_results_taskresult_changelist" %}">Result</a>
+        {% endif %}
+    </div>
+
+
+    {% if original.error %}
+        <ul class="messagelist">
+            <li class="error"> This query raised and exception:
+                <a target="_sentry" href="{{ original.error|link_to_sentry }}">View on Sentry</a>
+            </li>
+        </ul>
+    {% endif %}
+{% endblock %}
+{#{% block object-tools %}#}
+{#    <div>=== {{ block.super }} === </div>#}
+{#{% endblock %}#}
+{#{% block field_sets %}#}
+{#    ==== {{ block.super }}#}
+{#{% endblock %}#}
+{##}
+{#{% block after_field_sets %}after_field_sets{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#    content#}
+{#    {{ block.super }}#}
+{#{% endblock %}#}

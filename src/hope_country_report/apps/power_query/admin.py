@@ -16,7 +16,7 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 
 import tablib
-from admin_extra_buttons.decorators import button
+from admin_extra_buttons.decorators import button, view
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
@@ -27,8 +27,9 @@ from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
+from ...state import state
 from ...utils.perf import profile
-from .celery_tasks import refresh_report, refresh_reports, run_background_query
+from .celery_tasks import refresh_report
 from .forms import FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
 from .processors import ProcessorStrategy, registry
@@ -38,6 +39,8 @@ from .widget import FormatterEditor
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from django.contrib.admin.options import _ListFilterT
+
     from ...types.django import AnyModel
 
 
@@ -47,18 +50,26 @@ class CeleryEnabledMixin:
         ret.append("celery_task")
         return ret
 
-    @button(visible=settings.DEBUG)
-    def check_status(self, request: HttpRequest) -> HttpResponse:  # type: ignore
+    @button()
+    def check_status(self, request: HttpRequest) -> "HttpResponse":
         obj: CeleryEnabled
         for obj in self.get_queryset(request):
             if obj.async_result is None:
                 obj.celery_task = None
                 obj.save()
 
-    @button(visible=settings.DEBUG)
+    @view()
+    def revoke(self, request: HttpRequest, pk: int) -> "HttpResponse":
+        obj: CeleryEnabled = self.get_object(request, pk)
+        if obj.async_result:
+            res: AsyncResult = obj.async_result
+            res.revoke()
+            obj.celery_task = None
+            obj.save()
+
+    @button()
     def monitor(self, request: HttpRequest) -> HttpResponse:
         ctx = self.get_common_context(request, title="Celery Monitor")
-        ctx["flower_address"] = settings.POWER_QUERY_FLOWER_ADDRESS
         ctx["queries"] = Query.objects.all()
         ctx["reports"] = Report.objects.all()
         return render(
@@ -67,9 +78,9 @@ class CeleryEnabledMixin:
             ctx,
         )
 
-    @button(permission=False)
-    def queue(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore
-        obj: Optional[Any]
+    @view()
+    def queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
+        obj: Optional[CeleryEnabled]
         try:
             obj = self.get_object(request, str(pk))
             obj.queue()
@@ -78,16 +89,33 @@ class CeleryEnabledMixin:
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
 
+class AutoProjectCol:
+    def get_list_display(self, request: "HttpRequest") -> Sequence[str]:
+        base = super().get_list_display(request)
+        if state.tenant is None:
+            return ("project", *base)
+        return base
+
+    def get_list_filter(self, request: "HttpRequest") -> "Sequence[_ListFilterT]":
+        base = super().get_list_filter(request)
+        return (("project", AutoCompleteFilter), *base)
+
+    def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
+        base = super().get_autocomplete_fields(request)
+        return ("project", *base)
+
+
 @admin.register(Query)
 class QueryAdmin(
     AdminFiltersMixin,
+    AutoProjectCol,
     CeleryEnabledMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin,
 ):
-    list_display = ("name", "target", "owner", "active", "success")
+    list_display = ("name", "target", "owner", "active", "success", "last_run", "status")
     search_fields = ("name",)
     list_filter = (
         ("target", AutoCompleteFilter),
@@ -109,6 +137,11 @@ class QueryAdmin(
         return not bool(obj.error_message)
 
     success.boolean = True
+
+    def change_view(
+        self, request: "HttpRequest", object_id: str, form_url: str = "", extra_context: "dict[str, Any] | None" = None
+    ) -> "HttpResponse":
+        return super().change_view(request, object_id, form_url, extra_context)
 
     # def get_form(
     #     self, request: "HttpRequest", obj: "_ModelT|None" = None, change: bool = False, **kwargs: Any
@@ -137,7 +170,7 @@ class QueryAdmin(
         # return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
     @button()
-    def datasets(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
+    def datasets(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
         obj = self.get_object(request, str(pk))
         try:
             url = reverse("admin:power_query_dataset_changelist")
@@ -154,16 +187,16 @@ class QueryAdmin(
         ctx["results"] = results
         return render(request, "admin/power_query/query/run_result.html", ctx)
 
-    @button()
-    def queue(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
-        try:
-            res: AsyncResult = run_background_query.delay(pk)
-            self.message_user(request, f"Query scheduled: {res}")
-        except Exception as e:
-            self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
+    # @button()
+    # def queue(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
+    #     try:
+    #         res: AsyncResult = run_background_query.delay(pk)
+    #         self.message_user(request, f"Query scheduled: {res}")
+    #     except Exception as e:
+    #         self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
     @button()
-    def preview(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore[return]
+    def preview(self, request: HttpRequest, pk: int) -> HttpResponse:
         obj: Query = self.get_object(request, str(pk))
         try:
             context = self.get_common_context(request, pk, title="Results")
@@ -247,12 +280,12 @@ class DatasetAdmin(
         return obj.query.target
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
-    def analyze(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore[return]
+    def analyze(self, request: HttpRequest, pk: int) -> HttpResponse:
         context = self.get_common_context(request, pk, title="Results")
         return render(request, "admin/power_query/query/analyze.html", context)
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
-    def preview(self, request: HttpRequest, pk: int) -> HttpResponse:  # type: ignore[return]
+    def preview(self, request: HttpRequest, pk: int) -> HttpResponse:
         obj = self.get_object(request, str(pk))
         try:
             context = self.get_common_context(request, pk, title="Results")
@@ -290,7 +323,7 @@ class FormatterAdmin(
         models.TextField: {"widget": FormatterEditor(theme="abcdef")},
     }
 
-    def strategy(self, obj: Formatter):
+    def strategy(self, obj: Formatter) -> str:
         return obj.processor.label
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
@@ -340,7 +373,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
     # readonly_fields = ("suffix", )
 
     @button()
-    def preview(self, request, pk):
+    def preview(self, request: "HttpRequest", pk: int) -> HttpResponse:
         context = self.get_common_context(request, pk)
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
@@ -366,7 +399,7 @@ class ReportAdmin(
     AdminActionPermMixin,
     ModelAdmin,
 ):
-    list_display = ("name", "formatter", "last_run", "frequence", "owner")
+    list_display = ("name", "formatter", "last_run", "owner")
     autocomplete_fields = ("query", "formatter", "owner")
     filter_horizontal = ["limit_access_to"]
     readonly_fields = ("last_run",)
@@ -382,8 +415,8 @@ class ReportAdmin(
     def has_change_permission(self, request: HttpRequest, obj: Optional[Any] = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> Dict:
-        kwargs: Dict = {"owner": request.user}
+    def get_changeform_initial_data(self, request: HttpRequest) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {"owner": request.user}
         if "q" in request.GET:
             q = Query.objects.get(pk=request.GET["q"])
             kwargs["query"] = q
@@ -392,7 +425,7 @@ class ReportAdmin(
         return kwargs
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
-    def queue(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
+    def queue(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
         obj = self.get_object(request, str(pk))
         try:
             res: AsyncResult = refresh_report.delay(obj.pk)
@@ -402,7 +435,7 @@ class ReportAdmin(
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
-    def execute(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
+    def execute(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
         obj = self.get_object(request, str(pk))
         try:
             result = obj.execute(run_query=True)
@@ -418,17 +451,11 @@ class ReportAdmin(
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
-    @button(visible=lambda btn: btn.context["request"].path.endswith("/power_query/report/"))
-    def refresh(self, request: HttpRequest) -> HttpResponseRedirect:  # type: ignore[return]
-        try:
-            refresh_reports.delay()
-            self.message_user(request, "Reports refresh queued", messages.SUCCESS)
-        except Exception as e:
-            self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
-
 
 @admin.register(Parametrizer)
 class QueryArgsAdmin(
+    AdminFiltersMixin,
+    AutoProjectCol,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,

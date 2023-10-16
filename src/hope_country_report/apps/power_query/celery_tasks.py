@@ -8,7 +8,7 @@ from sentry_sdk import capture_exception
 
 from ...config.celery import app
 from .models import Query, Report
-from .utils import sentry_tags, should_run
+from .utils import sentry_tags
 
 if TYPE_CHECKING:
     from .models import QueryResult, ReportResult
@@ -84,21 +84,22 @@ def refresh_report(self: Any, id: int) -> "ReportResult":
     return result
 
 
-@app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
-@sentry_tags
-def refresh_reports(self: Any) -> Any:
-    results: Any = []
-    report: Report
-    try:
-        for report in Report.objects.select_related("owner", "query", "formatter").filter(
-            active=True, frequence__isnull=False
-        ):
-            if should_run(report.frequence):
-                ret = report.queue()
-                results.append(ret)
-            else:
-                results.append([report.pk, "skip"])
-    except BaseException as e:
-        logger.exception(e)
-        raise self.retry(exc=e)
-    return results
+#
+# @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
+# @sentry_tags
+# def period_task_manager(self: Any) -> Any:
+#     results: Any = []
+#     report: Report
+#     try:
+#         for report in Report.objects.select_related("owner", "query", "formatter").filter(
+#             active=True, frequence__isnull=False
+#         ):
+#             if should_run(report.frequence):
+#                 ret = report.queue()
+#                 results.append(ret)
+#             else:
+#                 results.append([report.pk, "skip"])
+#     except BaseException as e:
+#         logger.exception(e)
+#         raise self.retry(exc=e)
+#     return results

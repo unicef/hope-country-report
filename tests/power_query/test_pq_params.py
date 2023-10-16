@@ -24,4 +24,4 @@ def test_parameter_query(query) -> None:
 
     p: "Parametrizer" = ParametrizerFactory(source=query)
     p.refresh()
-    assert p.value == ["change_group"]
+    assert p.value == ["change_group", "change_groupresult"]

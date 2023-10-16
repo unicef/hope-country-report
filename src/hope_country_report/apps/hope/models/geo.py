@@ -76,5 +76,5 @@ class Area(MPTTModel, HopeModel):
     class Tenant:
         tenant_filter_field = "__all__"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.name)

@@ -83,6 +83,8 @@ def pytest_configure(config):
         CSRF_COOKIE_SECURE="False",
         SECRET_KEY="123",
         SESSION_COOKIE_SECURE="False",
+        SESSION_COOKIE_NAME="hcr_test",
+        SESSION_COOKIE_DOMAIN="",
     )
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""

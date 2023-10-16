@@ -71,7 +71,6 @@ class ReportFactory(AutoRegisterModelFactory):
     query = factory.SubFactory(QueryFactory)
     formatter = factory.SubFactory(FormatterFactory)
     owner = factory.SubFactory(UserFactory)
-    frequence = "mon,tue,wed,thu,fri,sat,sun"
 
     class Meta:
         model = Report

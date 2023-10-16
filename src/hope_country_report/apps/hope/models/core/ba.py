@@ -24,7 +24,7 @@ class BusinessAreaManager(TenantManager["BusinessArea"]):
 
 
 class BusinessArea(HopeModel):
-    id = models.CharField(primary_key=True, max_length=100)
+    id = models.CharField(primary_key=True, max_length=100, editable=False)
     name = models.CharField(max_length=100)
     active = models.BooleanField(default=False)
     code = models.CharField(max_length=10, unique=True)

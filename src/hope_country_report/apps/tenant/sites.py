@@ -2,6 +2,7 @@ from typing import Callable, TYPE_CHECKING
 
 from functools import update_wrapper
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -9,6 +10,7 @@ from django.urls import reverse, URLPattern, URLResolver
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
+from smart_admin.autocomplete import SmartAutocompleteJsonView
 from smart_admin.site import SmartAdminSite
 
 from .forms import SelectTenantForm
@@ -18,6 +20,25 @@ if TYPE_CHECKING:
     from typing import Any, Dict
 
     from hope_country_report.types.http import AuthHttpRequest
+
+    from ...types.django import AnyModel
+
+
+class TenantAutocompleteJsonView(SmartAutocompleteJsonView):
+    ...
+    # def get_queryset(self):
+    #     qs = super().get_queryset()
+    #     qs = qs.filter(self.model_admin.model.objects.)
+    #     return qs
+
+    # def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    #     return super().get_context_data(**kwargs)
+    #
+    def has_perm(self, request: "AuthHttpRequest", obj: "AnyModel|None" = None) -> bool:
+        return request.user.is_active
+
+    # def get(self, request, *args, **kwargs):
+    #     return JsonResponse({"t": state.tenant.slug})
 
 
 class TenantAdminSite(SmartAdminSite):
@@ -35,6 +56,7 @@ class TenantAdminSite(SmartAdminSite):
 
     def each_context(self, request: "AuthHttpRequest") -> "Dict[str, Any]":
         ret = super().each_context(request)
+        ret["flower_address"] = settings.POWER_QUERY_FLOWER_ADDRESS
         if must_tenant():
             selected_tenant = get_selected_tenant()
             ret["tenant_form"] = SelectTenantForm(initial={"tenant": selected_tenant}, request=request)
@@ -48,6 +70,9 @@ class TenantAdminSite(SmartAdminSite):
         if must_tenant():
             return False
         return super().is_smart_enabled(request)
+
+    def autocomplete_view(self, request: "AuthHttpRequest") -> HttpResponse:
+        return TenantAutocompleteJsonView.as_view(admin_site=self)(request)
 
     def has_permission(self, request: "AuthHttpRequest") -> bool:
         # if must_tenant():

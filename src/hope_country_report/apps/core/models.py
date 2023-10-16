@@ -1,20 +1,20 @@
 from django.contrib.auth.models import Group
 from django.db import models
+from django.db.models import QuerySet
+from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 from unicef_security.models import AbstractUser
 
 from hope_country_report.apps.hope.models import BusinessArea
+from hope_country_report.state import state
 
 
 class CountryOfficeManager(models.Manager["CountryOffice"]):
-    ...
-    # def get_queryset(self):
-    #     if is_tenant_active():
-    #         if active_tenant := get_selected_tenant():
-    #             ...
-    #     #         return super().get_queryset().filter(id=active_tenant.pk)
-    #     return super().get_queryset()
+    def get_queryset(self) -> QuerySet["CountryOffice"]:
+        if state.tenant:
+            return super().get_queryset().filter(id=state.tenant.pk)
+        return super().get_queryset()
 
 
 class CountryOffice(models.Model):
@@ -32,8 +32,10 @@ class CountryOffice(models.Model):
     class Meta:
         ordering = ("name",)
 
-    @property
+    @cached_property
     def business_area(self) -> "BusinessArea|None":
+        from hope_country_report.apps.hope.models import BusinessArea
+
         return BusinessArea.objects.filter(id=self.hope_id).first()
 
     @classmethod

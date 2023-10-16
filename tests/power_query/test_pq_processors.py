@@ -93,7 +93,7 @@ def test_processor_docx(dataset, tmp_path):
     fmt = Mock()
     fmt.template = tpl
 
-    result = processors.ToWord(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
+    result = processors.ToWord(fmt).process({"dataset": dataset, "business_area": "Afghanistan", "project": ""})
     # try ti save and open
     output = tmp_path / "AAAA.docx"
     output.write_bytes(result.read())

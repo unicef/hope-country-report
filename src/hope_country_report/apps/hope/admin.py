@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from django.db.models import Model, QuerySet
     from django.http import HttpRequest
 
+    from ...types.http import AuthHttpRequest
+
 
 class ReadOnlyMixin:
     def has_add_permission(self, request: "HttpRequest", obj: "Model | None" = None) -> bool:
@@ -43,7 +45,7 @@ class BusinessAreaAdmin(HopeModelAdmin):
 
 
 class AutoBusinessAreaCol:
-    def get_list_display(self, request):
+    def get_list_display(self, request: "AuthHttpRequest") -> Sequence[str]:
         base = super().get_list_display(request)
         # if "business_area" not in base:
         return ("business_area", *base)

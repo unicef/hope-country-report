@@ -1,23 +1,85 @@
-#header {
-  background-color: rgb(30, 58, 138);
+$admin-main: rgb(55, 176, 248);
+$tenant-main: rgb(30, 58, 138);
+html[data-theme],
+:root {
+  //--primary: rgb(55, 176, 248);
+  --header-bg: #37B0F8FF;
+  --accent: white;
+  --header-color: #e8e8e8;
+  //--header-bg: var(--primary);
+  //--accent: white;
+  //--link-fg: rgb(55, 176, 248);
+  //--header-link-color: white;
 }
 
-nav {
-  .breadcrumbs {
-    background-color: rgb(31 41 55);
+html[data-tenant="yes"][data-theme],
+:root {
+  --primary: #0f2f3b;
+  --header-bg: #1E3A8AFF;
+  --breadcrumbs-bg: #0f2f3b;
+  --link-fg: #37b0f8;
+  --accent: #f5dd5d;
+  --header-color: #ffc
+  //--secondary: #417690;
+  //--link-fg: white;
+  //--header-bg: #1E3A8AFF;
+  //--breadcrumbs-bg: var(--secondary);
+}
+
+body {
+
+  //#header {
+  //  //background-color: $admin-main;
+  //  color: white;
+  //
+  //  #branding h1 a {
+  //    color: white;
+  //  }
+  //}
+  //
+  //nav {
+  //  .breadcrumbs {
+  //    background-color: rgb(31 41 55);
+  //  }
+  //}
+  //
+  //.theme-toggle {
+  //  svg.theme-icon-when-auto, svg.theme-icon-when-dark, svg.theme-icon-when-light {
+  //    color: $admin-main;
+  //  }
+  //}
+}
+
+body.tenant {
+  --primary: rgb(30, 58, 138);
+  --link-fg: rgb(30, 58, 138);
+  //--header-link-color: white;
+
+  #header {
+    background-color: $tenant-main;
+  }
+
+  nav {
+    .breadcrumbs {
+      background-color: rgb(31 41 55);
+    }
+  }
+
+  .module caption, .module h2 {
+    background-color: $tenant-main;
+  }
+
+
+  .theme-toggle {
+    svg.theme-icon-when-auto, svg.theme-icon-when-dark, svg.theme-icon-when-light {
+      color: $tenant-main;
+    }
   }
 }
 
-.module caption, .module h2 {
-  background-color: rgb(30, 58, 138);
-
-}
-
-
-.theme-toggle {
-  svg.theme-icon-when-auto, svg.theme-icon-when-dark, svg.theme-icon-when-light {
-    color: rgb(30, 58, 138);
-  }
+#celery-status {
+  padding: 10px 40px;
+  background-color: #1f2937;
 }
 
 #id_code_container {
@@ -37,15 +99,18 @@ nav {
   width: 100%;
   position: relative;
 }
+
 .center-h {
   position: absolute;
   left: 50%;
 }
+
 .center-v {
   position: relative;
   top: 50%;
 
 }
+
 .center-screen {
   position: absolute;
   top: 50%;

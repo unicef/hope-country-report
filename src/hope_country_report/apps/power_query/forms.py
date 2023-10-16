@@ -2,6 +2,7 @@ from typing import Any
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.forms import Field
 
 from strategy_field.forms import StrategyFormField
@@ -11,7 +12,7 @@ from ..tenant.config import conf
 from ..tenant.utils import get_selected_tenant
 from .models import Dataset, Formatter, Query
 from .processors import registry
-from .widget import ContentTypeChoiceField, PythonFormatterEditor
+from .widget import PythonFormatterEditor
 
 
 class SelectDatasetForm(forms.Form):
@@ -28,9 +29,21 @@ class FormatterTestForm(forms.Form):
 
 
 class QueryForm(forms.ModelForm):
-    project = forms.ModelChoiceField(queryset=None, required=False, blank=True)
+    # project = forms.ModelChoiceField(
+    #     queryset=None,
+    #     required=False,
+    #     blank=True,
+    #     # widget=AutocompleteSelect(Query._meta.get_field("project").remote_field, admin.site),
+    # )
     name = forms.CharField(required=True, widget=forms.TextInput(attrs={"style": "width:80%"}))
-    target = ContentTypeChoiceField()
+    # target = ContentTypeChoiceField()
+    target = forms.ModelChoiceField(
+        queryset=ContentType.objects,
+        required=False,
+        blank=True,
+        limit_choices_to={"app_label": "hope"},
+        # widget=AutocompleteSelect(Query._meta.get_field("target").remote_field, admin.site),
+    )
     code = forms.CharField(widget=PythonFormatterEditor)
     owner = forms.ModelChoiceField(
         queryset=get_user_model().objects, widget=forms.HiddenInput, required=False

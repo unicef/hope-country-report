@@ -10,6 +10,8 @@ from django.core.management import BaseCommand, call_command
 from django.core.management.base import CommandError, SystemCheckError
 from django.core.validators import validate_email
 
+from strategy_field.utils import fqn
+
 from hope_country_report.apps.power_query.defaults import create_defaults
 from hope_country_report.config import env
 
@@ -178,6 +180,21 @@ class Command(BaseCommand):
                 echo("Created default formatters")
                 for f in created:
                     echo(f.name)
+            echo("Create default PeriodicTask")
+            from django_celery_beat.models import CrontabSchedule, PeriodicTask
+
+            from hope_country_report.apps.power_query.celery_tasks import period_task_manager
+
+            sunday, __ = CrontabSchedule.objects.get_or_create(day_of_week="0")
+            first_of_month, __ = CrontabSchedule.objects.get_or_create(day_of_month="1")
+
+            PeriodicTask.objects.get_or_create(
+                name="Refresh every Sunday", defaults={"task": fqn(period_task_manager), "crontab": sunday}
+            )
+
+            PeriodicTask.objects.get_or_create(
+                name="Refresh First Of Month", defaults={"task": fqn(period_task_manager), "crontab": first_of_month}
+            )
 
             echo("Upgrade completed", style_func=self.style.SUCCESS)
         except ValidationError as e:

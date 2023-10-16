@@ -22,6 +22,7 @@ import celery
 import swapper
 from celery import states
 from celery.result import AsyncResult
+from django_celery_beat.models import PeriodicTask
 from natural_keys import NaturalKeyModel
 from sentry_sdk import capture_exception, configure_scope
 from strategy_field.fields import StrategyField
@@ -37,7 +38,6 @@ from .exceptions import QueryRunError
 from .json import PQJSONEncoder
 from .processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_LIST, TYPES
 from .utils import dict_hash, is_valid_template, to_dataset
-from .validators import FrequencyValidator
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -75,6 +75,14 @@ class CeleryEnabled(models.Model):
     class Meta:
         abstract = True
 
+    @property
+    def async_result(self) -> Optional[AsyncResult]:
+        if self.celery_task:
+            return AsyncResult(self.celery_task, app=celery.current_app)
+        else:
+            return None
+
+    @property
     def status(self) -> str:
         if self.celery_task:
             try:
@@ -84,13 +92,6 @@ class CeleryEnabled(models.Model):
         else:
             result = "Not scheduled"
         return result
-
-    @property
-    def async_result(self) -> Optional[AsyncResult]:
-        if self.celery_task and self.status not in self.SCHEDULED:
-            return AsyncResult(self.celery_task, app=celery.current_app)
-        else:
-            return None
 
     def queue(self) -> Optional[str]:
         if self.status not in self.SCHEDULED:
@@ -524,14 +525,7 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
         related_name="+",
     )
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
-    frequence = models.CharField(
-        max_length=30,
-        null=True,
-        blank=True,
-        help_text="Refresh every (e.g. 3 - 1/3 - mon - 1/3,Mon)",
-        default="mon,tue,wed,thu,fri,sat,sun",
-        validators=[FrequencyValidator()],
-    )
+    schedule = models.ForeignKey(PeriodicTask, blank=True, null=True, on_delete=models.SET_NULL)
     last_run = models.DateTimeField(null=True, blank=True)
     validity_days = models.IntegerField(default=365)
 
@@ -628,7 +622,7 @@ class ReportDocument(PowerQueryModel, models.Model):
     arguments = models.JSONField(default=dict, encoder=PQJSONEncoder)
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
     content_type = models.CharField(max_length=5, choices=MIMETYPES)  # type: ignore # internal mypy error
-    info = models.JSONField(default={}, blank=True, null=False)
+    info = models.JSONField(default=dict, blank=True, null=False)
     objects = ReportDocumentManager()
 
     class Meta:

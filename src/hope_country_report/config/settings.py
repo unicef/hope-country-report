@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "constance",
     "taggit",
     "django_celery_beat",
+    "django_celery_results",
     "unicef_security",
     "debug_toolbar",
     "django.contrib.auth",
@@ -126,16 +127,28 @@ STATICFILES_FINDERS = [
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-SECURE_HSTS_SECONDS = 60
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 X_FRAME_OPTIONS = "SAMEORIGIN"
+
+
+# SECURE_HSTS_SECONDS = 60
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT")
+# SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
+# CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")
+#
+SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE")
+SESSION_COOKIE_PATH = env("SESSION_COOKIE_PATH")
+SESSION_COOKIE_DOMAIN = env("SESSION_COOKIE_DOMAIN")
+# SESSION_COOKIE_HTTPONLY = env("SESSION_COOKIE_HTTPONLY")
+SESSION_COOKIE_NAME = env("SESSION_COOKIE_NAME")
+# SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
 
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_URL = "/accounts/logout"
 LOGOUT_REDIRECT_URL = "/"
 
-# TIME_ZONE = env('TIME_ZONE')
+TIME_ZONE = env("TIME_ZONE")
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -154,6 +167,8 @@ INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
 USE_I18N = True
 USE_TZ = True
+USE_L10N = True
+
 
 CACHES = {
     "default": {

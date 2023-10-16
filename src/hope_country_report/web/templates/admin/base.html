@@ -1,7 +1,8 @@
-{% extends "admin/base.html" %}{% load i18n static %}
-{% block extrastyle %}{% if active_tenant %}
-    <link rel="stylesheet" href="{% static 'admin/hr.css' %}">{% endif %}
-{% endblock %}
+{% extends "admin/layout.html" %}{% load i18n static %}
+{#{% block extrastyle %}#}
+{#    {{ block.super }}#}
+{#    <link rel="stylesheet" href="{% static 'admin/hr.css' %}">#}
+{#{% endblock %}#}
 
 {% block userlinks %}
     {% if active_tenant %}

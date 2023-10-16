@@ -1,6 +1,6 @@
 from django.db import models
 
-from hope_country_report.apps.hope.models import HopeModel
+from ._base import HopeModel
 
 
 class DataCollectingType(HopeModel):

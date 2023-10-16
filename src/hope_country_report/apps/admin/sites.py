@@ -25,7 +25,7 @@ class HRAdminSite(TenantAdminSite):
     def site_header(self) -> "_StrOrPromise":
         if must_tenant():
             return gettext_lazy("HOPE Reporting %s") % (get_selected_tenant() or "")
-        return gettext_lazy("HOPE Reporting administration")
+        return gettext_lazy("HOPE Reporting")
 
     # def each_context(self, request: "AuthHttpRequest") -> "Dict[str, Any]":
     #     ret = super().each_context(request)
