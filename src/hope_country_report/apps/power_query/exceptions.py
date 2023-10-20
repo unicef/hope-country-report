@@ -1,7 +1,11 @@
 from typing import Any
 
 
-class QueryRunError(Exception):
+class PowerQueryError(Exception):
+    pass
+
+
+class QueryRunError(PowerQueryError):
     def __init__(
         self,
         exception: Exception,
@@ -14,3 +18,11 @@ class QueryRunError(Exception):
 
     def __str__(self) -> str:
         return str(f"{self.exception.__class__.__name__}: {self.exception}")
+
+
+class QueryRunCanceled(PowerQueryError):
+    pass
+
+
+class QueryRunTerminated(PowerQueryError):
+    pass

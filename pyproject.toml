@@ -57,6 +57,9 @@ dependencies = [
     "django-celery-results>=2.5.1",
     "celery>=5.3.4",
     "flower>=2.0.1",
+    "django-timezone-field>=6.0.1",
+    "pytz>=2023.3.post1",
+    "tzdata>=2023.3",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"

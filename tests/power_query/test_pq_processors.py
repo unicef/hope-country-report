@@ -7,6 +7,7 @@ from unittest.mock import Mock
 
 from docxtpl import DocxTemplate
 from pypdf import PdfReader
+from strategy_field.utils import fqn
 from testutils.factories import DatasetFactory
 
 from hope_country_report.apps.power_query import processors
@@ -105,7 +106,7 @@ def test_processor_pdf(dataset, tmp_path):
     from testutils.factories import FormatterFactory
 
     code = FormatterFactory(name="Queryset To HTML").code
-    fmt = FormatterFactory(name="aaa", code=code)
+    fmt = FormatterFactory(name="aaa", code=code, processor=fqn(processors.ToPDF))
 
     result = processors.ToPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
     output = tmp_path / "AAAA.pdf"

@@ -37,3 +37,17 @@ class Command(BaseCommand):
         Report.objects.get_or_create(
             title="Full HH list", defaults={"query": q, "formatter": Formatter.objects.get(name="Queryset To HTML")}
         )
+        q, __ = Query.objects.get_or_create(
+            name="Dev Query",
+            defaults=dict(
+                project=None,
+                owner=None,
+                target=ContentType.objects.get_for_model(Household),
+                code="""import time
+start=time.time()
+while True:
+    time.sleep(1)
+    print(f"Query: {self} -  Aborted: {self.is_aborted()}")
+""",
+            ),
+        )

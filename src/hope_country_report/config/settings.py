@@ -168,7 +168,7 @@ INTERNAL_IPS = ["127.0.0.1", "localhost"]
 USE_I18N = True
 USE_TZ = True
 USE_L10N = True
-
+USE_DEPRECATED_PYTZ = False
 
 CACHES = {
     "default": {

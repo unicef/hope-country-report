@@ -40,7 +40,7 @@ def test_sizeof(value, expected):
 
 def test_to_dataset_qs(user):
     qs = type(user).objects.all()
-    assert to_dataset(qs).width == 14
+    assert to_dataset(qs).width == 15
 
 
 def test_to_dataset_values(user):

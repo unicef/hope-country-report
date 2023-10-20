@@ -21,6 +21,7 @@ from admin_extra_buttons.mixins import ExtraButtonsMixin
 from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
+from celery.contrib.abortable import AbortableAsyncResult
 from celery.result import AsyncResult
 from constance import config
 from import_export import fields, resources
@@ -47,7 +48,7 @@ if TYPE_CHECKING:
 class CeleryEnabledMixin:
     def get_readonly_fields(self, request: HttpRequest, obj: Optional["AnyModel"] = None) -> Sequence[str]:
         ret = list(super().get_readonly_fields(request, obj))
-        ret.append("celery_task")
+        ret.append("async_result_id")
         return ret
 
     @button()
@@ -55,38 +56,73 @@ class CeleryEnabledMixin:
         obj: CeleryEnabled
         for obj in self.get_queryset(request):
             if obj.async_result is None:
-                obj.celery_task = None
+                obj.async_result_id = None
                 obj.save()
 
     @view()
-    def revoke(self, request: HttpRequest, pk: int) -> "HttpResponse":
+    def celery_discard_all(self, request: HttpRequest) -> "HttpResponse":
+        self.model.discard_all()
+
+    @view()
+    def celery_purge(self, request: HttpRequest) -> "HttpResponse":
+        self.model.purge()
+
+    @view()
+    def celery_abort(self, request: HttpRequest, pk: int) -> "HttpResponse":
         obj: CeleryEnabled = self.get_object(request, pk)
         if obj.async_result:
-            res: AsyncResult = obj.async_result
-            res.revoke()
-            obj.celery_task = None
+            res: AbortableAsyncResult = obj.async_result
+            res.abort()
             obj.save()
 
-    @button()
-    def monitor(self, request: HttpRequest) -> HttpResponse:
-        ctx = self.get_common_context(request, title="Celery Monitor")
-        ctx["queries"] = Query.objects.all()
-        ctx["reports"] = Report.objects.all()
+    @view()
+    def celery_terminate(self, request: HttpRequest, pk: int) -> "HttpResponse":
+        obj: CeleryEnabled = self.get_object(request, pk)
+        obj.terminate()
+
+    # @view()
+    # def celery_kill(self, request: HttpRequest, pk: int) -> "HttpResponse":
+    #     obj: CeleryEnabled = self.get_object(request, pk)
+    #     if obj.async_result:
+    #         res: AbortableAsyncResult = obj.async_result
+    #         res.revoke(terminate=True, signal="SIGKILL")
+    #         obj.async_result_id = None
+    #         obj.save()
+    #
+    # @view()
+    # def celery_revoke(self, request: HttpRequest, pk: int) -> "HttpResponse":
+    #     obj: CeleryEnabled = self.get_object(request, pk)
+    #     if obj.async_result:
+    #         res: AbortableAsyncResult = obj.async_result
+    #         res.revoke()
+    #         obj.save()
+
+    @view()
+    def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
+        ctx = self.get_common_context(request, pk=pk)
+        # ctx["queries"] = Query.objects.all()
+        # ctx["reports"] = Report.objects.all()
         return render(
             request,
-            f"admin/power_query/{self.model._meta.model_name}/monitor.html",
+            f"admin/power_query/{self.model._meta.model_name}/inspect.html",
             ctx,
         )
 
     @view()
-    def queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
+    def celery_queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
         obj: Optional[CeleryEnabled]
         try:
             obj = self.get_object(request, str(pk))
             obj.queue()
-            self.message_user(request, f"Run scheduled: {obj.celery_task}")
+            self.message_user(request, f"Run scheduled: {obj.async_result_id}")
         except Exception as e:
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
+
+    @property
+    def media(self):
+        response = super().media
+        response._js_lists.append(["admin/celery.js"])
+        return response
 
 
 class AutoProjectCol:

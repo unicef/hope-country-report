@@ -26,6 +26,8 @@ def _setup_models():
     settings.DATABASES["default"]["NAME"] = "_hcr"
     settings.DATABASES["default"]["TEST"] = {"NAME": "_hcr"}
     settings.DATABASE_ROUTERS = ()
+    # settings.CELERY_TASK_DEFAULT_QUEUE = "test_queue_hcr"
+    # settings.CELERY_TASK_REVOKED_QUEUE = "test_queue_hcr_revoked"
     del settings.DATABASES["hope_ro"]
 
     # settings.DATABASES["hope_ro"]["NAME"] = "_hope"
@@ -184,9 +186,11 @@ def mocked_responses():
 @pytest.fixture(autouse=True)
 def state_context(db):
     from hope_country_report.apps.power_query.defaults import create_defaults
+    from hope_country_report.config.celery import app
     from hope_country_report.state import state
 
     create_defaults()
+    app.control.purge()
 
     with state.configure():
         yield

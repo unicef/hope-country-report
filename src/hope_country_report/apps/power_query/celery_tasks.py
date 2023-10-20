@@ -1,23 +1,49 @@
 from typing import Any, Dict, Tuple, Type, TYPE_CHECKING, Union
 
 import logging
+import signal
+
+from django.conf import settings
 
 from billiard.einfo import ExceptionInfo
-from celery import Task
+from celery.contrib.abortable import AbortableTask
+from celery.exceptions import Ignore, Reject
+from concurrency.exceptions import RecordModifiedError
 from sentry_sdk import capture_exception
 
 from ...config.celery import app
+from .exceptions import PowerQueryError, QueryRunCanceled, QueryRunError, QueryRunTerminated
 from .models import Query, Report
 from .utils import sentry_tags
 
 if TYPE_CHECKING:
-    from .models import QueryResult, ReportResult
+    from .models import QueryMatrixResult, ReportResult
 
 logger = logging.getLogger(__name__)
 
 
-class AbstractPowerQueryTask(Task):
+class AbstractPowerQueryTask(AbortableTask):
     model: "Union[Type[Query], Type[Report]]"
+
+    def after_return(self, status, retval, task_id, args, kwargs, einfo):
+        print(f"AAAAAAAAAA  2222 {status} {retval} {type(retval)} {isinstance(retval, PowerQueryError)}")
+        # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 2222 {kwargs}")
+        if isinstance(retval, QueryRunCanceled):
+            print("QueryRunCanceled")
+        elif isinstance(retval, QueryRunTerminated):
+            print("QueryRunTerminated")
+            self.update_state(state="INTERRUPTED")
+        elif isinstance(retval, QueryRunError):
+            print("QueryRunError")
+        elif isinstance(retval, PowerQueryError):
+            print("PowerQueryError")
+        else:
+            print(f"{retval} {type(retval)}")
+
+            print(222222222)
+            print(222222222)
+
+        super().after_return(status, retval, task_id, args, kwargs, einfo)
 
     def on_success(self, retval: Any, task_id: str, args: Tuple[Any], kwargs: Dict[str, Any]) -> None:
         """
@@ -43,11 +69,16 @@ class AbstractPowerQueryTask(Task):
         kwargs (Dict): Original keyword arguments for the task that failed.
         einfo (~billiard.einfo.ExceptionInfo): Exception information.
         """
-        q = self.model.objects.get(id=args[0])
-        sid = capture_exception(exc)
-        q.sentry_error_id = sid
-        q.error_message = str(exc)
-        q.save()
+        print(f"ON_FAILURE {exc}")
+        # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 51 {task_id}")
+        # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 51 {args}")
+        # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 51 {einfo}")
+        q = self.model.objects.filter(id=args[0]).first()
+        if q:
+            sid = capture_exception(exc)
+            q.sentry_error_id = sid
+            q.error_message = str(exc)
+            q.save()
 
 
 class PowerQueryTask(AbstractPowerQueryTask):
@@ -58,13 +89,35 @@ class ReportTask(AbstractPowerQueryTask):
     model = Report
 
 
-@app.task(base=PowerQueryTask)
+@app.task(bind=True, base=PowerQueryTask)
 @sentry_tags
-def run_background_query(query_id: int) -> "QueryResult":
+def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "QueryMatrixResult":
     try:
-        query = Query.objects.get(pk=query_id)
-        return query.execute_matrix()
+        query: Query = Query.objects.get(pk=query_id)
+        if query.version != version:
+            raise RecordModifiedError(target=query)
+        if query.status == Query.CANCELED:
+            raise Ignore()
+
+        def trap(sig, frame):
+            raise QueryRunTerminated
+
+        for sig in ("TERM", "HUP", "INT", "USR1"):
+            signal.signal(getattr(signal, "SIG" + sig), trap)
+
+        res = query.execute_matrix(running_task=self)
+        return res
+    except QueryRunCanceled as e:
+        with app.pool.acquire(block=True) as conn:
+            conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, self.request.id)
+        app.control.revoke(self.request.id)
+        raise Reject(e, requeue=False)
+    except RecordModifiedError as e:
+        raise Reject(e, requeue=False)
+    except QueryRunTerminated:
+        raise
     except BaseException as e:
+        print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 122: 333 {e.__class__.__name__}:{e}")
         logger.exception(e)
         raise
 
@@ -84,22 +137,21 @@ def refresh_report(self: Any, id: int) -> "ReportResult":
     return result
 
 
-#
-# @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
-# @sentry_tags
-# def period_task_manager(self: Any) -> Any:
-#     results: Any = []
-#     report: Report
-#     try:
-#         for report in Report.objects.select_related("owner", "query", "formatter").filter(
-#             active=True, frequence__isnull=False
-#         ):
-#             if should_run(report.frequence):
-#                 ret = report.queue()
-#                 results.append(ret)
-#             else:
-#                 results.append([report.pk, "skip"])
-#     except BaseException as e:
-#         logger.exception(e)
-#         raise self.retry(exc=e)
-#     return results
+@app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
+@sentry_tags
+def period_task_manager(self: Any) -> Any:
+    results: Any = []
+    # report: Report
+    # try:
+    #     for report in Report.objects.select_related("owner", "query", "formatter").filter(
+    #         active=True, frequence__isnull=False
+    #     ):
+    #         if should_run(report.frequence):
+    #             ret = report.queue()
+    #             results.append(ret)
+    #         else:
+    #             results.append([report.pk, "skip"])
+    # except BaseException as e:
+    #     logger.exception(e)
+    #     raise self.retry(exc=e)
+    return results

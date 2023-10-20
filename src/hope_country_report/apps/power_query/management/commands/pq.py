@@ -1,10 +1,13 @@
 from typing import Any, Dict
 
 from pathlib import Path
+from pprint import pprint
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand, CommandError, CommandParser
+
+from hope_country_report.apps.power_query.models import Query as PowerQuery
 
 
 class Command(BaseCommand):
@@ -26,6 +29,9 @@ class Command(BaseCommand):
         )
         queue = subparsers.add_parser("queue")
         queue.add_argument("id")
+
+        check = subparsers.add_parser("check")
+        check.add_argument("id")
 
         run = subparsers.add_parser("run")
         run.add_argument("id")
@@ -53,8 +59,6 @@ class Command(BaseCommand):
             self.stdout.write(line.format(id=q.id, name=q.name[:30], status=q.status, last_run=q.last_run))
 
     def _test(self, *args: Any, **options: Any) -> None:
-        from hope_country_report.apps.power_query.models import Query as PowerQuery
-
         code = Path(options["filename"]).read_text()
         target = options["target"]
         model = ContentType.objects.get_for_model(apps.get_model(target))
@@ -64,9 +68,12 @@ class Command(BaseCommand):
         for entry in result:
             print(type(entry), entry)
 
-    def _queue(self, *args: Any, **options: Any) -> None:
-        from hope_country_report.apps.power_query.models import Query as PowerQuery
+    def _check(self, *args: Any, **options: Any) -> None:
+        pq = PowerQuery.objects.get(pk=options["id"])
+        pprint(pq.task_info)
+        pprint(pq.queue_info)
 
+    def _queue(self, *args: Any, **options: Any) -> None:
         pq = PowerQuery.objects.get(pk=options["id"])
         print("src/hope_country_report/apps/power_query/management/commands/pq.py: 68 - celery_task", pq.celery_task)
         print("src/hope_country_report/apps/power_query/management/commands/pq.py: 68 - async_result", pq.async_result)
@@ -79,8 +86,6 @@ class Command(BaseCommand):
         print("src/hope_country_report/apps/power_query/management/commands/pq.py: 74 - status", pq.status)
 
     def _run(self, *args: Any, **options: Any) -> None:
-        from hope_country_report.apps.power_query.models import Query as PowerQuery
-
         query_args: Dict[str, str] = {}
         try:
             for a in options["arguments"]:
@@ -98,8 +103,6 @@ class Command(BaseCommand):
             self.stdout.write(str(e))
 
     def _execute(self, *args: Any, **options: Any) -> None:
-        from hope_country_report.apps.power_query.models import Query as PowerQuery
-
         try:
             pq = PowerQuery.objects.get(pk=options["id"])
             result = pq.execute_matrix(persist=options["persist"])
@@ -122,5 +125,7 @@ class Command(BaseCommand):
             self._run(*args, **options)
         elif cmd == "queue":
             self._queue(*args, **options)
+        elif cmd == "check":
+            self._check(*args, **options)
         else:
             raise CommandError(cmd)

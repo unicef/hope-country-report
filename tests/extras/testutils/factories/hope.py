@@ -121,6 +121,7 @@ class HouseholdFactory(AutoRegisterModelFactory):
 
     class Meta:
         model = models.Household
+        django_get_or_create = ("id",)
 
     @post_generation
     def set_head_of_household(self, create, extracted, **kwargs):

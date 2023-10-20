@@ -6,7 +6,7 @@ groups = ["default", "code", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:d65a6f34b0cbcfed2848807795a103514e30117c4d40e5c5593d84a72a2e1df8"
+content_hash = "sha256:1d11366f5ce85fae8f0136ed6c3dd33c24fd57172e54afb3a6a360001177212f"
 
 [[package]]
 name = "amqp"

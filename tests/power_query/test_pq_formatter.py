@@ -31,7 +31,7 @@ def query1(data):
     return QueryFactory(
         target=ContentTypeFactory(app_label="hope", model="household"),
         name="Query1",
-        code="result=conn.all()",
+        code="result=conn.order_by('id')",
     )
 
 

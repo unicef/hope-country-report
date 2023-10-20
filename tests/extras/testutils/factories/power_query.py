@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import factory
+from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query.models import (
     Dataset,
@@ -11,6 +12,7 @@ from hope_country_report.apps.power_query.models import (
     ReportDocument,
     ReportTemplate,
 )
+from hope_country_report.apps.power_query.processors import ToHTML
 
 from .base import AutoRegisterModelFactory
 from .contenttypes import ContentTypeFactory
@@ -44,6 +46,7 @@ class ReportTemplateFactory(AutoRegisterModelFactory):
 class FormatterFactory(AutoRegisterModelFactory):
     name = "Queryset To HTML"
     template = factory.SubFactory(ReportTemplateFactory)
+    processor = fqn(ToHTML)
 
     class Meta:
         model = Formatter

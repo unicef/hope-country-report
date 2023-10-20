@@ -2,7 +2,9 @@ import pytest
 
 from django.urls import reverse
 
-from hope_country_report.apps.power_query.processors import TYPE_DETAIL
+from strategy_field.utils import fqn
+
+from hope_country_report.apps.power_query.processors import ToHTML, TYPE_DETAIL
 
 
 @pytest.fixture()
@@ -45,6 +47,7 @@ def formatter():
     return FormatterFactory(
         target=ContentTypeFactory(app_label="auth", model="permission"),
         name="f1",
+        processor=fqn(ToHTML),
         code="result=to_dataset(conn.all())",
     )
 
@@ -70,7 +73,7 @@ def test_dataset_preview(request, q, django_app, admin_user):
 def test_formatter_test(request, q, django_app, admin_user):
     from testutils.factories import FormatterFactory
 
-    fmt = FormatterFactory(name="f1", code="- {{record.pk}}\n", type=TYPE_DETAIL)
+    fmt = FormatterFactory(name="f1", code="- {{record.pk}}\n", type=TYPE_DETAIL, processor=fqn(ToHTML))
     query = request.getfixturevalue(q)
     query.run(True)
     url = reverse("admin:power_query_formatter_test", args=[fmt.pk])

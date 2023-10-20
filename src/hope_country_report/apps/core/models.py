@@ -4,6 +4,7 @@ from django.db.models import QuerySet
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+from timezone_field import TimeZoneField
 from unicef_security.models import AbstractUser
 
 from hope_country_report.apps.hope.models import BusinessArea
@@ -59,6 +60,8 @@ class CountryOffice(models.Model):
 
 
 class User(AbstractUser):  # type: ignore
+    timezone = TimeZoneField(default="UTC")
+
     class Meta:
         app_label = "core"
 
