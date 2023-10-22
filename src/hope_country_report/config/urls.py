@@ -7,7 +7,7 @@ from hope_country_report.apps.power_query.views import download
 
 urlpatterns = [
     # path("", include("hope_country_report.web.urls")),
-    path(r"media/<str:path>/", download),
+    path(r"media/<str:path>/", download, name="download-media"),
     path("s2/", include("django_select2.urls")),
     path(r"security/", include("unicef_security.urls", namespace="security")),
     path(r"social/", include("social_django.urls", namespace="social")),

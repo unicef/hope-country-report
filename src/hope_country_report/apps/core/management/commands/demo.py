@@ -34,9 +34,8 @@ class Command(BaseCommand):
             defaults=dict(project=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
         )
 
-        Report.objects.get_or_create(
-            title="Full HH list", defaults={"query": q, "formatter": Formatter.objects.get(name="Queryset To HTML")}
-        )
+        r1, __ = Report.objects.get_or_create(title="Full HH list", defaults={"query": q})
+        r1.formatters.add(Formatter.objects.get(name="Queryset To HTML"))
         q, __ = Query.objects.get_or_create(
             name="Dev Query",
             defaults=dict(

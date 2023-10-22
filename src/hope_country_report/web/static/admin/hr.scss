@@ -81,13 +81,17 @@ body.tenant {
   padding: 10px 40px;
   background-color: #1f2937;
   &.STARTED{
-    background-color: #98810b;
+    background-color: #37b0f8;
   }
   &.FAILURE{
     background-color: rgba(255, 37, 37, 0.65);
   }
   &.INTERRUPTED{
-    background-color: rgb(16, 118, 124);
+    background-color: rgb(255, 196, 0);
+    color: black;
+  }
+  &.SUCCESS{
+    background-color: rgba(0, 255, 13, 0.57);
   }
   .popup{
     position: absolute;

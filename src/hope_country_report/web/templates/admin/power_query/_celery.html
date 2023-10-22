@@ -5,32 +5,48 @@
         {% if original.status == "Not scheduled" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
         {% endif %}
-        {% if original.status == "STARTED" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_terminate' original.pk %}">Terminate</a>
-            <a class="button" target="flower" href="{{ flower_address }}/task/{{ original.async_result_id }}">Flower</a>
-            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
-        {% endif %}
         {% if original.status == "QUEUED" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_terminate' original.pk %}">Cancel</a>
-            <a class="button" target="flower" href="{{ flower_address }}/task/{{ original.async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
             <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
         {% endif %}
         {% if original.status == "PENDING" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
         {% endif %}
-        {% if original.status == "CANCELED" %}
+        {% if original.status == "REVOKED" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
         {% endif %}
         {% if original.status == "INTERRUPTED" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
-            <a class="button" target="flower" href="{{ flower_address }}/task/{{ original.async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
 
+        {% endif %}
+        {% if original.status == "CANCELED" %}
+            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+        {% endif %}
+        {% if original.status == "STARTED" %}
+            <a class="button" href="{% url opts|admin_urlname:'celery_terminate' original.pk %}">Terminate</a>
+            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
+        {% endif %}
+        {% if original.status == "SUCCESS" %}
+            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
+            <a class="button" href="{% url opts|admin_urlname:'celery_result' original.pk %}">Result</a>
+        {% endif %}
+        {% if original.status == "FAILURE" %}
+            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
+            <a class="button" href="{% url opts|admin_urlname:'celery_result' original.pk %}">Result</a>
         {% endif %}
     {% endif %}
 
 
 
-    {% if original.async_result_id %}
+    {% if original.curr_async_result_id %}
         {#            {{ original.task_info.last_update|userdatetime }}#}
         {#            - Task: <a target="flower" href="{{ flower_address }}/task/{{ original.async_result_id }}">{{ original.async_result_id }}</a>#}
         {#                <span>#}

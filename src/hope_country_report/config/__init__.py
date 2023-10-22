@@ -11,6 +11,7 @@ MANDATORY = {
 
 DEVELOPMENT = {
     "DEBUG": (bool, True),
+    "AUTHENTICATION_BACKENDS": (list, []),
     "SECURE_SSL_REDIRECT": (bool, False),
     "SECURE_HSTS_PRELOAD": (bool, False),
     "CSRF_COOKIE_SECURE": (bool, False),

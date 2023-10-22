@@ -2,12 +2,14 @@
 <html>
 <head>
     <title>HOPE - Reporting</title>
-    <link rel="stylesheet" href="{% static '/admin/hr.css' %}">
+    <link rel="stylesheet" href="{% static '/css/style.css' %}">
 </head>
 <body class="h-screen bg-gray-800 dark:text-gray-200" data-tenant="{% if active_tenant %}*{% endif %}">
 <div id="main-container" class="mx-auto max-w-screen-xl h-screen mb-auto">
     <div class="flex content-center">
+        {% if not user.is_authenticated %}
         <a class="m-auto bg-blue-500 p-3 rounded" href="{% url "admin:login" %}?next={% url "admin:select_tenant" %}">Login</a>
+        {% endif %}
     </div>
 </div>
 </body>

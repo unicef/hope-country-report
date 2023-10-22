@@ -29,6 +29,7 @@ def create_defaults() -> "List[Formatter]":
     </table>
 """,
             "processor": fqn(ToHTML),
+            "content_type": ".html",
         },
     )
 
@@ -47,6 +48,7 @@ def create_defaults() -> "List[Formatter]":
     </table>
 """,
             "processor": fqn(ToHTML),
+            "content_type": ".html",
         },
     )
     q1, __ = Query.objects.get_or_create(
@@ -69,11 +71,11 @@ def create_defaults() -> "List[Formatter]":
         code="result=conn.filter()",
     )
 
-    Report.objects.get_or_create(
+    r1, __ = Report.objects.get_or_create(
         name="Household by Program",
-        defaults={"query": q2, "formatter": f2, "title": "Household by BusinessArea: {program}"},
+        defaults={"query": q2, "title": "Household by BusinessArea: {program}"},
     )
-
+    r1.formatters.add(f2)
     f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "processor": fqn(ToXLS)})
 
     ReportTemplate.load()

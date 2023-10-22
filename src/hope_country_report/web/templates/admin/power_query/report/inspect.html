@@ -2,30 +2,6 @@
 {% load power_query %}
 {% block action-content %}
     <h1>{{ original }}</h1>
-{#    <table>#}
-{#        <tr>#}
-{#            <th colspan="2">Tasks</th>#}
-{#        </tr>#}
-{#        <tr>#}
-{#            <td>pending</td>#}
-{#            <td>{{ original.celery_queue_status.pending }}</td>#}
-{#        </tr>#}
-{#        <tr>#}
-{#            <td>canceled</td>#}
-{#            <td>{{ original.celery_queue_status.canceled }}</td>#}
-{#        </tr>#}
-{#        <tr>#}
-{#            <th colspan="2">Queue</th>#}
-{#        </tr>#}
-{#        <tr>#}
-{#            <td>size</td>#}
-{#            <td>{{ original.celery_queue_status.size }}</td>#}
-{#        </tr>#}
-{#        <tr>#}
-{#            <td>revoked</td>#}
-{#            <td>{{ original.celery_queue_status.revoked }}</td>#}
-{#        </tr>#}
-{#    </table>#}
     ==== {{ original.get_celery_queue_position }} ====
     {{ original.curr_async_result_id }}
     <a class="button" target="flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>

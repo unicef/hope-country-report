@@ -108,8 +108,9 @@ MIDDLEWARE = [
 AUTHENTICATION_BACKENDS = (
     "unicef_security.backends.UNICEFAzureADB2COAuth2",
     "hope_country_report.apps.tenant.backend.TenantBackend",
+    "hope_country_report.apps.power_query.backends.PowerQueryBackend",
     "django.contrib.auth.backends.ModelBackend",
-    "hope_country_report.utils.tests.backends.AnyUserAuthBackend",
+    # *env("AUTHENTICATION_BACKENDS"),
 )
 
 # path
@@ -168,7 +169,7 @@ INTERNAL_IPS = ["127.0.0.1", "localhost"]
 USE_I18N = True
 USE_TZ = True
 USE_L10N = True
-USE_DEPRECATED_PYTZ = False
+
 
 CACHES = {
     "default": {

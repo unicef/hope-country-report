@@ -49,6 +49,7 @@ def test_formatter_html_detail(dataset):
         code="<html><body>{{page}}</body></html>",
         processor=fqn(processors.ToHTML),
         type=processors.TYPE_DETAIL,
+        content_type=".html",
     )
     result = fmt.render({"dataset": dataset})
     content = result.decode()

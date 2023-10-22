@@ -20,9 +20,6 @@ class StateSetMiddleware:
         self.handler = RequestHandler()
 
     def __call__(self, request: "AuthHttpRequest") -> "HttpResponse":
-        # state.request = request
-        # tenant = get_tenant_from_request(request)
-        # state.tenant = tenant
         self.handler.process_request(request)
         response = self.get_response(request)
         return response
@@ -37,6 +34,4 @@ class StateClearMiddleware:
         response = self.get_response(request)
         self.handler.process_response(request, response)
 
-        # state.set_cookies(response)
-        # state.reset()
         return response

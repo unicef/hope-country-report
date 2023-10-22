@@ -7,11 +7,12 @@ from unittest.mock import Mock
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
+from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
 
@@ -22,15 +23,13 @@ from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from celery.contrib.abortable import AbortableAsyncResult
-from celery.result import AsyncResult
 from constance import config
-from import_export import fields, resources
-from import_export.widgets import ForeignKeyWidget
+from django_celery_results.models import TaskResult
+from import_export import resources
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
 from ...utils.perf import profile
-from .celery_tasks import refresh_report
 from .forms import FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
 from .processors import ProcessorStrategy, registry
@@ -48,7 +47,7 @@ if TYPE_CHECKING:
 class CeleryEnabledMixin:
     def get_readonly_fields(self, request: HttpRequest, obj: Optional["AnyModel"] = None) -> Sequence[str]:
         ret = list(super().get_readonly_fields(request, obj))
-        ret.append("async_result_id")
+        ret.append("curr_async_result_id")
         return ret
 
     @button()
@@ -56,7 +55,7 @@ class CeleryEnabledMixin:
         obj: CeleryEnabled
         for obj in self.get_queryset(request):
             if obj.async_result is None:
-                obj.async_result_id = None
+                obj.curr_async_result_id = None
                 obj.save()
 
     @view()
@@ -109,12 +108,22 @@ class CeleryEnabledMixin:
         )
 
     @view()
+    def celery_result(self, request: HttpRequest, pk: int) -> HttpResponse:
+        self.get_common_context(request, pk=pk)
+        result = TaskResult.objects.filter(task_id=self.object.curr_async_result_id).first()
+        if result:
+            url = reverse("admin:django_celery_results_taskresult_change", args=[result.pk])
+            return redirect(url)
+        else:
+            self.message_user(request, "Result not found", messages.ERROR)
+
+    @view()
     def celery_queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
         obj: Optional[CeleryEnabled]
         try:
             obj = self.get_object(request, str(pk))
-            obj.queue()
-            self.message_user(request, f"Run scheduled: {obj.async_result_id}")
+            if obj.queue():
+                self.message_user(request, f"Task scheduled: {obj.curr_async_result_id}")
         except Exception as e:
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
@@ -123,6 +132,12 @@ class CeleryEnabledMixin:
         response = super().media
         response._js_lists.append(["admin/celery.js"])
         return response
+
+
+class AutoReverseMixin:
+    def get_admin_url(self):
+        opts = self.model._meta
+        return reverse(admin_urlname(opts, "change"), args=[self.pk])
 
 
 class AutoProjectCol:
@@ -150,6 +165,7 @@ class QueryAdmin(
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin,
+    AutoReverseMixin,
 ):
     list_display = ("name", "target", "owner", "active", "success", "last_run", "status")
     search_fields = ("name",)
@@ -389,16 +405,6 @@ class FormatterAdmin(
         return render(request, "admin/power_query/formatter/test.html", context)
 
 
-class ReportResource(resources.ModelResource):
-    query = fields.Field(widget=ForeignKeyWidget(Query, "name"))
-    formatter = fields.Field(widget=ForeignKeyWidget(Formatter, "name"))
-
-    class Meta:
-        model = Report
-        fields = ("name", "query", "formatter")
-        import_id_fields = ("name",)
-
-
 @admin.register(ReportTemplate)
 class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin):
     list_display = ("name", "doc", "suffix", "content_type")
@@ -434,19 +440,20 @@ class ReportAdmin(
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin,
+    AutoReverseMixin,
 ):
-    list_display = ("name", "formatter", "last_run", "owner")
-    autocomplete_fields = ("query", "formatter", "owner")
-    filter_horizontal = ["limit_access_to"]
+    list_display = ("name", "formatters", "last_run", "owner")
+    autocomplete_fields = ("query", "owner")
+    filter_horizontal = ["limit_access_to", "formatters"]
     readonly_fields = ("last_run",)
     list_filter = (
         ("owner", AutoCompleteFilter),
         ("query", AutoCompleteFilter),
-        ("formatter", AutoCompleteFilter),
+        ("formatters", AutoCompleteFilter),
         "last_run",
     )
-    resource_class = ReportResource
     search_fields = ("name",)
+    change_form_template = None
 
     def has_change_permission(self, request: HttpRequest, obj: Optional[Any] = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
@@ -459,16 +466,6 @@ class ReportAdmin(
             kwargs["name"] = f"Report for {q.name}"
             kwargs["notify_to"] = [request.user]
         return kwargs
-
-    @button(visible=lambda btn: "change" in btn.context["request"].path)
-    def queue(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
-        obj = self.get_object(request, str(pk))
-        try:
-            res: AsyncResult = refresh_report.delay(obj.pk)
-            self.message_user(request, f"Report scheduled: {res}")
-        except Exception as e:
-            logger.exception(e)
-            self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def execute(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:

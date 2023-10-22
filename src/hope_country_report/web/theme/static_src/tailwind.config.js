@@ -26,11 +26,11 @@ module.exports = {
          * Adjust the following line to match your project structure.
          */
         // '../../**/templates/**/*.html',
-        '../**/templates/**/*.html',
+        // '../**/templates/**/*.html',
         '../../**/templates/**/*.html',
-        '../../../**/templates/**/*.html',
-        '../../../../**/templates/**/*.html',
-
+        // '../../../**/templates/**/*.html',
+        // '../../../../**/templates/**/*.html',
+        // '/Users/sax/Documents/data/PROGETTI/UNICEF/hope-country-report/src/hope_country_report/web/templates/**/*.html',
         /**
          * JS: If you use Tailwind CSS in JavaScript, uncomment the following lines and make sure
          * patterns match your project structure.
@@ -47,7 +47,51 @@ module.exports = {
         // '../../**/*.py'
     ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                unicef: '#12A8EC',
+                primary: {
+                    50: '#eff6ff',
+                    100: '#dbeafe',
+                    200: '#bfdbfe',
+                    300: '#93c5fd',
+                    400: '#60a5fa',
+                    500: '#3b82f6',
+                    600: '#2563eb',
+                    700: '#1d4ed8',
+                    800: '#1e40af',
+                    900: '#1e3a8a',
+                },
+                secondary: {
+                    50: '#f8fafc',
+                    100: '#f1f5f9',
+                    200: '#e2e8f0',
+                    300: '#cbd5e1',
+                    400: '#94a3b8',
+                    500: '#64748b',
+                    600: '#475569',
+                    700: '#334155',
+                    800: '#1e293b',
+                    900: '#0f172a',
+                },
+            },
+        },
+        screens: {
+            'sm': '640px',
+            // => @media (min-width: 640px) { ... }
+
+            'md': '768px',
+            // => @media (min-width: 768px) { ... }
+
+            'lg': '1024px',
+            // => @media (min-width: 1024px) { ... }
+
+            'xl': '1280px',
+            // => @media (min-width: 1280px) { ... }
+
+            '2xl': '1536px',
+            // => @media (min-width: 1536px) { ... }
+        }
     },
     plugins: [
         /**

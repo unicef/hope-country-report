@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Iterable, TYPE_CHECKING
 
 import base64
 import itertools
@@ -6,7 +6,6 @@ import json
 import logging
 import pickle
 import types
-from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
@@ -38,6 +37,7 @@ from hope_country_report.config.celery import app
 
 from ...state import state
 from ...utils.perf import profile
+from ..core.utils import SmartManager
 from ..tenant.db import TenantModel
 from ..tenant.exceptions import InvalidTenantError
 from ..tenant.utils import get_selected_tenant, must_tenant
@@ -47,7 +47,7 @@ from .processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_
 from .utils import dict_hash, is_valid_template, to_dataset
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+    from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
     from django.db.models import QuerySet
 
@@ -92,9 +92,20 @@ class CeleryEnabled(models.Model):
     SCHEDULED = frozenset({states.PENDING, states.RECEIVED, states.STARTED, states.RETRY, "QUEUED"})
     QUEUED = "QUEUED"
     CANCELED = "CANCELED"
-    async_result_id = models.CharField(max_length=36, blank=True, null=True)
+
     version = AutoIncVersionField()
-    celery_task_name: str = ""
+    sentry_error_id = models.CharField(max_length=400, blank=True, null=True)
+    error_message = models.CharField(max_length=400, blank=True, null=True)
+    last_run = models.DateTimeField(null=True, blank=True)
+
+    curr_async_result_id = models.CharField(
+        max_length=36, blank=True, null=True, help_text="Current (active) AsyncResult is"
+    )
+    last_async_result_id = models.CharField(
+        max_length=36, blank=True, null=True, help_text="Latest executed AsyncResult is"
+    )
+
+    celery_task_name: str = "<define `celery_task_name`>"
 
     class Meta:
         abstract = True
@@ -106,7 +117,7 @@ class CeleryEnabled(models.Model):
             tasks = conn.default_channel.client.lrange(settings.CELERY_TASK_DEFAULT_QUEUE, 0, -1)
         for i, task in enumerate(tasks, 1):
             j = json.loads(task)
-            if j["headers"]["id"] == self.async_result_id:
+            if j["headers"]["id"] == self.curr_async_result_id:
                 return i
         return 0
 
@@ -125,40 +136,12 @@ class CeleryEnabled(models.Model):
             for rem in revoked:
                 if rem not in pending_tasks:
                     conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, rem)
-            # i = app.control.inspect()
-            # t = 0
-            # for x, y in i.active().items():
-            #     t += len(y)
-            return {
-                "size": len(tasks),
-                "pending": pending,
-                "canceled": canceled,
-                "revoked": len(revoked),
-                # "running": t,
-                # "active": i.active(),
-                # "reserved": i.reserved(),
-                # "scheduled": i.scheduled(),
-            }
-
-            # revoked =  conn.default_channel.client.llen(settings.CELERY_TASK_REVOKED_QUEUE)
-
-    # def get_celery_queue_items(self):
-    #
-    #     with app.pool.acquire(block=True) as conn:
-    #         tasks = conn.default_channel.client.lrange(settings.CELERY_TASK_DEFAULT_QUEUE, 0, -1)
-    #         decoded_tasks = []
-    #
-    #     for task in tasks:
-    #         j = json.loads(task)
-    #         body = json.loads(base64.b64decode(j["body"]))
-    #         decoded_tasks.append({"task": j["headers"]["task"], "body": body})
-    #
-    #     return decoded_tasks
+            return {"size": len(tasks), "pending": pending, "canceled": canceled, "revoked": len(revoked)}
 
     @cached_property
     def async_result(self) -> "AbortableAsyncResult|None":
-        if self.async_result_id:
-            return AbortableAsyncResult(self.async_result_id, app=celery.current_app)
+        if self.curr_async_result_id:
+            return AbortableAsyncResult(self.curr_async_result_id, app=celery.current_app)
         else:
             return None
 
@@ -211,36 +194,6 @@ class CeleryEnabled(models.Model):
 
         return getattr(celery_tasks, cls.celery_task_name)
 
-    def queue(self) -> str | None:
-        if self.status not in self.SCHEDULED:
-            ver = self.version
-            res = self.task_handler.delay(self.id, self.version)
-            with disable_concurrency(self):
-                self.async_result_id = res.id
-                self.save(update_fields=["async_result_id"])
-            assert self.version == ver
-            return self.async_result_id
-        return None
-
-    @property
-    def status(self) -> str:
-        if self.async_result_id:
-            if self.is_canceled():
-                return "CANCELED"
-
-            try:
-                result = self.async_result.state
-                if result == "PENDING":
-                    if self.is_queued():
-                        result = "QUEUED"
-                    else:
-                        result = "Not scheduled"
-            except Exception as e:
-                result = str(e)
-        else:
-            result = "Not scheduled"
-        return result
-
     def is_queued(self):
         from hope_country_report.config.celery import app
 
@@ -248,39 +201,66 @@ class CeleryEnabled(models.Model):
             tasks = conn.default_channel.client.lrange(settings.CELERY_TASK_DEFAULT_QUEUE, 0, -1)
         for task in tasks:
             j = json.loads(task)
-            if j["headers"]["id"] == self.async_result_id:
+            if j["headers"]["id"] == self.curr_async_result_id:
                 return True
         return False
 
     def is_canceled(self):
         with app.pool.acquire(block=True) as conn:
-            return conn.default_channel.client.sismember(settings.CELERY_TASK_REVOKED_QUEUE, self.async_result_id)
+            return conn.default_channel.client.sismember(settings.CELERY_TASK_REVOKED_QUEUE, self.curr_async_result_id)
+
+    @property
+    def status(self) -> str:
+        try:
+            if self.curr_async_result_id:
+                if self.is_canceled():
+                    return "CANCELED"
+
+                result = self.async_result.state
+                if result == "PENDING":
+                    if self.is_queued():
+                        result = "QUEUED"
+                    else:
+                        result = "Not scheduled"
+            else:
+                result = "Not scheduled"
+            return result
+        except Exception as e:
+            return str(e)
+
+    def queue(self) -> str | None:
+        if self.status not in self.SCHEDULED:
+            ver = self.version
+            res = self.task_handler.delay(self.id, self.version)
+            with disable_concurrency(self):
+                self.curr_async_result_id = res.id
+                self.save(update_fields=["curr_async_result_id"])
+            assert self.version == ver
+            return self.curr_async_result_id
+        return None
 
     def terminate(self):
         if self.status in ["QUEUED", "PENDING"]:
             with app.pool.acquire(block=True) as conn:
                 conn.default_channel.client.sadd(
-                    settings.CELERY_TASK_REVOKED_QUEUE, self.async_result_id, self.async_result_id
+                    settings.CELERY_TASK_REVOKED_QUEUE, self.curr_async_result_id, self.curr_async_result_id
                 )
         else:
-            app.control.revoke(self.async_result_id, terminate=True)
+            app.control.revoke(self.curr_async_result_id, terminate=True)
 
     @classmethod
     def discard_all(cls):
         app.control.discard_all()
-        cls.objects.update(async_result_id=None)
+        cls.objects.update(curr_async_result_id=None)
         with app.pool.acquire(block=True) as conn:
             conn.default_channel.client.delete(settings.CELERY_TASK_REVOKED_QUEUE)
 
     @classmethod
     def purge(cls):
         app.control.purge()
-        # cls.objects.update(async_result_id=None)
-        # with app.pool.acquire(block=True) as conn:
-        #     conn.default_channel.client.delete(settings.CELERY_TASK_REVOKED_QUEUE)
 
 
-class PowerQueryManager(models.Manager["_PowerQueryModel"]):
+class PowerQueryManager(SmartManager["_PowerQueryModel"]):
     def get_tenant_filter(self) -> "Q":
         _filter = Q()
         if must_tenant():
@@ -335,11 +315,7 @@ class ProjectRelatedModel(PowerQueryModel):
 class Parametrizer(NaturalKeyModel, ProjectRelatedModel, models.Model):
     code = models.SlugField(max_length=255, unique=True, editable=False)
     name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(
-        max_length=255,
-        null=True,
-        blank=True,
-    )
+    description = models.TextField(max_length=255, null=True, blank=True)
     value = models.JSONField(default=dict, blank=False, validators=[validate_queryargs])
     system = models.BooleanField(blank=True, default=False, editable=False)
     source = models.ForeignKey("Query", blank=True, null=True, on_delete=models.CASCADE, related_name="+")
@@ -407,9 +383,6 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
     code = models.TextField(default="result=conn.all()", blank=True)
     info = JSONField(default=dict, blank=True, encoder=PQJSONEncoder)
     parametrizer = models.ForeignKey(Parametrizer, on_delete=models.CASCADE, blank=True, null=True)
-    sentry_error_id = models.CharField(max_length=400, blank=True, null=True)
-    error_message = models.CharField(max_length=400, blank=True, null=True)
-    last_run = models.DateTimeField(null=True, blank=True)
     active = models.BooleanField(default=True)
 
     celery_task_name = "run_background_query"
@@ -464,7 +437,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         self.last_run = None
         self.info = {}
         self.running_task = running_task
-        results: "QueryMatrixResult" = {"timestamp": datetime.strftime(timezone.now(), "%Y-%m-%d %H:%M")}
+        results: "QueryMatrixResult" = {}
         with configure_scope() as scope:
             scope.set_tag("power_query", True)
             scope.set_tag("power_query.name", self.name)
@@ -550,21 +523,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
                     else:
                         dataset = Dataset(query=self, hash=signature, **defaults)
 
-                    # if result and persist:
-                    #     dataset, __ = Dataset.objects.update_or_create(
-                    #         query=self,
-                    #         hash=signature,
-                    #         defaults={
-                    #             "size": len(result),
-                    #             "info": info,
-                    #             "last_run": timezone.now(),
-                    #             "value": pickle.dumps(result),
-                    #             "extra": pickle.dumps(extra),
-                    #         },
-                    #     )
                     return_value = dataset, extra
-                    # else:
-                    #     return_value = result, info
         except Exception:
             raise
         return return_value
@@ -587,6 +546,10 @@ class Dataset(PowerQueryModel, models.Model):
 
     def __str__(self) -> str:
         return f"Result of {self.query.name} {self.arguments}"
+
+    @property
+    def project(self) -> "Project":
+        return self.query.project
 
     @property
     def data(self) -> "Any":
@@ -638,7 +601,7 @@ class Formatter(ProjectRelatedModel, models.Model):
     code = models.TextField(blank=True, null=True)
     template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, blank=True, null=True)
 
-    content_type = models.CharField(max_length=5, choices=MIMETYPES)
+    content_type = models.CharField(max_length=200, choices=MIMETYPES)
     processor = StrategyField(registry=registry, default=fqn(ToHTML))
     type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
 
@@ -663,46 +626,35 @@ class Formatter(ProjectRelatedModel, models.Model):
                 context["record"] = entry
                 ret.extend(self.processor.process(context))
             return ret
-        # if self.content_type == "xls":
-        #     dt = to_dataset(context["dataset"].data)
-        #     return dt.export("xls")
-        #
-        # elif self.content_type == "pdf":
-        #     raise NotImplementedError
-        #
-        # if self.code:
-        #     tpl = Template(self.code)
-        # elif self.content_type == "json":
-        #     dt = to_dataset(context["dataset"].data)
-        #     return dt.export("json")
-        # elif self.content_type == "yaml":
-        #     dt = to_dataset(context["dataset"].data)
-        #     return dt.export("yaml")
-        # else:
-        #     raise ValueError("Unable to render. No code and/or unknown content_type")
-        #
-        # return tpl.render(Context(context))
+
+    def save(
+        self,
+        force_insert: bool = False,
+        force_update: bool = False,
+        using: "str|None" = None,
+        update_fields: "Iterable[str]|None" = None,
+    ) -> None:
+        if not self.content_type:
+            self.content_type = self.processor.content_type
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
     title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")
     name = models.CharField(max_length=255, blank=True, null=True)
     query = models.ForeignKey(Query, on_delete=models.CASCADE)
-    formatter = models.ForeignKey(Formatter, on_delete=models.CASCADE, blank=True, null=True)
+    description = models.TextField(max_length=255, null=True, blank=True, default="")
+
+    formatters = models.ManyToManyField(Formatter, null=False, blank=False)
     active = models.BooleanField(default=True)
-    owner = models.ForeignKey(
-        get_user_model(),
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name="+",
-    )
+    owner = models.ForeignKey(get_user_model(), blank=True, null=True, on_delete=models.CASCADE, related_name="+")
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
     schedule = models.ForeignKey(PeriodicTask, blank=True, null=True, on_delete=models.SET_NULL)
     last_run = models.DateTimeField(null=True, blank=True)
     validity_days = models.IntegerField(default=365)
 
     tags = TaggableManager(blank=True)
+    celery_task_name = "refresh_report"
 
     class Tenant:
         tenant_filter_field = "query__project"
@@ -724,43 +676,43 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
         result: "ReportResult" = []
         if run_query:
             query.execute_matrix()
-        for dataset in query.datasets.all():
-            if not dataset.size:
-                continue
-            try:
-                context = dataset.arguments
-                if dataset.extra:
-                    context.update(pickle.loads(dataset.extra) or {})
-
-                # title = (self.title % context) if self.title else self.title
+        for formatter in self.formatters.all():
+            for dataset in query.datasets.all():
+                if not dataset.size:
+                    continue
                 try:
-                    title = self.title.format(**context)
-                except KeyError:
-                    title = self.title
-                with profile() as perfs:
-                    output = self.formatter.render(
-                        {
-                            "dataset": dataset,
-                            "report": self,
+                    context = dataset.arguments
+                    if dataset.extra:
+                        context.update(pickle.loads(dataset.extra) or {})
+
+                    try:
+                        title = self.title.format(**context)
+                    except KeyError:
+                        title = self.title
+                    with profile() as perfs:
+                        output = formatter.render(
+                            {
+                                "dataset": dataset,
+                                "report": self,
+                                "title": title,
+                                "context": context,
+                            }
+                        )
+                    res, __ = ReportDocument.objects.update_or_create(
+                        report=self,
+                        dataset=dataset,
+                        defaults={
                             "title": title,
-                            "context": context,
-                        }
+                            "content_type": formatter.content_type,
+                            "output": pickle.dumps(output),
+                            "arguments": dataset.arguments,
+                            "info": perfs,
+                        },
                     )
-                res, __ = ReportDocument.objects.update_or_create(
-                    report=self,
-                    dataset=dataset,
-                    defaults={
-                        "title": title,
-                        "content_type": self.formatter.content_type,
-                        "output": pickle.dumps(output),
-                        "arguments": dataset.arguments,
-                        "info": perfs,
-                    },
-                )
-                result.append((res.pk, len(res.output)))
-            except Exception as e:
-                logger.exception(e)
-                result.append((dataset.pk, str(e)))
+                    result.append((res.pk, len(res.output)))
+                except Exception as e:
+                    logger.exception(e)
+                    result.append((dataset.pk, str(e)))
         self.last_run = timezone.now()
         if not result:
             result = ["No Dataset available"]
@@ -786,7 +738,7 @@ class ReportDocument(PowerQueryModel, models.Model):
     output = models.BinaryField(null=True, blank=True)
     arguments = models.JSONField(default=dict, encoder=PQJSONEncoder)
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
-    content_type = models.CharField(max_length=5, choices=MIMETYPES)  # type: ignore # internal mypy error
+    content_type = models.CharField(max_length=200, choices=MIMETYPES)  # type: ignore # internal mypy error
     info = models.JSONField(default=dict, blank=True, null=False)
     objects = ReportDocumentManager()
 
@@ -798,6 +750,10 @@ class ReportDocument(PowerQueryModel, models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    @cached_property
+    def project(self) -> "Project":
+        return self.report.project
 
     @cached_property
     def data(self) -> "Any":

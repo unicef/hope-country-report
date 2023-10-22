@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+header{
+  img{
+    height: 64px;
+  }
+}
+.breadcrumbs {
+  @apply flex bg-unicef;
+  ul {
+    @apply flex;
+    li {
+      @apply px-2;
+    }
+  }
+}

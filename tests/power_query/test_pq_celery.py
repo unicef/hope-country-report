@@ -51,7 +51,7 @@ def query2():
     q = QueryFactory(
         owner=None,
         name="Debug Query",
-        async_result_id=None,
+        curr_async_result_id=None,
         code="""import time;
 start=time.time()
 while True:
@@ -62,9 +62,9 @@ while True:
 """,
     )
     yield q
-    if q.async_result_id:
+    if q.curr_async_result_id:
         with app.pool.acquire(block=True) as conn:
-            conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, q.async_result_id)
+            conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, q.curr_async_result_id)
 
 
 @pytest.fixture()

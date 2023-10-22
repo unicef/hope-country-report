@@ -9,7 +9,6 @@ from billiard.einfo import ExceptionInfo
 from celery.contrib.abortable import AbortableTask
 from celery.exceptions import Ignore, Reject
 from concurrency.exceptions import RecordModifiedError
-from sentry_sdk import capture_exception
 
 from ...config.celery import app
 from .exceptions import PowerQueryError, QueryRunCanceled, QueryRunError, QueryRunTerminated
@@ -26,7 +25,7 @@ class AbstractPowerQueryTask(AbortableTask):
     model: "Union[Type[Query], Type[Report]]"
 
     def after_return(self, status, retval, task_id, args, kwargs, einfo):
-        print(f"AAAAAAAAAA  2222 {status} {retval} {type(retval)} {isinstance(retval, PowerQueryError)}")
+        print(f"AAAAAAAAAA {status} {retval} {type(retval)} {isinstance(retval, PowerQueryError)}")
         # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 2222 {kwargs}")
         if isinstance(retval, QueryRunCanceled):
             print("QueryRunCanceled")
@@ -37,12 +36,10 @@ class AbstractPowerQueryTask(AbortableTask):
             print("QueryRunError")
         elif isinstance(retval, PowerQueryError):
             print("PowerQueryError")
+        elif isinstance(retval, dict):
+            print("dict")
         else:
             print(f"{retval} {type(retval)}")
-
-            print(222222222)
-            print(222222222)
-
         super().after_return(status, retval, task_id, args, kwargs, einfo)
 
     def on_success(self, retval: Any, task_id: str, args: Tuple[Any], kwargs: Dict[str, Any]) -> None:
@@ -52,7 +49,10 @@ class AbstractPowerQueryTask(AbortableTask):
         args (Tuple): Original arguments for the executed task.
         kwargs (Dict): Original keyword arguments for the executed task.
         """
-        pass
+        instance = self.model.objects.filter(id=args[0]).first()
+        instance.last_async_result_id = task_id
+        instance.curr_async_result_id = None
+        instance.save()
 
     def on_failure(
         self,
@@ -72,13 +72,13 @@ class AbstractPowerQueryTask(AbortableTask):
         print(f"ON_FAILURE {exc}")
         # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 51 {task_id}")
         # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 51 {args}")
-        # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 51 {einfo}")
-        q = self.model.objects.filter(id=args[0]).first()
-        if q:
-            sid = capture_exception(exc)
-            q.sentry_error_id = sid
-            q.error_message = str(exc)
-            q.save()
+        # # print(f"src/hope_country_report/apps/power_query/celery_tasks.py: 51 {einfo}")
+        # instance = self.model.objects.filter(id=args[0]).first()
+        # if instance:
+        #     sid = capture_exception(exc)
+        #     q.sentry_error_id = sid
+        #     q.error_message = str(exc)
+        #     q.save()
 
 
 class PowerQueryTask(AbstractPowerQueryTask):
@@ -124,14 +124,14 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
 
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
-def refresh_report(self: Any, id: int) -> "ReportResult":
+def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportResult":
     result: "ReportResult" = []
     try:
         report: Report = Report.objects.get(id=id)
         result = report.execute(run_query=True)
     except Report.DoesNotExist as e:
         logger.exception(e)
-    except BaseException as e:
+    except Exception as e:
         logger.exception(e)
         raise self.retry(exc=e)
     return result

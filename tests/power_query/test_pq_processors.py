@@ -51,7 +51,7 @@ def formatter():
 def report(query1, formatter):
     from testutils.factories import ReportFactory
 
-    return ReportFactory(formatter=formatter, query=query1)
+    return ReportFactory(formatters=[formatter], query=query1)
 
 
 @pytest.fixture

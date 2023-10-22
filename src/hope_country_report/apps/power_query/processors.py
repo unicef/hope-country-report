@@ -95,7 +95,7 @@ class ToYAML(ProcessorStrategy):
 
 
 class ToHTML(ProcessorStrategy):
-    mime_type = None
+    mime_type = ".html"
     format = TYPE_BOTH
     verbose_name = "Render CODE"
 

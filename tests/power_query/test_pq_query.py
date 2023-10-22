@@ -157,7 +157,7 @@ def test_nested_query(query2: "Query"):
 def test_query_parametrizer(query3: "Query"):
     result = query3.execute_matrix()
     assert query3.datasets.count() == 2
-    assert sorted(result.keys()) == ["timestamp", "{'withdrawn': False}", "{'withdrawn': True}"]
+    assert sorted(result.keys()) == ["{'withdrawn': False}", "{'withdrawn': True}"]
     ds: "Dataset" = query3.datasets.get(info__arguments__withdrawn=False)
     assert ds.data.filter(withdrawn=False).count() == ds.data.count() == 2
 

@@ -16,7 +16,7 @@ from hope_country_report.apps.power_query.processors import ToHTML
 
 from .base import AutoRegisterModelFactory
 from .contenttypes import ContentTypeFactory
-from .user import UserFactory
+from .user import CountryOfficeFactory, UserFactory
 
 if TYPE_CHECKING:
     from typing import Dict
@@ -25,10 +25,13 @@ if TYPE_CHECKING:
 class QueryFactory(AutoRegisterModelFactory):
     name = factory.Sequence(lambda n: "Query %s" % n)
     owner = factory.SubFactory(UserFactory)
+    project = factory.SubFactory(CountryOfficeFactory)
     target = factory.SubFactory(ContentTypeFactory, app_label="hope", model="household")
     code = "result=conn.all()"
     parent = None
     active = True
+    curr_async_result_id = None
+    last_async_result_id = None
 
     class Meta:
         model = Query
@@ -72,29 +75,65 @@ class ReportFactory(AutoRegisterModelFactory):
     name = factory.Sequence(lambda n: "Report %s" % n)
     title = factory.Sequence(lambda n: "Report %s" % n)
     query = factory.SubFactory(QueryFactory)
-    formatter = factory.SubFactory(FormatterFactory)
     owner = factory.SubFactory(UserFactory)
+    project = factory.SubFactory(CountryOfficeFactory)
 
     class Meta:
         model = Report
         django_get_or_create = ("name",)
 
+    @factory.post_generation
+    def formatters(self, create, formatters, **kwargs):
+        from hope_country_report.apps.power_query.defaults import create_defaults
+
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if formatters:
+            # A list of groups were passed in, use them
+            for formatter in formatters:
+                self.formatters.add(formatter)
+        else:
+            create_defaults()
+            fmt = Formatter.objects.get(name="Queryset To HTML")
+            self.formatters.add(fmt)
+        self.execute(run_query=True)
+
 
 class ReportDocumentFactory(AutoRegisterModelFactory):
     report = factory.SubFactory(ReportFactory)
+    dataset = factory.SubFactory(DatasetFactory)
 
     class Meta:
         model = ReportDocument
 
-    @classmethod
-    def create(cls, **kwargs: "Dict") -> ReportDocument:
-        from hope_country_report.apps.power_query.defaults import create_defaults
+    # @classmethod
+    # def create(cls, **kwargs: "Dict") -> ReportDocument:
+    #     from hope_country_report.apps.power_query.defaults import create_defaults
+    #
+    #     create_defaults()
+    #     fmt = Formatter.objects.get(name="Queryset To HTML")
+    #     r: Report = ReportFactory(query=QueryFactory(), formatter=fmt)
+    #     r.execute(run_query=True)
+    #     return r.documents.first()
 
-        create_defaults()
-        fmt = Formatter.objects.get(name="Queryset To HTML")
-        r: Report = ReportFactory(query=QueryFactory(), formatter=fmt)
-        r.execute(run_query=True)
-        return r.documents.first()
+    # @factory.post_generation
+    # def formatters(self, create, formatters, **kwargs):
+    #     from hope_country_report.apps.power_query.defaults import create_defaults
+    #     if not create:
+    #         # Simple build, do nothing.
+    #         return
+    #
+    #     if formatters:
+    #         # A list of groups were passed in, use them
+    #         for formatter in formatters:
+    #             self.formatters.add(formatter)
+    #     else:
+    #         create_defaults()
+    #         fmt = Formatter.objects.get(name="Queryset To HTML")
+    #         r: Report = ReportFactory(query=QueryFactory(), formatter=fmt)
+    #         r.execute(run_query=True)
 
 
 class ParametrizerFactory(AutoRegisterModelFactory):
