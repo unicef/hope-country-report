@@ -1,4 +1,4 @@
-from typing import Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import base64
 import itertools
@@ -14,7 +14,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models, transaction
-from django.db.models import JSONField, Q
+from django.db.models import JSONField
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property, classproperty
@@ -37,28 +37,22 @@ from hope_country_report.config.celery import app
 
 from ...state import state
 from ...utils.perf import profile
-from ..core.utils import SmartManager
+from ..core.models import CountryOffice
 from ..tenant.db import TenantModel
-from ..tenant.exceptions import InvalidTenantError
-from ..tenant.utils import get_selected_tenant, must_tenant
 from .exceptions import QueryRunCanceled, QueryRunError
 from .json import PQJSONEncoder
+from .manager import PowerQueryManager
 from .processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_LIST, TYPES
 from .utils import dict_hash, is_valid_template, to_dataset
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
+    from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
     from django.db.models import QuerySet
 
     from ...types.django import AnyModel
+    from ...types.pq import QueryMatrixResult, ReportResult
     from .celery_tasks import PowerQueryTask
-
-    DocumentResult = Tuple[int, Union[str, int]]
-    ReportResult = List[Union[DocumentResult, Any, str]]
-    QueryResult = "Tuple[Dataset, Dict]"
-    QueryMatrixResult = Dict[str, Union[int, str]]
-    _PowerQueryModel = TypeVar("_PowerQueryModel", bound="PowerQueryModel", covariant=True)
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +104,7 @@ class CeleryEnabled(models.Model):
     class Meta:
         abstract = True
 
-    def get_celery_queue_position(self):
+    def get_celery_queue_position(self) -> int:
         from hope_country_report.config.celery import app
 
         with app.pool.acquire(block=True) as conn:
@@ -121,7 +115,7 @@ class CeleryEnabled(models.Model):
                 return i
         return 0
 
-    def celery_queue_status(self):
+    def celery_queue_status(self) -> "Dict[str, int]":
         with app.pool.acquire(block=True) as conn:
             tasks = conn.default_channel.client.lrange(settings.CELERY_TASK_DEFAULT_QUEUE, 0, 1)
             revoked = list(conn.default_channel.client.smembers(settings.CELERY_TASK_REVOKED_QUEUE))
@@ -146,7 +140,7 @@ class CeleryEnabled(models.Model):
             return None
 
     @property
-    def queue_info(self) -> "Dict":
+    def queue_info(self) -> "Dict[str, Any]":
         with app.pool.acquire(block=True) as conn:
             tasks = conn.default_channel.client.lrange(settings.CELERY_TASK_DEFAULT_QUEUE, 0, -1)
 
@@ -158,7 +152,7 @@ class CeleryEnabled(models.Model):
         return {"id": "NotFound"}
 
     @property
-    def task_info(self) -> "Dict":
+    def task_info(self) -> "Dict[str, Any]":
         if self.async_result:
             info = self.async_result._get_task_meta()
             result, task_status = info["result"], info["status"]
@@ -189,12 +183,12 @@ class CeleryEnabled(models.Model):
             }
 
     @classproperty
-    def task_handler(cls):
+    def task_handler(cls) -> "Callable[Any, Any]":
         from . import celery_tasks
 
         return getattr(celery_tasks, cls.celery_task_name)
 
-    def is_queued(self):
+    def is_queued(self) -> bool:
         from hope_country_report.config.celery import app
 
         with app.pool.acquire(block=True) as conn:
@@ -205,7 +199,7 @@ class CeleryEnabled(models.Model):
                 return True
         return False
 
-    def is_canceled(self):
+    def is_canceled(self) -> bool:
         with app.pool.acquire(block=True) as conn:
             return conn.default_channel.client.sismember(settings.CELERY_TASK_REVOKED_QUEUE, self.curr_async_result_id)
 
@@ -239,7 +233,7 @@ class CeleryEnabled(models.Model):
             return self.curr_async_result_id
         return None
 
-    def terminate(self):
+    def terminate(self) -> None:
         if self.status in ["QUEUED", "PENDING"]:
             with app.pool.acquire(block=True) as conn:
                 conn.default_channel.client.sadd(
@@ -249,46 +243,15 @@ class CeleryEnabled(models.Model):
             app.control.revoke(self.curr_async_result_id, terminate=True)
 
     @classmethod
-    def discard_all(cls):
+    def discard_all(cls) -> None:
         app.control.discard_all()
         cls.objects.update(curr_async_result_id=None)
         with app.pool.acquire(block=True) as conn:
             conn.default_channel.client.delete(settings.CELERY_TASK_REVOKED_QUEUE)
 
     @classmethod
-    def purge(cls):
+    def purge(cls) -> None:
         app.control.purge()
-
-
-class PowerQueryManager(SmartManager["_PowerQueryModel"]):
-    def get_tenant_filter(self) -> "Q":
-        _filter = Q()
-        if must_tenant():
-            tenant_filter_field = self.model.Tenant.tenant_filter_field
-            if not tenant_filter_field:
-                raise ValueError(
-                    f"Set 'tenant_filter_field' on {self} or override `get_queryset()` to enable queryset filtering"
-                )
-
-            if tenant_filter_field == "__all__":
-                return Q()
-            # elif tenant_filter_field == "__none__":
-            #     return {"pk__lt": -1}
-            elif tenant_filter_field == "__shared__":
-                if active_tenant := get_selected_tenant():
-                    _filter = Q(**{tenant_filter_field: active_tenant}) or Q({f"{tenant_filter_field}__isnull": True})
-            else:
-                active_tenant = get_selected_tenant()
-                if not active_tenant:
-                    raise InvalidTenantError
-                _filter = Q(**{tenant_filter_field: active_tenant})
-        return _filter
-
-    def get_queryset(self) -> "QuerySet[_PowerQueryModel]":
-        flt = self.get_tenant_filter()
-        if flt:
-            state.filters.append(str(flt))
-        return super().get_queryset().filter(flt)
 
 
 class PowerQueryModel(TenantModel):
@@ -298,21 +261,23 @@ class PowerQueryModel(TenantModel):
     objects = PowerQueryManager()
 
 
-class ProjectRelatedModel(PowerQueryModel):
-    project = models.ForeignKey(
-        swapper.get_model_name("power_query", "Project"), blank=True, on_delete=models.CASCADE, null=True
-    )
+#
+# class ProjectRelatedModel(PowerQueryModel):
+#     project = models.ForeignKey(
+#         swapper.get_model_name("power_query", "Project"), blank=True, on_delete=models.CASCADE, null=True
+#     )
+#
+#     objects = PowerQueryManager()
+#
+#     class Meta:
+#         abstract = True
+#
+#     class Tenant:
+#         tenant_filter_field = "project"
 
-    objects = PowerQueryManager()
 
-    class Meta:
-        abstract = True
-
-    class Tenant:
-        tenant_filter_field = "project"
-
-
-class Parametrizer(NaturalKeyModel, ProjectRelatedModel, models.Model):
+class Parametrizer(NaturalKeyModel, models.Model):
+    country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
     code = models.SlugField(max_length=255, unique=True, editable=False)
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(max_length=255, null=True, blank=True)
@@ -325,7 +290,7 @@ class Parametrizer(NaturalKeyModel, ProjectRelatedModel, models.Model):
         verbose_name = "Arguments"
 
     class Tenant:
-        tenant_filter_field = "project"
+        tenant_filter_field = "country_office"
 
     def clean(self) -> None:
         validate_queryargs(self.value)
@@ -373,7 +338,9 @@ class Project(models.Model):
         swappable = swapper.swappable_setting("power_query", "Project")
 
 
-class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
+class Query(CeleryEnabled, models.Model):
+    country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
+
     datasets: "QuerySet[Dataset]"
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
@@ -395,7 +362,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         ordering = ("name",)
 
     class Tenant:
-        tenant_filter_field = "project"
+        tenant_filter_field = "country_office"
 
     def save(
         self,
@@ -424,7 +391,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         self.last_run = timezone.now()
         self.save()
 
-    def execute_matrix(self, persist: bool = True, running_task=None) -> "QueryMatrixResult":
+    def execute_matrix(self, persist: bool = True, running_task: "PowerQueryTask|None" = None) -> "QueryMatrixResult":
         if self.parametrizer:
             args = self.parametrizer.get_matrix()
             if not args:
@@ -471,7 +438,7 @@ class Query(ProjectRelatedModel, CeleryEnabled, models.Model):
         connections: Dict[str, QuerySet[AnyModel]] = {}
         return_value: Tuple[Dataset, Dict[str, Any]]
         if state.tenant:
-            connections["QueryManager"] = Query.objects.filter(project=state.tenant)
+            connections["QueryManager"] = Query.objects.filter(country_office=state.tenant)
         else:
             connections["QueryManager"] = Query.objects.filter()
         debug = []
@@ -542,14 +509,14 @@ class Dataset(PowerQueryModel, models.Model):
     extra = models.BinaryField(null=True, blank=True, help_text="Any other attribute to pass to the formatter")
 
     class Tenant:
-        tenant_filter_field = "query__project"
+        tenant_filter_field = "query__country_office"
 
     def __str__(self) -> str:
         return f"Result of {self.query.name} {self.arguments}"
 
     @property
-    def project(self) -> "Project":
-        return self.query.project
+    def country_office(self) -> "CountryOffice":
+        return self.query.country_office
 
     @property
     def data(self) -> "Any":
@@ -560,11 +527,15 @@ class Dataset(PowerQueryModel, models.Model):
         return self.info.get("arguments", {})
 
 
-class ReportTemplate(ProjectRelatedModel, models.Model):
+class ReportTemplate(models.Model):
+    country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)
     doc = models.FileField()
     suffix = models.CharField(max_length=20)
     content_type = models.CharField(max_length=200, choices=MIMETYPES)  # type: ignore # internal mypy error
+
+    class Tenant:
+        tenant_filter_field = "country_office"
 
     @classmethod
     def load(cls) -> None:
@@ -595,7 +566,9 @@ class ReportTemplate(ProjectRelatedModel, models.Model):
         return str(self.name)
 
 
-class Formatter(ProjectRelatedModel, models.Model):
+class Formatter(models.Model):
+    country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
+
     processor: "ProcessorStrategy"
     name = models.CharField(max_length=255, unique=True)
     code = models.TextField(blank=True, null=True)
@@ -604,6 +577,9 @@ class Formatter(ProjectRelatedModel, models.Model):
     content_type = models.CharField(max_length=200, choices=MIMETYPES)
     processor = StrategyField(registry=registry, default=fqn(ToHTML))
     type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
+
+    class Tenant:
+        tenant_filter_field = "country_office"
 
     def __str__(self) -> str:
         return self.name
@@ -639,7 +615,9 @@ class Formatter(ProjectRelatedModel, models.Model):
         super().save(force_insert, force_update, using, update_fields)
 
 
-class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
+class Report(CeleryEnabled, models.Model):
+    country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
+
     title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")
     name = models.CharField(max_length=255, blank=True, null=True)
     query = models.ForeignKey(Query, on_delete=models.CASCADE)
@@ -657,7 +635,7 @@ class Report(ProjectRelatedModel, CeleryEnabled, models.Model):
     celery_task_name = "refresh_report"
 
     class Tenant:
-        tenant_filter_field = "query__project"
+        tenant_filter_field = "country_office"
 
     def save(
         self,
@@ -752,8 +730,8 @@ class ReportDocument(PowerQueryModel, models.Model):
         return self.title
 
     @cached_property
-    def project(self) -> "Project":
-        return self.report.project
+    def country_office(self) -> "CountryOffice":
+        return self.report.country_office
 
     @cached_property
     def data(self) -> "Any":

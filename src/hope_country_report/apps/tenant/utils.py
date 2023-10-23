@@ -12,13 +12,12 @@ if TYPE_CHECKING:
     from django.http import HttpResponse
 
     from hope_country_report.apps.core.models import CountryOffice
-    from hope_country_report.types.django import AnyModel
     from hope_country_report.types.http import AuthHttpRequest
 
 logger = logging.getLogger(__name__)
 
 
-def get_selected_tenant() -> "AnyModel | None":
+def get_selected_tenant() -> "CountryOffice | None":
     if state.tenant_cookie and state.tenant is None:
         filters = {"slug": state.tenant_cookie}
         state.filters.append(filters)
@@ -27,7 +26,7 @@ def get_selected_tenant() -> "AnyModel | None":
 
 
 def set_selected_tenant(tenant: "CountryOffice") -> None:
-    state.tenant = tenant.slug
+    state.tenant = tenant
     state.add_cookies(conf.COOKIE_NAME, tenant.slug)
 
 

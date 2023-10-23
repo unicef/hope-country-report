@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
         q, __ = Query.objects.get_or_create(
             name="Full HH list",
-            defaults=dict(project=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
+            defaults=dict(country_office=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
         )
 
         r1, __ = Report.objects.get_or_create(title="Full HH list", defaults={"query": q})
@@ -39,7 +39,7 @@ class Command(BaseCommand):
         q, __ = Query.objects.get_or_create(
             name="Dev Query",
             defaults=dict(
-                project=None,
+                country_office=None,
                 owner=None,
                 target=ContentType.objects.get_for_model(Household),
                 code="""import time

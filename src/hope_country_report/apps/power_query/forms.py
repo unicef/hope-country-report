@@ -54,7 +54,7 @@ class QueryForm(forms.ModelForm):
         model = Query
         exclude = ()
         fields = (
-            "project",
+            "country_office",
             "name",
             "description",
             "target",
@@ -66,11 +66,11 @@ class QueryForm(forms.ModelForm):
         from django.contrib.contenttypes.models import ContentType
 
         super().__init__(*args, **kwargs)
-        self.fields["project"].queryset = conf.auth.get_allowed_tenants()
+        self.fields["country_office"].queryset = conf.auth.get_allowed_tenants()
         self.fields["target"].queryset = ContentType.objects.filter(app_label="hope").order_by("model")
 
     def get_initial_for_field(self, field: Field, field_name: str) -> Any:
-        if field_name == "project":
+        if field_name == "country_office":
             return get_selected_tenant()
         if field_name == "owner":
             return state.request.user

@@ -43,6 +43,8 @@ OPTIONAL = {
     "STATIC_FILE_STORAGE": (str, "django.contrib.staticfiles.storage.StaticFilesStorage"),
     "MEDIA_URL": (str, "/media/"),
     "MEDIA_ROOT": (str, "/tmp/media/"),
+    "SENTRY_DSN": (str, ""),
+    "SENTRY_URL": (str, ""),
     "SESSION_COOKIE_DOMAIN": (str, "unicef.org"),
     "SESSION_COOKIE_NAME": (str, "hcr_session"),
     "SESSION_COOKIE_PATH": (str, "/"),

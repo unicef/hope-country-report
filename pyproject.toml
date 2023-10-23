@@ -93,6 +93,9 @@ code = [
     "django-stubs-ext>=4.2.2",
     "types-setuptools>=68.2.0.0",
 ]
+dev = [
+    "mkdocs>=1.5.3",
+]
 
 
 [tool.black]

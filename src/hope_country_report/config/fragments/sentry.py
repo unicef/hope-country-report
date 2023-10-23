@@ -4,8 +4,8 @@ from sentry_sdk.integrations.django import DjangoIntegration
 
 from .. import env
 
-SENTRY_DSN = env("SENTRY_DSN", default=None)  # noqa: F405
-
+SENTRY_DSN = env("SENTRY_DSN")
+SENTRY_URL = env("SENTRY_URL")
 if SENTRY_DSN:  # pragma: no cover
     sentry_sdk.init(
         dsn=SENTRY_DSN,

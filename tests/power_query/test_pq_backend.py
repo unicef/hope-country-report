@@ -33,8 +33,8 @@ def data() -> _DATA:
     with state.set(must_tenant=False):
         co1: "CountryOffice" = CountryOfficeFactory(name="Afghanistan")
         co2: "CountryOffice" = CountryOfficeFactory(name="Ukraine")
-        q1: Query = QueryFactory(project=co1, owner=UserFactory())
-        q2: Query = QueryFactory(project=co2, owner=UserFactory())
+        q1: Query = QueryFactory(country_office=co1, owner=UserFactory())
+        q2: Query = QueryFactory(country_office=co2, owner=UserFactory())
     return _DATA(co1, co2, q1, q2)
 
 

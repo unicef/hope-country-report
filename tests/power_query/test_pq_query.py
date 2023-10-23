@@ -1,12 +1,9 @@
 from typing import TYPE_CHECKING
 
-import contextlib
-
 import pytest
 
 from django.conf import settings
 
-from flags import state as flag_state
 from freezegun import freeze_time
 
 from hope_country_report.apps.tenant.config import conf
@@ -31,13 +28,6 @@ if TYPE_CHECKING:
     )
 
 pytestmark = pytest.mark.django_db()
-
-
-@contextlib.contextmanager
-def enable_flag(name):
-    flag_state.enable_flag(name)
-    yield
-    flag_state.disable_flag(name)
 
 
 @pytest.fixture()
@@ -133,7 +123,7 @@ def test_filter_query(req, data: "_DATA"):
     tenant = data["hh1"][0].business_area.country_office
 
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
-        q: "Query" = QueryFactory(owner=data["user"], project=state.tenant)
+        q: "Query" = QueryFactory(owner=data["user"], country_office=state.tenant)
         ds, extra = q.run()
         assert ds.data.count() == 2
         assert ds.data.first() == data["hh1"][0]

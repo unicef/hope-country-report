@@ -13,12 +13,12 @@ class PowerQueryBackend(ModelBackend):
     def _get_role_permissions(self, user_obj, obj):
         if not user_obj.is_active or user_obj.is_anonymous or obj is None:
             return set()
-        if obj._meta.app_label == "power_query" and getattr(obj, "project", None):
-            co = obj.project
+        if obj._meta.app_label == "power_query" and getattr(obj, "country_office", None):
+            co = obj.country_office
             perm_cache_name = "_power_query_%s_perm_cache" % co.pk
             if not hasattr(user_obj, perm_cache_name):
                 perms = Permission.objects.filter(
-                    group__userrole__user=user_obj, group__userrole__country_office=obj.project
+                    group__userrole__user=user_obj, group__userrole__country_office=obj.country_office
                 )
                 perms = perms.values_list("content_type__app_label", "codename").order_by()
                 setattr(user_obj, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})

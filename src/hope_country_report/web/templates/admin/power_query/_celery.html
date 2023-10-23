@@ -96,13 +96,10 @@
         <a class="button" id="celery-info" href="#">?</a>
         <div class="popup hidden" id="celery-info-panel">
             <table>
+                <tr><td>Position</td><td>{{ original.get_celery_queue_position }}</td></tr>
                 <tr><th colspan="2">Tasks</th></tr>
                 <tr><td>pending</td><td>{{ original.celery_queue_status.pending }}</td></tr>
                 <tr><td>canceled</td><td>{{ original.celery_queue_status.canceled }}</td></tr>
-{#                <tr><td>running</td><td>{{ original.celery_queue_status.running }}</td></tr>#}
-{#                <tr><td>active</td><td>{{ original.celery_queue_status.active }}</td></tr>#}
-{#                <tr><td>reserved</td><td>{{ original.celery_queue_status.reserved }}</td></tr>#}
-{#                <tr><td>scheduled</td><td>{{ original.celery_queue_status.scheduled }}</td></tr>#}
                 <tr><th colspan="2">Queue</th></tr>
                 <tr><td>size</td><td>{{ original.celery_queue_status.size }}</td></tr>
                 <tr><td>revoked</td><td>{{ original.celery_queue_status.revoked }}</td></tr>

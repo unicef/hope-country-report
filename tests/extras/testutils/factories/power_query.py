@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 class QueryFactory(AutoRegisterModelFactory):
     name = factory.Sequence(lambda n: "Query %s" % n)
     owner = factory.SubFactory(UserFactory)
-    project = factory.SubFactory(CountryOfficeFactory)
+    country_office = factory.SubFactory(CountryOfficeFactory)
     target = factory.SubFactory(ContentTypeFactory, app_label="hope", model="household")
     code = "result=conn.all()"
     parent = None
@@ -76,7 +76,7 @@ class ReportFactory(AutoRegisterModelFactory):
     title = factory.Sequence(lambda n: "Report %s" % n)
     query = factory.SubFactory(QueryFactory)
     owner = factory.SubFactory(UserFactory)
-    project = factory.SubFactory(CountryOfficeFactory)
+    country_office = factory.SubFactory(CountryOfficeFactory)
 
     class Meta:
         model = Report

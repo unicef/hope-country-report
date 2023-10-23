@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 from hope_country_report.state import state
 
 from .exceptions import InvalidTenantError
-from .utils import must_tenant
+from .utils import get_selected_tenant, must_tenant
 
 if TYPE_CHECKING:
     from ...types.django import AnyModel
@@ -28,7 +28,8 @@ class TenantManager(models.Manager["AnyModel"]):
             return {}
         # if tenant_filter_field == "__none__":
         #     return {"pk__lt": -1}
-        if not state.tenant:
+        active_tenant = get_selected_tenant()
+        if not active_tenant:
             raise InvalidTenantError("State does not have any active tenant")
         return {tenant_filter_field: state.tenant.hope_id}
 

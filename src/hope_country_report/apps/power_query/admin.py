@@ -22,7 +22,6 @@ from admin_extra_buttons.mixins import ExtraButtonsMixin
 from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
-from celery.contrib.abortable import AbortableAsyncResult
 from constance import config
 from django_celery_results.models import TaskResult
 from import_export import resources
@@ -67,40 +66,13 @@ class CeleryEnabledMixin:
         self.model.purge()
 
     @view()
-    def celery_abort(self, request: HttpRequest, pk: int) -> "HttpResponse":
-        obj: CeleryEnabled = self.get_object(request, pk)
-        if obj.async_result:
-            res: AbortableAsyncResult = obj.async_result
-            res.abort()
-            obj.save()
-
-    @view()
     def celery_terminate(self, request: HttpRequest, pk: int) -> "HttpResponse":
         obj: CeleryEnabled = self.get_object(request, pk)
         obj.terminate()
 
-    # @view()
-    # def celery_kill(self, request: HttpRequest, pk: int) -> "HttpResponse":
-    #     obj: CeleryEnabled = self.get_object(request, pk)
-    #     if obj.async_result:
-    #         res: AbortableAsyncResult = obj.async_result
-    #         res.revoke(terminate=True, signal="SIGKILL")
-    #         obj.async_result_id = None
-    #         obj.save()
-    #
-    # @view()
-    # def celery_revoke(self, request: HttpRequest, pk: int) -> "HttpResponse":
-    #     obj: CeleryEnabled = self.get_object(request, pk)
-    #     if obj.async_result:
-    #         res: AbortableAsyncResult = obj.async_result
-    #         res.revoke()
-    #         obj.save()
-
     @view()
     def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
         ctx = self.get_common_context(request, pk=pk)
-        # ctx["queries"] = Query.objects.all()
-        # ctx["reports"] = Report.objects.all()
         return render(
             request,
             f"admin/power_query/{self.model._meta.model_name}/inspect.html",
@@ -144,16 +116,16 @@ class AutoProjectCol:
     def get_list_display(self, request: "HttpRequest") -> Sequence[str]:
         base = super().get_list_display(request)
         if state.tenant is None:
-            return ("project", *base)
+            return ("country_office", *base)
         return base
 
     def get_list_filter(self, request: "HttpRequest") -> "Sequence[_ListFilterT]":
         base = super().get_list_filter(request)
-        return (("project", AutoCompleteFilter), *base)
+        return (("country_office", AutoCompleteFilter), *base)
 
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         base = super().get_autocomplete_fields(request)
-        return ("project", *base)
+        return ("country_office", *base)
 
 
 @admin.register(Query)
@@ -410,7 +382,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
     list_display = ("name", "doc", "suffix", "content_type")
     search_fields = ("name",)
     list_filter = ("suffix",)
-    autocomplete_fields = ("project",)
+    autocomplete_fields = ("country_office",)
 
     # readonly_fields = ("suffix", )
 

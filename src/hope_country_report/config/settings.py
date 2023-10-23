@@ -74,7 +74,6 @@ INSTALLED_APPS = [
     "flags",
     "silk",
     "tailwind",
-    # "push_notifications",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -110,7 +109,7 @@ AUTHENTICATION_BACKENDS = (
     "hope_country_report.apps.tenant.backend.TenantBackend",
     "hope_country_report.apps.power_query.backends.PowerQueryBackend",
     "django.contrib.auth.backends.ModelBackend",
-    # *env("AUTHENTICATION_BACKENDS"),
+    *env("AUTHENTICATION_BACKENDS"),
 )
 
 # path
@@ -246,7 +245,6 @@ from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
 from .fragments.hijack import *  # noqa
 from .fragments.power_query import *  # noqa
-from .fragments.push_notifications import *  # noqa
 from .fragments.rest_framework import *  # noqa
 from .fragments.select2 import *  # noqa
 from .fragments.sentry import *  # noqa

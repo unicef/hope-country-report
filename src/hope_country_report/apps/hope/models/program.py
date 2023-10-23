@@ -39,6 +39,3 @@ class Cycle(HopeModel):
 
     class Tenant:
         tenant_filter_field = "program__business_area"
-
-    def __str__(self) -> str:
-        return str(self.name)

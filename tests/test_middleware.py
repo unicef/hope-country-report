@@ -5,6 +5,8 @@ from django.http import HttpResponse
 
 from hope_country_report.apps.tenant.exceptions import InvalidTenantError, SelectTenantException
 from hope_country_report.middleware.exception import ExceptionMiddleware
+from hope_country_report.middleware.silk import SilkMiddleware
+from hope_country_report.utils.flags import enable_flag
 
 
 @pytest.fixture
@@ -30,3 +32,22 @@ def test_process_exception_raise(rf, m: ExceptionMiddleware):
     request = rf.get("/")
     with pytest.raises(ValueError):
         m.process_exception(request, ValueError())
+
+
+def test_silkmiddleware_enabled(rf):
+    m = SilkMiddleware(MagicMock())
+    request = rf.get("/")
+    try:
+        with enable_flag("SILK_PROFILING"):
+            m(request)
+    except Exception as e:
+        pytest.fail(f"Unespected Exception raised: {e}")
+
+
+def test_silkmiddleware_disabled(rf):
+    m = SilkMiddleware(MagicMock())
+    request = rf.get("/")
+    try:
+        m(request)
+    except Exception as e:
+        pytest.fail(f"Unespected Exception raised: {e}")

@@ -1,11 +1,10 @@
 from typing import Any, Callable, Dict
 
 import base64
-import contextlib
+import binascii
 import hashlib
 import json
 import logging
-from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
@@ -17,11 +16,7 @@ from django.utils.safestring import mark_safe
 
 import tablib
 from constance import config
-from flags.state import flag_enabled
 from sentry_sdk import configure_scope
-from silk.profiling.profiler import silk_profile as _s
-
-from hope_country_report.state import state
 
 logger = logging.getLogger(__name__)
 
@@ -107,15 +102,17 @@ def basicauth(view: Callable) -> Callable:
             return view(request, *args, **kwargs)
 
         if "HTTP_AUTHORIZATION" in request.META:
-            auth = request.headers["Authorization"].split()
-            if len(auth) == 2:
-                if auth[0].lower() == "basic":
-                    uname, passwd = base64.b64decode(auth[1].encode()).decode().split(":")
-                    user = authenticate(username=uname, password=passwd)
-                    if user is not None and user.is_active:
-                        request.user = user
-                        return view(request, *args, **kwargs)
-
+            try:
+                auth = request.headers["Authorization"].split()
+                if len(auth) == 2:
+                    if auth[0].lower() == "basic":
+                        uname, passwd = base64.b64decode(auth[1].encode()).decode().split(":")
+                        user = authenticate(username=uname, password=passwd)
+                        if user is not None and user.is_active:
+                            request.user = user
+                            return view(request, *args, **kwargs)
+            except binascii.Error:
+                pass
         response = HttpResponse()
         response.status_code = 401
         response["WWW-Authenticate"] = 'Basic realm="HOPE"'
@@ -146,31 +143,7 @@ def dict_hash(dictionary: Dict[str, Any]) -> str:
     return dhash.hexdigest()
 
 
-def should_run(expression: str) -> bool:
-    match_expressions = expression.split(",")
-    today = datetime.today()
-
-    for exp in match_expressions:
-        if exp.lower() in ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]:
-            if exp.lower() == datetime.today().strftime("%a").lower():
-                return True
-        elif exp.isnumeric():
-            if today.day == int(exp):
-                return True
-        elif exp.count("/") == 1:
-            day, month = exp.split("/")
-            if day.isnumeric() and month.isnumeric() and int(day) == today.day and int(month) == today.month:
-                return True
-        else:
-            raise ValueError(f"Invalid expression '{expression}'")
-    return False
-
-
 def sentry_tags(func: Callable) -> Callable:
-    """
-    add sentry tags 'celery' and 'celery_task'
-    """
-
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         with configure_scope() as scope:
@@ -180,12 +153,3 @@ def sentry_tags(func: Callable) -> Callable:
             return func(*args, **kwargs)
 
     return wrapper
-
-
-@contextlib.contextmanager
-def silk_profile(*args, **kwargs):
-    if flag_enabled("SILK_PROFILING", request=state.request):
-        with _s(*args, **kwargs):
-            yield
-    else:
-        yield

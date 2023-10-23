@@ -2,13 +2,21 @@ from base64 import b64encode
 from pathlib import Path
 
 import pytest
+from unittest.mock import MagicMock
 
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 
 import tablib
 
-from hope_country_report.apps.power_query.utils import basicauth, is_valid_template, sizeof, to_dataset
+from hope_country_report.apps.power_query.utils import (
+    basicauth,
+    get_sentry_url,
+    is_valid_template,
+    sentry_tags,
+    sizeof,
+    to_dataset,
+)
 
 
 @pytest.mark.parametrize(
@@ -84,6 +92,14 @@ def test_basicauth_authenticate(rf, user):
     assert response.status_code == 200
 
 
+def test_basicauth_authenticated(rf, user):
+    request = rf.get("/")
+    request.user = user
+    view = basicauth(lambda request: HttpResponse("Ok"))
+    response = view(request)
+    assert response.status_code == 200
+
+
 def test_basicauth_authenticate_fail(rf, user):
     request = rf.get(
         "/",
@@ -94,3 +110,25 @@ def test_basicauth_authenticate_fail(rf, user):
     view = basicauth(lambda request: HttpResponse("Ok"))
     response = view(request)
     assert response.status_code == 401
+
+
+@pytest.mark.parametrize("value", ["abc", "Basic abc", ""])
+def test_basicauth_authenticate_wrong_header(rf, user, value):
+    request = rf.get("/", headers={"Authorization": value})
+
+    request.user = AnonymousUser()
+    view = basicauth(lambda request: HttpResponse("Ok"))
+    response = view(request)
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("html", [True, False])
+def test_get_sentry_url(html):
+    assert get_sentry_url(123, html)
+
+
+def test_sentry_tags():
+    with MagicMock() as func:
+        func.__name__ = "func"
+        sentry_tags(func)()
+        assert func.call_count == 1

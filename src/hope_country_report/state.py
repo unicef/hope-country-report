@@ -7,7 +7,7 @@ from threading import local
 if TYPE_CHECKING:
     from typing import Any, Iterator, List
 
-    from hope_country_report.types.django import AnyModel
+    from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.types.http import AnyRequest, AnyResponse
 
 not_set = object()
@@ -16,7 +16,7 @@ not_set = object()
 class State(local):
     request: "AnyRequest|None" = None
     tenant_cookie: "str|None" = None
-    tenant: "AnyModel|None" = None
+    tenant: "CountryOffice|None" = None
     must_tenant: "bool|None" = None
     cookies: "dict[str, List[Any]]" = {}
     filters: "List[Any]" = []
