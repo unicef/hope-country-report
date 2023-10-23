@@ -5,7 +5,6 @@ from unittest import mock
 
 from django.conf import settings
 
-from celery.exceptions import Reject
 from celery.result import EagerResult
 
 from hope_country_report.apps.power_query.celery_tasks import refresh_report, run_background_query
@@ -92,8 +91,8 @@ def test_run_background_query(settings, query1: "Query") -> None:
 
 def test_run_background_query_version_mismatch(settings, query1: "Query") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
-    with pytest.raises(Reject):
-        run_background_query(query1.pk, -1)
+    result = run_background_query.delay(query1.pk, -1)
+    assert result.state == "REJECTED"
 
 
 def test_run_background_query_removed(settings, query1: "Query", monkeypatch) -> None:

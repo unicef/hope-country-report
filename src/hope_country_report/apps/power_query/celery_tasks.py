@@ -94,7 +94,7 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
     except QueryRunTerminated as e:
         raise Reject(e, requeue=False)
     except QueryRunCanceled as e:
-        if query:
+        if query and query.curr_async_result_id:
             with app.pool.acquire(block=True) as conn:
                 conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, query.curr_async_result_id)
             app.control.revoke(query.curr_async_result_id)
