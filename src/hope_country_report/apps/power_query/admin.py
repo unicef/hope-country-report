@@ -414,7 +414,7 @@ class ReportAdmin(
     ModelAdmin,
     AutoReverseMixin,
 ):
-    list_display = ("name", "formatters", "last_run", "owner")
+    list_display = ("name", "formatters", "last_run", "owner", "schedule")
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters"]
     readonly_fields = ("last_run",)

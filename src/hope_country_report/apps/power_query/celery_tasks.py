@@ -1,13 +1,18 @@
-from typing import Any, Dict, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Type, TYPE_CHECKING, Union
 
 import logging
 import signal
+import uuid
 
 from django.conf import settings
+from django.core.cache import caches
 
+from celery import group
 from celery.contrib.abortable import AbortableTask
 from celery.exceptions import Ignore, Reject
 from concurrency.exceptions import RecordModifiedError
+from django_celery_beat.models import PeriodicTask
+from redis import StrictRedis
 
 from ...config.celery import app
 from .exceptions import QueryRunCanceled, QueryRunTerminated
@@ -19,18 +24,44 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+REMOVE_ONLY_IF_OWNER_SCRIPT = """
+if redis.call("get",KEYS[1]) == ARGV[1] then
+    return redis.call("del",KEYS[1])
+else
+    return 0
+end
+"""
+rds = StrictRedis(settings.REDIS_URL, decode_responses=True, charset="utf-8")
+
 
 class AbstractPowerQueryTask(AbortableTask):
     model: "Union[Type[Query], Type[Report]]"
+    cache = caches[getattr(settings, "CELERY_TASK_LOCK_CACHE", "default")]
+    lock_expiration = 60 * 60 * 24  # 1 day
 
-    def after_return(self, status, retval, task_id, args, kwargs, einfo):
-        super().after_return(status, retval, task_id, args, kwargs, einfo)
+    def on_success(self, retval, task_id, args, kwargs):
+        rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
+        super().on_success(retval, task_id, args, kwargs)
 
-    def on_success(self, retval: Any, task_id: str, args: Tuple[Any], kwargs: Dict[str, Any]) -> None:
-        instance = self.model.objects.filter(id=args[0]).first()
-        instance.last_async_result_id = task_id
-        instance.curr_async_result_id = None
-        instance.save()
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
+        super().on_failure(exc, task_id, args, kwargs, einfo)
+
+    @property
+    def lock_key(self):
+        return "PowerQueryLock_%s_%s_%s" % (self.__class__.__name__, self.request.id, self.request.retries)
+
+    def acquire_lock(self):
+        lock_acquired = bool(rds.set(self.lock_key, self.lock_signature, ex=self.lock_expiration, nx=True))
+        logger.debug("Acquiring %s key %s", self.lock_key, "succeed" if lock_acquired else "failed")
+        return lock_acquired
+
+    def __call__(self, *args, **kwargs):
+        self.lock_signature = str(uuid.uuid4())
+        if self.acquire_lock():
+            logger.debug("Task %s execution with lock started", self.request.id)
+            return super().__call__(*args, **kwargs)
+        logger.warning("Task %s skipped due lock detection", self.request.id)
 
 
 class PowerQueryTask(AbstractPowerQueryTask):
@@ -44,8 +75,9 @@ class ReportTask(AbstractPowerQueryTask):
 @app.task(bind=True, base=PowerQueryTask)
 @sentry_tags
 def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "QueryMatrixResult":
+    query = None
     try:
-        query: Query = Query.objects.get(pk=query_id)
+        query = Query.objects.get(pk=query_id)
         if query.version != version:
             raise RecordModifiedError(target=query)
         if query.status == Query.CANCELED:
@@ -59,14 +91,17 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
 
         res = query.execute_matrix(running_task=self)
         return res
+    except QueryRunTerminated as e:
+        raise Reject(e, requeue=False)
     except QueryRunCanceled as e:
-        with app.pool.acquire(block=True) as conn:
-            conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, self.request.id)
-        app.control.revoke(self.request.id)
+        if query:
+            with app.pool.acquire(block=True) as conn:
+                conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, query.curr_async_result_id)
+            app.control.revoke(query.curr_async_result_id)
         raise Reject(e, requeue=False)
     except RecordModifiedError as e:
         raise Reject(e, requeue=False)
-    except QueryRunTerminated:
+    except (Ignore, Reject):
         raise
     except BaseException as e:
         logger.exception(e)
@@ -87,19 +122,15 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
 
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
-def period_task_manager(self: Any) -> Any:
-    results: Any = []
-    # report: Report
-    # try:
-    #     for report in Report.objects.select_related("owner", "query", "formatter").filter(
-    #         active=True, frequence__isnull=False
-    #     ):
-    #         if should_run(report.frequence):
-    #             ret = report.queue()
-    #             results.append(ret)
-    #         else:
-    #             results.append([report.pk, "skip"])
-    # except BaseException as e:
-    #     logger.exception(e)
-    #     raise self.retry(exc=e)
-    return results
+def reports_refresh(self: AbortableTask, **kwargs) -> Any:
+    report: Report
+    periodic_task_name = getattr(self.request, "properties", None)["periodic_task_name"]
+    periodic_task = PeriodicTask.objects.get(name=periodic_task_name)
+    grp = []
+    for report in periodic_task.reports.filter(active=True):
+        grp.append(refresh_report.subtask([report.pk, report.version]))
+
+    job = group(grp)
+    result = job.apply_async()
+
+    return result

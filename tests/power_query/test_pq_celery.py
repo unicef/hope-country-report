@@ -1,10 +1,15 @@
 from typing import TYPE_CHECKING
 
 import pytest
+from unittest import mock
 
 from django.conf import settings
 
+from celery.exceptions import Reject
+from celery.result import EagerResult
+
 from hope_country_report.apps.power_query.celery_tasks import refresh_report, run_background_query
+from hope_country_report.apps.power_query.exceptions import QueryRunCanceled, QueryRunTerminated
 from hope_country_report.config.celery import app
 from hope_country_report.state import state
 
@@ -85,6 +90,37 @@ def test_run_background_query(settings, query1: "Query") -> None:
     assert query1.datasets.exists()
 
 
+def test_run_background_query_version_mismatch(settings, query1: "Query") -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    with pytest.raises(Reject):
+        run_background_query(query1.pk, -1)
+
+
+def test_run_background_query_removed(settings, query1: "Query", monkeypatch) -> None:
+    from hope_country_report.apps.power_query.models import Query
+
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    with mock.patch("hope_country_report.apps.power_query.models.Query.status", Query.CANCELED):
+        result: EagerResult = run_background_query.delay(query1.pk, query1.version)
+        assert result.state == "IGNORED"
+
+
+def test_run_background_query_canceled(settings, query1: "Query", monkeypatch) -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    with mock.patch("hope_country_report.apps.power_query.models.Query.execute_matrix", side_effect=QueryRunCanceled()):
+        result: EagerResult = run_background_query.delay(query1.pk, query1.version)
+        assert result.state == "REJECTED"
+
+
+def test_run_background_query_terminate(settings, query1: "Query", monkeypatch) -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    with mock.patch(
+        "hope_country_report.apps.power_query.models.Query.execute_matrix", side_effect=QueryRunTerminated()
+    ):
+        result: EagerResult = run_background_query.delay(query1.pk, query1.version)
+        assert result.state == "REJECTED"
+
+
 def test_refresh_report(report: "Report") -> None:
     refresh_report.delay(report.pk)
     assert report.documents.exists()
@@ -99,43 +135,10 @@ def test_celery_no_worker(db, settings, query2: "Query") -> None:
     assert query2.status == "CANCELED"
 
 
-# @pytest.mark.celery()
-# def test_celery_worker(settings, transactional_db, query2: "Query") -> None:
-#     settings.CELERY_TASK_ALWAYS_EAGER = False
-#     assert query2.status == "Not scheduled"
-#     query2.queue()
-#     assert query2.status == "STARTED"
-#     query2.terminate()
-#     assert query2.status == "CANCELED"
-
-
-# @pytest.fixture(scope='session')
-# def celery_worker_parameters():
-#     return {
-#         'result_backend': 'redis://',
-#         'broker_url': 'redis://127.0.0.1/8',
-#     }
 #
-# @pytest.fixture(scope='session')
-# def celery_config():
-#     return {
-#         'result_backend': 'redis://',
-#         'broker_url': 'redis://127.0.0.1/8',
-#     }
-#
-
-
-# @pytest.fixture
-# def db_access_without_rollback_and_truncate(request, django_db_setup, django_db_blocker):
-#     django_db_blocker.unblock()
-#     request.addfinalizer(django_db_blocker.restore)
+# def test_celery_reports_refresh(db, settings, report: "Report") -> None:
+#     settings.CELERY_TASK_ALWAYS_EAGER = True
+#     from django_celery_beat.models import PeriodicTask
+#     pt: "PeriodicTask" = PeriodicTask.objects.filter(task=fqn(reports_refresh)).first()
 #
 #
-# @pytest.mark.celery()
-# @pytest.mark.django_db(transaction=True)
-# def test_celery_query(settings, celery_app, celery_worker, query2) -> None:
-#     celery_app.control.purge()
-#     settings.CELERY_TASK_ALWAYS_EAGER = False
-#     query2.queue()
-#     time.sleep(1)
-#     assert query2.status == 'STARTED'

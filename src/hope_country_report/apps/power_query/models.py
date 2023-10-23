@@ -627,7 +627,7 @@ class Report(CeleryEnabled, models.Model):
     active = models.BooleanField(default=True)
     owner = models.ForeignKey(get_user_model(), blank=True, null=True, on_delete=models.CASCADE, related_name="+")
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
-    schedule = models.ForeignKey(PeriodicTask, blank=True, null=True, on_delete=models.SET_NULL)
+    schedule = models.ForeignKey(PeriodicTask, blank=True, null=True, on_delete=models.SET_NULL, related_name="reports")
     last_run = models.DateTimeField(null=True, blank=True)
     validity_days = models.IntegerField(default=365)
 

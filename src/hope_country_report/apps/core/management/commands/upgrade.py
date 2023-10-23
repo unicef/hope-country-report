@@ -183,17 +183,25 @@ class Command(BaseCommand):
             echo("Create default PeriodicTask")
             from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
-            from hope_country_report.apps.power_query.celery_tasks import period_task_manager
+            import hope_country_report.apps.power_query.celery_tasks
 
             sunday, __ = CrontabSchedule.objects.get_or_create(day_of_week="0")
             first_of_month, __ = CrontabSchedule.objects.get_or_create(day_of_month="1")
 
             PeriodicTask.objects.get_or_create(
-                name="Refresh every Sunday", defaults={"task": fqn(period_task_manager), "crontab": sunday}
+                name="Refresh every Sunday",
+                defaults={
+                    "task": fqn(hope_country_report.apps.power_query.celery_tasks.reports_refresh),
+                    "crontab": sunday,
+                },
             )
 
             PeriodicTask.objects.get_or_create(
-                name="Refresh First Of Month", defaults={"task": fqn(period_task_manager), "crontab": first_of_month}
+                name="Refresh First Of Month",
+                defaults={
+                    "task": fqn(hope_country_report.apps.power_query.celery_tasks.reports_refresh),
+                    "crontab": first_of_month,
+                },
             )
 
             echo("Upgrade completed", style_func=self.style.SUCCESS)

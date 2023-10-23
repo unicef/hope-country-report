@@ -2,6 +2,7 @@ from typing import Dict
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 from . import env
 
@@ -129,7 +130,6 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
-
 # SECURE_HSTS_SECONDS = 60
 # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT")
@@ -169,15 +169,16 @@ USE_I18N = True
 USE_TZ = True
 USE_L10N = True
 
-
+CACHE_URL = env("CACHE_URL")
+REDIS_URL = urlparse(CACHE_URL).hostname
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": env("REDIS_URL"),
+        "LOCATION": CACHE_URL,
     },
     "select2": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": env("REDIS_URL"),
+        "LOCATION": CACHE_URL,
     },
 }
 
