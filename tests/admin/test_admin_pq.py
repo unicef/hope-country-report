@@ -52,6 +52,12 @@ def test_celery_queue(request, django_app, admin_user, query):
     assert res.status_code == 302
 
 
+def test_celery_run(request, django_app, admin_user, query):
+    url = reverse("admin:power_query_query_run", args=[query.pk])
+    res = django_app.get(url, user=admin_user)
+    assert res.status_code == 200
+
+
 def test_check_status(request, django_app, admin_user, query):
     url = reverse("admin:power_query_query_check_status")
     res = django_app.get(url, user=admin_user)

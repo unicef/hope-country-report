@@ -7,7 +7,6 @@ from unittest.mock import Mock
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
-from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import QuerySet
@@ -106,12 +105,6 @@ class CeleryEnabledMixin:
         return response
 
 
-class AutoReverseMixin:
-    def get_admin_url(self):
-        opts = self.model._meta
-        return reverse(admin_urlname(opts, "change"), args=[self.pk])
-
-
 class AutoProjectCol:
     def get_list_display(self, request: "HttpRequest") -> Sequence[str]:
         base = super().get_list_display(request)
@@ -137,7 +130,6 @@ class QueryAdmin(
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin,
-    AutoReverseMixin,
 ):
     list_display = ("name", "target", "owner", "active", "success", "last_run", "status")
     search_fields = ("name",)
@@ -412,7 +404,6 @@ class ReportAdmin(
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin,
-    AutoReverseMixin,
 ):
     list_display = ("name", "formatters", "last_run", "owner", "schedule")
     autocomplete_fields = ("query", "owner")
