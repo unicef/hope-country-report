@@ -61,6 +61,7 @@ autoscaling:
 
 secret:
   SECRET_KEY: ""
+  DATABASE_HOPE_URL: ""
   DATABASE_URL: ""
 
 config:
