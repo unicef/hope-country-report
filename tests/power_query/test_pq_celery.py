@@ -2,30 +2,28 @@ from typing import TYPE_CHECKING
 
 import pytest
 from unittest import mock
+from unittest.mock import MagicMock
 
 from django.conf import settings
 
 from celery.result import EagerResult
+from django_celery_beat.models import PeriodicTask
 
-from hope_country_report.apps.power_query.celery_tasks import refresh_report, run_background_query
+from hope_country_report.apps.power_query.celery_tasks import refresh_report, reports_refresh, run_background_query
 from hope_country_report.apps.power_query.exceptions import QueryRunCanceled, QueryRunTerminated
 from hope_country_report.config.celery import app
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
-    from typing import Tuple, TypedDict
+    from typing import TypedDict
 
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.apps.hope.models import Household
     from hope_country_report.apps.power_query.models import Query, Report
 
-    _DATA = TypedDict(
-        "_DATA",
-        {
-            "co1": CountryOffice,
-            "hh1": Tuple[Household, Household],
-        },
-    )
+    class _DATA(TypedDict):
+        co1: CountryOffice
+        hh1: tuple[Household, Household]
 
 
 @pytest.fixture()
@@ -134,10 +132,17 @@ def test_celery_no_worker(db, settings, query2: "Query") -> None:
     assert query2.status == "CANCELED"
 
 
-#
-# def test_celery_reports_refresh(db, settings, report: "Report") -> None:
-#     settings.CELERY_TASK_ALWAYS_EAGER = True
-#     from django_celery_beat.models import PeriodicTask
-#     pt: "PeriodicTask" = PeriodicTask.objects.filter(task=fqn(reports_refresh)).first()
-#
+def test_celery_reports_refresh(db, settings, report: "Report") -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    pt = PeriodicTask.objects.first()
+    report.schedule = pt
+    pt.save()
+
+    r = MagicMock()
+    r.properties = {"periodic_task_name": pt.name}
+    with mock.patch("hope_country_report.apps.power_query.celery_tasks.ReportTask.request", r):
+        result = reports_refresh.delay()
+    assert result.state == "SUCCESS"
+
+
 #

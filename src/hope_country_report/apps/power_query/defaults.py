@@ -81,3 +81,28 @@ def create_defaults() -> "List[Formatter]":
     ReportTemplate.load()
 
     return [f1, f2, f3]
+
+
+def create_periodic_tasks():
+    from django_celery_beat.models import CrontabSchedule, PeriodicTask
+
+    import hope_country_report.apps.power_query.celery_tasks
+
+    sunday, __ = CrontabSchedule.objects.get_or_create(day_of_week="0")
+    first_of_month, __ = CrontabSchedule.objects.get_or_create(day_of_month="1")
+
+    PeriodicTask.objects.get_or_create(
+        name="Refresh every Sunday",
+        defaults={
+            "task": fqn(hope_country_report.apps.power_query.celery_tasks.reports_refresh),
+            "crontab": sunday,
+        },
+    )
+
+    PeriodicTask.objects.get_or_create(
+        name="Refresh First Of Month",
+        defaults={
+            "task": fqn(hope_country_report.apps.power_query.celery_tasks.reports_refresh),
+            "crontab": first_of_month,
+        },
+    )

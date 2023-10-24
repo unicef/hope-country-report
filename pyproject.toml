@@ -95,6 +95,7 @@ code = [
 ]
 dev = [
     "mkdocs>=1.5.3",
+    "pyupgrade>=3.15.0",
 ]
 
 

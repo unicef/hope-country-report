@@ -49,7 +49,7 @@ class AbstractPowerQueryTask(AbortableTask):
 
     @property
     def lock_key(self):
-        return "PowerQueryLock_%s_%s_%s" % (self.__class__.__name__, self.request.id, self.request.retries)
+        return f"PowerQueryLock_{self.__class__.__name__}_{self.request.id}_{self.request.retries}"
 
     def acquire_lock(self):
         lock_acquired = bool(rds.set(self.lock_key, self.lock_signature, ex=self.lock_expiration, nx=True))
@@ -124,13 +124,15 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
 @sentry_tags
 def reports_refresh(self: AbortableTask, **kwargs) -> Any:
     report: Report
-    periodic_task_name = getattr(self.request, "properties", None)["periodic_task_name"]
-    periodic_task = PeriodicTask.objects.get(name=periodic_task_name)
-    grp = []
-    for report in periodic_task.reports.filter(active=True):
-        grp.append(refresh_report.subtask([report.pk, report.version]))
+    result = {}
+    if periodic_task_name := (getattr(self.request, "properties", {}) or {}).get("periodic_task_name"):
+        periodic_task = PeriodicTask.objects.get(name=periodic_task_name)
+        grp = []
+        for report in periodic_task.reports.filter(active=True):
+            grp.append(refresh_report.subtask([report.pk, report.version]))
 
-    job = group(grp)
-    result = job.apply_async()
+        if grp:
+            job = group(grp)
+            result = job.apply_async()
 
-    return result
+        return result

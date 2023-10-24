@@ -103,41 +103,6 @@ def pytest_configure(config):
     _setup_models()
 
 
-#
-# @pytest.fixture(autouse=True)
-# def global_setup(
-#     request,
-#     db,
-#     monkeypatch,
-#     settings,
-#     caplog,
-#     django_db_modify_db_settings_parallel_suffix,
-# ):
-#     caplog.set_level(logging.CRITICAL, logger="django.server")
-#
-#     settings.STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
-#     settings.DEBUG = False
-#     settings.SESSION_COOKIE_NAME = "bob_test_session"
-#     settings.AUTH_PASSWORD_VALIDATORS = [
-#         {
-#             "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-#         },
-#         {
-#             "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-#         },
-#         {
-#             "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-#         },
-#         {
-#             "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-#         },
-#     ]
-#     from django.core.cache import caches
-#
-#     for backend in caches.all():
-#         backend.client.clear()
-#
-#
 @pytest.fixture
 def user(db):
     from testutils.factories import UserFactory
@@ -187,11 +152,12 @@ def mocked_responses():
 
 @pytest.fixture(autouse=True)
 def state_context(db):
-    from hope_country_report.apps.power_query.defaults import create_defaults
+    from hope_country_report.apps.power_query.defaults import create_defaults, create_periodic_tasks
     from hope_country_report.config.celery import app
     from hope_country_report.state import state
 
     create_defaults()
+    create_periodic_tasks()
     app.control.purge()
 
     with state.configure():

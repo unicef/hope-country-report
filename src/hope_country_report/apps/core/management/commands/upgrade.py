@@ -1,4 +1,4 @@
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import logging
 import os
@@ -10,9 +10,7 @@ from django.core.management import BaseCommand, call_command
 from django.core.management.base import CommandError, SystemCheckError
 from django.core.validators import validate_email
 
-from strategy_field.utils import fqn
-
-from hope_country_report.apps.power_query.defaults import create_defaults
+from hope_country_report.apps.power_query.defaults import create_defaults, create_periodic_tasks
 from hope_country_report.config import env
 
 if TYPE_CHECKING:
@@ -91,7 +89,7 @@ class Command(BaseCommand):
             help="Admin password",
         )
 
-    def get_options(self, options: Dict[str, Any]) -> None:
+    def get_options(self, options: dict[str, Any]) -> None:
         self.verbosity = options["verbosity"]
         self.run_check = options["check"]
         self.prompt = not options["prompt"]
@@ -181,29 +179,7 @@ class Command(BaseCommand):
                 for f in created:
                     echo(f.name)
             echo("Create default PeriodicTask")
-            from django_celery_beat.models import CrontabSchedule, PeriodicTask
-
-            import hope_country_report.apps.power_query.celery_tasks
-
-            sunday, __ = CrontabSchedule.objects.get_or_create(day_of_week="0")
-            first_of_month, __ = CrontabSchedule.objects.get_or_create(day_of_month="1")
-
-            PeriodicTask.objects.get_or_create(
-                name="Refresh every Sunday",
-                defaults={
-                    "task": fqn(hope_country_report.apps.power_query.celery_tasks.reports_refresh),
-                    "crontab": sunday,
-                },
-            )
-
-            PeriodicTask.objects.get_or_create(
-                name="Refresh First Of Month",
-                defaults={
-                    "task": fqn(hope_country_report.apps.power_query.celery_tasks.reports_refresh),
-                    "crontab": first_of_month,
-                },
-            )
-
+            create_periodic_tasks()
             echo("Upgrade completed", style_func=self.style.SUCCESS)
         except ValidationError as e:
             self.halt("\n- ".join(["Wrong argument(s):", *e.messages]))

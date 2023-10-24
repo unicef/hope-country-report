@@ -14,8 +14,10 @@
             <img src="{% static "hope_logo.png" %}" class="h-16">
             <a class="h-16" href="#"></a>
         </div>
-        <ul>
-            <li><a href="{% url "power_query:report_list" %}">Reports</a></li>
+        <ul class="menu">
+            <li><a href="{% url "power_query:report_list" %}">
+                <div>Reports</div>
+                </a></li>
             <li><a href="{% url "power_query:report_list" %}">Configuration</a></li>
             <li><a href="{% url "admin:index" %}">Admin</a></li>
         </ul>
