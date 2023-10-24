@@ -24,7 +24,7 @@ case "$1" in
     ;;
     tests)
         python3 manage.py migrate
-        pytest
+        python3 -m pytest
     ;;
     prd)
         production
