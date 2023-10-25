@@ -17,6 +17,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      hopedb:
+        condition: service_healthy
       redis:
         condition: service_healthy
 
