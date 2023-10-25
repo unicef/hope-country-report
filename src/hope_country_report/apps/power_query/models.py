@@ -9,6 +9,7 @@ import types
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -21,7 +22,6 @@ from django.utils.functional import cached_property, classproperty
 from django.utils.text import slugify
 
 import celery
-import swapper
 from celery import states
 from celery.contrib.abortable import AbortableAsyncResult
 from concurrency.api import disable_concurrency
@@ -46,7 +46,9 @@ from .processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_
 from .utils import dict_hash, is_valid_template, to_dataset
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+    from typing import Any, Dict, List, Optional, Tuple
+
+    from collections.abc import Callable, Iterable
 
     from django.db.models import QuerySet
 
@@ -331,13 +333,6 @@ class BaseProject(models.Model):
         abstract = True
 
 
-class Project(models.Model):
-    name = models.CharField(max_length=200)
-
-    class Meta:
-        swappable = swapper.swappable_setting("power_query", "Project")
-
-
 class Query(CeleryEnabled, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
@@ -377,7 +372,7 @@ class Query(CeleryEnabled, models.Model):
 
     @property
     def silk_name(self) -> str:
-        return "Query %s #%s" % (self.name, self.pk)
+        return f"Query {self.name} #{self.pk}"
 
     def _invoke(self, query_id: int, arguments: "Dict[str, Any]") -> "Tuple[Any, Any]":
         query = Query.objects.get(id=query_id)
@@ -435,8 +430,8 @@ class Query(CeleryEnabled, models.Model):
         **kwargs: "Dict[str, Any]",
     ) -> "Tuple[Dataset, Dict[str,Any]]":
         model = self.target.model_class()
-        connections: Dict[str, QuerySet[AnyModel]] = {}
-        return_value: Tuple[Dataset, Dict[str, Any]]
+        connections: dict[str, QuerySet[AnyModel]] = {}
+        return_value: tuple[Dataset, dict[str, Any]]
         if state.tenant:
             connections["QueryManager"] = Query.objects.filter(country_office=state.tenant)
         else:
@@ -449,7 +444,6 @@ class Query(CeleryEnabled, models.Model):
                 return self.aborted or running_task.is_aborted()
 
             self.is_aborted = types.MethodType(is_aborted, self)
-
             with profile() as perfs:
                 locals_ = {
                     "conn": model._default_manager.using(settings.POWER_QUERY_DB_ALIAS),
@@ -467,7 +461,7 @@ class Query(CeleryEnabled, models.Model):
                 if not preview and use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
                     return_value = ds, ds.extra
                 else:
-                    with state.set(preview=preview):
+                    with state.set(preview=preview, tenant=self.country_office):
                         exec(self.code, globals(), locals_)
 
                     result = locals_.get("result", None)
@@ -531,8 +525,7 @@ class ReportTemplate(models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)
     doc = models.FileField()
-    suffix = models.CharField(max_length=20)
-    content_type = models.CharField(max_length=200, choices=MIMETYPES)  # type: ignore # internal mypy error
+    file_suffix = models.CharField(max_length=20)
 
     class Tenant:
         tenant_filter_field = "country_office"
@@ -547,8 +540,7 @@ class ReportTemplate(models.Model):
                     name=record_name,
                     defaults={
                         "doc": File(filename.open("rb"), record_name),
-                        "content_type": filename.suffix,
-                        "suffix": filename.suffix,
+                        "file_suffix": filename.suffix,
                     },
                 )
 
@@ -559,7 +551,7 @@ class ReportTemplate(models.Model):
         using: str | None = None,
         update_fields: "Iterable[str] | None" = None,
     ) -> None:
-        self.suffix = Path(self.doc.name).suffix
+        self.file_suffix = Path(self.doc.name).suffix
         super().save(force_insert, force_update, using, update_fields)
 
     def __str__(self) -> str:
@@ -574,7 +566,7 @@ class Formatter(models.Model):
     code = models.TextField(blank=True, null=True)
     template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, blank=True, null=True)
 
-    content_type = models.CharField(max_length=200, choices=MIMETYPES)
+    file_suffix = models.CharField(max_length=10, choices=MIMETYPES)
     processor = StrategyField(registry=registry, default=fqn(ToHTML))
     type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
 
@@ -584,12 +576,28 @@ class Formatter(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    @property
+    def content_type(self):
+        return mimetype_map[self.file_suffix]
+
     def clean(self) -> None:
         if self.code and self.template:
             raise ValidationError("You cannot set both 'template' and 'code'")
-        if self.processor.mime_type and self.processor.mime_type != self.content_type:
-            raise ValidationError(f"Incompatible Content-Type: {self.processor.mime_type} {self.content_type}")
         self.processor.validate()
+
+    # def render(self, context: "Dict[str, Any]") -> bytearray:
+    #     f: Storage = default_storage.open("AAAAAAA", "wb")
+    #     if self.type == TYPE_LIST:
+    #         f.write(self.processor.process(context))
+    #         return f
+    #     else:
+    #         ret = bytearray()
+    #         ds = context.pop("dataset")
+    #         for page, entry in enumerate(ds.data, 1):
+    #             context["page"] = page
+    #             context["record"] = entry
+    #             ret.extend(self.processor.process(context))
+    #         return ret
 
     def render(self, context: "Dict[str, Any]") -> bytearray:
         if self.type == TYPE_LIST:
@@ -610,12 +618,20 @@ class Formatter(models.Model):
         using: "str|None" = None,
         update_fields: "Iterable[str]|None" = None,
     ) -> None:
-        if not self.content_type:
-            self.content_type = self.processor.content_type
+        if not self.file_suffix:
+            self.file_suffix = self.processor.file_suffix
         super().save(force_insert, force_update, using, update_fields)
 
 
-class Report(CeleryEnabled, models.Model):
+class AdminReversable(models.Model):
+    class Meta:
+        abstract = True
+
+    def get_admin_url(self):
+        return reverse(admin_urlname(self._meta, "change"), args=[self.pk])
+
+
+class Report(CeleryEnabled, AdminReversable, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")
@@ -667,31 +683,33 @@ class Report(CeleryEnabled, models.Model):
                         title = self.title.format(**context)
                     except KeyError:
                         title = self.title
-                    with profile() as perfs:
-                        output = formatter.render(
-                            {
-                                "dataset": dataset,
-                                "report": self,
-                                "title": title,
-                                "context": context,
-                            }
-                        )
+                    with state.set(tenant=self.country_office):
+                        with profile() as perfs:
+                            output = formatter.render(
+                                {
+                                    "dataset": dataset,
+                                    "report": self,
+                                    "title": title,
+                                    "context": context,
+                                }
+                            )
                     res, __ = ReportDocument.objects.update_or_create(
                         report=self,
                         dataset=dataset,
+                        formatter=formatter,
                         defaults={
                             "title": title,
-                            "content_type": formatter.content_type,
                             "output": pickle.dumps(output),
                             "arguments": dataset.arguments,
                             "info": perfs,
                         },
                     )
-                    result.append((res.pk, len(res.output)))
+                    result.append((res.pk, len(res.output), formatter.content_type))
                 except Exception as e:
                     logger.exception(e)
                     result.append((dataset.pk, str(e)))
         self.last_run = timezone.now()
+        self.save()
         if not result:
             result = ["No Dataset available"]
         return result
@@ -699,8 +717,8 @@ class Report(CeleryEnabled, models.Model):
     def __str__(self) -> str:
         return self.name or ""
 
-    def get_absolute_url(self) -> str:
-        return reverse("power_query:report", args=[self.pk])
+    # def get_absolute_url(self) -> str:
+    #     return reverse("power_query:report", args=[self.pk])
 
 
 class ReportDocumentManager(PowerQueryManager["ReportDocument"]):
@@ -713,15 +731,17 @@ class ReportDocument(PowerQueryModel, models.Model):
     title = models.CharField(max_length=300)
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="documents")
     dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
+    formatter = models.ForeignKey(Formatter, on_delete=models.CASCADE)
+
     output = models.BinaryField(null=True, blank=True)
+    content = models.FileField(upload_to="documents")
     arguments = models.JSONField(default=dict, encoder=PQJSONEncoder)
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
-    content_type = models.CharField(max_length=200, choices=MIMETYPES)  # type: ignore # internal mypy error
     info = models.JSONField(default=dict, blank=True, null=False)
     objects = ReportDocumentManager()
 
     class Meta:
-        unique_together = ("report", "dataset")
+        unique_together = ("report", "dataset", "formatter")
 
     class Tenant:
         tenant_filter_field = "report__query__project"
@@ -734,6 +754,14 @@ class ReportDocument(PowerQueryModel, models.Model):
         return self.report.country_office
 
     @cached_property
+    def file_suffix(self) -> str:
+        return self.formatter.processor.file_suffix
+
+    @cached_property
+    def content_type(self) -> str:
+        return self.formatter.content_type
+
+    @cached_property
     def data(self) -> "Any":
         return pickle.loads(self.output)
 
@@ -741,5 +769,5 @@ class ReportDocument(PowerQueryModel, models.Model):
     def size(self) -> int:
         return len(self.output)
 
-    def get_absolute_url(self) -> str:
-        return reverse("power_query:document", args=[self.report.pk, self.pk])
+    # def get_absolute_url(self) -> str:
+    #     return reverse("power_query:document", args=[self.report.pk, self.pk])

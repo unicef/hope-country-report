@@ -19,7 +19,7 @@ class TenantAuthenticationForm(AdminAuthenticationForm):
 
 
 class SelectTenantForm(forms.Form):
-    tenant = forms.ModelChoiceField(queryset=None)
+    tenant = forms.ModelChoiceField(label="Office", queryset=None)
     next = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args: "Any", **kwargs: "Any") -> None:

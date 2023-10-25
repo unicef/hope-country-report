@@ -1,7 +1,8 @@
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import io
 import mimetypes
+from collections.abc import Callable
 from io import BytesIO
 
 from django.template import Context, Template
@@ -22,11 +23,8 @@ if TYPE_CHECKING:
 
     ProcessorResult = bytes | BytesIO
 
-# mimetypes = mimetypes.MimeTypes()
-# mimetypes.add_type('application/xml', ".xml")
 
-m = mimetypes.MimeTypes()
-m.add_type("application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx")
+mimetypes.add_type("text/vnd.yaml", ".yaml")
 
 mimetype_map = {
     k: v
@@ -42,7 +40,7 @@ TYPES = ((TYPE_LIST, "List"), (TYPE_DETAIL, "Detail"))
 
 
 class ProcessorStrategy:
-    mime_type: str | None = None
+    file_suffix: str = ".txt"
     verbose_name = ""
     format: int
 
@@ -58,14 +56,14 @@ class ProcessorStrategy:
 
     @classproperty
     def content_type(cls) -> str:
-        return mimetype_map[cls.mime_type]
+        return mimetype_map[cls.file_suffix]
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         raise NotImplementedError
 
 
 class ToXLS(ProcessorStrategy):
-    mime_type = ".xlsx"
+    file_suffix = ".xlsx"
     format = TYPE_LIST
     verbose_name = "Dataset to XLS"
 
@@ -75,7 +73,7 @@ class ToXLS(ProcessorStrategy):
 
 
 class ToJSON(ProcessorStrategy):
-    mime_type = ".json"
+    file_suffix = ".json"
     format = TYPE_LIST
     verbose_name = "Dataset to JSON"
 
@@ -85,7 +83,7 @@ class ToJSON(ProcessorStrategy):
 
 
 class ToYAML(ProcessorStrategy):
-    mime_type = ".yaml"
+    file_suffix = ".yaml"
     format = TYPE_LIST
     verbose_name = "Dataset to YAML"
 
@@ -95,7 +93,7 @@ class ToYAML(ProcessorStrategy):
 
 
 class ToHTML(ProcessorStrategy):
-    mime_type = ".html"
+    file_suffix = ".html"
     format = TYPE_BOTH
     verbose_name = "Render CODE"
 
@@ -104,8 +102,18 @@ class ToHTML(ProcessorStrategy):
         return tpl.render(Context(context)).encode()
 
 
+class ToText(ProcessorStrategy):
+    file_suffix = ".txt"
+    format = TYPE_BOTH
+    verbose_name = "To Textfile"
+
+    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+        tpl = Template(self.formatter.code)
+        return tpl.render(Context(context)).encode()
+
+
 class ToWord(ProcessorStrategy):
-    mime_type = ".docx"
+    file_suffix = ".docx"
     format = TYPE_BOTH
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
@@ -122,8 +130,9 @@ class ToWord(ProcessorStrategy):
 
 
 class ToPDF(ProcessorStrategy):
-    mime_type = ".pdf"
+    file_suffix = ".pdf"
     format = TYPE_BOTH
+    verbose_name = "Text To PDF"
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         tpl = Template(self.formatter.code)
@@ -132,7 +141,7 @@ class ToPDF(ProcessorStrategy):
 
 
 class ToFormPDF(ProcessorStrategy):
-    mime_type = ".pdf"
+    file_suffix = ".pdf"
     format = TYPE_DETAIL
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":

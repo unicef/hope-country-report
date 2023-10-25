@@ -48,7 +48,7 @@ def test_sizeof(value, expected):
 
 def test_to_dataset_qs(user):
     qs = type(user).objects.all()
-    assert to_dataset(qs).width == 15
+    assert to_dataset(qs).width == 16  # number of fields
 
 
 def test_to_dataset_values(user):
@@ -83,7 +83,7 @@ def test_basicauth(rf):
 def test_basicauth_authenticate(rf, user):
     request = rf.get(
         "/",
-        headers={"Authorization": "Basic " + b64encode(f"{user.username}:password".encode("utf-8")).decode("ascii")},
+        headers={"Authorization": "Basic " + b64encode(f"{user.username}:password".encode()).decode("ascii")},
     )
 
     request.user = AnonymousUser()
@@ -103,7 +103,7 @@ def test_basicauth_authenticated(rf, user):
 def test_basicauth_authenticate_fail(rf, user):
     request = rf.get(
         "/",
-        headers={"Authorization": "Basic " + b64encode(f"{user.username}:".encode("utf-8")).decode("ascii")},
+        headers={"Authorization": "Basic " + b64encode(f"{user.username}:".encode()).decode("ascii")},
     )
 
     request.user = AnonymousUser()

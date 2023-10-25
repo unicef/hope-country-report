@@ -1,0 +1,31 @@
+{% extends "layout.html" %}{% load i18n %}
+{% block header %}
+    <div class="pr-10 flex-grow">
+        <form id="select-tenant" class="text-" method="post" action="{% url 'select-tenant' %}">
+            {% csrf_token %}{{ tenant_form.tenant }}
+        </form>
+    </div>
+    <a href="{% url "profile" %}"><div class="icon icon-user text-3xl float-shrink"></div></a>
+{% endblock %}
+{% block menu %}
+    <ul class="menu p-4">
+        <li><a href="{% url "office-index" selected_office.slug %}">
+            <div class="OfficeHomeView">{% trans "Home" %}</div>
+        </a></li>
+        <li><a href="{% url "office-reports" selected_office.slug %}">
+            <div class="OfficeReportListView OfficeReportDetailView">{% trans "Reports" %}</div>
+        </a></li>
+        {#        <li><a href="{% url "power_query:report_list" %}">#}
+        {#            <div>{% trans "Configuration" %}</div>#}
+        {#        </a></li>#}
+        <li><a href="{% url "admin:index" %}">
+            <div>{% trans "Admin" %}</div>
+        </a></li>
+{#        <li><a href="{% url "profile" %}">#}
+{#            <div>{% trans "Settings" %}</div>#}
+{#        </a></li>#}
+        <li><a href="{% url "logout" %}">
+            <div>{% trans "Logout" %}</div>
+        </a></li>
+    </ul>
+{% endblock %}

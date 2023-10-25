@@ -26,6 +26,10 @@ help:
 bootstrap:
 	python manage.py upgrade --admin-email admin@unicef.org --admin-password 123
 
+i18n:
+	./manage.py makemessages --locale es --locale fr --ignore '~*'
+	./manage.py compilemessages
+
 reset-migrations: ## reset django migrations
 	./manage.py check
 	find src -name '0*[1,2,3,4,5,6,7,8,9,0]*' | xargs rm -f

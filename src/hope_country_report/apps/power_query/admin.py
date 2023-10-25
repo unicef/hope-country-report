@@ -1,6 +1,7 @@
-from typing import Any, Dict, Optional, Sequence, Type, TYPE_CHECKING
+from typing import Any, Optional, Type, TYPE_CHECKING
 
 import logging
+from collections.abc import Sequence
 
 from unittest.mock import Mock
 
@@ -90,7 +91,7 @@ class CeleryEnabledMixin:
 
     @view()
     def celery_queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
-        obj: Optional[CeleryEnabled]
+        obj: CeleryEnabled | None
         try:
             obj = self.get_object(request, str(pk))
             if obj.queue():
@@ -180,7 +181,7 @@ class QueryAdmin(
     #
     #     return super().formfield_for_dbfield(db_field, request, **kwargs)
 
-    def has_change_permission(self, request: HttpRequest, obj: Optional[Any] = None) -> bool:
+    def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
         return super().has_change_permission(request, obj)
         # if isinstance(obj, int):
         # return request.user.is_superuser or bool(obj and obj.owner == request.user)
@@ -244,7 +245,7 @@ class QueryAdmin(
         except Exception as e:
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> Dict[str, Any]:
+    def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
         return {
             "code": "result=conn.all()",
@@ -371,9 +372,13 @@ class FormatterAdmin(
 
 @admin.register(ReportTemplate)
 class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin):
-    list_display = ("name", "doc", "suffix", "content_type")
+    list_display = (
+        "name",
+        "doc",
+        "file_suffix",
+    )
     search_fields = ("name",)
-    list_filter = ("suffix",)
+    list_filter = ("file_suffix",)
     autocomplete_fields = ("country_office",)
 
     # readonly_fields = ("suffix", )
@@ -405,11 +410,17 @@ class ReportAdmin(
     AdminActionPermMixin,
     ModelAdmin,
 ):
-    list_display = ("name", "formatters", "last_run", "owner", "schedule")
+    list_display = ("country_office", "name", "formatters", "last_run", "owner", "schedule")
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters"]
-    readonly_fields = ("last_run",)
+    readonly_fields = (
+        "last_run",
+        "sentry_error_id",
+        "error_message",
+        "last_async_result_id",
+    )
     list_filter = (
+        ("country_office", AutoCompleteFilter),
         ("owner", AutoCompleteFilter),
         ("query", AutoCompleteFilter),
         ("formatters", AutoCompleteFilter),
@@ -418,11 +429,11 @@ class ReportAdmin(
     search_fields = ("name",)
     change_form_template = None
 
-    def has_change_permission(self, request: HttpRequest, obj: Optional[Any] = None) -> bool:
+    def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> Dict[str, Any]:
-        kwargs: Dict[str, Any] = {"owner": request.user}
+    def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
+        kwargs: dict[str, Any] = {"owner": request.user}
         if "q" in request.GET:
             q = Query.objects.get(pk=request.GET["q"])
             kwargs["query"] = q
@@ -483,7 +494,7 @@ class ReportDocumentAdmin(
     AdminActionPermMixin,
     ModelAdmin,
 ):
-    list_display = ("title", "content_type", "arguments")
+    list_display = ("title", "content_type", "report")
     list_filter = (("report", AutoCompleteFilter),)
     search_fields = ("title",)
     filter_horizontal = ("limit_access_to",)
@@ -495,12 +506,12 @@ class ReportDocumentAdmin(
     def size(self, obj: ReportDocument) -> int:
         return len(obj.output or "")
 
-    @button()
-    def view(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
-        if not (obj := self.get_object(request, str(pk))):
-            raise Exception("Report document not found")
-        url = reverse("power_query:document", args=[obj.report.pk, pk])
-        return HttpResponseRedirect(url)
+    # @button()
+    # def view(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
+    #     if not (obj := self.get_object(request, str(pk))):
+    #         raise Exception("Report document not found")
+    #     url = reverse("power_query:document", args=[obj.report.pk, pk])
+    #     return HttpResponseRedirect(url)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

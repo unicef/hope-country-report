@@ -60,6 +60,7 @@ dependencies = [
     "django-timezone-field>=6.0.1",
     "pytz>=2023.3.post1",
     "tzdata>=2023.3",
+    "django-user-language-middleware>=0.0.3",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"

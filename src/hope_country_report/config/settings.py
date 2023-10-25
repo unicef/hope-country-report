@@ -1,5 +1,3 @@
-from typing import Dict
-
 import os
 from pathlib import Path
 from urllib.parse import urlparse
@@ -25,7 +23,7 @@ DATABASES = {
     "hope_ro": RO_CONN,
 }
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
-DATABASE_APPS_MAPPING: Dict[str, str] = {
+DATABASE_APPS_MAPPING: dict[str, str] = {
     "core": "default",
     "hope": "hope_ro",
 }
@@ -92,8 +90,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "hope_country_report.middleware.state.StateSetMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "hope_country_report.middleware.user_language.UserLanguageMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # "silk.middleware.SilkyMiddleware",
     "hope_country_report.middleware.silk.SilkMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -158,7 +156,7 @@ LANGUAGES = (
     ("es", ugettext("Spanish")),  # type: ignore[no-untyped-call]
     ("fr", ugettext("French")),  # type: ignore[no-untyped-call]
     ("en", ugettext("English")),  # type: ignore[no-untyped-call]
-    ("ar", ugettext("Arabic")),  # type: ignore[no-untyped-call]
+    # ("ar", ugettext("Arabic")),  # type: ignore[no-untyped-call]
 )
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -168,6 +166,7 @@ INTERNAL_IPS = ["127.0.0.1", "localhost"]
 USE_I18N = True
 USE_TZ = True
 USE_L10N = True
+LOCALE_PATHS = [PACKAGE_DIR / "LOCALE"]
 
 CACHE_URL = env("CACHE_URL")
 REDIS_URL = urlparse(CACHE_URL).hostname

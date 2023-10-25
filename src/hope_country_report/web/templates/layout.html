@@ -1,0 +1,47 @@
+{% load static i18n %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta name="view" content="{{ view_name }}"></meta>
+    <link rel="stylesheet" href="{% static "power_query.css" %}" type="text/css">
+    <link rel="stylesheet" href="{% static "icons.css" %}" type="text/css">
+    <link rel="stylesheet" href="{% static "css/styles.css" %}" type="text/css">
+    <script src="{% static "admin/js/vendor/jquery/jquery.js" %}"></script>
+    <script src="{% static "hcr.js" %}"></script>
+</head>
+<body>
+<main class="flex flex-col h-screen">
+    <div class="flex flex-1 overflow-hidden">
+    {% block sidebar %}
+        <div class="bg-unicef-blue w-64" id="sidebar">
+            <div class="flex mb-10 h-16 items-center">
+                <div class="flex-grow">
+                    <img src="{% static "hope_logo.png" %}" class="pl-8 h-16">
+                </div>
+                <div class="flex shrink align-middle pr-5 cursor-pointer" id="hide-sidebar">
+                    <svg focusable="false" class="text-white" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path>
+                    </svg>
+                </div>
+            </div>
+            {% block menu %}{% endblock %}
+        </div>
+    {% endblock %}
+        <div class="flex flex-1 flex-col">
+            <div class="flex h-16 p-4 bg-unicef-gray text-white">{% block areas %}
+                <div class="text-white cursor-pointer w-16">
+                <svg class="text-white hidden"  id="show-sidebar"  focusable="false" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+                </svg></div>{% endblock %}
+
+                {% block header %}{% endblock %}</div>
+            <div class="overflow-y-auto p-4">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    <div class="flex">Footer</div>
+</main>
+</body>
+</html>

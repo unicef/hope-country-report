@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from strategy_field.utils import fqn
 
-from hope_country_report.apps.power_query.processors import ToHTML, ToXLS
+from hope_country_report.apps.power_query.processors import ToHTML, ToJSON, ToText, ToXLS, ToYAML
 
 if TYPE_CHECKING:
     from typing import List
@@ -29,7 +29,7 @@ def create_defaults() -> "List[Formatter]":
     </table>
 """,
             "processor": fqn(ToHTML),
-            "content_type": ".html",
+            "file_suffix": ".html",
         },
     )
 
@@ -48,9 +48,37 @@ def create_defaults() -> "List[Formatter]":
     </table>
 """,
             "processor": fqn(ToHTML),
-            "content_type": ".html",
+            "file_suffix": ".html",
         },
     )
+
+    f2, __ = Formatter.objects.get_or_create(
+        name="Queryset To Text",
+        defaults={
+            "code": """
+{% for row in dataset.data %}{{ row }}
+{% endfor %}""",
+            "processor": fqn(ToText),
+            "file_suffix": ".txt",
+        },
+    )
+    fmts = [f1, f2]
+
+    for p in [ToYAML, ToJSON, ToXLS]:
+        f, __ = Formatter.objects.get_or_create(
+            name=p.verbose_name,
+            defaults={
+                "code": "",
+                "processor": fqn(p),
+                "file_suffix": p.file_suffix,
+            },
+        )
+        fmts.append(f)
+    #
+    # f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "processor": fqn(ToXLS)})
+    # Formatter.objects.get_or_create(name="Dataset To YAML", processor=fqn(ToYAML), content_type=ToYAML.content_type)
+    # Formatter.objects.get_or_create(name="Dataset To JSON", processor=fqn(ToJSON), content_type=ToJSON.content_type)
+
     q1, __ = Query.objects.get_or_create(
         name="Active Programs",
         defaults={
@@ -75,12 +103,11 @@ def create_defaults() -> "List[Formatter]":
         name="Household by Program",
         defaults={"query": q2, "title": "Household by BusinessArea: {program}"},
     )
-    r1.formatters.add(f2)
-    f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "processor": fqn(ToXLS)})
+    r1.formatters.add(*fmts)
 
     ReportTemplate.load()
 
-    return [f1, f2, f3]
+    return fmts
 
 
 def create_periodic_tasks():

@@ -1,5 +1,6 @@
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
+from collections.abc import Callable
 from functools import update_wrapper
 
 from django.conf import settings
@@ -193,15 +194,13 @@ class TenantAdminSite(SmartAdminSite):
 
     @method_decorator(never_cache)
     def select_tenant(self, request: "AuthHttpRequest") -> "HttpResponse":
-        # if not must_tenant():
-        #     return redirect(f"{self.name}:index")
         context = self.each_context(request)
         if request.method == "POST":
             form = SelectTenantForm(request.POST, request=request)
             if form.is_valid():
                 set_selected_tenant(form.cleaned_data["tenant"])
-                return HttpResponseRedirect("/")
+                return HttpResponseRedirect("/admin/")
 
-        form = SelectTenantForm(request=request, initial={"next": "/"})
+        form = SelectTenantForm(request=request, initial={"next": "/admin/"})
         context["form"] = form
         return TemplateResponse(request, "tenant_admin/select_tenant.html", context)

@@ -104,6 +104,7 @@ class ReportFactory(AutoRegisterModelFactory):
 class ReportDocumentFactory(AutoRegisterModelFactory):
     report = factory.SubFactory(ReportFactory)
     dataset = factory.SubFactory(DatasetFactory)
+    formatter = factory.SubFactory(FormatterFactory)
 
     class Meta:
         model = ReportDocument

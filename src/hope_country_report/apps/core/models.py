@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from django.db.models import QuerySet
@@ -19,6 +20,7 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
 
 
 class CountryOffice(models.Model):
+    HQ = "HQ"
     name = models.CharField(max_length=100, editable=False, blank=True)
     active = models.BooleanField(default=False, blank=True)
     code = models.CharField(max_length=10, unique=True, blank=True)
@@ -43,6 +45,16 @@ class CountryOffice(models.Model):
     def sync(cls) -> None:
         from hope_country_report.apps.hope.models import BusinessArea
 
+        CountryOffice.objects.update_or_create(
+            hope_id=CountryOffice.HQ,
+            defaults={
+                "name": "Headquarter",
+                "long_name": "Headquarter",
+                "active": True,
+                "code": CountryOffice.HQ,
+            },
+        )
+
         for ba in BusinessArea.objects.all():
             values = {
                 "hope_id": str(ba.id),
@@ -61,6 +73,7 @@ class CountryOffice(models.Model):
 
 class User(AbstractUser):  # type: ignore
     timezone = TimeZoneField(default="UTC")
+    language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
 
     class Meta:
         app_label = "core"
@@ -77,4 +90,4 @@ class UserRole(models.Model):
         unique_together = ("user", "group", "country_office")
 
     def __str__(self) -> str:
-        return "%s %s" % (self.user.username, self.group.name)
+        return f"{self.user.username} {self.group.name}"

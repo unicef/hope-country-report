@@ -34,12 +34,13 @@ class Command(BaseCommand):
             defaults=dict(country_office=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
         )
 
-        r1, __ = Report.objects.get_or_create(title="Full HH list", defaults={"query": q})
-        r1.formatters.add(Formatter.objects.get(name="Queryset To HTML"))
+        r1, __ = Report.objects.get_or_create(title="Full HH list", country_office=afg, defaults={"query": q})
+        r1.formatters.add(*Formatter.objects.all())
+
         q, __ = Query.objects.get_or_create(
             name="Dev Query",
             defaults=dict(
-                country_office=None,
+                country_office=afg,
                 owner=None,
                 target=ContentType.objects.get_for_model(Household),
                 code="""import time

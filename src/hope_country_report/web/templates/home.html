@@ -1,1 +1,11 @@
-{% extends "base.html" %}
+{% extends "layout.html" %}
+{% block sidebar %}
+{% endblock %}
+{% block content %}
+    <div class="flex items-center justify-center h-screen">
+        <div class="w-1/4 mb-96">
+            <form id="select-tenant" method="post" action="{% url 'select-tenant' %}">
+                {% csrf_token %}{{ tenant_form }}</form>
+        </div>
+    </div>
+{% endblock %}

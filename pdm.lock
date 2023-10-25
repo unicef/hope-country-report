@@ -6,7 +6,7 @@ groups = ["default", "code", "test", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:2ec808784a4b9b2aae27826e4bbca928ff51fd627ee647bc6a94815fc5bf286d"
+content_hash = "sha256:f0e69e7af039820bfdcc6149e828d94a7def1572c6d2f8a64f0a5afb74b15a1e"
 
 [[package]]
 name = "amqp"
@@ -960,6 +960,18 @@ dependencies = [
 files = [
     {file = "django_timezone_field-6.0.1-py3-none-any.whl", hash = "sha256:ed28d3ff8e3500f2bc173cdf1aab7a3244ef607d06ad890611512de1bae6074d"},
     {file = "django_timezone_field-6.0.1.tar.gz", hash = "sha256:916d0fd924443462f099f02122cc38d6a6e901ea17f1206c343836199df8bc49"},
+]
+
+[[package]]
+name = "django-user-language-middleware"
+version = "0.0.3"
+requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+summary = "Django middleware to translate with language in user model"
+dependencies = [
+    "Django>=1.8",
+]
+files = [
+    {file = "django-user-language-middleware-0.0.3.tar.gz", hash = "sha256:9c73a0d5916aa07810bf32d8b6be4f0b66d5486126ee5b21d1dee638b80763d2"},
 ]
 
 [[package]]
