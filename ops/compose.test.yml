@@ -6,24 +6,39 @@ services:
     command: tests
     environment:
       - SECRET_KEY=secret-key
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+      - DATABASE_URL=postgis://postgres:postgres@db:5432/postgres
+      - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/postgres
       - REDIS_URL=redis://redis:6379/0
     ports:
       - 8000:8000
     depends_on:
       db:
         condition: service_healthy
+      hope_db:
+        condition: service_healthy
       redis:
         condition: service_healthy
 
   db:
-    image: postgres:15
+    image: postgis/postgis:15-3.4
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
-    ports:
-      - 5432:5432
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      start_period: 5s
+      interval: 5s
+      timeout: 4s
+      retries: 5
+
+  hopedb:
+    image: postgis/postgis:15-3.4
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
     restart: always
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]

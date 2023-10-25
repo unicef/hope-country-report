@@ -23,6 +23,7 @@ case "$1" in
         python3 manage.py runserver 0.0.0.0:8000
     ;;
     tests)
+        sleep 10 # FIXME: hack to wait for postgis init
         python3 manage.py migrate
         python3 -m pytest
     ;;
