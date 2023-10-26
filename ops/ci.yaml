@@ -56,6 +56,8 @@ stages:
               --push \
               ./
             displayName: Docker build dev
+          - script: echo $(Build.SourceVersionMessage)
+            displayName: 'Display Build.SourceVersionMessage'
 
   - stage: test
     condition: not(contains(variables['Build.SourceVersionMessage'], 'skip-tests'))
