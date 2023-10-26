@@ -58,14 +58,12 @@ class FormatterFactory(AutoRegisterModelFactory):
 
 class DatasetFactory(AutoRegisterModelFactory):
     query = factory.SubFactory(QueryFactory)
-    value = b""
 
     class Meta:
         model = Dataset
 
     @classmethod
     def create(cls, **kwargs: "Dict") -> Dataset:
-        # ret = super().create(**kwargs)
         q: Query = cls.query.get_factory().create()
         q.run(persist=True)
         return q.datasets.first()

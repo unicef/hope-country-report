@@ -103,6 +103,22 @@ def pytest_configure(config):
     _setup_models()
 
 
+def pytest_runtest_setup(item):
+    driver = item.config.getoption("--driver") or ""
+
+    if driver.lower() == "firefox" and list(item.iter_markers(name="skip_if_firefox")):
+        pytest.skip("Test skipped because Firefox")
+    if driver.lower() == "safari" and list(item.iter_markers(name="skip_if_safari")):
+        pytest.skip("Test skipped because Safari")
+    if driver.lower() == "edge" and list(item.iter_markers(name="skip_if_edge")):
+        pytest.skip("Test skipped because Edge")
+
+    env_names = [mark.args[0] for mark in item.iter_markers(name="skip_test_if_env")]
+    if env_names:
+        if item.config.getoption("--env") in os.environ:
+            pytest.skip(f"Test skipped because env {env_names!r} is present")
+
+
 @pytest.fixture
 def user(db):
     from testutils.factories import UserFactory

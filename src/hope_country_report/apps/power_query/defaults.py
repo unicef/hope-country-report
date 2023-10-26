@@ -86,7 +86,8 @@ def create_defaults() -> "List[Formatter]":
             "code": "result=conn.filter(status='ACTIVE').values_list('name', flat=True)",
         },
     )
-    q1.run(True)
+    ds, __ = q1.run(True, use_existing=False)
+    assert ds.file
     p1, __ = Parametrizer.objects.get_or_create(
         code="active-programs", defaults={"name": "Active Programs", "source": q1, "system": True}
     )

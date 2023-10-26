@@ -49,7 +49,7 @@ dependencies = [
     "sqlparse>=0.4.4",
     "docxtpl>=0.16.7",
     "pyhtml2pdf>=0.0.7",
-    "django-strategy-field>=3.0.0",
+    "django-strategy-field>=3.1",
     "django-select2>=8.1.2",
     "pypdf>=3.16.4",
     "pdfkit>=1.0.0",
@@ -77,6 +77,10 @@ test = [
     "freezegun>=1.2.2",
     "pytest-celery>=0.0.0",
     "fs>=2.4.16",
+    "responses>=0.23.3",
+    "py>=1.11.0",
+    "pytest-selenium",
+    "selenium<4.10",
 ]
 code = [
     "flake8>=6.1.0",
@@ -93,12 +97,9 @@ code = [
     "django-stubs>=4.2.4",
     "django-stubs-ext>=4.2.2",
     "types-setuptools>=68.2.0.0",
-]
-dev = [
     "mkdocs>=1.5.3",
     "pyupgrade>=3.15.0",
 ]
-
 
 [tool.black]
 line-length = 120

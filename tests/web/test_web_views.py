@@ -51,25 +51,41 @@ def report_template():
     return ReportTemplate.objects.first()
 
 
+def test_index(django_app, report):
+    res = django_app.get("/", user=report.owner)
+    assert res.status_code == 200
+
+
 def test_report_list(django_app, report):
     url = reverse("office-reports", args=[report.country_office.slug])
     res = django_app.get(url, user=report.owner)
-    assert res
+    assert res.status_code == 200
 
 
 def test_report(django_app, report):
     url = reverse("office-report", args=[report.country_office.slug, report.pk])
     res = django_app.get(url, user=report.owner)
-    assert res
+    assert res.status_code == 200
 
 
 def test_document(django_app, report: "Report"):
     url = reverse("office-doc-display", args=[report.country_office.slug, report.pk, report.documents.first().pk])
     res = django_app.get(url, user=report.owner)
-    assert res
+    assert res.status_code == 200
 
 
 def test_download(django_app, report: "Report"):
     url = reverse("office-doc-download", args=[report.country_office.slug, report.pk, report.documents.first().pk])
-    res = django_app.get(url)
-    assert res
+    res = django_app.get(url, user=report.owner)
+    assert res.status_code == 200
+
+
+def test_user_profile(django_app, report: "Report"):
+    url = reverse("office-index", args=[report.country_office.slug])
+    res = django_app.get(url, user=report.owner)
+    res = res.click(href="/profile/")
+    res.forms["user-profile"].language = "es"
+    res = res.forms["user-profile"].submit()
+    assert res.status_code == 302
+    report.owner.refresh_from_db()
+    assert report.owner.language == "es"

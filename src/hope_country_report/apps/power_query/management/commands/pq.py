@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from pathlib import Path
 from pprint import pprint
@@ -75,18 +75,11 @@ class Command(BaseCommand):
 
     def _queue(self, *args: Any, **options: Any) -> None:
         pq = PowerQuery.objects.get(pk=options["id"])
-        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 68 - celery_task", pq.celery_task)
-        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 68 - async_result", pq.async_result)
-        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 69 - status", pq.status)
-        res = pq.queue()
+        pq.queue()
         pq.refresh_from_db()
-        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 72 - res", res)
-        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 72 - celery_task", pq.celery_task)
-        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 73 - async_result", pq.async_result)
-        print("src/hope_country_report/apps/power_query/management/commands/pq.py: 74 - status", pq.status)
 
     def _run(self, *args: Any, **options: Any) -> None:
-        query_args: Dict[str, str] = {}
+        query_args: dict[str, str] = {}
         try:
             for a in options["arguments"]:
                 k, v = a.split("=")

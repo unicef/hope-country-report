@@ -1,4 +1,6 @@
-from typing import Any, Dict, Mapping, reveal_type, Tuple
+from typing import Any, Dict, reveal_type, Tuple
+
+from collections.abc import Mapping
 
 from environ import Env
 
@@ -44,7 +46,7 @@ OPTIONAL = {
     "MEDIA_URL": (str, "/media/"),
     "MEDIA_ROOT": (str, "/tmp/media/"),
     "SENTRY_DSN": (str, ""),
-    "SENTRY_URL": (str, ""),
+    "SENTRY_URL": (str, "https://excubo.unicef.org/"),
     "SESSION_COOKIE_DOMAIN": (str, "unicef.org"),
     "SESSION_COOKIE_NAME": (str, "hcr_session"),
     "SESSION_COOKIE_PATH": (str, "/"),

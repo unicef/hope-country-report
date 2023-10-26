@@ -5,7 +5,7 @@ from unittest import mock
 
 from django.db.models import Q
 
-from hope_country_report.apps.power_query.models import PowerQueryManager
+from hope_country_report.apps.power_query.manager import PowerQueryManager
 from hope_country_report.apps.tenant.exceptions import InvalidTenantError
 from hope_country_report.state import state
 

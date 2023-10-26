@@ -19,7 +19,7 @@ from .utils import to_dataset
 if TYPE_CHECKING:
     from typing import Any, Dict, List, Tuple
 
-    from .models import Formatter, ReportTemplate
+    from .models import Dataset, Formatter, ReportTemplate
 
     ProcessorResult = bytes | BytesIO
 
@@ -88,7 +88,8 @@ class ToYAML(ProcessorStrategy):
     verbose_name = "Dataset to YAML"
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
-        dt = to_dataset(context["dataset"].data)
+        ds: "Dataset" = context["dataset"]
+        dt = to_dataset(ds.data)
         return dt.export("yaml")
 
 

@@ -23,6 +23,14 @@
             <th>{% trans "Date" %}</th>
             <td>{{ report.last_run }}</td>
         </tr>
+        <tr>
+            <th>{% trans "schedule" %}</th>
+            <td>{{ report.schedule.name }}</td>
+        </tr>
+        <tr>
+            <th>{% trans "status" %}</th>
+            <td>{{ report.status }}</td>
+        </tr>
     </table>
     <table class="w-1/2 m-auto mt-10">
         <thead>

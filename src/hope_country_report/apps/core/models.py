@@ -77,6 +77,7 @@ class User(AbstractUser):  # type: ignore
 
     class Meta:
         app_label = "core"
+        swappable = "AUTH_USER_MODEL"
 
 
 class UserRole(models.Model):

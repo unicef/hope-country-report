@@ -1,7 +1,7 @@
 {% extends "web/office/_base.html" %}{% load i18n %}
 
 {% block content %}
-    <form method="post">
+    <form method="post" id="user-profile">
         {% csrf_token %}
 
         <table>

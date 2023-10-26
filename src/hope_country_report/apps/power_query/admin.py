@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from ...types.django import AnyModel
 
 
-class CeleryEnabledMixin:
+class CeleryEnabledMixin(admin.ModelAdmin):
     def get_readonly_fields(self, request: HttpRequest, obj: Optional["AnyModel"] = None) -> Sequence[str]:
         ret = list(super().get_readonly_fields(request, obj))
         ret.append("curr_async_result_id")
@@ -106,7 +106,7 @@ class CeleryEnabledMixin:
         return response
 
 
-class AutoProjectCol:
+class AutoProjectCol(admin.ModelAdmin):
     def get_list_display(self, request: "HttpRequest") -> Sequence[str]:
         base = super().get_list_display(request)
         if state.tenant is None:
@@ -255,12 +255,30 @@ class QueryAdmin(
         }
 
 
+class FileProviderAdmin(admin.ModelAdmin):
+    actions = ["check_files"]
+
+    def check_files(self, request: HttpRequest, queryset) -> HttpResponse:
+        for m in queryset.all():
+            try:
+                if not m.file.exists():
+                    m.file = None
+                    m.save()
+            except Exception:
+                pass
+
+    @button()
+    def _check_files(self, request: HttpRequest) -> HttpResponse:
+        return self.check_files(request, self.model.objects.all())
+
+
 @admin.register(Dataset)
 class DatasetAdmin(
     AdminFiltersMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
+    FileProviderAdmin,
     ModelAdmin,
 ):
     search_fields = ("query__name",)
@@ -282,7 +300,7 @@ class DatasetAdmin(
     date_hierarchy = "last_run"
 
     def get_queryset(self, request: HttpRequest):  # type: ignore[no-untyped-def]
-        return super().get_queryset(request).select_related("query", "query__target").defer("extra", "value")
+        return super().get_queryset(request).select_related("query", "query__target").defer("extra")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
@@ -428,6 +446,8 @@ class ReportAdmin(
     )
     search_fields = ("name",)
     change_form_template = None
+    linked_objects_hide_empty = False
+    object: "Report"
 
     def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
@@ -442,18 +462,19 @@ class ReportAdmin(
         return kwargs
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
-    def execute(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
-        obj = self.get_object(request, str(pk))
+    def execute(self, request: HttpRequest, pk: int) -> HttpResponse:
+        ctx = self.get_common_context(request, pk, title="Execution results")
         try:
-            result = obj.execute(run_query=True)
-            errors = [r[1] for r in result if isinstance(r[1], Exception)]
+            results = self.object.execute(run_query=True)
+            errors = [r[1] for r in results if isinstance(r[1], Exception)]
             if len(errors) == 0:
-                message_level = messages.SUCCESS
-            elif len(errors) == len(result):
-                message_level = messages.ERROR
+                self.message_user(request, "Documents creation success", messages.SUCCESS)
+            elif len(errors) == len(results):
+                self.message_user(request, "All documents failed", messages.ERROR)
             else:
-                message_level = messages.WARNING
-            self.message_user(request, f"{result}", message_level)
+                self.message_user(request, "Documents created with errors", messages.WARNING)
+            ctx["results"] = results
+            return render(request, "admin/power_query/report/exec.html", ctx)
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
@@ -489,23 +510,24 @@ class QueryArgsAdmin(
 class ReportDocumentAdmin(
     AdminFiltersMixin,
     LinkedObjectsMixin,
+    FileProviderAdmin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin,
 ):
-    list_display = ("title", "content_type", "report")
+    list_display = ("title", "content_type", "report", "file")
     list_filter = (("report", AutoCompleteFilter),)
     search_fields = ("title",)
     filter_horizontal = ("limit_access_to",)
     readonly_fields = ("arguments", "report", "dataset", "content_type")
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ReportDocument]:
-        return super().get_queryset(request).defer("output")
+        return super().get_queryset(request)
 
-    def size(self, obj: ReportDocument) -> int:
-        return len(obj.output or "")
-
+    # def size(self, obj: ReportDocument) -> int:
+    #     return len(obj.output or "")
+    #
     # @button()
     # def view(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
     #     if not (obj := self.get_object(request, str(pk))):

@@ -10,22 +10,19 @@ from hope_country_report.apps.tenant.config import conf
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
-    from typing import Tuple, TypedDict
+    from typing import TypedDict
 
     from hope_country_report.apps.core.models import CountryOffice, User
     from hope_country_report.apps.hope.models import Household
     from hope_country_report.apps.power_query.models import Dataset, Formatter, Parametrizer, Query
 
-    _DATA = TypedDict(
-        "_DATA",
-        {
-            "user": User,
-            "co1": CountryOffice,
-            "co2": CountryOffice,
-            "hh1": Tuple[Household, Household],
-            "hh2": Tuple[Household, Household],
-        },
-    )
+    class _DATA(TypedDict):
+        user: User
+        co1: CountryOffice
+        co2: CountryOffice
+        hh1: tuple[Household, Household]
+        hh2: tuple[Household, Household]
+
 
 pytestmark = pytest.mark.django_db()
 
@@ -177,3 +174,13 @@ def test_query_log(query_log: "Query", data):
     assert ds.data.count() == 2
     assert ds.data.first() == data["hh1"][0]
     assert ds.info["debug"] == [("08:00:00", "start"), ("08:00:00", "end")]
+
+
+@freeze_time("2012-01-14 08:00:00")
+def test_query_marshalling(query1: "Query", data):
+    tenant_slug = data["hh1"][0].business_area.id
+    tenant = data["hh1"][0].business_area.country_office
+    with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
+        ds, extra = query1.run()
+    assert ds.data.count() == 2
+    assert ds.data.first() == data["hh1"][0]

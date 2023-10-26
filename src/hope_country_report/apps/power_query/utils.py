@@ -1,10 +1,11 @@
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 
 import base64
 import binascii
 import hashlib
 import json
 import logging
+from collections.abc import Callable, Iterable
 from functools import wraps
 from pathlib import Path
 
@@ -50,7 +51,7 @@ def is_valid_template(filename: Path):
     return True
 
 
-def to_dataset(result: Any) -> tablib.Dataset:
+def to_dataset(result: "QuerySet|Iterable|tablib.Dataset|Dict") -> tablib.Dataset:
     if isinstance(result, QuerySet):
         data = tablib.Dataset()
         fields = result.__dict__["_fields"]
@@ -133,7 +134,7 @@ def sizeof(num: float, suffix: str = "") -> str:
     return f"{num:.1f}Yi{suffix}".strip()
 
 
-def dict_hash(dictionary: Dict[str, Any]) -> str:
+def dict_hash(dictionary: dict[str, Any]) -> str:
     """MD5 hash of a dictionary."""
     dhash = hashlib.md5()
     # We need to sort arguments so {'a': 1, 'b': 2} is

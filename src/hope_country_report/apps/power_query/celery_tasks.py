@@ -4,8 +4,10 @@ import logging
 import signal
 import uuid
 
+from django.apps import apps
 from django.conf import settings
 from django.core.cache import caches
+from django.utils.functional import cached_property
 
 from celery import group
 from celery.contrib.abortable import AbortableTask
@@ -16,11 +18,10 @@ from redis import StrictRedis
 
 from ...config.celery import app
 from .exceptions import QueryRunCanceled, QueryRunTerminated
-from .models import Query, Report
 from .utils import sentry_tags
 
 if TYPE_CHECKING:
-    from .models import QueryMatrixResult, ReportResult
+    from .models import Query, QueryMatrixResult, Report, ReportResult
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,11 @@ class AbstractPowerQueryTask(AbortableTask):
     model: "Union[Type[Query], Type[Report]]"
     cache = caches[getattr(settings, "CELERY_TASK_LOCK_CACHE", "default")]
     lock_expiration = 60 * 60 * 24  # 1 day
+    model_name: str = ""
+
+    @cached_property
+    def model(self):
+        return apps.get_app_config("power_query").get_model(self.model_name)
 
     def on_success(self, retval, task_id, args, kwargs):
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
@@ -65,16 +71,18 @@ class AbstractPowerQueryTask(AbortableTask):
 
 
 class PowerQueryTask(AbstractPowerQueryTask):
-    model = Query
+    model_name = "Query"
 
 
 class ReportTask(AbstractPowerQueryTask):
-    model = Report
+    model_name = "Report"
 
 
 @app.task(bind=True, base=PowerQueryTask)
 @sentry_tags
 def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "QueryMatrixResult":
+    from hope_country_report.apps.power_query.models import Query
+
     query = None
     try:
         query = Query.objects.get(pk=query_id)
@@ -111,6 +119,8 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportResult":
+    from hope_country_report.apps.power_query.models import Report
+
     result: "ReportResult" = []
     try:
         report: Report = Report.objects.get(id=id)
@@ -123,6 +133,8 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def reports_refresh(self: AbortableTask, **kwargs) -> Any:
+    from hope_country_report.apps.power_query.models import Report
+
     report: Report
     result = {}
     if periodic_task_name := (getattr(self.request, "properties", {}) or {}).get("periodic_task_name"):

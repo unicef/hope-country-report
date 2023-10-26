@@ -28,6 +28,12 @@ class UserFactory(AutoRegisterModelFactory):
         model = User
         django_get_or_create = ("username", "is_active", "is_staff")
 
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        ret = super()._create(model_class, *args, **kwargs)
+        ret._password = cls._password
+        return ret
+
 
 class SuperUserFactory(UserFactory):
     username = factory.Sequence(lambda n: "superuser%03d@example.com" % n)
