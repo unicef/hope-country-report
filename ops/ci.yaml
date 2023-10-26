@@ -57,7 +57,18 @@ stages:
               ./
             displayName: Docker build dev
 
+  - stage: CaptureCommitMessage
+    jobs:
+      - job: CaptureCommitMessage
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              message=$(git log -1 --pretty=%B)
+              echo "##vso[task.setvariable variable=commitMessage]$message"
+
   - stage: test
+    condition: not(contains(variables['commitMessage'], 'skip-tests'))
     displayName: TEST
     dependsOn: build_and_push_backend
     jobs:
