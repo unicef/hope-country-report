@@ -7,6 +7,7 @@ ABOUT HOPE Country Report
 ### System Requirements
 
 - python 3.11
+- [direnv](https://direnv.net/) - not mandatory but strongly recommended
 - [pdm](https://pdm.fming.dev/2.9/)
 
 ## Configure development environment
