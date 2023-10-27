@@ -21,6 +21,8 @@ def test_userdatetime(user):
 
     assert userdatetime(now(), AnonymousUser()) == "2000 Jan 01 08:00"
 
+    assert userdatetime(None) == ""
+
     r = Mock()
     r.user = user
     with state.set(request=r):
@@ -36,6 +38,8 @@ def test_usertime(user):
     assert usertime(now(), user) == "09:00"
 
     assert usertime(now(), AnonymousUser()) == "08:00"
+
+    assert usertime(None) == ""
 
     r = Mock()
     r.user = user

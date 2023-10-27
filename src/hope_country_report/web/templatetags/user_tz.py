@@ -11,7 +11,9 @@ register = Library()
 
 
 @register.filter(expects_localtime=True, is_safe=False)
-def userdatetime(value: datetime, user: "User|AnonymousUser|None" = None, arg: str = "Y M d H:i") -> str:
+def userdatetime(value: datetime | None, user: "User|AnonymousUser|None" = None, arg: str = "Y M d H:i") -> str:
+    if not value:
+        return ""
     if not user:
         user = state.request.user
     if user.is_authenticated and user.timezone:
@@ -21,7 +23,9 @@ def userdatetime(value: datetime, user: "User|AnonymousUser|None" = None, arg: s
 
 
 @register.filter(expects_localtime=True, is_safe=False)
-def usertime(value: datetime, user: "User|AnonymousUser|None" = None, arg: str = "H:i") -> str:
+def usertime(value: datetime | None, user: "User|AnonymousUser|None" = None, arg: str = "H:i") -> str:
+    if not value:
+        return ""
     if not user:
         user = state.request.user
     if user.is_authenticated and user.timezone:
