@@ -1,0 +1,216 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-25 06:42+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/hope_country_report/apps/admin/sites.py:19
+msgid "HOPE Reporting site admin"
+msgstr ""
+
+#: src/hope_country_report/apps/admin/sites.py:21
+msgid "="
+msgstr ""
+
+#: src/hope_country_report/apps/admin/sites.py:27
+#, python-format
+msgid "HOPE Reporting %s"
+msgstr ""
+
+#: src/hope_country_report/apps/admin/sites.py:28
+msgid "HOPE Reporting"
+msgstr ""
+
+#: src/hope_country_report/apps/hope/models/geo.py:60
+msgid "Parent"
+msgstr "Padre"
+
+#: src/hope_country_report/config/settings.py:158
+msgid "Spanish"
+msgstr ""
+
+#: src/hope_country_report/config/settings.py:159
+msgid "French"
+msgstr ""
+
+#: src/hope_country_report/config/settings.py:160
+msgid "English"
+msgstr ""
+
+#: src/hope_country_report/utils/ddt.py:67
+msgid "Tenant"
+msgstr "Arrendatario"
+
+#: src/hope_country_report/utils/ddt.py:76
+msgid "Tenant Debug Panel"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/_actionlist.html:3
+msgid "Recent actions"
+msgstr "Acciones recientes"
+
+#: src/hope_country_report/web/templates/admin/_actionlist.html:4
+msgid "My actions"
+msgstr "Mis acciones"
+
+#: src/hope_country_report/web/templates/admin/_actionlist.html:8
+msgid "None available"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/_actionlist.html:23
+msgid "Unknown content"
+msgstr "Contenido desconocido"
+
+#: src/hope_country_report/web/templates/admin/_app_list.html:6
+#, python-format
+msgid "Models in the %(name)s application"
+msgstr "Modelos en la aplicación %(name)s"
+
+#: src/hope_country_report/web/templates/admin/_app_list.html:17
+msgid "Add"
+msgstr "Agregar"
+
+#: src/hope_country_report/web/templates/admin/_app_list.html:24
+msgid "View"
+msgstr "Vista"
+
+#: src/hope_country_report/web/templates/admin/_app_list.html:26
+msgid "Change"
+msgstr "Cambiar"
+
+#: src/hope_country_report/web/templates/admin/_app_list.html:37
+msgid "You don't have permission to view anything here."
+msgstr "No tienes permiso para ver nada aquí."
+
+#: src/hope_country_report/web/templates/admin/base.html:23
+#: src/hope_country_report/web/templates/admin/layout.html:62
+msgid "Log out"
+msgstr "Cerrar sesión"
+
+#: src/hope_country_report/web/templates/admin/layout.html:29
+msgid "Skip to main content"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/layout.html:44
+msgid "Welcome,"
+msgstr "Bienvenido"
+
+#: src/hope_country_report/web/templates/admin/layout.html:49
+msgid "View site"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/layout.html:54
+msgid "Documentation"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/layout.html:58
+msgid "Change password"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/layout.html:74
+msgid "Breadcrumbs"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/layout.html:77
+#: src/hope_country_report/web/templates/admin_extra_buttons/action_page.html:5
+#: src/hope_country_report/web/templates/admin_extra_buttons/confirm.html:4
+#: src/hope_country_report/web/templates/web/office/_base.html:10
+msgid "Home"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin/power_query/linked_objects.html:5
+msgid "No linked objects found"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin_extra_buttons/confirm.html:8
+msgid "Confirmation"
+msgstr ""
+
+#: src/hope_country_report/web/templates/admin_extra_buttons/confirm.html:14
+msgid "Warning"
+msgstr ""
+
+#: src/hope_country_report/web/templates/adminfilters/_wrapper.html:5
+#, python-format
+msgid " By %(filter_title)s"
+msgstr ""
+
+#: src/hope_country_report/web/templates/adminfilters/combobox.html:3
+#, python-format
+msgid " By %(filter_title)s "
+msgstr ""
+
+#: src/hope_country_report/web/templates/registration/login.html:15
+msgid "Login"
+msgstr "Acceso"
+
+#: src/hope_country_report/web/templates/tenant_admin/includes/object_delete_summary.html:2
+msgid "Summary"
+msgstr ""
+
+#: src/hope_country_report/web/templates/web/office/_base.html:13
+msgid "Reports"
+msgstr "Informes"
+
+#: src/hope_country_report/web/templates/web/office/_base.html:19
+msgid "Admin"
+msgstr "Área de administración"
+
+#: src/hope_country_report/web/templates/web/office/_base.html:22
+msgid "Settings"
+msgstr "Ajustes"
+
+#: src/hope_country_report/web/templates/web/office/_base.html:25
+msgid "Logout"
+msgstr "Cerrar sesión"
+
+#: src/hope_country_report/web/templates/web/office/index.html:3
+msgid "Welcome to HOPE Reporting"
+msgstr "Bienvenido a HOPE Reporting"
+
+#: src/hope_country_report/web/templates/web/office/profile.html:12
+msgid "Save"
+msgstr "Ahorrar"
+
+#: src/hope_country_report/web/templates/web/office/report.html:7
+#: src/hope_country_report/web/templates/web/office/reports.html:7
+msgid "Name"
+msgstr "Nombre"
+
+#: src/hope_country_report/web/templates/web/office/report.html:11
+msgid "Title"
+msgstr "Título"
+
+#: src/hope_country_report/web/templates/web/office/report.html:15
+msgid "Description"
+msgstr "Descripción"
+
+#: src/hope_country_report/web/templates/web/office/reports.html:4
+msgid "Available Reports"
+msgstr "Informes disponibles"
+
+#: src/hope_country_report/web/templates/web/office/reports.html:8
+msgid "Active"
+msgstr "Activo"
+
+#: src/hope_country_report/web/templates/web/office/reports.html:9
+msgid "Refreshed On"
+msgstr "Actualizado el"
+
+#: src/hope_country_report/web/templates/web/office/reports.html:10
+msgid "Tags"
+msgstr "Etiquetas"
