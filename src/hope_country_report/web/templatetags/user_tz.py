@@ -17,3 +17,14 @@ def userdatetime(value: datetime, user: "User|None" = None, arg: str = "Y M d H:
         except ValueError:
             pass
     return date(value, arg)
+
+
+@register.filter(expects_localtime=True, is_safe=False)
+def usertime(value: datetime, user: "User|None" = None, arg: str = "H:i") -> str:
+    if user:
+        try:
+            tz = user.timezone
+            value = value.astimezone(tz)
+        except ValueError:
+            pass
+    return date(value, arg)

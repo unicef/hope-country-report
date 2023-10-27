@@ -73,6 +73,7 @@ def pytest_configure(config):
     os.environ.update(
         ADMINS="",
         ALLOWED_HOSTS="*",
+        AUTHENTICATION_BACKENDS="",
         DEFAULT_FILE_STORAGE="hope_country_report.apps.power_query.storage.DataSetStorage",
         DJANGO_SETTINGS_MODULE="hope_country_report.config.settings",
         CELERY_TASK_ALWAYS_EAGER="1",
@@ -86,8 +87,6 @@ def pytest_configure(config):
     )
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""
-
-    os.environ["AUTHENTICATION_BACKENDS"] = ""
 
     config.option.enable_selenium = "selenium" in config.option.markexpr
 

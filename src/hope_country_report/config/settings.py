@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_celery_results",
     # "unicef_security",  ## cannot be enabled it creates User model even if not used
+    "django_cleanup.apps.CleanupSelectedConfig",
     "debug_toolbar",
     "django.contrib.auth",
     "django.contrib.humanize",

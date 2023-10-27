@@ -8,9 +8,9 @@ import pickle
 
 from django.conf import settings
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
-from django.core.files.storage import default_storage
-from django.db import models, transaction
+from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property, classproperty
 
 import celery
@@ -254,15 +254,31 @@ class FileProviderMixin(models.Model):
             x = self.unmarshall(f)
         return x
 
-    def delete(self, using: "Any" = None, keep_parents: bool = False) -> tuple[int, dict[str, int]]:
-        fpath = self.file.path
+    #
+    # def delete(self, using: "Any" = None, keep_parents: bool = False) -> tuple[int, dict[str, int]]:
+    #     fpath = self.file.path
+    #
+    #     def _delete_file():
+    #         try:
+    #             self.file.storage.delete(self.file.path)
+    #         except ValueError:
+    #             pass
+    #
+    #     transaction.on_commit(lambda: _delete_file)
+    #     ret = super().delete(using, keep_parents)
+    #     return ret
 
-        def _delete_file():
-            try:
-                default_storage.delete(fpath)
-            except ValueError:
-                ...
 
-        transaction.on_commit(lambda: _delete_file)
-        ret = super().delete(using, keep_parents)
-        return ret
+class TimeStampMixin(models.Model):
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def timestamp(self):
+        today = timezone.now().date()
+        if self.updated_on.date() == today:
+            return self.updated_on.time
+        return self.updated_on.date

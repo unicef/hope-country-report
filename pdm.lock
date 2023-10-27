@@ -6,7 +6,7 @@ groups = ["default", "code", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:ee8ee9960d78a4470a09179912507f8c29311afe386a108d30211825392519e5"
+content_hash = "sha256:9f8479bd8be0d45449d8a8b760a67db15f1b56e902f8599f20ad91e760ec7a10"
 
 [[package]]
 name = "amqp"
@@ -607,6 +607,15 @@ dependencies = [
 files = [
     {file = "django_celery_results-2.5.1-py3-none-any.whl", hash = "sha256:0da4cd5ecc049333e4524a23fcfc3460dfae91aa0a60f1fae4b6b2889c254e01"},
     {file = "django_celery_results-2.5.1.tar.gz", hash = "sha256:3ecb7147f773f34d0381bac6246337ce4cf88a2ea7b82774ed48e518b67bb8fd"},
+]
+
+[[package]]
+name = "django-cleanup"
+version = "8.0.0"
+summary = "Deletes old files."
+files = [
+    {file = "django-cleanup-8.0.0.tar.gz", hash = "sha256:c739a05544e1e48dc848871c870dbf1595f8533d24523bc67360e43562edaf0d"},
+    {file = "django_cleanup-8.0.0-py2.py3-none-any.whl", hash = "sha256:8cd8872d67fe1501b19a843d006cdb5673cfbb74ac3d6d8f2c60e8e7723a7f5b"},
 ]
 
 [[package]]

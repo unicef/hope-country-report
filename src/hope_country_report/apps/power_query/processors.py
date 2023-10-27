@@ -23,13 +23,12 @@ if TYPE_CHECKING:
 
     ProcessorResult = bytes | BytesIO
 
-
 mimetypes.add_type("text/vnd.yaml", ".yaml")
 
 mimetype_map = {
     k: v
     for k, v in mimetypes.types_map.items()
-    if k in [".csv", ".html", ".json", ".txt", ".xlsx", ".xml", ".yaml", ".pdf", ".docx", ".png"]
+    if k in [".csv", ".html", ".json", ".txt", ".xlsx", ".xls", ".xml", ".yaml", ".pdf", ".docx", ".png"]
 }
 
 TYPE_LIST = 1
@@ -63,13 +62,23 @@ class ProcessorStrategy:
 
 
 class ToXLS(ProcessorStrategy):
-    file_suffix = ".xlsx"
+    file_suffix = ".xls"
     format = TYPE_LIST
     verbose_name = "Dataset to XLS"
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         dt = to_dataset(context["dataset"].data)
         return dt.export("xls")
+
+
+class ToXLSX(ProcessorStrategy):
+    file_suffix = ".xlsx"
+    format = TYPE_LIST
+    verbose_name = "Dataset to XLSX"
+
+    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+        dt = to_dataset(context["dataset"].data)
+        return dt.export("xlsx")
 
 
 class ToJSON(ProcessorStrategy):
@@ -80,6 +89,16 @@ class ToJSON(ProcessorStrategy):
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         dt = to_dataset(context["dataset"].data)
         return dt.export("json")
+
+
+class ToCSV(ProcessorStrategy):
+    file_suffix = ".csv"
+    format = TYPE_LIST
+    verbose_name = "Dataset to CSV"
+
+    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+        dt = to_dataset(context["dataset"].data)
+        return dt.export("csv")
 
 
 class ToYAML(ProcessorStrategy):
@@ -179,10 +198,13 @@ class ProcessorRegistry(Registry):
 
 
 registry = ProcessorRegistry(ProcessorStrategy, label_attribute="label")
-registry.register(ToWord)
-registry.register(ToJSON)
-registry.register(ToHTML)
-registry.register(ToYAML)
-registry.register(ToXLS)
-registry.register(ToPDF)
+registry.register(ToCSV)
 registry.register(ToFormPDF)
+registry.register(ToHTML)
+registry.register(ToJSON)
+registry.register(ToPDF)
+registry.register(ToWord)
+registry.register(ToXLS)
+registry.register(ToXLSX)
+registry.register(ToYAML)
+registry.register(ToText)

@@ -7,12 +7,15 @@ from django.core.files import File
 from django.db import models
 from django.utils.text import slugify
 
+from django_cleanup import cleanup
+
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.power_query.utils import is_valid_template
 
 logger = logging.getLogger(__name__)
 
 
+@cleanup.select
 class ReportTemplate(models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)

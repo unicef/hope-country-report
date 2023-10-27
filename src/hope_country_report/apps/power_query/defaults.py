@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from strategy_field.utils import fqn
 
-from hope_country_report.apps.power_query.processors import ToHTML, ToJSON, ToText, ToXLS, ToYAML
+from hope_country_report.apps.power_query.processors import ToCSV, ToHTML, ToJSON, ToPDF, ToText, ToXLS, ToXLSX, ToYAML
 
 if TYPE_CHECKING:
     from typing import List
@@ -62,9 +62,19 @@ def create_defaults() -> "List[Formatter]":
             "file_suffix": ".txt",
         },
     )
-    fmts = [f1, f2]
+    f3, __ = Formatter.objects.get_or_create(
+        name="Code To PDF",
+        defaults={
+            "code": """
+    {% for row in dataset.data %}{{ row }}
+    {% endfor %}""",
+            "processor": fqn(ToPDF),
+            "file_suffix": ".pdf",
+        },
+    )
+    fmts = [f1, f2, f3]
 
-    for p in [ToYAML, ToJSON, ToXLS]:
+    for p in [ToYAML, ToJSON, ToXLS, ToCSV, ToXLSX]:
         f, __ = Formatter.objects.get_or_create(
             name=p.verbose_name,
             defaults={
@@ -74,6 +84,7 @@ def create_defaults() -> "List[Formatter]":
             },
         )
         fmts.append(f)
+
     #
     # f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "processor": fqn(ToXLS)})
     # Formatter.objects.get_or_create(name="Dataset To YAML", processor=fqn(ToYAML), content_type=ToYAML.content_type)

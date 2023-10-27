@@ -82,7 +82,7 @@ def test_delete_file(django_app, admin_user, dataset: "Dataset"):
     url = reverse("admin:power_query_dataset_change", args=[dataset.pk])
     res = django_app.get(url, user=admin_user)
     res = res.click("Delete")
-    res = res.forms[1].submit()
+    res.forms[1].submit()
     with pytest.raises(ObjectDoesNotExist):
         dataset.refresh_from_db()
     assert not default_storage.exists(file_path)

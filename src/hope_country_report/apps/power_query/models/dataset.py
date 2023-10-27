@@ -5,8 +5,10 @@ import logging
 from django.db import models
 from django.db.models import JSONField
 
+from django_cleanup import cleanup
+
 from ...core.models import CountryOffice
-from ._base import FileProviderMixin, PowerQueryModel
+from ._base import FileProviderMixin, PowerQueryModel, TimeStampMixin
 from .query import Query
 
 if TYPE_CHECKING:
@@ -15,7 +17,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Dataset(PowerQueryModel, FileProviderMixin, models.Model):
+@cleanup.select
+class Dataset(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.Model):
     hash = models.CharField(unique=True, max_length=200, editable=False)
     last_run = models.DateTimeField(null=True, blank=True)
     description = models.CharField(max_length=100)

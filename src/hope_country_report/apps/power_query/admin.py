@@ -28,6 +28,7 @@ from import_export import resources
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
+from ...utils.media import download_media
 from ...utils.perf import profile
 from .forms import FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
@@ -38,7 +39,7 @@ from .widget import FormatterEditor
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from django.contrib.admin.options import _ListFilterT, _ModelT
+    from django.contrib.admin.options import _ListFilterT
 
     from ...types.django import AnyModel
 
@@ -160,27 +161,6 @@ class QueryAdmin(
     ) -> "HttpResponse":
         return super().change_view(request, object_id, form_url, extra_context)
 
-    # def get_form(
-    #     self, request: "HttpRequest", obj: "_ModelT|None" = None, change: bool = False, **kwargs: Any
-    # ) -> "type[ModelForm[_ModelT]]":
-    #     # kwargs["initial"] = {"project": get_selected_tenant()}
-    #     return super().get_form(request, obj, change, **kwargs)
-    #
-    # def formfield_for_dbfield(self,
-    # db_field: Any, request: HttpRequest, **kwargs: Any) -> Optional[forms.fields.Field]:
-    #     if db_field.name == "code":
-    #         kwargs = {"widget": PythonFormatterEditor}
-    #     elif db_field.name == "description":
-    #         kwargs = {"widget": forms.Textarea(attrs={"rows": 2, "style": "width:80%"})}
-    #     elif db_field.name == "project":
-    #         from hope_country_report.apps.tenant.config import conf
-    #
-    #         db_field.queryset = conf.auth.get_allowed_tenants()
-    #     elif db_field.name == "owner":
-    #         kwargs = {"widget": forms.HiddenInput}
-    #
-    #     return super().formfield_for_dbfield(db_field, request, **kwargs)
-
     def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
         return super().has_change_permission(request, obj)
         # if isinstance(obj, int):
@@ -203,14 +183,6 @@ class QueryAdmin(
         self.message_user(request, "Done", messages.SUCCESS)
         ctx["results"] = results
         return render(request, "admin/power_query/query/run_result.html", ctx)
-
-    # @button()
-    # def queue(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
-    #     try:
-    #         res: AsyncResult = run_background_query.delay(pk)
-    #         self.message_user(request, f"Query scheduled: {res}")
-    #     except Exception as e:
-    #         self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
     @button()
     def preview(self, request: HttpRequest, pk: int) -> HttpResponse:
@@ -257,11 +229,6 @@ class QueryAdmin(
 
 class FileProviderAdmin(admin.ModelAdmin):
     actions = ["check_files"]
-
-    def delete_model(self, request: "HttpRequest", obj: "_ModelT") -> None:
-        super().delete_model(request, obj)
-        # TODO: handle exceptions here
-        obj.file.storage.delete(obj.file.path)
 
     def check_files(self, request: HttpRequest, queryset) -> HttpResponse:
         for m in queryset.all():
@@ -530,15 +497,10 @@ class ReportDocumentAdmin(
     def get_queryset(self, request: HttpRequest) -> QuerySet[ReportDocument]:
         return super().get_queryset(request)
 
-    # def size(self, obj: ReportDocument) -> int:
-    #     return len(obj.output or "")
-    #
-    # @button()
-    # def view(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
-    #     if not (obj := self.get_object(request, str(pk))):
-    #         raise Exception("Report document not found")
-    #     url = reverse("power_query:document", args=[obj.report.pk, pk])
-    #     return HttpResponseRedirect(url)
-
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
+
+    @button()
+    def download(self, request: HttpRequest, pk: str) -> HttpResponse:  # FIXME: this need to be fixed in extra_buttons
+        doc = self.get_object(request, pk)
+        return download_media(doc.file.path, response_class=HttpResponse)

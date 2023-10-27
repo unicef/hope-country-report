@@ -12,7 +12,7 @@ from taggit.managers import TaggableManager
 
 from ...core.models import CountryOffice
 from ..processors import mimetype_map
-from ._base import AdminReversable, CeleryEnabled
+from ._base import AdminReversable, CeleryEnabled, TimeStampMixin
 from .formatter import Formatter
 from .query import Query
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-class Report(CeleryEnabled, AdminReversable, models.Model):
+class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")

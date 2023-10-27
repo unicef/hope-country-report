@@ -7,6 +7,7 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils.functional import cached_property
 
+from django_cleanup import cleanup
 from sentry_sdk import capture_exception
 
 from hope_country_report.state import state
@@ -15,7 +16,7 @@ from hope_country_report.utils.perf import profile
 from ..json import PQJSONEncoder
 from ..manager import PowerQueryManager
 from ..processors import mimetype_map
-from ._base import FileProviderMixin, PowerQueryModel
+from ._base import FileProviderMixin, PowerQueryModel, TimeStampMixin
 from .dataset import Dataset
 from .formatter import Formatter
 from .report import Report
@@ -36,12 +37,12 @@ class ReportDocumentManager(PowerQueryManager["ReportDocument"]):
         return super().get_queryset().select_related("report")
 
 
-class ReportDocument(PowerQueryModel, FileProviderMixin, models.Model):
-    timestamp = models.DateTimeField(auto_now=True)
+@cleanup.select
+class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.Model):
     title = models.CharField(max_length=300)
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="documents")
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
-    formatter = models.ForeignKey(Formatter, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(Dataset, on_delete=models.SET_NULL, blank=True, null=True)
+    formatter = models.ForeignKey(Formatter, on_delete=models.SET_NULL, blank=True, null=True)
 
     arguments = models.JSONField(default=dict, encoder=PQJSONEncoder)
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
@@ -58,9 +59,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, models.Model):
         return self.title
 
     @classmethod
-    def process(
-        self, report: "Report", dataset: "Dataset", formatter: "Formatter"
-    ) -> "Tuple[int|None, Exception|None]":
+    def process(self, report: "Report", dataset: "Dataset", formatter: "Formatter") -> "Tuple[int|None, Exception|str]":
         try:
             context = dataset.arguments or {}
             try:
@@ -79,7 +78,9 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, models.Model):
                                 "context": context,
                             }
                         )
-                content = ContentFile(output, name=f"{self.pk}_{formatter.pk}{formatter.file_suffix}")
+                content = ContentFile(
+                    output, name=f"r{report.pk}_ds{dataset.pk}_fmt{formatter.pk}{formatter.file_suffix}"
+                )
                 if doc := ReportDocument.objects.filter(**key).first():
                     if doc.file:
                         doc.file.delete()
@@ -98,7 +99,6 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, models.Model):
         except Exception as exc:
             logger.exception(exc)
             raise
-        print(f"222 {result}")
         return result
 
     @cached_property

@@ -1,13 +1,10 @@
 from typing import Any, TYPE_CHECKING, TypeVar
 
-import os
-from wsgiref.util import FileWrapper
-
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Model
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
@@ -21,6 +18,7 @@ from hope_country_report.apps.power_query.models import Report, ReportDocument
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.forms import SelectTenantForm
 from hope_country_report.apps.tenant.utils import set_selected_tenant
+from hope_country_report.utils.media import download_media
 from hope_country_report.web.forms import UserProfileForm
 
 django_stubs_ext.monkeypatch()
@@ -120,15 +118,16 @@ class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):
 
 @login_required
 def download(request: "HttpRequest", path: str) -> "StreamingHttpResponse":
-    file_path = os.path.join(settings.MEDIA_ROOT, path)
-    chunk_size = 8192
-    if os.path.exists(file_path):
-        response = StreamingHttpResponse(
-            FileWrapper(open(file_path, "rb"), chunk_size), content_type="application/force-download"
-        )
-        response["Content-Disposition"] = "inline; filename=" + os.path.basename(file_path)
-        return response
-    raise Http404(file_path)
+    return download_media(path)
+    # file_path = os.path.join(settings.MEDIA_ROOT, path)
+    # chunk_size = 8192
+    # if os.path.exists(file_path):
+    #     response = StreamingHttpResponse(
+    #         FileWrapper(open(file_path, "rb"), chunk_size), content_type="application/force-download"
+    #     )
+    #     response["Content-Disposition"] = "inline; filename=" + os.path.basename(file_path)
+    #     return response
+    # raise Http404(file_path)
 
 
 @require_POST
