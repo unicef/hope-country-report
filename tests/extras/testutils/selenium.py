@@ -21,7 +21,7 @@ class SmartDriver(WebDriver):
     def wait_for(self, by: "By", *args: Any, clickable: bool = False):
         ...
 
-    def click_gdpr(self):
+    def go(self, path):
         ...
 
 

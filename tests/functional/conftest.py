@@ -15,23 +15,6 @@ def pytest_configure(config):
     os.environ["DISPLAY"] = ":10.0"
 
 
-# @pytest.fixture(scope="session")
-# def mock_proxy():
-#     import shutil
-#     import tempfile
-#
-#     temp_folder = tempfile.mkdtemp()
-#     setattr(IntegrationTestsRequestHandler, "workspace", temp_folder)
-#
-#     proxy = MockProxy(IntegrationTestsRequestHandler)
-#     proxy.startup()
-#
-#     yield Proxy(proxy.proxy_name, proxy.proxy_port)
-#
-#     proxy.shutdown()
-#     shutil.rmtree(temp_folder)
-
-
 @pytest.fixture
 def capabilities(capabilities):
     capabilities["loggingPrefs"] = {"browser": "ALL"}
@@ -82,17 +65,7 @@ def chrome_options(request, chrome_options):
     chrome_options.add_argument("--disable-translate")
     chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--lang=en-GB")
-
-    # chrome_options.add_argument("--window-position=0,0")
-    # chrome_options.add_argument("--window-size=1920,1080")
-    # chrome_options.add_argument("--no-pings")
-    # chrome_options.add_argument("--disable-3d-apis")
-    # chrome_options.add_argument("--disable-background-mode")
     chrome_options.add_argument("--disable-gpu")
-    # chrome_options.add_argument("--disable-plugins")
-    # chrome_options.add_argument("--disable-plugins-discovery")
-    # chrome_options.add_argument("--disable-preconnect")
-    # chrome_options.add_argument("--remote-debugging-port=9222")  # solves 'DevToolsActivePort file doesn't exist'
     chrome_options.add_argument("--disable-browser-side-navigation")
     chrome_options.add_argument("--ignore-certificate-errors")
     chrome_options.add_argument("--proxy-server='direct://'")
@@ -105,23 +78,8 @@ def chrome_options(request, chrome_options):
 
 
 SELENIUM_DEFAULT_PAGE_LOAD_TIMEOUT = 20
-SELENIUM_DEFAULT_IMPLICITLY_WAIT = 5
-SELENIUM_DEFAULT_SCRIPT_TIMEOUT = 5
-
-
-# @contextlib.contextmanager
-# def page_load_timeout(driver, secs):
-#     driver.set_page_load_timeout(secs)
-#     yield
-#     driver.set_page_load_timeout(SELENIUM_DEFAULT_PAGE_LOAD_TIMEOUT)
-#
-#
-# @contextlib.contextmanager
-# def implicitly_wait(driver, secs):
-#     driver.implicitly_wait(secs)
-#     yield
-#     driver.implicitly_wait(SELENIUM_DEFAULT_IMPLICITLY_WAIT)
-#
+SELENIUM_DEFAULT_IMPLICITLY_WAIT = 1
+SELENIUM_DEFAULT_SCRIPT_TIMEOUT = 1
 
 
 @contextlib.contextmanager
@@ -139,6 +97,10 @@ def timeouts(driver, wait=None, page=None, script=None):
     driver.timeouts = _current
 
 
+def go(driver, path):
+    return driver.get(f"{driver.live_server.url}{path}")
+
+
 def set_input_value(driver, *args):
     rules = args[:-1]
     el = driver.find_element(*rules)
@@ -154,6 +116,9 @@ def browser(transactional_db, driver, live_server, settings, monkeypatch) -> "Sm
 
     monkeypatch.setattr(WSGIRequest, "user_ip", "127.0.0.1", raising=False)
 
+    driver.live_server = live_server
+
+    driver.go = go.__get__(driver)
     driver.with_timeouts = timeouts.__get__(driver)
     driver.set_input_value = set_input_value.__get__(driver)
 
@@ -161,7 +126,6 @@ def browser(transactional_db, driver, live_server, settings, monkeypatch) -> "Sm
     driver.find_by_css = find_by_css.__get__(driver)
     driver.wait_for_url = wait_for_url.__get__(driver)
     driver.login = force_login.__get__(driver)
-    driver.live_server = live_server
     driver.maximize_window()
     driver.fullscreen_window()
 
