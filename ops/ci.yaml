@@ -59,19 +59,7 @@ stages:
           - script: echo $(Build.SourceVersionMessage)
             displayName: 'Display Build.SourceVersionMessage'
 
-  - stage: FetchCommitMessage
-    jobs:
-    - job: FetchCommitMessage
-      pool:
-        vmImage: 'ubuntu-latest'
-      steps:
-      - script: |
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-          echo "##vso[task.setvariable variable=commitMessage]$COMMIT_MESSAGE"
-        displayName: 'Fetch latest commit message'
-
   - stage: test
-    condition: and(succeeded(), not(contains(variables['commitMessage'], 'skip-tests')))
     displayName: TEST
     dependsOn: build_and_push_backend
     jobs:
