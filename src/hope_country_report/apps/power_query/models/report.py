@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 
 from django_celery_beat.models import PeriodicTask
 from taggit.managers import TaggableManager
@@ -39,7 +40,14 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
     active = models.BooleanField(default=True)
     owner = models.ForeignKey(get_user_model(), blank=True, null=True, on_delete=models.CASCADE, related_name="+")
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
-    schedule = models.ForeignKey(PeriodicTask, blank=True, null=True, on_delete=models.SET_NULL, related_name="reports")
+    schedule = models.ForeignKey(
+        PeriodicTask,
+        verbose_name=_("Scheduling"),
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="reports",
+    )
     last_run = models.DateTimeField(null=True, blank=True)
     validity_days = models.IntegerField(default=365)
 
@@ -75,7 +83,7 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
         self.last_run = timezone.now()
         self.save()
         if not result:
-            result = ["No Dataset available"]
+            result = [_("No Dataset available")]
         return result
 
     def __str__(self) -> str:

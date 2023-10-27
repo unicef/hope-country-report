@@ -30,6 +30,7 @@ def test_upgrade_check(mocked_responses):
         call_command("upgrade", stdout=out, check=True)
 
 
+@pytest.mark.parametrize("defaults", [True, False], ids=["defaults", ""])
 @pytest.mark.parametrize("template", [True, False], ids=["template", ""])
 @pytest.mark.parametrize("comment", [True, False], ids=["comment", ""])
 @pytest.mark.parametrize("group", ("mandatory", "optional", "all", "develop"))

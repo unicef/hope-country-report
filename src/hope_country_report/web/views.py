@@ -119,15 +119,6 @@ class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):
 @login_required
 def download(request: "HttpRequest", path: str) -> "StreamingHttpResponse":
     return download_media(path)
-    # file_path = os.path.join(settings.MEDIA_ROOT, path)
-    # chunk_size = 8192
-    # if os.path.exists(file_path):
-    #     response = StreamingHttpResponse(
-    #         FileWrapper(open(file_path, "rb"), chunk_size), content_type="application/force-download"
-    #     )
-    #     response["Content-Disposition"] = "inline; filename=" + os.path.basename(file_path)
-    #     return response
-    # raise Http404(file_path)
 
 
 @require_POST

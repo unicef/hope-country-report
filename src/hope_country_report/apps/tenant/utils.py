@@ -5,7 +5,6 @@ import logging
 from django.core.signing import get_cookie_signer
 
 from hope_country_report.apps.tenant.config import conf
-from hope_country_report.apps.tenant.exceptions import InvalidTenantError
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -33,11 +32,6 @@ def set_selected_tenant(tenant: "CountryOffice") -> None:
 
 def is_tenant_valid() -> bool:
     return bool(get_selected_tenant())
-
-
-def ensure_tenant() -> None:
-    if not get_selected_tenant():
-        raise InvalidTenantError
 
 
 def must_tenant() -> bool:

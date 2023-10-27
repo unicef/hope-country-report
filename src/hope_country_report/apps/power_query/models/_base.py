@@ -11,6 +11,7 @@ from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property, classproperty
+from django.utils.translation import gettext as _
 
 import celery
 from celery import states
@@ -124,7 +125,7 @@ class CeleryEnabled(models.Model):
             if isinstance(result, Exception):
                 error = str(result)
             elif task_status == "REVOKED":
-                error = "Query execution cancelled."
+                error = _("Query execution cancelled.")
             else:
                 error = ""
 

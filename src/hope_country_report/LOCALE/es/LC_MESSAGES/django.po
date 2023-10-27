@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-10-25 06:42+0200\n"
+"POT-Creation-Date: 2023-10-27 21:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,19 +35,39 @@ msgstr ""
 msgid "HOPE Reporting"
 msgstr ""
 
+#: src/hope_country_report/apps/core/models.py:75
+msgid "Timezone"
+msgstr "Zona horaria"
+
+#: src/hope_country_report/apps/core/models.py:76
+msgid "Language"
+msgstr "Idioma"
+
 #: src/hope_country_report/apps/hope/models/geo.py:60
 msgid "Parent"
 msgstr "Padre"
 
-#: src/hope_country_report/config/settings.py:158
+#: src/hope_country_report/apps/power_query/models/_base.py:129
+msgid "Query execution cancelled."
+msgstr ""
+
+#: src/hope_country_report/apps/power_query/models/report.py:45
+msgid "Scheduling"
+msgstr "Planificación"
+
+#: src/hope_country_report/apps/power_query/models/report.py:86
+msgid "No Dataset available"
+msgstr ""
+
+#: src/hope_country_report/config/settings.py:157
 msgid "Spanish"
 msgstr ""
 
-#: src/hope_country_report/config/settings.py:159
+#: src/hope_country_report/config/settings.py:158
 msgid "French"
 msgstr ""
 
-#: src/hope_country_report/config/settings.py:160
+#: src/hope_country_report/config/settings.py:159
 msgid "English"
 msgstr ""
 
@@ -69,7 +89,7 @@ msgstr "Mis acciones"
 
 #: src/hope_country_report/web/templates/admin/_actionlist.html:8
 msgid "None available"
-msgstr ""
+msgstr "Ninguno disponible"
 
 #: src/hope_country_report/web/templates/admin/_actionlist.html:23
 msgid "Unknown content"
@@ -96,40 +116,43 @@ msgstr "Cambiar"
 msgid "You don't have permission to view anything here."
 msgstr "No tienes permiso para ver nada aquí."
 
+#: src/hope_country_report/web/templates/admin/ad.html:5
+#: src/hope_country_report/web/templates/admin/layout.html:78
+#: src/hope_country_report/web/templates/admin/link_user.html:4
+#: src/hope_country_report/web/templates/admin/load_users.html:4
+#: src/hope_country_report/web/templates/admin_extra_buttons/action_page.html:5
+#: src/hope_country_report/web/templates/admin_extra_buttons/confirm.html:4
+#: src/hope_country_report/web/templates/web/office/_base.html:13
+msgid "Home"
+msgstr "Hogar"
+
 #: src/hope_country_report/web/templates/admin/base.html:23
-#: src/hope_country_report/web/templates/admin/layout.html:62
+#: src/hope_country_report/web/templates/admin/layout.html:63
 msgid "Log out"
 msgstr "Cerrar sesión"
 
-#: src/hope_country_report/web/templates/admin/layout.html:29
+#: src/hope_country_report/web/templates/admin/layout.html:30
 msgid "Skip to main content"
 msgstr ""
 
-#: src/hope_country_report/web/templates/admin/layout.html:44
+#: src/hope_country_report/web/templates/admin/layout.html:45
 msgid "Welcome,"
 msgstr "Bienvenido"
 
-#: src/hope_country_report/web/templates/admin/layout.html:49
+#: src/hope_country_report/web/templates/admin/layout.html:50
 msgid "View site"
 msgstr ""
 
-#: src/hope_country_report/web/templates/admin/layout.html:54
+#: src/hope_country_report/web/templates/admin/layout.html:55
 msgid "Documentation"
 msgstr ""
 
-#: src/hope_country_report/web/templates/admin/layout.html:58
+#: src/hope_country_report/web/templates/admin/layout.html:59
 msgid "Change password"
 msgstr ""
 
-#: src/hope_country_report/web/templates/admin/layout.html:74
+#: src/hope_country_report/web/templates/admin/layout.html:75
 msgid "Breadcrumbs"
-msgstr ""
-
-#: src/hope_country_report/web/templates/admin/layout.html:77
-#: src/hope_country_report/web/templates/admin_extra_buttons/action_page.html:5
-#: src/hope_country_report/web/templates/admin_extra_buttons/confirm.html:4
-#: src/hope_country_report/web/templates/web/office/_base.html:10
-msgid "Home"
 msgstr ""
 
 #: src/hope_country_report/web/templates/admin/power_query/linked_objects.html:5
@@ -162,19 +185,15 @@ msgstr "Acceso"
 msgid "Summary"
 msgstr ""
 
-#: src/hope_country_report/web/templates/web/office/_base.html:13
+#: src/hope_country_report/web/templates/web/office/_base.html:16
 msgid "Reports"
 msgstr "Informes"
 
-#: src/hope_country_report/web/templates/web/office/_base.html:19
+#: src/hope_country_report/web/templates/web/office/_base.html:22
 msgid "Admin"
 msgstr "Área de administración"
 
-#: src/hope_country_report/web/templates/web/office/_base.html:22
-msgid "Settings"
-msgstr "Ajustes"
-
-#: src/hope_country_report/web/templates/web/office/_base.html:25
+#: src/hope_country_report/web/templates/web/office/_base.html:28
 msgid "Logout"
 msgstr "Cerrar sesión"
 
@@ -186,18 +205,31 @@ msgstr "Bienvenido a HOPE Reporting"
 msgid "Save"
 msgstr "Ahorrar"
 
-#: src/hope_country_report/web/templates/web/office/report.html:7
+#: src/hope_country_report/web/templates/web/office/report.html:11
 #: src/hope_country_report/web/templates/web/office/reports.html:7
 msgid "Name"
 msgstr "Nombre"
 
-#: src/hope_country_report/web/templates/web/office/report.html:11
+#: src/hope_country_report/web/templates/web/office/report.html:15
 msgid "Title"
 msgstr "Título"
 
-#: src/hope_country_report/web/templates/web/office/report.html:15
+#: src/hope_country_report/web/templates/web/office/report.html:19
 msgid "Description"
 msgstr "Descripción"
+
+#: src/hope_country_report/web/templates/web/office/report.html:23
+msgid "Date"
+msgstr ""
+
+#: src/hope_country_report/web/templates/web/office/report.html:27
+#: src/hope_country_report/web/templates/web/office/reports.html:11
+msgid "schedule"
+msgstr ""
+
+#: src/hope_country_report/web/templates/web/office/report.html:31
+msgid "status"
+msgstr ""
 
 #: src/hope_country_report/web/templates/web/office/reports.html:4
 msgid "Available Reports"
@@ -212,5 +244,12 @@ msgid "Refreshed On"
 msgstr "Actualizado el"
 
 #: src/hope_country_report/web/templates/web/office/reports.html:10
+msgid "Status"
+msgstr "Estado"
+
+#: src/hope_country_report/web/templates/web/office/reports.html:12
 msgid "Tags"
 msgstr "Etiquetas"
+
+#~ msgid "Settings"
+#~ msgstr "Ajustes"

@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import QuerySet
 from django.utils.functional import cached_property
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 
 from timezone_field import TimeZoneField
 from unicef_security.models import AbstractUser
@@ -72,8 +73,10 @@ class CountryOffice(models.Model):
 
 
 class User(AbstractUser):  # type: ignore
-    timezone = TimeZoneField(default="UTC")
-    language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
+    timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC")
+    language = models.CharField(
+        verbose_name=_("Language"), max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
+    )
     date_format = "Y M d h:i a"
     time_format = "h:i a"
 
