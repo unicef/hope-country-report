@@ -40,7 +40,7 @@
                                 </a>
                             </td>
                             <td>
-                                {{ doc.updated_on|usertime }}
+                                {{ doc.updated_on|userdatetime:"h:i a" }}
                             </td>
                         </tr>
                     {% endfor %}

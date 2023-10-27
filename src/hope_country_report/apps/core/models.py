@@ -74,6 +74,8 @@ class CountryOffice(models.Model):
 class User(AbstractUser):  # type: ignore
     timezone = TimeZoneField(default="UTC")
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
+    date_format = "Y M d h:i a"
+    time_format = "h:i a"
 
     class Meta:
         app_label = "core"

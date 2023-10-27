@@ -16,7 +16,7 @@
                 <td>{{ report.active }}</td>
                 <td>{{ report.last_run|userdatetime }}</td>
                 <td>{{ report.status }}</td>
-                <td>{{ report.schedule }}</td>
+                <td>{{ report.schedule|default_if_none:"" }}</td>
                 <td>{% for t in report.tags.all  %}
                     <span class="tag {% color %}">{{ t }}</span>{% endfor %}
                     </td>

@@ -2,7 +2,7 @@ FROM python:3.11-slim-bullseye as base
 
 RUN apt-get update \
     && apt-get install -y \
-        gcc curl libgdal-dev \
+        gcc curl libgdal-dev wkhtmltopdf \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && addgroup --system --gid 82 hcr \
     && adduser \

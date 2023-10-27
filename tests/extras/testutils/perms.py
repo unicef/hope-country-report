@@ -1,11 +1,14 @@
 from contextlib import ContextDecorator
 from random import choice
 
+from unittest.mock import Mock
+
 from django.contrib.auth.models import Permission
 
 from faker import Faker
 
 from hope_country_report.apps.core.models import UserRole
+from hope_country_report.state import state
 
 from .factories import GroupFactory
 
@@ -39,7 +42,7 @@ def get_group(name=None, permissions=None):
         try:
             app_label, codename = permission_name.split(".")
         except ValueError:
-            raise ValueError("Invalid permission name `{0}`".format(permission_name))
+            raise ValueError(f"Invalid permission name `{permission_name}`")
         try:
             permission = Permission.objects.get(content_type__app_label=app_label, codename=codename)
         except Permission.DoesNotExist:
@@ -49,8 +52,20 @@ def get_group(name=None, permissions=None):
     return group
 
 
-class user_grant_grant_role(ContextDecorator):  # noqa
-    ...
+class set_current_user(ContextDecorator):  # noqa
+    def __init__(self, user):
+        self.user = user
+
+    def __enter__(self):
+        r = Mock()
+        r.user = self.user
+        self.state = state.set(request=r)
+        self.state.__enter__()
+
+    def __exit__(self, e_typ, e_val, trcbak):
+        self.state.__exit__(e_typ, e_val, trcbak)
+        if e_typ:
+            raise e_typ(e_val).with_traceback(trcbak)
 
 
 class user_grant_permissions(ContextDecorator):  # noqa
