@@ -27,7 +27,8 @@ def get_selected_tenant() -> "CountryOffice | None":
 
 def set_selected_tenant(tenant: "CountryOffice") -> None:
     state.tenant = tenant
-    state.add_cookies(conf.COOKIE_NAME, tenant.slug)
+    signer = get_cookie_signer()
+    state.add_cookies(conf.COOKIE_NAME, signer.sign(tenant.slug))
 
 
 def is_tenant_valid() -> bool:

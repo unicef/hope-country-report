@@ -1,5 +1,6 @@
 import pytest
 
+from django.core.signing import get_cookie_signer
 from django.http import HttpResponse
 
 from hope_country_report.apps.tenant.config import conf
@@ -9,9 +10,11 @@ from hope_country_report.state import State, state
 
 @pytest.fixture()
 def req(rf, tenant_user):
+    signer = get_cookie_signer()
+
     req = rf.get("/")
     req.user = tenant_user
-    req.COOKIES[conf.COOKIE_NAME] = tenant_user.roles.first().country_office.slug
+    req.COOKIES[conf.COOKIE_NAME] = signer.sign(tenant_user.roles.first().country_office.slug)
     yield req
 
 

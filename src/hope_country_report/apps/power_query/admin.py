@@ -38,7 +38,7 @@ from .widget import FormatterEditor
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from django.contrib.admin.options import _ListFilterT
+    from django.contrib.admin.options import _ListFilterT, _ModelT
 
     from ...types.django import AnyModel
 
@@ -257,6 +257,9 @@ class QueryAdmin(
 
 class FileProviderAdmin(admin.ModelAdmin):
     actions = ["check_files"]
+
+    def delete_model(self, request: "HttpRequest", obj: "_ModelT") -> None:
+        super().delete_model(request, obj)
 
     def check_files(self, request: HttpRequest, queryset) -> HttpResponse:
         for m in queryset.all():

@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from django.core.files.base import ContentFile
+
 import factory
 from strategy_field.utils import fqn
 
@@ -107,32 +109,12 @@ class ReportDocumentFactory(AutoRegisterModelFactory):
     class Meta:
         model = ReportDocument
 
-    # @classmethod
-    # def create(cls, **kwargs: "Dict") -> ReportDocument:
-    #     from hope_country_report.apps.power_query.defaults import create_defaults
-    #
-    #     create_defaults()
-    #     fmt = Formatter.objects.get(name="Queryset To HTML")
-    #     r: Report = ReportFactory(query=QueryFactory(), formatter=fmt)
-    #     r.execute(run_query=True)
-    #     return r.documents.first()
-
-    # @factory.post_generation
-    # def formatters(self, create, formatters, **kwargs):
-    #     from hope_country_report.apps.power_query.defaults import create_defaults
-    #     if not create:
-    #         # Simple build, do nothing.
-    #         return
-    #
-    #     if formatters:
-    #         # A list of groups were passed in, use them
-    #         for formatter in formatters:
-    #             self.formatters.add(formatter)
-    #     else:
-    #         create_defaults()
-    #         fmt = Formatter.objects.get(name="Queryset To HTML")
-    #         r: Report = ReportFactory(query=QueryFactory(), formatter=fmt)
-    #         r.execute(run_query=True)
+    @classmethod
+    def create(cls, **kwargs: "Dict") -> ReportDocument:
+        ret = super().create(**kwargs)
+        ret.file = ContentFile("", f"test{ret.formatter.file_suffix}")
+        ret.save()
+        return ret
 
 
 class ParametrizerFactory(AutoRegisterModelFactory):

@@ -80,10 +80,13 @@ def pytest_configure(config):
     os.environ.update(
         ADMINS="",
         ALLOWED_HOSTS="*",
+        DEFAULT_FILE_STORAGE="hope_country_report.apps.power_query.storage.DataSetStorage",
         DJANGO_SETTINGS_MODULE="hope_country_report.config.settings",
         CELERY_TASK_ALWAYS_EAGER="1",
         CSRF_COOKIE_SECURE="False",
         SECRET_KEY="123",
+        MEDIA_ROOT="/tmp/media",
+        STATIC_ROOT="/tmp/static",
         SESSION_COOKIE_SECURE="False",
         SESSION_COOKIE_NAME="hcr_test",
         SESSION_COOKIE_DOMAIN="",
@@ -101,6 +104,13 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "skip_if_ci: this mark skips the tests on GitlabCI")
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
     _setup_models()
+    from django.core.management import call_command, CommandError
+
+    try:
+        call_command("env", check=True)
+    except CommandError:
+        msg = "FATAL. Connection refused: ES does not appear to be installed as a service (localhost port 9200)"
+        pytest.exit(msg)
 
 
 def pytest_runtest_setup(item):

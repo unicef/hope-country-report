@@ -9,6 +9,7 @@ MANDATORY = {
     "DATABASE_URL": (str, "", "Database connetcion url"),
     "SECRET_KEY": (str, ""),
     "CACHE_URL": (str, "redis://localhost:6379/0"),
+    "CELERY_BROKER_URL": (str, "redis://localhost:6379/0"),
 }
 
 DEVELOPMENT = {
@@ -27,7 +28,6 @@ OPTIONAL = {
     "AZURE_ACCOUNT_KEY": (str, "", "Azure account Key"),
     "AZURE_ACCOUNT_NAME": (str, ""),
     "AZURE_CONTAINER": (str, ""),
-    "CELERY_BROKER_URL": (str, ""),
     "CELERY_VISIBILITY_TIMEOUT": (int, 1800),
     "CELERY_TASK_ALWAYS_EAGER": (bool, False),
     "CELERY_TASK_EAGER_PROPAGATES": (bool, True),
