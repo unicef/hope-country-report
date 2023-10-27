@@ -122,8 +122,19 @@ class ToHTML(ProcessorStrategy):
     verbose_name = "Render CODE"
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
-        tpl = Template(self.formatter.code)
+        if self.formatter.template:
+            with self.formatter.template.doc.open("r") as f:
+                code = f.read()
+        else:
+            code = self.formatter.code
+        tpl = Template(code)
         return tpl.render(Context(context)).encode()
+
+
+class ToOnlinePage(ToHTML):
+    file_suffix = ".html"
+    format = TYPE_BOTH
+    verbose_name = "Online Page"
 
 
 class ToText(ProcessorStrategy):
@@ -212,3 +223,4 @@ registry.register(ToXLS)
 registry.register(ToXLSX)
 registry.register(ToYAML)
 registry.register(ToText)
+registry.register(ToOnlinePage)

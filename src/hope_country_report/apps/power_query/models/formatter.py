@@ -50,20 +50,6 @@ class Formatter(models.Model):
             raise ValidationError("You cannot set both 'template' and 'code'")
         self.processor.validate()
 
-    # def render(self, context: "Dict[str, Any]") -> bytearray:
-    #     f: Storage = default_storage.open("AAAAAAA", "wb")
-    #     if self.type == TYPE_LIST:
-    #         f.write(self.processor.process(context))
-    #         return f
-    #     else:
-    #         ret = bytearray()
-    #         ds = context.pop("dataset")
-    #         for page, entry in enumerate(ds.data, 1):
-    #             context["page"] = page
-    #             context["record"] = entry
-    #             ret.extend(self.processor.process(context))
-    #         return ret
-
     def render(self, context: "Dict[str, Any]") -> bytearray:
         if self.type == TYPE_LIST:
             return self.processor.process(context)

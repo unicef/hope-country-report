@@ -6,7 +6,7 @@ groups = ["default", "code", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:9f8479bd8be0d45449d8a8b760a67db15f1b56e902f8599f20ad91e760ec7a10"
+content_hash = "sha256:c4de388ecd5fc53af3ebb3402762c2fd0e1ffb86a82de2b41712b4f5abe453f5"
 
 [[package]]
 name = "amqp"
@@ -2057,6 +2057,19 @@ files = [
 ]
 
 [[package]]
+name = "python-pptx"
+version = "0.6.21"
+summary = "Generate and manipulate Open XML PowerPoint (.pptx) files"
+dependencies = [
+    "Pillow>=3.3.2",
+    "XlsxWriter>=0.5.7",
+    "lxml>=3.1.0",
+]
+files = [
+    {file = "python-pptx-0.6.21.tar.gz", hash = "sha256:7798a2aaf89563565b3c7120c0acfe9aff775db0db3580544e3bf4840c2e378f"},
+]
+
+[[package]]
 name = "python3-openid"
 version = "3.2.0"
 summary = "OpenID support for modern servers and consumers."
@@ -2770,6 +2783,16 @@ summary = "Library for developers to extract data from Microsoft Excel (tm) .xls
 files = [
     {file = "xlrd-2.0.1-py2.py3-none-any.whl", hash = "sha256:6a33ee89877bd9abc1158129f6e94be74e2679636b8a205b43b85206c3f0bbdd"},
     {file = "xlrd-2.0.1.tar.gz", hash = "sha256:f72f148f54442c6b056bf931dbc34f986fd0c3b0b6b5a58d013c9aef274d0c88"},
+]
+
+[[package]]
+name = "xlsxwriter"
+version = "3.1.9"
+requires_python = ">=3.6"
+summary = "A Python module for creating Excel XLSX files."
+files = [
+    {file = "XlsxWriter-3.1.9-py3-none-any.whl", hash = "sha256:b61c1a0c786f82644936c0936ec96ee96cd3afb9440094232f7faef9b38689f0"},
+    {file = "XlsxWriter-3.1.9.tar.gz", hash = "sha256:de810bf328c6a4550f4ffd6b0b34972aeb7ffcf40f3d285a0413734f9b63a929"},
 ]
 
 [[package]]

@@ -62,6 +62,7 @@ dependencies = [
     "tzdata>=2023.3",
     "django-user-language-middleware>=0.0.3",
     "django-cleanup>=8.0.0",
+    "python-pptx>=0.6.21",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"
