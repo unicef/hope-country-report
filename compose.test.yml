@@ -11,7 +11,8 @@ services:
       - SECRET_KEY=secret-key
       - DATABASE_URL=postgis://postgres:postgres@db:5432/postgres
       - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/postgres
-      - REDIS_URL=redis://redis:6379/0
+      - CACHE_URL=redis://redis:6379/2
+      - CELERY_BROKER_URL=redis://redis:6379/3
     ports:
       - 8000:8000
     depends_on:
