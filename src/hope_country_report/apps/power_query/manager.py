@@ -8,6 +8,9 @@ from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tena
 
 from ...state import state
 
+# from django.db.models.manager import RelatedManager
+
+
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 

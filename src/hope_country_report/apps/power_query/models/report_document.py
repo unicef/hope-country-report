@@ -34,7 +34,7 @@ MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 class ReportDocumentManager(PowerQueryManager["ReportDocument"]):
     def get_queryset(self) -> "models.QuerySet[ReportDocument]":
-        return super().get_queryset().select_related("report")
+        return super().get_queryset()
 
 
 @cleanup.select
@@ -53,7 +53,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
         unique_together = ("report", "dataset", "formatter")
 
     class Tenant:
-        tenant_filter_field = "report__query__project"
+        tenant_filter_field = "report__query__country_office"
 
     def __str__(self) -> str:
         return self.title

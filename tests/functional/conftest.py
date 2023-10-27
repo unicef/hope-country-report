@@ -126,8 +126,8 @@ def browser(transactional_db, driver, live_server, settings, monkeypatch) -> "Sm
     driver.find_by_css = find_by_css.__get__(driver)
     driver.wait_for_url = wait_for_url.__get__(driver)
     driver.login = force_login.__get__(driver)
-    driver.maximize_window()
-    driver.fullscreen_window()
+    # driver.maximize_window()
+    # driver.fullscreen_window()
 
     yield driver
 

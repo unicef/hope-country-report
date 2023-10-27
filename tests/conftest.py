@@ -89,7 +89,8 @@ def pytest_configure(config):
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""
 
-    config.option.enable_selenium = "selenium" in config.option.markexpr
+    if not config.option.enable_selenium:
+        config.option.enable_selenium = "selenium" in config.option.markexpr
 
     if not config.option.enable_selenium:
         config.option.markexpr = "not selenium"
