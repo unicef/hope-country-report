@@ -33,7 +33,7 @@ i18n:
 test:
 	docker compose -f compose.test.yml down
 	docker compose -f compose.test.yml build
-	docker compose -f compose.test.yml up --build
+	docker compose -f compose.test.yml up --build --exit-code-from backend
 
 
 reset-migrations: ## reset django migrations

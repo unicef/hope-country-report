@@ -80,8 +80,8 @@ def pytest_configure(config):
         CSRF_COOKIE_SECURE="False",
         SECURE_SSL_REDIRECT="False",
         SECRET_KEY="123",
-        # MEDIA_ROOT="/tmp/media",
-        # STATIC_ROOT="/tmp/static",
+        MEDIA_ROOT="/tmp/media",
+        STATIC_ROOT="/tmp/static",
         SESSION_COOKIE_SECURE="False",
         SESSION_COOKIE_NAME="hcr_test",
         SESSION_COOKIE_DOMAIN="",
@@ -100,14 +100,15 @@ def pytest_configure(config):
 
     settings.MEDIA_ROOT = "/tmp/media"
     settings.STATIC_ROOT = "/tmp/static"
+    os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+    os.makedirs(settings.STATIC_ROOT, exist_ok=True)
+
     from django.core.management import call_command, CommandError
 
     try:
         call_command("env", check=True)
     except CommandError:
         pytest.exit("FATAL: Environment variables missing")
-    os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
-    os.makedirs(settings.STATIC_ROOT, exist_ok=True)
 
 
 def pytest_runtest_setup(item):
