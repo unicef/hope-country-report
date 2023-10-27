@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
     from collections.abc import Iterable
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +32,8 @@ class Formatter(models.Model):
     file_suffix = models.CharField(max_length=10, choices=MIMETYPES)
     processor = StrategyField(registry=registry, default=fqn(ToHTML))
     type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
+
+    compress = models.BooleanField(default=False, blank=True)
 
     class Tenant:
         tenant_filter_field = "country_office"

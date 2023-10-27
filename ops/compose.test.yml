@@ -8,15 +8,12 @@ services:
       - SECRET_KEY=secret-key
       - DATABASE_URL=postgis://postgres:postgres@db:5432/postgres
       - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/postgres
-      - REDIS_URL=redis://redis:6379/1
       - CACHE_URL=redis://redis:6379/2
       - CELERY_BROKER_URL=redis://redis:6379/3
     ports:
       - 8000:8000
     depends_on:
       db:
-        condition: service_healthy
-      hopedb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -35,24 +32,8 @@ services:
       timeout: 4s
       retries: 5
 
-  hopedb:
-    image: postgis/postgis:15-3.4
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
-    restart: always
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      start_period: 5s
-      interval: 5s
-      timeout: 4s
-      retries: 5
-
   redis:
     image: redis:7.2
-    ports:
-      - 6379:6379
     restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]

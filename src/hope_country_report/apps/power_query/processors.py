@@ -24,6 +24,10 @@ if TYPE_CHECKING:
     ProcessorResult = bytes | BytesIO
 
 mimetypes.add_type("text/vnd.yaml", ".yaml")
+mimetypes.add_type("application/vnd.ms-excel", ".xls")
+mimetypes.add_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx")
+mimetypes.add_type("text/xml", ".xml")
+mimetypes.add_type("application/x-zip-compressed", ".zip")
 
 mimetype_map = {
     k: v

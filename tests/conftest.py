@@ -78,9 +78,10 @@ def pytest_configure(config):
         DJANGO_SETTINGS_MODULE="hope_country_report.config.settings",
         CELERY_TASK_ALWAYS_EAGER="1",
         CSRF_COOKIE_SECURE="False",
+        SECURE_SSL_REDIRECT="False",
         SECRET_KEY="123",
-        MEDIA_ROOT="/tmp/media",
-        STATIC_ROOT="/tmp/static",
+        # MEDIA_ROOT="/tmp/media",
+        # STATIC_ROOT="/tmp/static",
         SESSION_COOKIE_SECURE="False",
         SESSION_COOKIE_NAME="hcr_test",
         SESSION_COOKIE_DOMAIN="",
@@ -96,6 +97,9 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
     _setup_models()
     from django.conf import settings
+
+    settings.MEDIA_ROOT = "/tmp/media"
+    settings.STATIC_ROOT = "/tmp/static"
     from django.core.management import call_command, CommandError
 
     try:
