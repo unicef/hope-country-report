@@ -24,7 +24,7 @@ case "$1" in
     ;;
     tests)
         sleep 10 # FIXME: hack to wait for postgis init
-        python3 -m pytest --create-db
+        pytest tests/ --create-db
     ;;
     prd)
         production
