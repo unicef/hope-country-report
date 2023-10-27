@@ -1,6 +1,10 @@
 import pytest
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.storage import default_storage
 from django.urls import reverse
+
+from hope_country_report.apps.power_query.models import Dataset
 
 
 @pytest.fixture()
@@ -12,6 +16,13 @@ def query():
         name="Query1",
         code="result=conn.all()",
     )
+
+
+@pytest.fixture()
+def dataset():
+    from testutils.factories import DatasetFactory
+
+    return DatasetFactory()
 
 
 def test_celery_discard_all(request, django_app, admin_user):
@@ -62,3 +73,16 @@ def test_check_status(request, django_app, admin_user, query):
     url = reverse("admin:power_query_query_check_status")
     res = django_app.get(url, user=admin_user)
     assert res.status_code == 302
+
+
+@pytest.mark.django_db(transaction=True)
+def test_delete_file(django_app, admin_user, dataset: "Dataset"):
+    file_path = dataset.file.path
+    assert default_storage.exists(file_path)
+    url = reverse("admin:power_query_dataset_change", args=[dataset.pk])
+    res = django_app.get(url, user=admin_user)
+    res = res.click("Delete")
+    res = res.forms[1].submit()
+    with pytest.raises(ObjectDoesNotExist):
+        dataset.refresh_from_db()
+    assert not default_storage.exists(file_path)

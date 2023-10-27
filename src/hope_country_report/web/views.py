@@ -26,7 +26,7 @@ from hope_country_report.web.forms import UserProfileForm
 django_stubs_ext.monkeypatch()
 
 if TYPE_CHECKING:
-    from django.contrib.auth.base_user import AbstractBaseUser
+    from django.contrib.auth.models import AbstractBaseUser
     from django.core.paginator import _SupportsPagination
     from django.db.models import QuerySet
     from django.views.generic.edit import _ModelFormT
@@ -71,7 +71,7 @@ class OfficeReportListView(SelectedOfficeMixin, ListView[Report]):
 class OfficeReportDetailView(SelectedOfficeMixin, DetailView[Report]):
     template_name = "web/office/report.html"
 
-    def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
+    def get_object(self, queryset: "QuerySet[_M]|None" = None) -> "_M":
         return Report.objects.get(country_office=self.selected_office, id=self.kwargs["pk"])
 
 

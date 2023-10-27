@@ -260,6 +260,8 @@ class FileProviderAdmin(admin.ModelAdmin):
 
     def delete_model(self, request: "HttpRequest", obj: "_ModelT") -> None:
         super().delete_model(request, obj)
+        # TODO: handle exceptions here
+        obj.file.storage.delete(obj.file.path)
 
     def check_files(self, request: HttpRequest, queryset) -> HttpResponse:
         for m in queryset.all():

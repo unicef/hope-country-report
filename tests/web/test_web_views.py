@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.apps.hope.models import Household
-    from hope_country_report.apps.power_query.models import Query, Report
+    from hope_country_report.apps.power_query.models import Query, Report, ReportTemplate
 
     class _DATA(TypedDict):
         co1: CountryOffice
@@ -89,3 +89,21 @@ def test_user_profile(django_app, report: "Report"):
     assert res.status_code == 302
     report.owner.refresh_from_db()
     assert report.owner.language == "es"
+
+
+def test_download_media(django_app, report_template: "ReportTemplate", user):
+    url = reverse("download-media", args=[report_template.doc.path])
+    res = django_app.get(url, user=user)
+    assert res.headers["Content-Type"] == "application/force-download"
+
+
+def test_download_media_requires_login(django_app, report_template: "ReportTemplate", user):
+    url = reverse("download-media", args=[report_template.doc.path])
+    res = django_app.get(url)
+    assert res.status_code == 302
+
+
+def test_download_media_handle_missing(django_app, user):
+    url = reverse("download-media", args=["missing-file.zap"])
+    res = django_app.get(url, user=user, expect_errors=True)
+    assert res.status_code == 404

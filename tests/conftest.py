@@ -26,14 +26,7 @@ def _setup_models():
     settings.DATABASES["default"]["NAME"] = "_hcr"
     settings.DATABASES["default"]["TEST"] = {"NAME": "_hcr"}
     settings.DATABASE_ROUTERS = ()
-    # settings.CELERY_TASK_DEFAULT_QUEUE = "test_queue_hcr"
-    # settings.CELERY_TASK_REVOKED_QUEUE = "test_queue_hcr_revoked"
     del settings.DATABASES["hope_ro"]
-
-    # settings.DATABASES["hope_ro"]["NAME"] = "_hope"
-    # settings.DATABASES["hope_ro"]["TEST"] = {"NAME": "_hope"}
-    # settings.DATABASES["hope_ro"]["OPTIONS"] = {}
-
     django.setup()
 
     for m in apps.get_app_config("hope").get_models():
@@ -51,7 +44,7 @@ def _setup_models():
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--selenium",
+        "--with-selenium",
         action="store_true",
         dest="enable_selenium",
         default=False,
@@ -101,16 +94,17 @@ def pytest_configure(config):
     if not config.option.enable_selenium:
         config.option.markexpr = "not selenium"
 
-    config.addinivalue_line("markers", "skip_if_ci: this mark skips the tests on GitlabCI")
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
     _setup_models()
+    from django.conf import settings
     from django.core.management import call_command, CommandError
 
     try:
         call_command("env", check=True)
     except CommandError:
-        msg = "FATAL. Connection refused: ES does not appear to be installed as a service (localhost port 9200)"
-        pytest.exit(msg)
+        pytest.exit("FATAL: Environment variables missing")
+    os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+    os.makedirs(settings.STATIC_ROOT, exist_ok=True)
 
 
 def pytest_runtest_setup(item):
