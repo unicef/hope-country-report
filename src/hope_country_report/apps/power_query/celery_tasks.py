@@ -7,6 +7,7 @@ import uuid
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import caches
+from django.db import connection
 from django.utils.functional import cached_property
 
 from celery import group
@@ -40,10 +41,15 @@ class AbstractPowerQueryTask(AbortableTask):
     cache = caches[getattr(settings, "CELERY_TASK_LOCK_CACHE", "default")]
     lock_expiration = 60 * 60 * 24  # 1 day
     model_name: str = ""
+    abstract = True
 
     @cached_property
     def model(self):
         return apps.get_app_config("power_query").get_model(self.model_name)
+
+    def after_return(self, *args, **kwargs):
+        if not settings.CELERY_TASK_ALWAYS_EAGER:
+            connection.close()
 
     def on_success(self, retval, task_id, args, kwargs):
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)

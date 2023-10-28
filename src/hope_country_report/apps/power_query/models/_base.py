@@ -47,6 +47,7 @@ class CeleryEnabled(models.Model):
     SCHEDULED = frozenset({states.PENDING, states.RECEIVED, states.STARTED, states.RETRY, "QUEUED"})
     QUEUED = "QUEUED"
     CANCELED = "CANCELED"
+    NOT_SCHEDULED = "Not scheduled"
 
     version = AutoIncVersionField()
     sentry_error_id = models.CharField(max_length=400, blank=True, null=True)

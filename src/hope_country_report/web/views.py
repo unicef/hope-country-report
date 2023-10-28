@@ -3,6 +3,7 @@ from typing import Any, TYPE_CHECKING, TypeVar
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.signing import get_cookie_signer
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import render
@@ -51,7 +52,8 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse | StreamingHttpResponse:
         response = super().get(request, *args, **kwargs)
-        response.set_cookie(conf.COOKIE_NAME, self.selected_office.slug)
+        signer = get_cookie_signer()
+        response.set_cookie(conf.COOKIE_NAME, signer.sign(self.selected_office.slug))
         return response
 
 
@@ -105,7 +107,8 @@ class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):
 
     @property
     def selected_office(self) -> CountryOffice:
-        return CountryOffice.objects.get(slug=self.request.COOKIES.get(conf.COOKIE_NAME))
+        signer = get_cookie_signer()
+        return CountryOffice.objects.get(slug=signer.unsign(self.request.COOKIES.get(conf.COOKIE_NAME)))
 
     def get_object(self, queryset: "QuerySet[AbstractBaseUser] | None" = None) -> "User":
         return self.request.user  # type: ignore[return-value]

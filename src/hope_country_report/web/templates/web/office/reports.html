@@ -2,20 +2,20 @@
 
 {% block content %}
     <h1>{% trans "Available Reports" %}</h1>
-    <table>
-        <thead>
+    <table class="report-list">
+        <thead class="text-left">
         <th>{% trans "Name" %}</th>
         <th>{% trans "Active" %}</th>
         <th>{% trans "Refreshed On" %}</th>
         <th>{% trans "Status" %}</th>
-        <th>{% trans "schedule" %}</th>
+        <th>{% trans "Scheduling" %}</th>
         <th>{% trans "Tags" %}</th>
         {% for report in report_list %}
             <tr>
                 <td><a href="{% url "office-report" selected_office.slug report.pk %}">{{ report.name }}</a></td>
                 <td>{{ report.active }}</td>
                 <td>{{ report.last_run|userdatetime }}</td>
-                <td>{{ report.status }}</td>
+                <td>{% trans report.status %}</td>
                 <td>{{ report.schedule|default_if_none:"" }}</td>
                 <td>{% for t in report.tags.all  %}
                     <span class="tag {% color %}">{{ t }}</span>{% endfor %}

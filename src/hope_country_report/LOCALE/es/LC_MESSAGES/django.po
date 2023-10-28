@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-10-27 21:47+0200\n"
+"POT-Creation-Date: 2023-10-28 22:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,11 +35,11 @@ msgstr ""
 msgid "HOPE Reporting"
 msgstr ""
 
-#: src/hope_country_report/apps/core/models.py:75
+#: src/hope_country_report/apps/core/models.py:76
 msgid "Timezone"
 msgstr "Zona horaria"
 
-#: src/hope_country_report/apps/core/models.py:76
+#: src/hope_country_report/apps/core/models.py:78
 msgid "Language"
 msgstr "Idioma"
 
@@ -47,16 +47,22 @@ msgstr "Idioma"
 msgid "Parent"
 msgstr "Padre"
 
-#: src/hope_country_report/apps/power_query/models/_base.py:129
+#: src/hope_country_report/apps/power_query/models/_base.py:128
 msgid "Query execution cancelled."
 msgstr ""
 
 #: src/hope_country_report/apps/power_query/models/report.py:45
+#: src/hope_country_report/web/templates/web/office/report.html:27
+#: src/hope_country_report/web/templates/web/office/reports.html:11
 msgid "Scheduling"
 msgstr "Planificación"
 
 #: src/hope_country_report/apps/power_query/models/report.py:86
 msgid "No Dataset available"
+msgstr ""
+
+#: src/hope_country_report/apps/tenant/forms.py:23
+msgid "Office"
 msgstr ""
 
 #: src/hope_country_report/config/settings.py:157
@@ -128,7 +134,8 @@ msgstr "Hogar"
 
 #: src/hope_country_report/web/templates/admin/base.html:23
 #: src/hope_country_report/web/templates/admin/layout.html:63
-msgid "Log out"
+#: src/hope_country_report/web/templates/web/office/_base.html:28
+msgid "Logout"
 msgstr "Cerrar sesión"
 
 #: src/hope_country_report/web/templates/admin/layout.html:30
@@ -193,10 +200,6 @@ msgstr "Informes"
 msgid "Admin"
 msgstr "Área de administración"
 
-#: src/hope_country_report/web/templates/web/office/_base.html:28
-msgid "Logout"
-msgstr "Cerrar sesión"
-
 #: src/hope_country_report/web/templates/web/office/index.html:3
 msgid "Welcome to HOPE Reporting"
 msgstr "Bienvenido a HOPE Reporting"
@@ -222,14 +225,10 @@ msgstr "Descripción"
 msgid "Date"
 msgstr ""
 
-#: src/hope_country_report/web/templates/web/office/report.html:27
-#: src/hope_country_report/web/templates/web/office/reports.html:11
-msgid "schedule"
-msgstr ""
-
 #: src/hope_country_report/web/templates/web/office/report.html:31
-msgid "status"
-msgstr ""
+#: src/hope_country_report/web/templates/web/office/reports.html:10
+msgid "Status"
+msgstr "Estado"
 
 #: src/hope_country_report/web/templates/web/office/reports.html:4
 msgid "Available Reports"
@@ -243,13 +242,12 @@ msgstr "Activo"
 msgid "Refreshed On"
 msgstr "Actualizado el"
 
-#: src/hope_country_report/web/templates/web/office/reports.html:10
-msgid "Status"
-msgstr "Estado"
-
 #: src/hope_country_report/web/templates/web/office/reports.html:12
 msgid "Tags"
 msgstr "Etiquetas"
+
+#~ msgid "Log out"
+#~ msgstr "Cerrar sesión"
 
 #~ msgid "Settings"
 #~ msgstr "Ajustes"

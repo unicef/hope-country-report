@@ -98,7 +98,7 @@ def test_report_list(browser: "SmartDriver", report: "Report"):
     browser.wait_for_url("/afghanistan/")
     browser.wait_for(By.LINK_TEXT, "Reports").click()
     browser.wait_for_url("/afghanistan/reports")
-
+    browser.save_screenshot("a1.png")
     browser.wait_for(By.LINK_TEXT, report.name).click()
     browser.wait_for_url(f"/afghanistan/reports/{report.pk}/")
 

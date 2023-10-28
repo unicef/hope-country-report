@@ -11,9 +11,6 @@ sys.path.insert(0, str(here / "../src"))
 sys.path.insert(0, str(here / "extras"))
 
 
-# os.environ["DJANGO_SETTINGS_MODULE"] = "hope_country_report.config.settings"
-
-
 def _setup_models():
     import django
     from django.apps import apps
@@ -78,6 +75,7 @@ def pytest_configure(config):
         DJANGO_SETTINGS_MODULE="hope_country_report.config.settings",
         CELERY_TASK_ALWAYS_EAGER="1",
         CSRF_COOKIE_SECURE="False",
+        SECURE_HSTS_PRELOAD="False",
         SECURE_SSL_REDIRECT="False",
         SECRET_KEY="123",
         MEDIA_ROOT="/tmp/media",
@@ -85,6 +83,7 @@ def pytest_configure(config):
         SESSION_COOKIE_SECURE="False",
         SESSION_COOKIE_NAME="hcr_test",
         SESSION_COOKIE_DOMAIN="",
+        SIGNING_BACKEND="django.core.signing.TimestampSigner",
     )
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""

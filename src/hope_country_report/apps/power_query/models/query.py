@@ -21,7 +21,7 @@ from hope_country_report.types.django import AnyModel
 from hope_country_report.utils.perf import profile
 
 from ..celery_tasks import PowerQueryTask
-from ..exceptions import QueryRunCanceled, QueryRunError
+from ..exceptions import QueryRunCanceled
 from ..json import PQJSONEncoder
 from ..utils import dict_hash, to_dataset
 from ._base import CeleryEnabled
@@ -78,10 +78,6 @@ class Query(CeleryEnabled, models.Model):
             self.code = "result=conn.all().order_by('pk')"
         super().save(force_insert, force_update, using, update_fields)
 
-    @property
-    def silk_name(self) -> str:
-        return f"Query {self.name} #{self.pk}"
-
     def _invoke(self, query_id: int, arguments: "Dict[str, Any]") -> "Tuple[Any, Any]":
         query = Query.objects.get(id=query_id)
         result = query.run(persist=False, arguments=arguments, use_existing=True)
@@ -97,9 +93,6 @@ class Query(CeleryEnabled, models.Model):
     def execute_matrix(self, persist: bool = True, running_task: "PowerQueryTask|None" = None) -> "QueryMatrixResult":
         if self.parametrizer:
             args = self.parametrizer.get_matrix()
-            if not args:
-                args = [{}]
-                # raise ValueError("No valid arguments provided")
         else:
             args = [{}]
         self.error_message = None
@@ -119,12 +112,12 @@ class Query(CeleryEnabled, models.Model):
                         results[str(a)] = dataset.pk
                     except QueryRunCanceled:
                         raise
-                    except QueryRunError as e:
+                    except Exception as e:
                         logger.exception(e)
                         err = capture_exception(e)
                         results["sentry_error_id"] = str(err)
                         results["error_message"] = str(e)
-                        raise
+
                 self.datasets.exclude(pk__in=[dpk for dpk in results.values() if isinstance(dpk, int)]).delete()
         return results
 
@@ -174,30 +167,35 @@ class Query(CeleryEnabled, models.Model):
                     return_value = ds, ds.extra
                 else:
                     with state.set(preview=preview, tenant=self.country_office):
-                        exec(self.code, globals(), locals_)
-                    result = locals_.get("result", None)
-                    extra = locals_.get("extra", None)
-                    info = {
-                        "type": type(result).__name__,
-                        "arguments": arguments,
-                        "perfs": perfs,
-                        "debug": debug,
-                    }
-                    h = hashlib.md5(str(arguments).encode()).hexdigest()
+                        try:
+                            exec(self.code, globals(), locals_)
+                            result = locals_.get("result", None)
+                            extra = locals_.get("extra", None)
+                        except Exception:
+                            raise
+                        info = {
+                            "type": type(result).__name__,
+                            "arguments": arguments,
+                            "perfs": perfs,
+                            "debug": debug,
+                        }
+                        h = hashlib.md5(str(arguments).encode()).hexdigest()
 
-                    defaults = {
-                        "size": len(result) if result else 0,
-                        "info": info,
-                        "last_run": timezone.now(),
-                        "file": ContentFile(Dataset.marshall(result), name=f"{self.pk}_{h}.pkl"),
-                        # "extra": pickle.dumps(extra),
-                    }
-                    if persist:
-                        dataset, __ = Dataset.objects.update_or_create(query=self, hash=signature, defaults=defaults)
-                    else:
-                        dataset = Dataset(query=self, hash=signature, **defaults)
+                        defaults = {
+                            "size": len(result) if result else 0,
+                            "info": info,
+                            "last_run": timezone.now(),
+                            "file": ContentFile(Dataset.marshall(result), name=f"{self.pk}_{h}.pkl"),
+                            # "extra": pickle.dumps(extra),
+                        }
+                        if persist:
+                            dataset, __ = Dataset.objects.update_or_create(
+                                query=self, hash=signature, defaults=defaults
+                            )
+                        else:
+                            dataset = Dataset(query=self, hash=signature, **defaults)
 
-                    return_value = dataset, extra
+                        return_value = dataset, extra
         except Exception:
             raise
         return return_value

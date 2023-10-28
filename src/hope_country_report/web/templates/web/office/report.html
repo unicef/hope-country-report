@@ -6,7 +6,7 @@
             <small class="float-right"><a target="_admin" href="{{ report.get_admin_url }}">View in Admin</a></small>
             </h1>
         {% endif %}
-    <table>
+    <table class="report-detail">
         <tr>
             <th>{% trans "Name" %}</th>
             <td>{{ report.name }}</td>
@@ -24,11 +24,11 @@
             <td>{{ report.last_run|userdatetime:"d" }}</td>
         </tr>
         <tr>
-            <th>{% trans "schedule" %}</th>
+            <th>{% trans "Scheduling" %}</th>
             <td>{{ report.schedule.name }}</td>
         </tr>
         <tr>
-            <th>{% trans "status" %}</th>
+            <th>{% trans "Status" %}</th>
             <td>{{ report.status }}</td>
         </tr>
     </table>

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from .config import conf
 
@@ -19,7 +20,7 @@ class TenantAuthenticationForm(AdminAuthenticationForm):
 
 
 class SelectTenantForm(forms.Form):
-    tenant = forms.ModelChoiceField(label="Office", queryset=None, required=True, blank=False)
+    tenant = forms.ModelChoiceField(label=_("Office"), queryset=None, required=True, blank=False)
     next = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args: "Any", **kwargs: "Any") -> None:

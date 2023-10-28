@@ -917,6 +917,10 @@ select {
   padding-right: 1.25rem;
 }
 
+.text-left {
+  text-align: left;
+}
+
 .text-center {
   text-align: center;
 }
@@ -968,6 +972,19 @@ select {
 header img {
     height: 64px;
   }
+
+table.report-detail {
+  margin: auto;
+  width: 75%;
+}
+
+table.report-detail tr th {
+      width: 33.333333%;
+    }
+
+table.report-detail tr th {
+      text-align: left;
+    }
 
 svg {
   fill: currentColor;

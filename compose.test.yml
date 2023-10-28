@@ -10,7 +10,7 @@ services:
     environment:
       - SECRET_KEY=secret-key
       - DATABASE_URL=postgis://postgres:postgres@db:5432/postgres
-      - DATABASE_HOPE_URL=""
+      - DATABASE_HOPE_URL=postgis://postgres:postgres@db:5432/postgres
       - CACHE_URL=redis://redis:6379/2
       - CELERY_BROKER_URL=redis://redis:6379/3
     depends_on:
@@ -18,7 +18,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-
+    volumes:
+      - ./~build/:/code/~build
   db:
     image: postgis/postgis:15-3.4
     environment:
