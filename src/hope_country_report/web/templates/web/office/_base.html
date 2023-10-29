@@ -5,27 +5,34 @@
             {% csrf_token %}{{ tenant_form.tenant }}
         </form>
     </div>
-    <a href="{% url "profile" %}"><div class="icon icon-user text-3xl float-shrink"></div></a>
+    <a href="{% url "profile" %}">
+        <div class="icon icon-user text-3xl float-shrink"></div>
+    </a>
 {% endblock %}
 {% block menu %}
-    <ul class="menu p-4">
+    <ul class="menu p-4 h-4/5">
         <li><a href="{% url "office-index" selected_office.slug %}">
             <div class="OfficeHomeView">{% trans "Home" %}</div>
         </a></li>
         <li><a href="{% url "office-reports" selected_office.slug %}">
             <div class="OfficeReportListView OfficeReportDetailView">{% trans "Reports" %}</div>
         </a></li>
-        {#        <li><a href="{% url "power_query:report_list" %}">#}
-        {#            <div>{% trans "Configuration" %}</div>#}
-        {#        </a></li>#}
-        <li><a href="{% url "admin:index" %}">
-            <div>{% trans "Admin" %}</div>
+        <li><a href="{% url "office-pages" selected_office.slug %}">
+            <div>{% trans "Dashboards" %}</div>
         </a></li>
-{#        <li><a href="{% url "profile" %}">#}
-{#            <div>{% trans "Settings" %}</div>#}
-{#        </a></li>#}
+        <li><a href="{% url "office-users" selected_office.slug %}">
+            <div>{% trans "Users" %}</div>
+        </a></li>
+
         <li><a href="{% url "logout" %}">
             <div>{% trans "Logout" %}</div>
         </a></li>
+    </ul>
+    <ul class="menu p-4">
+        {% if user.is_staff %}
+            <li><a href="{% url "admin:index" %}">
+                <div>{% trans "Admin" %}</div>
+            </a></li>
+        {% endif %}
     </ul>
 {% endblock %}

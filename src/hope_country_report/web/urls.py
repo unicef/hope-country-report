@@ -7,8 +7,10 @@ from .views import (
     OfficeDocumentDisplayView,
     OfficeDocumentDownloadView,
     OfficeHomeView,
+    OfficePageListView,
     OfficeReportDetailView,
     OfficeReportListView,
+    OfficeUserListView,
     select_tenant,
     UserProfileView,
 )
@@ -20,6 +22,8 @@ urlpatterns = [
     path("profile/", UserProfileView.as_view(), name="profile"),
     path("select-tenant/", select_tenant, name="select-tenant"),
     path("<slug:co>/", OfficeHomeView.as_view(), name="office-index"),
+    path("<slug:co>/users/", OfficeUserListView.as_view(), name="office-users"),
+    path("<slug:co>/pages/", OfficePageListView.as_view(), name="office-pages"),
     path("<slug:co>/reports/", OfficeReportListView.as_view(), name="office-reports"),
     path("<slug:co>/reports/<int:pk>/", OfficeReportDetailView.as_view(), name="office-report"),
     path(

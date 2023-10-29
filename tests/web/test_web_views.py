@@ -62,6 +62,18 @@ def test_report_list(django_app, report):
     assert res.status_code == 200
 
 
+def test_user_list(django_app, report):
+    url = reverse("office-users", args=[report.country_office.slug])
+    res = django_app.get(url, user=report.owner)
+    assert res.status_code == 200
+
+
+def test_dashboard_list(django_app, report):
+    url = reverse("office-pages", args=[report.country_office.slug])
+    res = django_app.get(url, user=report.owner)
+    assert res.status_code == 200
+
+
 def test_report(django_app, report):
     url = reverse("office-report", args=[report.country_office.slug, report.pk])
     res = django_app.get(url, user=report.owner)

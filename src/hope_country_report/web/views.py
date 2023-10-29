@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView
 
 import django_stubs_ext
+from adminfilters.utils import parse_bool
 
 from hope_country_report.apps.core.models import CountryOffice, User
 from hope_country_report.apps.power_query.models import Report, ReportDocument
@@ -68,6 +69,8 @@ class OfficeReportListView(SelectedOfficeMixin, ListView[Report]):
         qs = Report.objects.filter(country_office=self.selected_office)
         if tag := self.request.GET.get("tag", None):
             qs = qs.filter(tags__name=tag)
+        if active := self.request.GET.get("active", None):
+            qs = qs.filter(active=parse_bool(active))
         return qs
 
 
@@ -100,6 +103,22 @@ class OfficeDocumentDownloadView(SelectedOfficeMixin, View):
         response = StreamingHttpResponse(doc.file, content_type="application/force-download")
         response["Content-Disposition"] = f"attachment; filename= {doc.title}{doc.file_suffix}"
         return response
+
+
+class OfficeUserListView(SelectedOfficeMixin, ListView[User]):
+    template_name = "web/office/users.html"
+
+    def get_queryset(self) -> "_SupportsPagination[_M]":
+        qs = User.objects.filter(roles__country_office=self.selected_office)
+        return qs
+
+
+class OfficePageListView(SelectedOfficeMixin, ListView[User]):
+    template_name = "web/office/pages.html"
+
+    def get_queryset(self) -> "_SupportsPagination[_M]":
+        qs = User.objects.filter(roles__country_office=self.selected_office)
+        return qs
 
 
 class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):

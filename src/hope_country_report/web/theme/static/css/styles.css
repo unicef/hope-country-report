@@ -805,6 +805,14 @@ select {
   height: 100vh;
 }
 
+.h-2\/3 {
+  height: 66.666667%;
+}
+
+.h-4\/5 {
+  height: 80%;
+}
+
 .w-1\/4 {
   width: 25%;
 }
