@@ -11,7 +11,7 @@ from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property, classproperty
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 import celery
 from celery import states

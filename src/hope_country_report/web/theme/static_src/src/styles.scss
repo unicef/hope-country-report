@@ -11,10 +11,20 @@ table.report-detail{
   @apply w-3/4 m-auto;
   tr{
     th{
-      @apply text-left w-1/3;
+      @apply text-left w-1/3 capitalize;
     }
   }
 }
+table.document-list{
+  @apply w-3/4 m-auto mt-10;
+    th{
+      @apply capitalize;
+    }
+
+}
+
+
+
 svg {
   fill: currentColor;
   width: 1em;

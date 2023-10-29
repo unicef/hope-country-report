@@ -108,7 +108,7 @@ class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):
     @property
     def selected_office(self) -> CountryOffice:
         signer = get_cookie_signer()
-        return CountryOffice.objects.get(slug=signer.unsign(self.request.COOKIES.get(conf.COOKIE_NAME)))
+        return CountryOffice.objects.get(slug=signer.unsign(str(self.request.COOKIES.get(conf.COOKIE_NAME))))
 
     def get_object(self, queryset: "QuerySet[AbstractBaseUser] | None" = None) -> "User":
         return self.request.user  # type: ignore[return-value]
@@ -120,7 +120,7 @@ class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):
 
 
 @login_required
-def download(request: "HttpRequest", path: str) -> "StreamingHttpResponse":
+def download(request: "HttpRequest", path: str) -> "HttpResponse | StreamingHttpResponse":
     return download_media(path)
 
 

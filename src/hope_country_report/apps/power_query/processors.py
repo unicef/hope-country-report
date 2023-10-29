@@ -123,7 +123,7 @@ class ToHTML(ProcessorStrategy):
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         if self.formatter.template:
-            with self.formatter.template.doc.open("r") as f:
+            with self.formatter.template.doc.open("rb") as f:
                 code = f.read()
         else:
             code = self.formatter.code

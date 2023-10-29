@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 class TenantAutocompleteJsonView(SmartAutocompleteJsonView):
     ...
+
     # def get_queryset(self):
     #     qs = super().get_queryset()
     #     qs = qs.filter(self.model_admin.model.objects.)

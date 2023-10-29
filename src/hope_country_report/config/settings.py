@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "constance",
     "taggit",
     "django_celery_beat",
+    "admin_cursor_paginator",
     "django_celery_results",
     # "unicef_security",  ## cannot be enabled it creates User model even if not used
     "django_cleanup.apps.CleanupSelectedConfig",

@@ -8,46 +8,54 @@
         {% endif %}
     <table class="report-detail">
         <tr>
-            <th>{% trans "Name" %}</th>
+            <th>{% trans "name" %}</th>
             <td>{{ report.name }}</td>
         </tr>
         <tr>
-            <th>{% trans "Title" %}</th>
+            <th>{% trans "title" %}</th>
             <td>{{ report.title }}</td>
         </tr>
         <tr>
-            <th>{% trans "Description" %}</th>
+            <th>{% trans "description" %}</th>
             <td>{{ report.description }}</td>
         </tr>
         <tr>
-            <th>{% trans "Date" %}</th>
+            <th>{% trans "date" %}</th>
             <td>{{ report.last_run|userdatetime:"d" }}</td>
         </tr>
         <tr>
-            <th>{% trans "Scheduling" %}</th>
+            <th>{% trans "scheduling" %}</th>
             <td>{{ report.schedule.name }}</td>
         </tr>
         <tr>
-            <th>{% trans "Status" %}</th>
+            <th>{% trans "status" %}</th>
             <td>{{ report.status }}</td>
         </tr>
     </table>
-    <table class="w-3/4 m-auto mt-10">
+    <table class="document-list">
         <thead>
+        <tr>
+            <th >{% trans "title" %}</th>
+            <th>{% trans "format" %}</th>
+            <th >{% trans "view" %}</th>
+            <th >{% trans "download" %}</th>
+            <th >{% trans "created" %}/{% trans "updated" %}</th>
+        </tr>
         </thead>
         {% for document in report.documents.all %}
             <tbody>
             <tr>
-                <td>
+                <td>{{ document.title }}</td>
+                <td class="text-center">
                     <div class="icon {{ document.file_suffix|slice:"1:" }} text-4xl"></div>
+                <div class="text-xs">{{ document.file_suffix }}</div>
                 </td>
-                <td>{{ document.file_suffix }}</td>
-                <td>
+                <td class="text-center">
                     <a href="{% url "office-doc-display" selected_office.slug report.pk document.pk %}">
                         <div class="icon icon-television text-4xl"></div>
                     </a>
                 </td>
-                <td>
+                <td class="text-center">
                     <a href="{% url "office-doc-download" selected_office.slug report.pk document.pk %}">
                         <div class="icon icon-inbox-download1 text-4xl"></div>
                     </a>

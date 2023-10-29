@@ -1,7 +1,11 @@
-from typing import Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING
+
+from collections.abc import Sequence
 
 from django.contrib import admin
 
+from admin_cursor_paginator import CursorPaginatorAdmin
+from admin_extra_buttons.api import ExtraButtonsMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.combo import RelatedFieldComboFilter
 from adminfilters.dates import DateRangeFilter
@@ -32,7 +36,11 @@ class ReadOnlyMixin:
         return False
 
 
-class HopeModelAdmin(ReadOnlyMixin, AdminFiltersMixin, DisplayAllMixin, admin.ModelAdmin):  # type: ignore
+class CursorButtonMixin(ExtraButtonsMixin, CursorPaginatorAdmin):
+    change_list_template = "admin/hope/change_list.html"
+
+
+class HopeModelAdmin(ReadOnlyMixin, AdminFiltersMixin, DisplayAllMixin, CursorButtonMixin):  # type: ignore
     def has_module_permission(self, request: "HttpRequest") -> bool:
         return True
         # return super().has_module_permission(request)
@@ -58,10 +66,17 @@ class AutoBusinessAreaCol:
 
 @admin.register(models.Household)
 class HouseholdAdmin(AutoBusinessAreaCol, HopeModelAdmin):
+    list_display = (
+        "unicef_id",
+        "withdrawn",
+        "size",
+        "first_registration_date",
+    )
     list_filter = (
         ("unicef_id", ValueFilter),
         "withdrawn",
         QueryStringFilter,
+        ("admin_area", AutoCompleteFilter),
         ("flex_fields", JsonFieldFilter),
         ("first_registration_date", DateRangeFilter),
     )
@@ -115,6 +130,7 @@ class AreaTypeAdmin(HopeModelAdmin):
 
 @admin.register(models.Area)
 class AreaAdmin(HopeModelAdmin):
+    search_fields = ("name",)
     list_display = ("name", "parent", "area_type")
     list_filter = (
         ("area_type__country", AutoCompleteFilter),

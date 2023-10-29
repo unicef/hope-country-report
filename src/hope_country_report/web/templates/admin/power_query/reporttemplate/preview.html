@@ -3,7 +3,7 @@
 {% block content_title %}{% endblock %}
 {% block action-content %}
     {% if form %}
-        <form method="post">
+        <form method="post" id="template-form">
             {% csrf_token %}
             <table>
                 {{ form }}

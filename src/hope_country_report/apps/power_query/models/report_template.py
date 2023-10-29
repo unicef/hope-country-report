@@ -1,10 +1,12 @@
 import logging
+import mimetypes
 from collections.abc import Iterable
 from pathlib import Path
 
 from django.conf import settings
 from django.core.files import File
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 from django_cleanup import cleanup
@@ -24,6 +26,10 @@ class ReportTemplate(models.Model):
 
     class Tenant:
         tenant_filter_field = "country_office"
+
+    @cached_property
+    def content_type(self):
+        return mimetypes.guess_type(self.doc.name)
 
     @classmethod
     def load(cls) -> None:

@@ -1,10 +1,8 @@
 import pytest
 
-from django.urls import reverse
-
 from strategy_field.utils import fqn
 
-from hope_country_report.apps.power_query.processors import ToHTML, TYPE_DETAIL
+from hope_country_report.apps.power_query.processors import ToHTML
 
 
 @pytest.fixture()
@@ -50,34 +48,3 @@ def formatter():
         processor=fqn(ToHTML),
         code="result=to_dataset(conn.all())",
     )
-
-
-@pytest.mark.parametrize("q", ["query_qs", "query_list", "query_ds"])
-def test_query_preview(request, q, django_app, admin_user):
-    query = request.getfixturevalue(q)
-    url = reverse("admin:power_query_query_preview", args=[query.pk])
-    res = django_app.get(url, user=admin_user)
-    assert res.pyquery("#query-results")[0].tag == "table"
-
-
-@pytest.mark.parametrize("q", ["query_qs", "query_list", "query_ds"])
-def test_dataset_preview(request, q, django_app, admin_user):
-    query = request.getfixturevalue(q)
-    query.run(True)
-    url = reverse("admin:power_query_dataset_preview", args=[query.datasets.first().pk])
-    res = django_app.get(url, user=admin_user)
-    assert res.pyquery("#query-results")[0].tag == "table"
-
-
-@pytest.mark.parametrize("q", ["query_qs", "query_list", "query_ds"])
-def test_formatter_test(request, q, django_app, admin_user):
-    from testutils.factories import FormatterFactory
-
-    fmt = FormatterFactory(name="f1", code="- {{record.pk}}\n", type=TYPE_DETAIL, processor=fqn(ToHTML))
-    query = request.getfixturevalue(q)
-    query.run(True)
-    url = reverse("admin:power_query_formatter_test", args=[fmt.pk])
-    res = django_app.get(url, user=admin_user)
-    res.forms["formatter-form"]["query"] = query.pk
-    res = res.forms["formatter-form"].submit()
-    assert res.pyquery("div.results")

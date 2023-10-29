@@ -1,20 +1,19 @@
-from typing import Any, Optional, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import logging
 from collections.abc import Sequence
-
-from unittest.mock import Mock
 
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import connections, models
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
+from django.utils.module_loading import import_string
 
 import tablib
 from admin_extra_buttons.decorators import button, view
@@ -23,29 +22,31 @@ from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from constance import config
+from debug_toolbar.panels.sql.utils import reformat_sql
 from django_celery_results.models import TaskResult
-from import_export import resources
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
 from ...utils.media import download_media
 from ...utils.perf import profile
-from .forms import FormatterTestForm, QueryForm, SelectDatasetForm
+from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
-from .processors import ProcessorStrategy, registry
 from .utils import to_dataset
 from .widget import FormatterEditor
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from typing import Any, Dict, Optional, Type
+
     from django.contrib.admin.options import _ListFilterT
 
     from ...types.django import AnyModel
+    from .processors import ProcessorStrategy
 
 
 class CeleryEnabledMixin(admin.ModelAdmin):
-    def get_readonly_fields(self, request: HttpRequest, obj: Optional["AnyModel"] = None) -> Sequence[str]:
+    def get_readonly_fields(self, request: HttpRequest, obj: "Optional[AnyModel]" = None) -> Sequence[str]:
         ret = list(super().get_readonly_fields(request, obj))
         ret.append("curr_async_result_id")
         return ret
@@ -161,10 +162,42 @@ class QueryAdmin(
     ) -> "HttpResponse":
         return super().change_view(request, object_id, form_url, extra_context)
 
-    def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
+    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return super().has_change_permission(request, obj)
-        # if isinstance(obj, int):
-        # return request.user.is_superuser or bool(obj and obj.owner == request.user)
+
+    @button()
+    def explain(self, request: HttpRequest, pk: int) -> HttpResponse:
+        context = self.get_common_context(request, pk)
+        if request.method == "POST":
+            form = ExplainQueryForm(request.POST)
+            if form.is_valid():
+                q = form.cleaned_data["query"]
+                ct: ContentType = form.cleaned_data["target"]
+                code = f"""sql={q}.query"""
+                locals_ = {"conn": ct.model_class().objects}
+                exec(code, globals(), locals_)
+                sql = locals_.get("sql", None)
+                if sql:
+                    cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
+                    context["sql"] = reformat_sql(str(locals_.get("sql", "")))
+                    cursor.execute(f"EXPLAIN ANALYZE {sql}")
+                    headers = [d[0] for d in cursor.description]
+                    result = cursor.fetchall()
+                    context.update(
+                        **{
+                            "result": result,
+                            "sql": sql,
+                            "headers": headers,
+                            "alias": settings.POWER_QUERY_DB_ALIAS,
+                        }
+                    )
+                self.message_user(request, code)
+                # context["explain_info"] = json.loads(explain_info)
+        else:
+            form = ExplainQueryForm(initial={"query": "conn.all()", "target": None})
+
+        context["form"] = form
+        return render(request, "admin/power_query/query/explain.html", context)
 
     @button()
     def datasets(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
@@ -217,7 +250,7 @@ class QueryAdmin(
         except Exception as e:
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
+    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
         return {
             "code": "result=conn.all()",
@@ -277,13 +310,13 @@ class DatasetAdmin(
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
-    def arguments(self, obj: Any) -> str:
+    def arguments(self, obj: "Any") -> str:
         return obj.info.get("arguments")
 
-    def dataset_type(self, obj: Any) -> str:
+    def dataset_type(self, obj: "Any") -> str:
         return obj.info.get("type")
 
-    def target_type(self, obj: Any) -> str:
+    def target_type(self, obj: "Any") -> str:
         return obj.query.target
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
@@ -306,13 +339,6 @@ class DatasetAdmin(
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
 
-class FormatterResource(resources.ModelResource):
-    class Meta:
-        model = Report
-        fields = ("name", "content_type", "code")
-        import_id_fields = ("name",)
-
-
 @admin.register(Formatter)
 class FormatterAdmin(
     ExtraButtonsMixin,
@@ -323,7 +349,6 @@ class FormatterAdmin(
     list_display = ("name", "strategy", "content_type")
     search_fields = ("name",)
     list_filter = ("processor",)
-    resource_class = FormatterResource
     change_form_template = None
 
     formfield_overrides = {
@@ -341,18 +366,16 @@ class FormatterAdmin(
             if request.method == "POST":
                 form = FormatterTestForm(request.POST)
                 if form.is_valid():
-                    obj: Formatter = self.object
-                    ctx = {
-                        "dataset": form.cleaned_data["query"].datasets.first(),
-                        "report": "None",
-                    }
-                    if obj.content_type == ".xls":
-                        output = obj.render(ctx)
-                        response = HttpResponse(output, content_type=obj.content_type)
-                        response["Content-Disposition"] = "attachment; filename=Report.xls"
-                        return response
-                    else:
-                        context["results"] = obj.render(ctx).decode()
+                    fmt: Formatter = self.object
+                    dataset: Dataset = form.cleaned_data["dataset"]
+                    results = fmt.render({"dataset": dataset})
+                    context.update(
+                        **{
+                            "dataset": dataset,
+                            "results": results,
+                        }
+                    )
+
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
@@ -371,22 +394,23 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
     list_filter = ("file_suffix",)
     autocomplete_fields = ("country_office",)
 
-    # readonly_fields = ("suffix", )
-
     @button()
     def preview(self, request: "HttpRequest", pk: int) -> HttpResponse:
         context = self.get_common_context(request, pk)
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
-            form.fields["processor"].choices = registry.as_choices(lambda x: x.content_type == self.object.content_type)
             if form.is_valid():
-                processor: "Type[ProcessorStrategy]" = form.cleaned_data["processor"]
-                fmt = Mock()
-                fmt.doc = self.object
+                processor: "Type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
+                fmt = Formatter(
+                    template=self.object,
+                    processor=processor,
+                    code="",
+                )
                 content = processor(fmt).process({"dataset": form.cleaned_data["dataset"]})
                 return HttpResponse(content, content_type=processor.content_type)
         else:
-            context["form"] = SelectDatasetForm()
+            form = SelectDatasetForm()
+        context["form"] = form
         return render(request, "admin/power_query/reporttemplate/preview.html", context)
 
 
@@ -421,10 +445,10 @@ class ReportAdmin(
     linked_objects_hide_empty = False
     object: "Report"
 
-    def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
+    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
+    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
         kwargs: dict[str, Any] = {"owner": request.user}
         if "q" in request.GET:
             q = Query.objects.get(pk=request.GET["q"])
@@ -494,7 +518,7 @@ class ReportDocumentAdmin(
     filter_horizontal = ("limit_access_to",)
     readonly_fields = ("arguments", "report", "dataset", "content_type")
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[ReportDocument]:
+    def get_queryset(self, request: HttpRequest) -> "QuerySet[ReportDocument]":
         return super().get_queryset(request)
 
     def has_add_permission(self, request: HttpRequest) -> bool:

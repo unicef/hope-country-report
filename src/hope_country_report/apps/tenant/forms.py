@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from .config import conf
 

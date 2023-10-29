@@ -21,7 +21,7 @@ class ReportAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type
 
 
 @admin.register(User)
-class UserAdminPlus(_UserAdminPlus):  # type: ignore
+class UserAdmin(_UserAdminPlus):  # type: ignore
     pass
 
 

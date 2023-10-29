@@ -755,10 +755,6 @@ select {
   float: right;
 }
 
-.m-auto {
-  margin: auto;
-}
-
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -770,10 +766,6 @@ select {
 
 .mb-96 {
   margin-bottom: 24rem;
-}
-
-.mt-10 {
-  margin-top: 2.5rem;
 }
 
 .block {
@@ -814,10 +806,6 @@ select {
 
 .w-16 {
   width: 4rem;
-}
-
-.w-3\/4 {
-  width: 75%;
 }
 
 .w-64 {
@@ -948,6 +936,11 @@ select {
   line-height: 1;
 }
 
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
 .font-bold {
   font-weight: 700;
 }
@@ -985,6 +978,20 @@ table.report-detail tr th {
 table.report-detail tr th {
       text-align: left;
     }
+
+table.report-detail tr th {
+      text-transform: capitalize;
+    }
+
+table.document-list {
+  margin: auto;
+  margin-top: 2.5rem;
+  width: 75%;
+}
+
+table.document-list th {
+    text-transform: capitalize;
+  }
 
 svg {
   fill: currentColor;

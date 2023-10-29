@@ -29,6 +29,8 @@ def userdatetime(value: datetime.datetime | None, fmt: str | None = None) -> str
                 today = timezone.now().date()
                 if value.date() == today:
                     fmt = user.time_format
+                else:
+                    fmt = user.date_format
     if not fmt:
         fmt = "Y M d h:i a"
 

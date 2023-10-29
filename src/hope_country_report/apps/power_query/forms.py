@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.forms import Field
+from django.templatetags.static import static
 
 from strategy_field.forms import StrategyFormField
 
@@ -25,24 +26,39 @@ class ExportForm(forms.Form):
 
 
 class FormatterTestForm(forms.Form):
-    query = forms.ModelChoiceField(Query.objects)  # type: ignore
+    dataset = forms.ModelChoiceField(Dataset.objects)  # type: ignore
+
+
+class ExplainQueryForm(forms.Form):
+    target = forms.ModelChoiceField(
+        queryset=ContentType.objects,
+        required=True,
+        blank=True,
+        limit_choices_to={"app_label": "hope"},
+    )
+    query = forms.CharField(widget=PythonFormatterEditor)
+
+    def __init__(self, *args, **kwargs) -> None:
+        from django.contrib.contenttypes.models import ContentType
+
+        super().__init__(*args, **kwargs)
+        self.fields["target"].queryset = ContentType.objects.filter(app_label="hope").order_by("model")
+
+    class Media:
+        js = (
+            static("admin/js/vendor/jquery/jquery.js"),
+            static("admin/js/jquery.init.js"),
+            static("admin/explain.js"),
+        )
 
 
 class QueryForm(forms.ModelForm):
-    # project = forms.ModelChoiceField(
-    #     queryset=None,
-    #     required=False,
-    #     blank=True,
-    #     # widget=AutocompleteSelect(Query._meta.get_field("project").remote_field, admin.site),
-    # )
     name = forms.CharField(required=True, widget=forms.TextInput(attrs={"style": "width:80%"}))
-    # target = ContentTypeChoiceField()
     target = forms.ModelChoiceField(
         queryset=ContentType.objects,
         required=False,
         blank=True,
         limit_choices_to={"app_label": "hope"},
-        # widget=AutocompleteSelect(Query._meta.get_field("target").remote_field, admin.site),
     )
     code = forms.CharField(widget=PythonFormatterEditor)
     owner = forms.ModelChoiceField(
