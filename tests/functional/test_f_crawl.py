@@ -44,7 +44,8 @@ def report(afghanistan, afg_user):
         HouseholdFactory(business_area=ba, withdrawn=False)
         query1 = QueryFactory(owner=afg_user)
         query1.execute_matrix()
-        r = ReportFactory(name="Housholds", owner=afg_user, query=query1, country_office=afghanistan)
+        r: "Report" = ReportFactory(name="Housholds", owner=afg_user, query=query1, country_office=afghanistan)
+        r.tags.add("tag1")
         r.execute()
     return r
 
@@ -98,8 +99,9 @@ def test_report_list(browser: "SmartDriver", report: "Report"):
     browser.wait_for_url("/afghanistan/")
     browser.wait_for(By.LINK_TEXT, "Reports").click()
     browser.wait_for_url("/afghanistan/reports")
-    browser.save_screenshot("a1.png")
+    browser.wait_for(By.LINK_TEXT, "tag1").click()
+    browser.wait_for(By.ID, "remove-filter").click()
+
     browser.wait_for(By.LINK_TEXT, report.name).click()
     browser.wait_for_url(f"/afghanistan/reports/{report.pk}/")
-
     browser.go(f"/afghanistan/reports/{report.pk}/")

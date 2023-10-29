@@ -64,6 +64,7 @@ dependencies = [
     "django-cleanup>=8.0.0",
     "python-pptx>=0.6.21",
     "django-admin-cursor-paginator>=0.1.4",
+    "django-filter>=23.3",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"

@@ -65,7 +65,10 @@ class OfficeReportListView(SelectedOfficeMixin, ListView[Report]):
     template_name = "web/office/reports.html"
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        return Report.objects.filter(country_office=self.selected_office)
+        qs = Report.objects.filter(country_office=self.selected_office)
+        if tag := self.request.GET.get("tag", None):
+            qs = qs.filter(tags__name=tag)
+        return qs
 
 
 class OfficeReportDetailView(SelectedOfficeMixin, DetailView[Report]):
