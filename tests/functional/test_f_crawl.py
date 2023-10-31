@@ -23,7 +23,7 @@ def afghanistan(db):
 
 @pytest.fixture()
 def afg_user(user, afghanistan):
-    grant = user_grant_permissions(user, [], afghanistan)
+    grant = user_grant_permissions(user, ["power_query.view_report"], afghanistan)
     grant.start()
     yield user
     grant.stop()
@@ -85,9 +85,8 @@ def test_access(browser: "SmartDriver", afg_user):
 @pytest.mark.selenium
 def test_report_list(browser: "SmartDriver", report: "Report"):
     browser.go("/")
-
     browser.find_element(By.NAME, "username").send_keys(report.owner.username)
-    browser.find_element(By.NAME, "password").send_keys(report.owner._password)
+    browser.find_element(By.NAME, "password").send_keys("password")
     browser.find_element(By.TAG_NAME, "button").click()
 
     select = Select(browser.wait_for(By.NAME, "tenant"))
@@ -102,6 +101,6 @@ def test_report_list(browser: "SmartDriver", report: "Report"):
     browser.wait_for(By.LINK_TEXT, "tag1").click()
     browser.wait_for(By.ID, "remove-filter").click()
 
-    browser.wait_for(By.LINK_TEXT, report.name).click()
+    browser.wait_for(By.LINK_TEXT, report.title).click()
     browser.wait_for_url(f"/afghanistan/reports/{report.pk}/")
     browser.go(f"/afghanistan/reports/{report.pk}/")

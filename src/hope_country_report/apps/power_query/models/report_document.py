@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
     from ...core.models import CountryOffice
 
-
 logger = logging.getLogger(__name__)
 
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
@@ -61,7 +60,11 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
     @classmethod
     def process(self, report: "Report", dataset: "Dataset", formatter: "Formatter") -> "Tuple[int|None, Exception|str]":
         try:
-            context = dataset.arguments or {}
+            context = {
+                **dataset.arguments,
+                **dataset.extra,
+                **report.context,
+            }
             try:
                 title = report.title.format(**context)
             except KeyError:
@@ -84,7 +87,10 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                 if doc := ReportDocument.objects.filter(**key).first():
                     if doc.file:
                         doc.file.delete()
+                    doc.title = title
                     doc.file = content
+                    doc.info = perfs
+                    doc.arguments = dataset.arguments
                     doc.save()
                 else:
                     doc = ReportDocument.objects.create(

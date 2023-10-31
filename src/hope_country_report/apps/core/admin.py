@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from hope_country_report.types.http import AuthHttpRequest
 
 
-class ReportAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: ignore[type-arg]
+class BaseAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: ignore[type-arg]
     pass
 
 
@@ -34,7 +34,7 @@ class UserRoleForm(forms.ModelForm):  # type: ignore
 
 
 @admin.register(UserRole)
-class UserRoleAdmin(AdminFiltersMixin, ReportAdmin):
+class UserRoleAdmin(AdminFiltersMixin, BaseAdmin):
     list_display = ("user", "group", "country_office")
     list_filter = (
         ("country_office", AutoCompleteFilter),
@@ -46,7 +46,7 @@ class UserRoleAdmin(AdminFiltersMixin, ReportAdmin):
 
 
 @admin.register(CountryOffice)
-class CountryOfficeAdmin(AdminFiltersMixin, ReportAdmin):
+class CountryOfficeAdmin(AdminFiltersMixin, BaseAdmin):
     search_fields = ("name",)
     list_filter = ("active",)
 

@@ -2,7 +2,7 @@
 
 {% block content %}
     <div class="box">
-        <h1>{{ report.name }}
+        <h1>{{ doc.title }}
 
             {% if user.is_staff %}
                 <small class="float-right"><a target="_admin" href="{{ report.get_admin_url }}">View in
@@ -19,14 +19,14 @@
             {#        </tr>#}
             <tr>
                 <th>{% trans "title" %}</th>
-                <td>{{ report.title }}</td>
+                <td>{{ doc.title }}</td>
             </tr>
             <tr>
                 <th>{% trans "Owner" %}</th>
-                <td>{% if report.owner %}
+                <td>{% if doc.report.owner %}
                     <div class="flex items-center">
-                    {{ report.owner }}
-                    <a href="mailto:{{ report.owner.email }}">
+                    {{ doc.report.owner }}
+                    <a href="mailto:{{ doc.report.owner.email }}">
                         <div class="px-4 icon icon-mail-envelope"></div>
                     </a>{% endif %}
                     </div>
@@ -34,11 +34,11 @@
             </tr>
             <tr>
                 <th>{% trans "date" %}</th>
-                <td>{{ report.last_run|userdatetime:"d" }}</td>
+                <td>{{ doc.updated_on|userdatetime:"-" }}</td>
             </tr>
             <tr>
                 <th>{% trans "scheduling" %}</th>
-                <td>{{ report.schedule.name }}</td>
+                <td>{{ doc.report.schedule.name }}</td>
             </tr>
             {#        <tr>#}
             {#            <th>{% trans "status" %}</th>#}
@@ -47,12 +47,12 @@
             <tr>
                 <th>{% trans "tags" %}</th>
                 <td>
-                    {% for t in report.tags.all %}<span class="tag {{ t.name|color }}">{{ t }}</span>{% endfor %}
+                    {% for t in doc.report.tags.all %}<span class="tag {{ t.name|color }}">{{ t }}</span>{% endfor %}
                 </td>
             </tr>
             <tr>
                 <th>{% trans "description" %}</th>
-                <td>{{ report.description }}</td>
+                <td>{{ doc.report.description }}</td>
             </tr>
         </table>
     </div>
@@ -68,7 +68,7 @@
                 <th>{% trans "created" %}/{% trans "updated" %}</th>
             </tr>
             </thead>
-            {% for document in report.documents.all %}
+            {% for instance in report.documents.all %}
                 <tbody>
                 <tr>
                     <td>{{ document.title }}</td>

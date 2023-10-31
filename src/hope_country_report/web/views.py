@@ -2,12 +2,13 @@ from typing import Any, TYPE_CHECKING, TypeVar
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.signing import get_cookie_signer
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.views import View
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView
@@ -16,7 +17,7 @@ import django_stubs_ext
 from adminfilters.utils import parse_bool
 
 from hope_country_report.apps.core.models import CountryOffice, User
-from hope_country_report.apps.power_query.models import Report, ReportDocument
+from hope_country_report.apps.power_query.models import ReportDocument
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.forms import SelectTenantForm
 from hope_country_report.apps.tenant.utils import set_selected_tenant
@@ -40,7 +41,7 @@ def index(request: "HttpRequest") -> "HttpResponse":
 
 
 class SelectedOfficeMixin(LoginRequiredMixin, View):
-    @property
+    @cached_property
     def selected_office(self) -> CountryOffice:
         return CountryOffice.objects.get(slug=self.kwargs["co"])
 
@@ -62,23 +63,28 @@ class OfficeHomeView(SelectedOfficeMixin, TemplateView):
     template_name = "web/office/index.html"
 
 
-class OfficeReportListView(SelectedOfficeMixin, ListView[Report]):
+class OfficeReportListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[ReportDocument]):
     template_name = "web/office/reports.html"
+    permission_required = ["power_query.view_report"]
+    # context_object_name = "doc"
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        qs = Report.objects.filter(country_office=self.selected_office)
+        qs = ReportDocument.objects.filter(report__country_office=self.selected_office)
         if tag := self.request.GET.get("tag", None):
-            qs = qs.filter(tags__name=tag)
+            qs = qs.filter(report__tags__name=tag)
         if active := self.request.GET.get("active", None):
-            qs = qs.filter(active=parse_bool(active))
-        return qs
+            qs = qs.filter(report__active=parse_bool(active))
+        return qs.distinct("report", "dataset")
 
 
-class OfficeReportDetailView(SelectedOfficeMixin, DetailView[Report]):
+class OfficeReportDetailView(SelectedOfficeMixin, DetailView[ReportDocument]):
     template_name = "web/office/report.html"
+    context_object_name = "doc"
 
     def get_object(self, queryset: "QuerySet[_M]|None" = None) -> "_M":
-        return Report.objects.get(country_office=self.selected_office, id=self.kwargs["pk"])
+        return ReportDocument.objects.select_related("report").get(
+            report__country_office=self.selected_office, id=self.kwargs["pk"]
+        )
 
 
 class OfficeDocumentDisplayView(SelectedOfficeMixin, View):

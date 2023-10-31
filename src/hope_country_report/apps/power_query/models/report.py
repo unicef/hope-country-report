@@ -12,6 +12,7 @@ from django_celery_beat.models import PeriodicTask
 from taggit.managers import TaggableManager
 
 from ...core.models import CountryOffice
+from ..json import PQJSONEncoder
 from ..processors import mimetype_map
 from ._base import AdminReversable, CeleryEnabled, TimeStampMixin
 from .formatter import Formatter
@@ -51,6 +52,7 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
     )
     last_run = models.DateTimeField(null=True, blank=True)
     validity_days = models.IntegerField(default=365)
+    context = models.JSONField(default=dict, encoder=PQJSONEncoder)
 
     tags = TaggableManager(blank=True)
     celery_task_name = "refresh_report"
@@ -77,14 +79,20 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
         result: "ReportResult" = []
         if run_query:
             query.execute_matrix()
-        for dataset in query.datasets.all():
-            for formatter in self.formatters.all():
-                res = ReportDocument.process(self, dataset, formatter)
-                result.append(res)
-        self.last_run = timezone.now()
-        self.save()
-        if not result:
+        if not self.formatters.exists():
+            result = [_("No Formatters available")]
+        elif not query.datasets.exists():
             result = [_("No Dataset available")]
+        else:
+            for dataset in query.datasets.all():
+                for formatter in self.formatters.all():
+                    res = ReportDocument.process(self, dataset, formatter)
+                    result.append(res)
+            self.refresh_from_db()
+            self.last_run = timezone.now()
+            self.save()
+        # if not result:
+        #     result = [_("No Dataset available")]
         return result
 
     def __str__(self) -> str:

@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
         from hope_country_report.apps.core.models import CountryOffice, User
         from hope_country_report.apps.hope.models import Household
-        from hope_country_report.apps.power_query.models import Formatter, Query, Report
+        from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, Report
 
         FlagState.objects.get_or_create(name="DEVELOP_DEBUG_TOOLBAR", condition="hostname", value="127.0.0.1,localhost")
         FlagState.objects.get_or_create(name="DEVELOP_DEBUG_TOOLBAR", condition="debug", value="1", required=True)
@@ -28,22 +28,43 @@ class Command(BaseCommand):
         afg, __ = CountryOffice.objects.get_or_create(slug="afghanistan")
         user, __ = User.objects.get_or_create(username="user")
         user.roles.get_or_create(group=reporters, country_office=afg)
-
-        q, __ = Query.objects.get_or_create(
+        p, __ = Parametrizer.objects.get_or_create(
+            name="months", value={"month": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+        )
+        q1 = Query.objects.get_or_create(
             name="Full HH list",
             defaults=dict(country_office=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
-        )
+        )[0]
+        q2 = Query.objects.get_or_create(
+            name="Registration by month",
+            defaults=dict(
+                country_office=afg,
+                parametrizer=p,
+                code="""import calendar
+month=args['month']
+result=conn.filter(first_registration_date__month=month)
+extra={"monthname": calendar.month_name[month]}
+""",
+                owner=user,
+                target=ContentType.objects.get_for_model(Household),
+            ),
+        )[0]
 
-        r1, __ = Report.objects.get_or_create(
-            title="Full HH list", country_office=afg, defaults={"query": q, "owner": user}
-        )
+        r1 = Report.objects.get_or_create(
+            title="Full HH list", country_office=afg, defaults={"query": q1, "owner": user}
+        )[0]
         r1.formatters.add(*Formatter.objects.all())
         r1.tags.add("tag1", "tag2")
 
-        r2, __ = Report.objects.get_or_create(
-            title="Report #2", country_office=afg, defaults={"query": q, "owner": user}
-        )
+        r2 = Report.objects.get_or_create(title="Report #2", country_office=afg, defaults={"query": q1, "owner": user})[
+            0
+        ]
         r2.tags.add("tag1", "tag3", "tag4")
+
+        r3 = Report.objects.get_or_create(
+            title="Report #3 {monthname}", country_office=afg, defaults={"query": q2, "owner": user}
+        )[0]
+        r3.tags.add("tag3", "tag4")
 
         Query.objects.get_or_create(
             name="Dev Query",
@@ -59,3 +80,8 @@ while True:
 """,
             ),
         )
+        q1.execute_matrix()
+        q2.execute_matrix()
+        r1.execute()
+        r2.execute()
+        r3.execute()

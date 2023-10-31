@@ -172,12 +172,17 @@ class Query(CeleryEnabled, models.Model):
                             result = locals_.get("result", None)
                             extra = locals_.get("extra", None)
                         except Exception:
+                            self.info = {
+                                "debug": debug,
+                            }
+                            self.save()
                             raise
                         info = {
                             "type": type(result).__name__,
                             "arguments": arguments,
                             "perfs": perfs,
                             "debug": debug,
+                            "extra": extra,
                         }
                         h = hashlib.md5(str(arguments).encode()).hexdigest()
 

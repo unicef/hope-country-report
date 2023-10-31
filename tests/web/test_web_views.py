@@ -4,6 +4,8 @@ import pytest
 
 from django.urls import reverse
 
+from testutils.perms import user_grant_permissions
+
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -45,6 +47,11 @@ def report(query1: "Query"):
 
 
 @pytest.fixture()
+def report_document(report: "Report"):
+    return report.documents.first()
+
+
+@pytest.fixture()
 def report_template():
     from testutils.factories import ReportTemplate
 
@@ -53,12 +60,6 @@ def report_template():
 
 def test_index(django_app, report):
     res = django_app.get("/", user=report.owner)
-    assert res.status_code == 200
-
-
-def test_report_list(django_app, report):
-    url = reverse("office-reports", args=[report.country_office.slug])
-    res = django_app.get(url, user=report.owner)
     assert res.status_code == 200
 
 
@@ -74,10 +75,18 @@ def test_dashboard_list(django_app, report):
     assert res.status_code == 200
 
 
-def test_report(django_app, report):
-    url = reverse("office-report", args=[report.country_office.slug, report.pk])
-    res = django_app.get(url, user=report.owner)
-    assert res.status_code == 200
+def test_report_list(django_app, report):
+    url = reverse("office-reports", args=[report.country_office.slug])
+    with user_grant_permissions(report.owner, ["power_query.view_report"]):
+        res = django_app.get(url, user=report.owner)
+        assert res.status_code == 200
+
+
+def test_report(django_app, report_document):
+    url = reverse("office-report", args=[report_document.report.country_office.slug, report_document.pk])
+    with user_grant_permissions(report_document.report.owner, ["power_query.view_report"]):
+        res = django_app.get(url, user=report_document.report.owner)
+        assert res.status_code == 200
 
 
 def test_document(django_app, report: "Report"):

@@ -303,7 +303,7 @@ class DatasetAdmin(
     date_hierarchy = "last_run"
 
     def get_queryset(self, request: HttpRequest):  # type: ignore[no-untyped-def]
-        return super().get_queryset(request).select_related("query", "query__target").defer("extra")
+        return super().get_queryset(request).select_related("query", "query__target")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
