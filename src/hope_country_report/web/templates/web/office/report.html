@@ -1,70 +1,97 @@
 {% extends "web/office/_base.html" %}{% load i18n user_tz colors %}
 
 {% block content %}
-    <h1>{{ report.name }}
-        {% if user.is_staff %}
-            <small class="float-right"><a target="_admin" href="{{ report.get_admin_url }}">View in Admin</a></small>
-            </h1>
-        {% endif %}
-    <table class="report-detail">
-        <tr>
-            <th>{% trans "name" %}</th>
-            <td>{{ report.name }}</td>
-        </tr>
-        <tr>
-            <th>{% trans "title" %}</th>
-            <td>{{ report.title }}</td>
-        </tr>
-        <tr>
-            <th>{% trans "description" %}</th>
-            <td>{{ report.description }}</td>
-        </tr>
-        <tr>
-            <th>{% trans "date" %}</th>
-            <td>{{ report.last_run|userdatetime:"d" }}</td>
-        </tr>
-        <tr>
-            <th>{% trans "scheduling" %}</th>
-            <td>{{ report.schedule.name }}</td>
-        </tr>
-        <tr>
-            <th>{% trans "status" %}</th>
-            <td>{{ report.status }}</td>
-        </tr>
-    </table>
-    <table class="document-list">
-        <thead>
-        <tr>
-            <th >{% trans "title" %}</th>
-            <th>{% trans "format" %}</th>
-            <th >{% trans "view" %}</th>
-            <th >{% trans "download" %}</th>
-            <th >{% trans "created" %}/{% trans "updated" %}</th>
-        </tr>
-        </thead>
-        {% for document in report.documents.all %}
-            <tbody>
+    <div class="box">
+        <h1>{{ report.name }}
+
+            {% if user.is_staff %}
+                <small class="float-right"><a target="_admin" href="{{ report.get_admin_url }}">View in
+                    Admin</a></small>
+                </h1>
+            {% endif %}
+    </div>
+    <div class="box">
+
+        <table class="report-detail">
+            {#        <tr>#}
+            {#            <th>{% trans "name" %}</th>#}
+            {#            <td>{{ report.name }}</td>#}
+            {#        </tr>#}
             <tr>
-                <td>{{ document.title }}</td>
-                <td class="text-center">
-                    <div class="icon {{ document.file_suffix|slice:"1:" }} text-4xl"></div>
-                <div class="text-xs">{{ document.file_suffix }}</div>
-                </td>
-                <td class="text-center">
-                    <a href="{% url "office-doc-display" selected_office.slug report.pk document.pk %}">
-                        <div class="icon icon-television text-4xl"></div>
-                    </a>
-                </td>
-                <td class="text-center">
-                    <a href="{% url "office-doc-download" selected_office.slug report.pk document.pk %}">
-                        <div class="icon icon-inbox-download1 text-4xl"></div>
-                    </a>
-                </td>
-                <td>
-                    {{ document.updated_on|userdatetime:"-" }}
+                <th>{% trans "title" %}</th>
+                <td>{{ report.title }}</td>
+            </tr>
+            <tr>
+                <th>{% trans "Owner" %}</th>
+                <td>{% if report.owner %}
+                    <div class="flex items-center">
+                    {{ report.owner }}
+                    <a href="mailto:{{ report.owner.email }}">
+                        <div class="px-4 icon icon-mail-envelope"></div>
+                    </a>{% endif %}
+                    </div>
                 </td>
             </tr>
-            </tbody>
-        {% endfor %}
-    </table>
+            <tr>
+                <th>{% trans "date" %}</th>
+                <td>{{ report.last_run|userdatetime:"d" }}</td>
+            </tr>
+            <tr>
+                <th>{% trans "scheduling" %}</th>
+                <td>{{ report.schedule.name }}</td>
+            </tr>
+            {#        <tr>#}
+            {#            <th>{% trans "status" %}</th>#}
+            {#            <td>{{ report.status }}</td>#}
+            {#        </tr>#}
+            <tr>
+                <th>{% trans "tags" %}</th>
+                <td>
+                    {% for t in report.tags.all %}<span class="tag {{ t.name|color }}">{{ t }}</span>{% endfor %}
+                </td>
+            </tr>
+            <tr>
+                <th>{% trans "description" %}</th>
+                <td>{{ report.description }}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="box">
+
+        <table class="document-list">
+            <thead>
+            <tr>
+                <th>{% trans "title" %}</th>
+                <th>{% trans "format" %}</th>
+                <th>{% trans "view" %}</th>
+                <th>{% trans "download" %}</th>
+                <th>{% trans "created" %}/{% trans "updated" %}</th>
+            </tr>
+            </thead>
+            {% for document in report.documents.all %}
+                <tbody>
+                <tr>
+                    <td>{{ document.title }}</td>
+                    <td class="text-center">
+                        <div class="icon {{ document.file_suffix|slice:"1:" }} text-4xl"></div>
+                        <div class="text-xs">{{ document.file_suffix }}</div>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url "office-doc-display" selected_office.slug report.pk document.pk %}">
+                            <div class="icon icon-television text-4xl"></div>
+                        </a>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url "office-doc-download" selected_office.slug report.pk document.pk %}">
+                            <div class="icon icon-inbox-download1 text-4xl"></div>
+                        </a>
+                    </td>
+                    <td>
+                        {{ document.updated_on|userdatetime:"-" }}
+                    </td>
+                </tr>
+                </tbody>
+            {% endfor %}
+        </table>
+    </div>
 {% endblock %}

@@ -1,0 +1,56 @@
+from typing import TYPE_CHECKING
+
+import pytest
+
+from django.urls import reverse
+
+from functional.conftest import select2
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
+from testutils.perms import user_grant_permissions
+from testutils.selenium import SmartDriver
+
+if TYPE_CHECKING:
+    from hope_country_report.apps.core.models import User
+
+
+@pytest.fixture()
+def afghanistan(db):
+    from testutils.factories import CountryOfficeFactory
+
+    return CountryOfficeFactory(name="Afghanistan")
+
+
+@pytest.fixture()
+def afg_user(user, afghanistan):
+    grant = user_grant_permissions(user, [], afghanistan)
+    grant.start()
+    yield user
+    grant.stop()
+
+
+@pytest.mark.selenium
+def test_user_profile(browser: "SmartDriver", afg_user: "User"):
+    """user without any roles will not have any CO available"""
+    browser.go("/")
+
+    browser.find_element(By.NAME, "username").send_keys(afg_user.username)
+    browser.find_element(By.NAME, "password").send_keys(afg_user._password)
+    browser.find_element(By.TAG_NAME, "button").click()
+
+    select = Select(browser.wait_for(By.NAME, "tenant"))
+    select.select_by_visible_text("Afghanistan")
+
+    browser.wait_for(By.CLASS_NAME, "profile-link").click()
+    browser.wait_for_url(reverse("user-profile"))
+
+    select2(browser, By.ID, "timezone", "Rome")
+
+    select = Select(browser.wait_for(By.NAME, "language"))
+    select.select_by_visible_text("Spanish")
+
+    browser.find_element(By.TAG_NAME, "button").click()
+
+    afg_user.refresh_from_db()
+    assert afg_user.language == "es"
+    assert afg_user.timezone.key == "Europe/Rome"

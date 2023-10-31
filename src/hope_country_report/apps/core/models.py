@@ -1,7 +1,11 @@
+import datetime
+from zoneinfo import ZoneInfo
+
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from django.db.models import QuerySet
+from django.utils import dateformat
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -72,13 +76,41 @@ class CountryOffice(models.Model):
         return self.name
 
 
+DATE_FORMATS = []
+sample = datetime.datetime(2000, 12, 31, 23, 59)
+for fmt in ["Y M d", "j M Y", "Y-m-d", "Y M d, l", "D, j M Y"]:
+    DATE_FORMATS.append([fmt, dateformat.format(sample, fmt)])
+
+TIME_FORMATS = []
+sample = datetime.datetime(2000, 12, 31, 23, 59)
+for fmt in ["h:i a", "H:i"]:
+    TIME_FORMATS.append([fmt, dateformat.format(sample, fmt)])
+
+
 class User(AbstractUser):  # type: ignore
+    timezone: ZoneInfo
     timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC")
     language = models.CharField(
         verbose_name=_("Language"), max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
     )
-    date_format = "Y M d h:i a"
-    time_format = "h:i a"
+    date_format = models.CharField(
+        verbose_name=_("Date Format"),
+        max_length=20,
+        choices=DATE_FORMATS,
+        default=DATE_FORMATS[0][0],
+        help_text=_("Only applied to user interface. It will not be applied to the reports"),
+    )
+    time_format = models.CharField(
+        verbose_name=_("Date Format"),
+        max_length=20,
+        choices=TIME_FORMATS,
+        default=TIME_FORMATS[0][0],
+        help_text=_("Only applied to user interface. It will not be applied to the reports"),
+    )
+
+    @cached_property
+    def datetime_format(self):
+        return f"{self.date_format} {self.time_format}"
 
     class Meta:
         app_label = "core"

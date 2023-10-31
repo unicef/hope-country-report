@@ -13,9 +13,7 @@ def query():
     from testutils.factories import ContentTypeFactory, QueryFactory
 
     return QueryFactory(
-        target=ContentTypeFactory(app_label="auth", model="permission"),
-        name="Query1",
-        code="result=conn.all()",
+        target=ContentTypeFactory(app_label="auth", model="permission"), name="Query1", code="result=conn.all()"
     )
 
 

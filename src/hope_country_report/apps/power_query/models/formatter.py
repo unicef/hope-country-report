@@ -22,9 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 class Formatter(models.Model):
+    processor: "ProcessorStrategy"
+
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
-    processor: "ProcessorStrategy"
     name = models.CharField(max_length=255, unique=True)
     code = models.TextField(blank=True, null=True)
     template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, blank=True, null=True)

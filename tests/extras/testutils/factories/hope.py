@@ -130,3 +130,12 @@ class HouseholdFactory(AutoRegisterModelFactory):
         self.head_of_household.household = self
         self.head_of_household.business_area = self.business_area
         self.head_of_household.save()
+
+
+class IndividualRoleInHouseholdFactory(AutoRegisterModelFactory):
+    individual = factory.SubFactory(IndividualFactory)
+    household = factory.SubFactory(HouseholdFactory)
+
+    class Meta:
+        model = models.IndividualRoleInHousehold
+        django_get_or_create = ("name",)

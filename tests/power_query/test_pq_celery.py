@@ -164,7 +164,7 @@ def test_celery_reports_refresh(db, settings, report: "Report") -> None:
 
 
 @pytest.mark.django_db(transaction=True)
-def test_celery_worker(settings, query_exception: "Query") -> None:
+def test_celery_error(settings, query_exception: "Query") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     query_exception.last_run = None
     result = query_exception.queue()
@@ -174,3 +174,18 @@ def test_celery_worker(settings, query_exception: "Query") -> None:
     assert query_exception.curr_async_result_id == result
     assert query_exception.status == "Not scheduled"
     assert query_exception.error_message
+
+
+#
+#
+# @pytest.mark.django_db(transaction=True)
+# def test_celery_async(settings, celery_worker, query_exception: "Query") -> None:
+#     settings.CELERY_TASK_ALWAYS_EAGER = True
+#     query_exception.last_run = None
+#     result = query_exception.queue()
+#     assert result
+#     query_exception.refresh_from_db()
+#     assert query_exception.last_run
+#     assert query_exception.curr_async_result_id == result
+#     assert query_exception.status == "Not scheduled"
+#     assert query_exception.error_message

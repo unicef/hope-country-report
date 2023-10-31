@@ -11,6 +11,7 @@ from strategy_field.utils import fqn
 from testutils.factories import DatasetFactory
 
 from hope_country_report.apps.power_query import processors
+from hope_country_report.apps.power_query.processors import registry
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -128,3 +129,8 @@ def test_processor_pdfform(dataset, tmp_path):
     output.write_bytes(result.read())
     PdfReader(output)
     assert result
+
+
+def test_registry():
+    assert registry.as_choices()
+    assert not registry.as_choices(lambda x: False)

@@ -24,6 +24,9 @@ class SmartDriver(WebDriver):
     def go(self, path):
         ...
 
+    def select2(self, element):
+        ...
+
 
 class MaxParentsReached(NoSuchElementException):
     pass

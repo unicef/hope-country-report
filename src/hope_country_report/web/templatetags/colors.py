@@ -1,16 +1,18 @@
 import hashlib
-import random
+import itertools
 
 from django.template import Library
 
 register = Library()
 
-COLORS = ["blue", "red", "gray", "yellow", "indigo", "purple"]
+COLORS = ["blue", "red", "gray", "green", "yellow", "indigo", "purple"]
+
+infinite = itertools.cycle(COLORS)
 
 
 @register.simple_tag()
 def random_color() -> str:
-    return random.choice(COLORS)
+    return next(infinite)
 
 
 @register.filter()

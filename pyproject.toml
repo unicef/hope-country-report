@@ -65,6 +65,7 @@ dependencies = [
     "python-pptx>=0.6.21",
     "django-admin-cursor-paginator>=0.1.4",
     "django-filter>=23.3",
+    "qrcode>=7.4.2",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"

@@ -11,8 +11,6 @@ if TYPE_CHECKING:
 
 
 def create_defaults() -> "List[Formatter]":
-    # if get_user_model().objects.filter(is_superuser=True).first() is None:
-    #     return []
     from django.contrib.contenttypes.models import ContentType
 
     from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, Report, ReportTemplate
@@ -84,11 +82,6 @@ def create_defaults() -> "List[Formatter]":
             },
         )
         fmts.append(f)
-
-    #
-    # f3, __ = Formatter.objects.get_or_create(name="Dataset To XLS", defaults={"code": "", "processor": fqn(ToXLS)})
-    # Formatter.objects.get_or_create(name="Dataset To YAML", processor=fqn(ToYAML), content_type=ToYAML.content_type)
-    # Formatter.objects.get_or_create(name="Dataset To JSON", processor=fqn(ToJSON), content_type=ToJSON.content_type)
 
     q1, __ = Query.objects.get_or_create(
         name="Active Programs",

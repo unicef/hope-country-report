@@ -1,10 +1,16 @@
 import os
+from pathlib import Path
 from wsgiref.util import FileWrapper
 
+from django.conf import settings
 from django.core.files.storage import default_storage, Storage
 from django.http import Http404, HttpResponse, StreamingHttpResponse
 
 THttpResponse = type[StreamingHttpResponse | HttpResponse]
+
+
+def resource_path(path: str) -> Path:
+    return Path(settings.PACKAGE_DIR) / path
 
 
 def download_media(

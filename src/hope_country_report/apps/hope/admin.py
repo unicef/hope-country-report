@@ -139,3 +139,13 @@ class AreaAdmin(HopeModelAdmin):
 
     def get_queryset(self, request: "HttpRequest") -> "QuerySet[_ModelT]":
         return super().get_queryset(request).select_related("parent", "area_type")
+
+
+#
+# @admin.register(models.IndividualRoleInHousehold)
+# class IndividualRoleInHouseholdAdmin(HopeModelAdmin):
+#     ...
+#
+# @admin.register(models.Document)
+# class DocumentsAdmin(HopeModelAdmin):
+#     ...

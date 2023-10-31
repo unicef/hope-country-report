@@ -131,12 +131,6 @@ class ToHTML(ProcessorStrategy):
         return tpl.render(Context(context)).encode()
 
 
-class ToOnlinePage(ToHTML):
-    file_suffix = ".html"
-    format = TYPE_BOTH
-    verbose_name = "Online Page"
-
-
 class ToText(ProcessorStrategy):
     file_suffix = ".txt"
     format = TYPE_BOTH
@@ -223,4 +217,3 @@ registry.register(ToXLS)
 registry.register(ToXLSX)
 registry.register(ToYAML)
 registry.register(ToText)
-registry.register(ToOnlinePage)

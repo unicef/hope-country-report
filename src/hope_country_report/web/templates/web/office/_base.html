@@ -1,38 +1,60 @@
-{% extends "layout.html" %}{% load i18n %}
+{% extends "layout.html" %}{% load i18n feature_flags %}
+{% flag_enabled 'ONLINE_PAGES' as ONLINE_PAGES %}
+
 {% block header %}
-    <div class="pr-10 flex-grow">
-        <form id="select-tenant" class="text-" method="post" action="{% url 'select-tenant' %}">
+    <div class="pr-10 flex-grow align-middle pt-3">
+        <form id="select-tenant" method="post" action="{% url 'select-tenant' %}">
             {% csrf_token %}{{ tenant_form.tenant }}
         </form>
     </div>
-    <a href="{% url "profile" %}">
-        <div class="icon icon-user text-3xl float-shrink"></div>
-    </a>
+    <div class="flex-shrink align-middle pt-3 pr-10">
+        <a class="profile-link" href="{% url "user-profile" %}">
+            <div class="icon icon-user text-3xl float-shrink"></div>
+        </a>
+    </div>
 {% endblock %}
 {% block menu %}
-    <ul class="menu p-4 h-4/5">
-        <li><a href="{% url "office-index" selected_office.slug %}">
-            <div class="OfficeHomeView">{% trans "Home" %}</div>
-        </a></li>
-        <li><a href="{% url "office-reports" selected_office.slug %}">
-            <div class="OfficeReportListView OfficeReportDetailView">{% trans "Reports" %}</div>
-        </a></li>
-        <li><a href="{% url "office-pages" selected_office.slug %}">
-            <div>{% trans "Dashboards" %}</div>
-        </a></li>
-        <li><a href="{% url "office-users" selected_office.slug %}">
-            <div>{% trans "Users" %}</div>
-        </a></li>
-
-        <li><a href="{% url "logout" %}">
-            <div>{% trans "Logout" %}</div>
-        </a></li>
-    </ul>
-    <ul class="menu p-4">
-        {% if user.is_staff %}
-            <li><a href="{% url "admin:index" %}">
-                <div>{% trans "Admin" %}</div>
+    <ul class="menu p-0 w-full h-5/6 mt-10">
+        <li class="flex OfficeHomeView h-12">
+            <a class="flex w-full px-4" href="{% url "office-index" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-home"></span>
+                <div class="flex-grow pt-3 display-open">{% trans "Home" %}</div>
+            </a>
+        </li>
+        <li class="OfficeReportListView OfficeReportDetailView flex">
+            <a class="flex w-full px-4" href="{% url "office-reports" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-folders"></span>
+                <div class="flex-grow pt-3 display-open">{% trans "Reports" %}</div>
+            </a></li>
+        {% if ONLINE_PAGES %}
+        <li class="OfficePageListView flex">
+            <a class="flex w-full px-4" href="{% url "office-pages" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
+                <div class="flex-grow  pt-3 display-open">{% trans "Dashboards" %}</div>
             </a></li>
         {% endif %}
+        <li class="OfficePageListView flex">
+            <a class="flex w-full px-4" href="{% url "logout" %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-logout"></span>
+                <div class="flex-grow  pt-3 display-open">{% trans "Logout" %}</div>
+            </a>
+        </li>
+    </ul>
+    <ul class="menu d-block block">
+        {% if user.is_staff %}
+            <li class="flex">
+                <a class="flex w-full px-4" href="{% url "admin:index" %}">
+                    <span class="flex text-2xl pt-2 pr-4 icon icon-cog-outline"></span>
+                    <div class="flex-grow  pt-3 display-open">{% trans "Admin" %}</div>
+                </a>
+            </li>
+        {% endif %}
+        <div class="flex items-center p-2 border-t-black display-open">
+            <div class="m-auto text-gray-400 ">
+                <span>HOPE Reporting</span>
+                <span>{{ version }}</span>
+                <span>{{ release_date }}</span>
+            </div>
+        </div>
     </ul>
 {% endblock %}

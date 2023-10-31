@@ -18,6 +18,7 @@ from django.utils.module_loading import import_string
 import tablib
 from admin_extra_buttons.decorators import button, view
 from admin_extra_buttons.mixins import ExtraButtonsMixin
+from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
@@ -143,7 +144,7 @@ class QueryAdmin(
         "last_run",
     )
     linked_objects_template = None
-    autocomplete_fields = ("target", "owner")
+    autocomplete_fields = ("target", "owner", "target")
     readonly_fields = ("sentry_error_id", "error_message", "info")
     change_form_template = None
     ordering = ["-last_run"]
@@ -218,7 +219,7 @@ class QueryAdmin(
         return render(request, "admin/power_query/query/run_result.html", ctx)
 
     @button()
-    def preview(self, request: HttpRequest, pk: int) -> HttpResponse:
+    def preview(self, request: HttpRequest, pk: int) -> HttpResponse | HttpResponseRedirect:
         obj: Query = self.get_object(request, str(pk))
         try:
             context = self.get_common_context(request, pk, title="Results")
@@ -248,16 +249,13 @@ class QueryAdmin(
                 )
             return render(request, "admin/power_query/query/preview.html", context)
         except Exception as e:
+            logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
+        return HttpResponseRedirectToReferrer(request)
 
     def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
-        return {
-            "code": "result=conn.all()",
-            "name": ct,
-            "target": ct,
-            "owner": request.user,
-        }
+        return {"code": "result=conn.all()", "name": ct, "target": ct, "owner": request.user}
 
 
 class FileProviderAdmin(admin.ModelAdmin):
@@ -350,6 +348,7 @@ class FormatterAdmin(
     search_fields = ("name",)
     list_filter = ("processor",)
     change_form_template = None
+    autocomplete_fields = ("country_office", "template")
 
     formfield_overrides = {
         models.TextField: {"widget": FormatterEditor(theme="abcdef")},
@@ -369,13 +368,7 @@ class FormatterAdmin(
                     fmt: Formatter = self.object
                     dataset: Dataset = form.cleaned_data["dataset"]
                     results = fmt.render({"dataset": dataset})
-                    context.update(
-                        **{
-                            "dataset": dataset,
-                            "results": results,
-                        }
-                    )
-
+                    return HttpResponse(results, content_type=fmt.content_type)
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)

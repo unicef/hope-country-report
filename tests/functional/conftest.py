@@ -5,6 +5,9 @@ import os
 
 import pytest
 
+from selenium.webdriver import Keys
+from selenium.webdriver.common.by import By
+
 if TYPE_CHECKING:
     from testutils.selenium import SmartDriver
 
@@ -108,6 +111,15 @@ def set_input_value(driver, *args):
     el.send_keys(args[-1])
 
 
+def select2(driver, by, selector, value):
+    el = driver.wait_for(by, f"select2-id_{selector}-container")
+    el.click()
+    el = driver.wait_for(By.CLASS_NAME, "select2-search__field")
+    el.click()
+    el.send_keys(value)
+    driver.switch_to.active_element.send_keys(Keys.ENTER)
+
+
 @pytest.fixture
 def browser(transactional_db, driver, live_server, settings, monkeypatch) -> "SmartDriver":
     from django.core.handlers.wsgi import WSGIRequest
@@ -119,6 +131,7 @@ def browser(transactional_db, driver, live_server, settings, monkeypatch) -> "Sm
     driver.live_server = live_server
 
     driver.go = go.__get__(driver)
+    driver.select2 = select2.__get__(driver)
     driver.with_timeouts = timeouts.__get__(driver)
     driver.set_input_value = set_input_value.__get__(driver)
 

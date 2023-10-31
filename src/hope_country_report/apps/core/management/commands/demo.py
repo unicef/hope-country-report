@@ -34,10 +34,18 @@ class Command(BaseCommand):
             defaults=dict(country_office=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
         )
 
-        r1, __ = Report.objects.get_or_create(title="Full HH list", country_office=afg, defaults={"query": q})
+        r1, __ = Report.objects.get_or_create(
+            title="Full HH list", country_office=afg, defaults={"query": q, "owner": user}
+        )
         r1.formatters.add(*Formatter.objects.all())
+        r1.tags.add("tag1", "tag2")
 
-        q, __ = Query.objects.get_or_create(
+        r2, __ = Report.objects.get_or_create(
+            title="Report #2", country_office=afg, defaults={"query": q, "owner": user}
+        )
+        r2.tags.add("tag1", "tag3", "tag4")
+
+        Query.objects.get_or_create(
             name="Dev Query",
             defaults=dict(
                 country_office=afg,

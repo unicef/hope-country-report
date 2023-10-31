@@ -7,7 +7,7 @@ import factory
 from social_django.models import UserSocialAuth
 from testutils.factories.base import AutoRegisterModelFactory
 
-from hope_country_report.apps.core.models import CountryOffice, User, UserRole
+from hope_country_report.apps.core.models import CountryOffice, DATE_FORMATS, TIME_FORMATS, User, UserRole
 
 from .django_auth import GroupFactory
 from .hope import BusinessAreaFactory
@@ -18,6 +18,9 @@ class UserFactory(AutoRegisterModelFactory):
     username = factory.Sequence(lambda n: "m%03d@example.com" % n)
     password = factory.django.Password(_password)
     email = factory.Sequence(lambda n: "m%03d@example.com" % n)
+    language = "en"
+    date_format = DATE_FORMATS[0][0]
+    time_format = TIME_FORMATS[0][0]
     first_name = "Jhon"
     last_name = "Doe"
     is_superuser = False

@@ -5,3 +5,4 @@ def test_signer():
     signer = DebugSigner()
     value = "abc"
     assert signer.unsign(signer.sign(value)) == value
+    assert signer.signature(value) == value

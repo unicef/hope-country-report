@@ -4,13 +4,12 @@ node_modules
 *.pyc
 DATA/
 build
-~build
 /dist
-static/
 media/
 *.egg*
 celerybeat-schedule
 coverage.xml
+!.envrc
 !.coveragerc
 !.dockerignore
 !.flake8

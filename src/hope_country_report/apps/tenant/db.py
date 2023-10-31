@@ -48,17 +48,3 @@ class TenantModel(models.Model):
         tenant_filter_field = None
 
     objects = TenantManager()
-    #
-    # def save(
-    #     self,
-    #     force_insert: bool = ...,
-    #     force_update: bool = ...,
-    #     using: Optional[str] = ...,
-    #     update_fields: Optional[Iterable[str]] = ...,
-    # ) -> None:
-    #     t = getattr(self, self.Tenant.tenant_filter_field)
-    #     assert conf.auth.get_allowed_tenants().filter(pk=t.pk).exists()
-    #     super().save(force_insert, force_update, using, update_fields)
-    #
-    # def delete(self, using: Any = None, keep_parents: bool = False) -> Tuple[int, Dict[str, int]]:
-    #     return 0, {}

@@ -38,6 +38,7 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
 
     formatters = models.ManyToManyField(Formatter, blank=False)
     active = models.BooleanField(default=True)
+    visible = models.BooleanField(default=True)
     owner = models.ForeignKey(get_user_model(), blank=True, null=True, on_delete=models.CASCADE, related_name="+")
     limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
     schedule = models.ForeignKey(

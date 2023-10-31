@@ -51,6 +51,28 @@ def query_ds():
 
 
 @pytest.fixture()
+def query_none():
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    return QueryFactory(
+        target=ContentTypeFactory(app_label="auth", model="permission"),
+        name="Query1",
+        code="result=None",
+    )
+
+
+@pytest.fixture()
+def query_exception():
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    return QueryFactory(
+        target=ContentTypeFactory(app_label="auth", model="permission"),
+        name="Query1",
+        code="1/0",
+    )
+
+
+@pytest.fixture()
 def dataset():
     from testutils.factories import DatasetFactory
 
@@ -125,4 +147,21 @@ def test_query_preview(request, q, django_app, admin_user):
     query = request.getfixturevalue(q)
     url = reverse("admin:power_query_query_preview", args=[query.pk])
     res = django_app.get(url, user=admin_user)
+    assert res.status_code == 200
     assert res.pyquery("#query-results")[0].tag == "table"
+
+
+def test_query_preview_none(query_none, django_app, admin_user):
+    url = reverse("admin:power_query_query_preview", args=[query_none.pk])
+    res = django_app.get(url, user=admin_user)
+    assert (
+        res.pyquery("ul.messagelist .warning")[0].text
+        == "Query does not returns a valid result. It returned <class 'NoneType'>"
+    )
+
+
+def test_query_preview_exception(query_exception, django_app, admin_user):
+    url = reverse("admin:power_query_query_change", args=[query_exception.pk])
+    res = django_app.get(url, user=admin_user)
+    res = res.click("Preview").follow()
+    assert res.pyquery("ul.messagelist .error")[0].text == "ZeroDivisionError: division by zero"

@@ -41,3 +41,9 @@ def test_celery_no_worker(db, settings, report: "Report") -> None:
     assert report.status == "QUEUED"
     report.terminate()
     assert report.status == "CANCELED"
+
+
+def test_report_refresh(db, settings, report: "Report") -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    report.execute(True)
+    report.execute(False)

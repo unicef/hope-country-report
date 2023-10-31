@@ -96,9 +96,8 @@ def test_user_profile(django_app, report: "Report"):
     url = reverse("office-index", args=[report.country_office.slug])
     res = django_app.get(url, user=report.owner)
     res = res.click(href="/profile/")
-    res.forms["user-profile"].language = "es"
-    res = res.forms["user-profile"].submit()
-    assert res.status_code == 302
+    res.forms["user-profile"]["language"] = "es"
+    res.forms["user-profile"].submit().follow()
     report.owner.refresh_from_db()
     assert report.owner.language == "es"
 

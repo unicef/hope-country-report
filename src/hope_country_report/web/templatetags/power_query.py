@@ -1,13 +1,11 @@
 from typing import Any
 
-import json
-
 from django import template
 from django.utils.safestring import mark_safe
 
-from adminactions.utils import get_attr
+from strategy_field.utils import get_attr
 
-from ..utils import get_sentry_url, sizeof
+from hope_country_report.apps.power_query.utils import get_sentry_url, sizeof
 
 register = template.Library()
 
@@ -22,14 +20,15 @@ def link_to_sentry(event_id: Any, href: bool = False) -> str:
     return get_sentry_url(event_id, href)
 
 
-@register.filter(name="classname")
-def get_class(value: Any) -> Any:
-    return value.__class__.__name__
-
-
-@register.filter()
-def dataset_to_json(value: Any) -> str:
-    return json.dump(value)  # type: ignore # FIXME: json.dump needs a second argument (fp)
+# @register.filter(name="classname")
+# def get_class(value: Any) -> Any:
+#     return value.__class__.__name__
+#
+#
+# @register.filter()
+# def dataset_to_json(value: Any) -> str:
+#     return json.dump(value)  # type: ignore # FIXME: json.dump needs a second argument (fp)
+#
 
 
 @register.filter()

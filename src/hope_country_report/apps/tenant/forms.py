@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class TenantAuthenticationForm(AdminAuthenticationForm):
     def confirm_login_allowed(self, user: "AbstractBaseUser") -> None:
-        if not user.is_active:
+        if not user.is_active:  # pragma: no cover
             raise ValidationError(self.error_messages["inactive"], code="inactive")
 
 
