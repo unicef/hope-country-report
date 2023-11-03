@@ -5,7 +5,7 @@ from factory.base import FactoryMetaClass
 
 TAutoRegisterModelFactory = typing.TypeVar("TAutoRegisterModelFactory", bound="AutoRegisterModelFactory")
 
-factories_registry: typing.Dict[str, TAutoRegisterModelFactory] = {}
+factories_registry: dict[str, TAutoRegisterModelFactory] = {}
 
 
 class AutoRegisterFactoryMetaClass(FactoryMetaClass):

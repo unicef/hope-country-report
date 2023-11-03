@@ -50,9 +50,9 @@ def formatter():
 
 @pytest.fixture()
 def report(query1, formatter):
-    from testutils.factories import ReportFactory
+    from testutils.factories import ReportConfigurationFactory
 
-    return ReportFactory(formatters=[formatter], query=query1)
+    return ReportConfigurationFactory(formatters=[formatter], query=query1)
 
 
 @pytest.fixture

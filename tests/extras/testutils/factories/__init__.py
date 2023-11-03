@@ -12,7 +12,7 @@ from .power_query import *
 from .user import *
 
 
-def get_factory_for_model(_model) -> typing.Type[TAutoRegisterModelFactory]:
+def get_factory_for_model(_model) -> type[TAutoRegisterModelFactory]:
     class Meta:
         model = _model
 

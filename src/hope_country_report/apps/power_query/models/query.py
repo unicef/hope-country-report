@@ -24,7 +24,7 @@ from ..celery_tasks import PowerQueryTask
 from ..exceptions import QueryRunCanceled
 from ..json import PQJSONEncoder
 from ..utils import dict_hash, to_dataset
-from ._base import CeleryEnabled
+from ._base import AdminReversable, CeleryEnabled
 from .arguments import Parametrizer
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Query(CeleryEnabled, models.Model):
+class Query(CeleryEnabled, AdminReversable, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     datasets: "QuerySet[Dataset]"

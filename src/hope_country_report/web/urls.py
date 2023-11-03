@@ -1,15 +1,18 @@
 from django.contrib.auth.views import LoginView
 from django.urls import path
+from django.views.generic import TemplateView
 
 from .views import (
     download,
     index,
+    OfficeConfigurationDetailView,
+    OfficeConfigurationListView,
     OfficeDocumentDisplayView,
     OfficeDocumentDownloadView,
     OfficeHomeView,
     OfficePageListView,
-    OfficeReportDetailView,
-    OfficeReportListView,
+    OfficeReportDocumentDetailView,
+    OfficeReportDocumentListView,
     OfficeUserListView,
     select_tenant,
     UserProfileView,
@@ -17,23 +20,18 @@ from .views import (
 
 urlpatterns = [
     path("", index, name="index"),
-    path(r"media/<path:path>", download, name="download-media"),
+    path("media/<path:path>", download, name="download-media"),
     path("login/", LoginView.as_view(), name="login"),
     path("profile/", UserProfileView.as_view(), name="user-profile"),
     path("select-tenant/", select_tenant, name="select-tenant"),
     path("<slug:co>/", OfficeHomeView.as_view(), name="office-index"),
     path("<slug:co>/users/", OfficeUserListView.as_view(), name="office-users"),
     path("<slug:co>/pages/", OfficePageListView.as_view(), name="office-pages"),
-    path("<slug:co>/reports/", OfficeReportListView.as_view(), name="office-reports"),
-    path("<slug:co>/reports/<int:pk>/", OfficeReportDetailView.as_view(), name="office-report"),
-    path(
-        "<slug:co>/reports/<int:report>/document/<int:pk>/view/",
-        OfficeDocumentDisplayView.as_view(),
-        name="office-doc-display",
-    ),
-    path(
-        "<slug:co>/reports/<int:report>/document/<int:pk>/download/",
-        OfficeDocumentDownloadView.as_view(),
-        name="office-doc-download",
-    ),
+    path("<slug:co>/configurations/", OfficeConfigurationListView.as_view(), name="office-config-list"),
+    path("<slug:co>/configuration/<int:pk>/", OfficeConfigurationDetailView.as_view(), name="office-config"),
+    path("<slug:co>/docs/", OfficeReportDocumentListView.as_view(), name="office-doc-list"),
+    path("<slug:co>/doc/<int:pk>/", OfficeReportDocumentDetailView.as_view(), name="office-doc"),
+    path("<slug:co>/doc/<int:pk>/view/", OfficeDocumentDisplayView.as_view(), name="office-doc-display"),
+    path("<slug:co>/doc/<int:pk>/download/", OfficeDocumentDownloadView.as_view(), name="office-doc-download"),
+    path("errors/404/", TemplateView.as_view(template_name="404.html")),
 ]

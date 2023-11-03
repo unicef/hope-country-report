@@ -8,7 +8,9 @@ from django.urls import reverse
 from hope_country_report.apps.tenant.exceptions import InvalidTenantError, SelectTenantException
 
 if TYPE_CHECKING:
-    from typing import Callable, TYPE_CHECKING
+    from typing import TYPE_CHECKING
+
+    from collections.abc import Callable
 
     from hope_country_report.types.http import AuthHttpRequest
 

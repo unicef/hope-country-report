@@ -1,15 +1,16 @@
 from typing import TYPE_CHECKING
 
+import logging
+
 from django.db.models import Q
 
 from hope_country_report.apps.core.utils import SmartManager
-from hope_country_report.apps.tenant.exceptions import InvalidTenantError
 from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tenant
 
 from ...state import state
 
 # from django.db.models.manager import RelatedManager
-
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -31,9 +32,8 @@ class PowerQueryManager(SmartManager["_PowerQueryModel"]):
                 return Q()
             else:
                 active_tenant = get_selected_tenant()
-                if not active_tenant:
-                    raise InvalidTenantError
-                _filter = Q(**{tenant_filter_field: active_tenant})
+                if active_tenant:
+                    _filter = Q(**{tenant_filter_field: active_tenant})
         return _filter
 
     def get_queryset(self) -> "QuerySet[_PowerQueryModel]":

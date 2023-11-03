@@ -76,15 +76,12 @@ class CountryOffice(models.Model):
         return self.name
 
 
-DATE_FORMATS = []
+DATE_FORMATS: list[tuple[str, str]]
+TIME_FORMATS: list[tuple[str, str]]
 sample = datetime.datetime(2000, 12, 31, 23, 59)
-for fmt in ["Y M d", "j M Y", "Y-m-d", "Y M d, l", "D, j M Y"]:
-    DATE_FORMATS.append([fmt, dateformat.format(sample, fmt)])
 
-TIME_FORMATS = []
-sample = datetime.datetime(2000, 12, 31, 23, 59)
-for fmt in ["h:i a", "H:i"]:
-    TIME_FORMATS.append([fmt, dateformat.format(sample, fmt)])
+DATE_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["Y M d", "j M Y", "Y-m-d", "Y M d, l", "D, j M Y"]]
+TIME_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["h:i a", "H:i"]]
 
 
 class User(AbstractUser):  # type: ignore
@@ -109,12 +106,16 @@ class User(AbstractUser):  # type: ignore
     )
 
     @cached_property
-    def datetime_format(self):
+    def datetime_format(self) -> str:
         return f"{self.date_format} {self.time_format}"
 
     class Meta:
         app_label = "core"
         swappable = "AUTH_USER_MODEL"
+
+    @cached_property
+    def friendly_name(self) -> str:
+        return self.first_name or self.username
 
 
 class UserRole(models.Model):

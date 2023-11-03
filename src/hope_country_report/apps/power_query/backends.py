@@ -21,7 +21,7 @@ class PowerQueryBackend(ModelBackend):
                     group__userrole__user=user_obj, group__userrole__country_office=obj.country_office
                 )
                 perms = perms.values_list("content_type__app_label", "codename").order_by()
-                setattr(user_obj, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})
+                setattr(user_obj, perm_cache_name, {f"{ct}.{name}" for ct, name in perms})
             return getattr(user_obj, perm_cache_name)
         return set()
 

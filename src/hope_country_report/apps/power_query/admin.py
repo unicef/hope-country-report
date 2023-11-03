@@ -28,10 +28,20 @@ from django_celery_results.models import TaskResult
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
+from ...utils.mail import send_document_password
 from ...utils.media import download_media
 from ...utils.perf import profile
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
-from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
+from .models import (
+    CeleryEnabled,
+    Dataset,
+    Formatter,
+    Parametrizer,
+    Query,
+    ReportConfiguration,
+    ReportDocument,
+    ReportTemplate,
+)
 from .utils import to_dataset
 from .widget import FormatterEditor
 
@@ -145,7 +155,14 @@ class QueryAdmin(
     )
     linked_objects_template = None
     autocomplete_fields = ("target", "owner", "target")
-    readonly_fields = ("sentry_error_id", "error_message", "info")
+    readonly_fields = (
+        "sentry_error_id",
+        "error_message",
+        "info",
+        "last_run",
+        "last_async_result_id",
+        "curr_async_result_id",
+    )
     change_form_template = None
     ordering = ["-last_run"]
     form = QueryForm
@@ -407,13 +424,12 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
         return render(request, "admin/power_query/reporttemplate/preview.html", context)
 
 
-@admin.register(Report)
+@admin.register(ReportConfiguration)
 class ReportAdmin(
     AdminFiltersMixin,
     CeleryEnabledMixin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
-    DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin,
 ):
@@ -434,9 +450,11 @@ class ReportAdmin(
         "last_run",
     )
     search_fields = ("name",)
-    change_form_template = None
+    # change_form_template = None
+    change_form_template = "admin/power_query/report/change_form.html"
+
     linked_objects_hide_empty = False
-    object: "Report"
+    object: "ReportConfiguration"
 
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
@@ -505,11 +523,11 @@ class ReportDocumentAdmin(
     AdminActionPermMixin,
     ModelAdmin,
 ):
-    list_display = ("title", "content_type", "report", "file")
-    list_filter = (("report", AutoCompleteFilter),)
+    list_display = ("title", "content_type", "report", "file", "compressed", "protected")
+    list_filter = (("report", AutoCompleteFilter), "report__compress", "report__protect")
     search_fields = ("title",)
     filter_horizontal = ("limit_access_to",)
-    readonly_fields = ("arguments", "report", "dataset", "content_type")
+    readonly_fields = ("arguments", "report", "dataset", "content_type", "formatter", "info", "size")
 
     def get_queryset(self, request: HttpRequest) -> "QuerySet[ReportDocument]":
         return super().get_queryset(request)
@@ -518,6 +536,12 @@ class ReportDocumentAdmin(
         return False
 
     @button()
-    def download(self, request: HttpRequest, pk: str) -> HttpResponse:  # FIXME: this need to be fixed in extra_buttons
+    def download(self, request: HttpRequest, pk: str) -> HttpResponse:
         doc = self.get_object(request, pk)
         return download_media(doc.file.path, response_class=HttpResponse)
+
+    @button()
+    def resend_password(self, request: HttpRequest, pk: str) -> HttpResponse:
+        self.object = self.get_object(request, pk)
+        s = send_document_password(request.user, self.object)
+        self.message_user(request, f"{s}")

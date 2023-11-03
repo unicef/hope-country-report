@@ -11,7 +11,7 @@ from hope_country_report.state import state
 register = Library()
 
 
-def get_format_for_user(user: User, value: datetime.datetime, fmt: str):
+def get_format_for_user(user: User | AnonymousUser, value: datetime.datetime, fmt: str | None) -> str | None:
     datetime_format = getattr(user, "datetime_format", "Y M d h:i a")
     time_format = getattr(user, "time_format", "h:i a")
     date_format = getattr(user, "date_format", "Y M d")

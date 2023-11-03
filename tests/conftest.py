@@ -19,9 +19,10 @@ def _setup_models():
     from django.db.backends.utils import truncate_name
     from django.db.models import Model
 
+    database_name = "_test_hcr"
     settings.POWER_QUERY_DB_ALIAS = "default"
-    settings.DATABASES["default"]["NAME"] = "_hcr"
-    settings.DATABASES["default"]["TEST"] = {"NAME": "_hcr"}
+    settings.DATABASES["default"]["NAME"] = database_name
+    settings.DATABASES["default"]["TEST"] = {"NAME": database_name}
     settings.DATABASE_ROUTERS = ()
     del settings.DATABASES["hope_ro"]
     django.setup()
@@ -65,6 +66,14 @@ def pytest_addoption(parser):
         help="enable sentry error logging",
     )
 
+    parser.addoption(
+        "--sentry-environment",
+        action="store",
+        dest="sentry_environment",
+        default="test",
+        help="set sentry environment",
+    )
+
 
 def pytest_configure(config):
     os.environ.update(
@@ -87,6 +96,8 @@ def pytest_configure(config):
     )
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""
+    else:
+        os.environ["SENTRY_ENVIRONMENT"] = config.option.sentry_environment
 
     if not config.option.enable_selenium:
         config.option.enable_selenium = "selenium" in config.option.markexpr
@@ -134,27 +145,27 @@ def user(db):
     return UserFactory(username="user@example.com", is_active=True)
 
 
-@pytest.fixture
-def country_office(db):
+@pytest.fixture()
+def afghanistan(db):
     from testutils.factories import CountryOfficeFactory
 
-    return CountryOfficeFactory()
+    return CountryOfficeFactory(name="Afghanistan")
 
 
 @pytest.fixture
-def reporters(db, country_office, user):
+def reporters(db, afghanistan, user):
     from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
     return get_or_create_reporter_group()
 
 
 @pytest.fixture()
-def tenant_user(country_office, reporters):
+def tenant_user(afghanistan, reporters):
     """User with access to a tenant"""
     from testutils.factories import UserFactory, UserRoleFactory
 
     u = UserFactory(username="user", is_staff=False, is_superuser=False, is_active=True)
-    UserRoleFactory(country_office=country_office, group=reporters, user=u)
+    UserRoleFactory(country_office=afghanistan, group=reporters, user=u)
     return u
 
 
@@ -169,6 +180,23 @@ def pending_user(db):
 
 
 @pytest.fixture()
+def afg_user(user, afghanistan):
+    from testutils.perms import user_grant_permissions
+
+    grant = user_grant_permissions(
+        user,
+        [
+            "power_query.view_reportconfiguration",
+            "power_query.view_reportdocument",
+        ],
+        afghanistan,
+    )
+    grant.start()
+    yield user
+    grant.stop()
+
+
+@pytest.fixture()
 def mocked_responses():
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         yield rsps
@@ -176,12 +204,15 @@ def mocked_responses():
 
 @pytest.fixture(autouse=True)
 def state_context(db):
+    from hope_country_report.apps.core.utils import get_or_create_reporter_group
     from hope_country_report.apps.power_query.defaults import create_defaults, create_periodic_tasks
     from hope_country_report.config.celery import app
     from hope_country_report.state import state
 
     create_defaults()
     create_periodic_tasks()
+    get_or_create_reporter_group()
+
     app.control.purge()
 
     with state.configure():

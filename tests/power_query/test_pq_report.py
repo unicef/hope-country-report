@@ -1,22 +1,28 @@
+import tempfile
 from typing import TYPE_CHECKING
+
+from pathlib import PurePath
+from zipfile import ZipFile
 
 import pytest
 
 from django.conf import settings
 
 from hope_country_report.config.celery import app
+from hope_country_report.state import state
+from hope_country_report.utils.os import pushd
 
 if TYPE_CHECKING:
-    from hope_country_report.apps.power_query.models import Query, Report
+    from hope_country_report.apps.power_query.models import Query, ReportConfiguration, ReportDocument
 
 
 @pytest.fixture()
-def query2():
+def query2(afg_user):
     from testutils.factories import Query, QueryFactory
 
     Query.objects.filter(name="Debug Query").delete()
     q = QueryFactory(
-        owner=None,
+        owner=afg_user,
         name="Debug Query",
         curr_async_result_id=None,
         code="""result=[1,2,3,4]""",
@@ -29,12 +35,12 @@ def query2():
 
 @pytest.fixture()
 def report(query2: "Query"):
-    from testutils.factories import ReportFactory
+    from testutils.factories import ReportConfigurationFactory
 
-    return ReportFactory(name="Celery Report", query=query2, owner=query2.owner)
+    return ReportConfigurationFactory(name="Celery Report", query=query2, owner=query2.owner)
 
 
-def test_celery_no_worker(db, settings, report: "Report") -> None:
+def test_celery_no_worker(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = False
     assert report.status == "Not scheduled"
     report.queue()
@@ -43,7 +49,75 @@ def test_celery_no_worker(db, settings, report: "Report") -> None:
     assert report.status == "CANCELED"
 
 
-def test_report_refresh(db, settings, report: "Report") -> None:
+def test_report_refresh(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     report.execute(True)
+    assert report.documents.exists()
+    doc = report.documents.first()
+    assert doc.file
     report.execute(False)
+    assert doc.file
+
+
+def test_report_zip(db, settings, report: "ReportConfiguration", mailoutbox) -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    report.compress = True
+    assert report.owner
+    assert report.owner.email
+
+    report.execute(True)
+    assert report.documents.exists()
+
+    doc: "ReportDocument" = report.documents.first()
+    assert doc.file
+    assert doc.content_type == "application/x-zip-compressed"
+
+    archive = ZipFile(doc.file.path, "r")
+    assert len(archive.namelist()) == 1
+    page_document = archive.open(archive.namelist()[0])
+    assert PurePath(page_document.name).suffix == doc.formatter.file_suffix
+
+
+def test_report_zip_protected_notify_email(
+    transactional_db, rf, settings, report: "ReportConfiguration", mailoutbox
+) -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    report.compress = True
+    report.protect = True
+    request = rf.get("/")
+    request.user = report.owner
+
+    with state.set(request=request, must_tenant=False):
+        report.execute(True)
+
+    assert len(mailoutbox) == 1
+    assert mailoutbox[0].subject == "Document ready"
+
+
+def test_report_zip_protected(transactional_db, rf, settings, report: "ReportConfiguration", mailoutbox) -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    report.compress = True
+    report.protect = True
+    request = rf.get("/")
+    request.user = report.owner
+    assert not report.pwd
+    with state.set(request=request, must_tenant=False):
+        report.execute(True)
+
+    assert report.pwd
+
+    doc: "ReportDocument" = report.documents.first()
+    assert doc.file
+    assert doc.content_type == "application/x-zip-compressed"
+
+    with pytest.raises(RuntimeError):
+        archive = ZipFile(doc.file.path, "r")
+        archive.open(archive.namelist()[0])
+
+    archive = ZipFile(doc.file.path, "r")
+    archive.setpassword(report.pwd.encode())
+    assert len(archive.namelist()) == 1
+    filename = archive.namelist()[0]
+    tdir = tempfile.TemporaryDirectory(prefix="~")
+    with pushd(tdir.name):
+        archive.extract(filename, filename)

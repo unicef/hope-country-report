@@ -5,7 +5,9 @@ from copy import copy
 from threading import local
 
 if TYPE_CHECKING:
-    from typing import Any, Iterator, List
+    from typing import Any, List
+
+    from collections.abc import Iterator
 
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.types.http import AnyRequest, AnyResponse
@@ -22,7 +24,7 @@ class State(local):
     filters: "List[Any]" = []
 
     def __repr__(self) -> str:
-        return f"<State {id(self)}>"
+        return f"<State {id(self)}: {self.tenant_cookie}:{self.must_tenant}>"
 
     @contextlib.contextmanager
     def configure(self, **kwargs: "Dict[str,Any]") -> "Iterator[None]":
@@ -32,6 +34,19 @@ class State(local):
             yield
         for k, v in pre.items():
             setattr(self, k, v)
+
+    @contextlib.contextmanager
+    def activate_tenant(self, country_office: "CountryOffice") -> "Iterator[None]":
+        _must_tenant = self.must_tenant
+        _country_office = self.tenant
+        _tenant_cookie = self.tenant_cookie
+        self.must_tenant = True
+        self.tenant = country_office
+        self.tenant_cookie = country_office.slug
+        yield
+        self.must_tenant = _must_tenant
+        self.tenant = _country_office
+        self.tenant_cookie = _tenant_cookie
 
     @contextlib.contextmanager
     def set(self, **kwargs: "Dict[str,Any]") -> "Iterator[None]":

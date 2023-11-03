@@ -32,6 +32,8 @@ TEMPLATE = """
         <tbody>
             <tr><th>Request</th><td>{{state.request}}</td><tr>
             <tr><th>Tenant</th><td>{{state.tenant}}</td><tr>
+            <tr><th>Cookie</th><td>{{state.tenant_cookie}}</td><tr>
+            <tr><th>Cookie</th><td>{{state.must_tenant}}</td><tr>
             <tr><th>Filters</th><td>{{state.filters}}</td><tr>
         </tbody>
     </table>

@@ -230,14 +230,19 @@ AUTH_USER_MODEL = "core.User"
 
 HOST = env("HOST", default="http://localhost:8000")
 SIGNING_BACKEND = env("SIGNING_BACKEND")
-DEFAULT_FROM_EMAIL = "hope@unicef.org"
-EMAIL_HOST = env("EMAIL_HOST", default="")
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-EMAIL_PORT = env("EMAIL_PORT", default=25)
-EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False)
-EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 
+CATCH_ALL_EMAIL = env("CATCH_ALL_EMAIL")
+DEFAULT_FROM_EMAIL = "hope-reporting@unicef.org"
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL")
+
+
+from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
 from .fragments.constance import *  # noqa

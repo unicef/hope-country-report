@@ -32,7 +32,7 @@ mimetypes.add_type("application/x-zip-compressed", ".zip")
 mimetype_map = {
     k: v
     for k, v in mimetypes.types_map.items()
-    if k in [".csv", ".html", ".json", ".txt", ".xlsx", ".xls", ".xml", ".yaml", ".pdf", ".docx", ".png"]
+    if k in [".csv", ".html", ".json", ".txt", ".xlsx", ".xls", ".xml", ".yaml", ".pdf", ".docx", ".png", ".zip"]
 }
 
 TYPE_LIST = 1

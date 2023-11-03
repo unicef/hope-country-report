@@ -10,7 +10,7 @@ from hope_country_report.apps.power_query.models import (
     Formatter,
     Parametrizer,
     Query,
-    Report,
+    ReportConfiguration,
     ReportDocument,
     ReportTemplate,
 )
@@ -71,15 +71,16 @@ class DatasetFactory(AutoRegisterModelFactory):
         return q.datasets.first()
 
 
-class ReportFactory(AutoRegisterModelFactory):
+class ReportConfigurationFactory(AutoRegisterModelFactory):
     name = factory.Sequence(lambda n: "Report %s" % n)
     title = factory.Sequence(lambda n: "Report %s" % n)
     query = factory.SubFactory(QueryFactory)
     owner = factory.SubFactory(UserFactory)
     country_office = factory.SubFactory(CountryOfficeFactory)
+    compress = False
 
     class Meta:
-        model = Report
+        model = ReportConfiguration
         django_get_or_create = ("name",)
 
     @factory.post_generation
@@ -102,7 +103,7 @@ class ReportFactory(AutoRegisterModelFactory):
 
 
 class ReportDocumentFactory(AutoRegisterModelFactory):
-    report = factory.SubFactory(ReportFactory)
+    report = factory.SubFactory(ReportConfigurationFactory)
     dataset = factory.SubFactory(DatasetFactory)
     formatter = factory.SubFactory(FormatterFactory)
 

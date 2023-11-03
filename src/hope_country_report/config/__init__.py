@@ -10,6 +10,18 @@ MANDATORY = {
     "SECRET_KEY": (str, ""),
     "CACHE_URL": (str, "redis://localhost:6379/0"),
     "CELERY_BROKER_URL": (str, "redis://localhost:6379/0"),
+    "SENTRY_DSN": (str, ""),
+    "SENTRY_URL": (str, "https://excubo.unicef.org/"),
+    "SENTRY_ENVIRONMENT": (str, "local"),
+    "EMAIL_BACKEND": (str, "anymail.backends.mailjet.EmailBackend"),
+    "EMAIL_HOST": (str, ""),
+    "EMAIL_HOST_USER": (str, ""),
+    "EMAIL_HOST_PASSWORD": (str, ""),
+    "EMAIL_PORT": (str, ""),
+    "EMAIL_USE_TLS": (str, ""),
+    "EMAIL_USE_SSL": (str, ""),
+    "MAILJET_API_KEY": (str, ""),
+    "MAILJET_SECRET_KEY": (str, ""),
 }
 
 DEVELOPMENT = {
@@ -47,6 +59,7 @@ OPTIONAL = {
     "MEDIA_ROOT": (str, "/tmp/media/"),
     "SENTRY_DSN": (str, ""),
     "SENTRY_URL": (str, "https://excubo.unicef.org/"),
+    "SENTRY_ENVIRONMENT": (str, "local"),
     "SESSION_COOKIE_DOMAIN": (str, "unicef.org"),
     "SESSION_COOKIE_NAME": (str, "hcr_session"),
     "SESSION_COOKIE_PATH": (str, "/"),

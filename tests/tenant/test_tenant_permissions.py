@@ -24,8 +24,8 @@ def tenant_user(request):
 
     from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
-    if "country_office" in request.fixturenames:
-        co = request.getfixturevalue("country_office")
+    if "afghanistan" in request.fixturenames:
+        co = request.getfixturevalue("afghanistan")
     else:
         co: "CountryOffice" = CountryOfficeFactory()
     g: "Group" = get_or_create_reporter_group()
@@ -43,7 +43,7 @@ def req(request, rf) -> "AuthHttpRequest":
 
 
 @pytest.mark.parametrize("u", ["tenant_user", "admin_user", "anonymous"])
-def test_tenant_backend_get_allowed_tenants(request, country_office, req, u, django_assert_max_num_queries):
+def test_tenant_backend_get_allowed_tenants(request, afghanistan, req, u, django_assert_max_num_queries):
     from hope_country_report.apps.tenant.backend import TenantBackend
 
     req.user = request.getfixturevalue(u)
@@ -51,21 +51,21 @@ def test_tenant_backend_get_allowed_tenants(request, country_office, req, u, dja
 
     # with django_assert_max_num_queries(1):
     if req.user.is_authenticated:
-        assert list(b.get_allowed_tenants().values_list("pk", flat=True)) == [country_office.pk]
+        assert list(b.get_allowed_tenants().values_list("pk", flat=True)) == [afghanistan.pk]
     else:
         assert not b.get_allowed_tenants().values_list("pk", flat=True)
 
 
 @pytest.mark.parametrize("u", ["tenant_user", "admin_user", "anonymous"])
-def test_tenant_backend_get_all_permissions(request, country_office, req, u, django_assert_max_num_queries):
+def test_tenant_backend_get_all_permissions(request, afghanistan, req, u, django_assert_max_num_queries):
     from hope_country_report.apps.tenant.backend import TenantBackend
 
     req.user = request.getfixturevalue(u)
     b: TenantBackend = TenantBackend()
-    if hasattr(req.user, "_tenant_%s_perm_cache" % country_office.pk):
-        delattr(req.user, "_tenant_%s_perm_cache" % country_office.pk)
+    if hasattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk):
+        delattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk)
 
-    with state.set(tenant=country_office):
+    with state.set(tenant=afghanistan):
         with django_assert_max_num_queries(2):
             if req.user.is_authenticated:
                 assert b.get_all_permissions(req.user)
@@ -78,14 +78,14 @@ def test_tenant_backend_get_all_permissions(request, country_office, req, u, dja
 
 
 def test_tenant_backend_get_all_permissions_no_tenant(
-    request, country_office, req, tenant_user, django_assert_max_num_queries
+    request, afghanistan, req, tenant_user, django_assert_max_num_queries
 ):
     from hope_country_report.apps.tenant.backend import TenantBackend
 
     req.user = tenant_user
     b: TenantBackend = TenantBackend()
-    if hasattr(req.user, "_tenant_%s_perm_cache" % country_office.pk):
-        delattr(req.user, "_tenant_%s_perm_cache" % country_office.pk)
+    if hasattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk):
+        delattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk)
 
     with django_assert_max_num_queries(1):
         assert not b.get_all_permissions(req.user)

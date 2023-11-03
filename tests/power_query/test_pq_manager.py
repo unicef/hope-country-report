@@ -6,7 +6,6 @@ from unittest import mock
 from django.db.models import Q
 
 from hope_country_report.apps.power_query.manager import PowerQueryManager
-from hope_country_report.apps.tenant.exceptions import InvalidTenantError
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -20,10 +19,10 @@ def manager():
 
 
 @pytest.fixture()
-def query(country_office: "CountryOffice"):
+def query(afghanistan: "CountryOffice"):
     from testutils.factories import QueryFactory
 
-    return QueryFactory(country_office=country_office)
+    return QueryFactory(country_office=afghanistan)
 
 
 def test_get_tenant_filter_no_active_tenant(manager):
@@ -33,39 +32,30 @@ def test_get_tenant_filter_no_active_tenant(manager):
     assert manager.get_tenant_filter() == Q()
 
 
-def test_get_tenant_filter_invalid_tenant(manager, country_office):
+def test_get_tenant_filter_valid_tenant(manager, afghanistan):
     from hope_country_report.apps.power_query.models import Query
 
     manager.model = Query
-    with pytest.raises(InvalidTenantError):
-        with state.set(must_tenant=True):
-            manager.get_tenant_filter()
+    with state.set(must_tenant=True, tenant=afghanistan):
+        assert manager.get_tenant_filter() == Q(country_office=afghanistan)
 
 
-def test_get_tenant_filter_valid_tenant(manager, country_office):
-    from hope_country_report.apps.power_query.models import Query
-
-    manager.model = Query
-    with state.set(must_tenant=True, tenant=country_office):
-        assert manager.get_tenant_filter() == Q(country_office=country_office)
-
-
-def test_get_tenant_filter_invalid_model(manager, country_office):
+def test_get_tenant_filter_invalid_model(manager, afghanistan):
     from hope_country_report.apps.power_query.models import Query
 
     manager.model = Query
     with mock.patch("hope_country_report.apps.power_query.models.Query.Tenant.tenant_filter_field", ""):
         with pytest.raises(ValueError):
-            with state.set(must_tenant=True, tenant=country_office):
+            with state.set(must_tenant=True, tenant=afghanistan):
                 manager.get_tenant_filter()
 
 
-def test_get_tenant_filter_all(manager, country_office):
+def test_get_tenant_filter_all(manager, afghanistan):
     from hope_country_report.apps.power_query.models import Query
 
     manager.model = Query
     with mock.patch("hope_country_report.apps.power_query.models.Query.Tenant.tenant_filter_field", "__all__"):
-        with state.set(must_tenant=True, tenant=country_office):
+        with state.set(must_tenant=True, tenant=afghanistan):
             assert manager.get_tenant_filter() == Q()
 
 
@@ -78,8 +68,8 @@ def test_get_queryset_active(manager, query: "Query"):
 
 
 #
-# def test_get_queryset_not_active(manager, household, country_office):
+# def test_get_queryset_not_active(manager, household, afghanistan):
 #     from hope_country_report.apps.hope.models import Household
 #     manager.model = Household
-#     with state.set(must_tenant=True, tenant=country_office):
+#     with state.set(must_tenant=True, tenant=afghanistan):
 #         assert not manager.get_queryset()

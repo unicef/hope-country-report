@@ -83,4 +83,3 @@ stages:
               dockerComposeCommand: 'up --exit-code-from backend'
               dockerComposeFileArgs: |
                 backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
-

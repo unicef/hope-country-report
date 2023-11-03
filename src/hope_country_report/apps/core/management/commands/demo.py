@@ -1,6 +1,7 @@
 from typing import Any
 
 import logging
+import random
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -15,12 +16,22 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         from django.contrib.contenttypes.models import ContentType
+        from django.contrib.sites.models import Site
 
         from flags.models import FlagState
 
         from hope_country_report.apps.core.models import CountryOffice, User
         from hope_country_report.apps.hope.models import Household
-        from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, Report
+        from hope_country_report.apps.power_query.models import Formatter, Parametrizer, Query, ReportConfiguration
+
+        Site.objects.update_or_create(
+            pk=settings.SITE_ID,
+            defaults={
+                "domain": "localhost:8000",
+                "name": "localhost",
+            },
+        )
+        Site.objects.clear_cache()
 
         FlagState.objects.get_or_create(name="DEVELOP_DEBUG_TOOLBAR", condition="hostname", value="127.0.0.1,localhost")
         FlagState.objects.get_or_create(name="DEVELOP_DEBUG_TOOLBAR", condition="debug", value="1", required=True)
@@ -36,7 +47,7 @@ class Command(BaseCommand):
             defaults=dict(country_office=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
         )[0]
         q2 = Query.objects.get_or_create(
-            name="Registration by month",
+            name="Monthly registrations: {monthname}",
             defaults=dict(
                 country_office=afg,
                 parametrizer=p,
@@ -49,22 +60,24 @@ extra={"monthname": calendar.month_name[month]}
                 target=ContentType.objects.get_for_model(Household),
             ),
         )[0]
-
-        r1 = Report.objects.get_or_create(
-            title="Full HH list", country_office=afg, defaults={"query": q1, "owner": user}
+        q3 = Query.objects.get_or_create(
+            name="Program List",
+            defaults=dict(
+                country_office=afg,
+                owner=user,
+                target=ContentType.objects.get_for_model(Household),
+                code="""result=conn.all()""",
+            ),
         )[0]
-        r1.formatters.add(*Formatter.objects.all())
-        r1.tags.add("tag1", "tag2")
-
-        r2 = Report.objects.get_or_create(title="Report #2", country_office=afg, defaults={"query": q1, "owner": user})[
-            0
-        ]
-        r2.tags.add("tag1", "tag3", "tag4")
-
-        r3 = Report.objects.get_or_create(
-            title="Report #3 {monthname}", country_office=afg, defaults={"query": q2, "owner": user}
-        )[0]
-        r3.tags.add("tag3", "tag4")
+        tags = ["tag%d" % d for d in range(10)]
+        for q in [q1, q2, q3]:
+            r = ReportConfiguration.objects.get_or_create(
+                title=q.name,
+                country_office=q.country_office,
+                defaults={"query": q, "owner": q.owner, "context": {"extra_footer": "-- Report footer --"}},
+            )[0]
+            r.formatters.add(*Formatter.objects.all())
+            r.tags.add(*random.choices(tags, k=random.choice([1, 2, 3])))
 
         Query.objects.get_or_create(
             name="Dev Query",
@@ -80,8 +93,6 @@ while True:
 """,
             ),
         )
-        q1.execute_matrix()
-        q2.execute_matrix()
-        r1.execute()
-        r2.execute()
-        r3.execute()
+        ReportConfiguration.objects.filter(query=q3).update(compress=True, protect=True)
+        for r in ReportConfiguration.objects.all():
+            r.execute(True)

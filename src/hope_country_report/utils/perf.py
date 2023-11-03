@@ -1,8 +1,9 @@
-from typing import Iterator, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import contextlib
 import resource
 import time
+from collections.abc import Iterator
 
 from django.conf import settings
 from django.db import connections

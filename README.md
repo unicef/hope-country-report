@@ -46,5 +46,3 @@ Uses `./manage.py env` to check required (and optional) variables to put
 > If `DEBUG=True` you can login using any username/password. Note that:
 >   - If username starts with `admin` will be created a superuser   
 >   - If username starts with `user`  will be created a standard user (no staff, no admin)
-
-

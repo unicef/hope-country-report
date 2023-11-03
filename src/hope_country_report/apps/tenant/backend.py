@@ -39,7 +39,7 @@ class TenantBackend(BaseBackend):
                     }
                 )
             perms = qs.values_list("content_type__app_label", "codename").order_by()
-            setattr(user, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})
+            setattr(user, perm_cache_name, {f"{ct}.{name}" for ct, name in perms})
         return getattr(user, perm_cache_name)
 
     def get_available_modules(self, user: "User") -> "Set[str]":

@@ -22,7 +22,7 @@ from .exceptions import QueryRunCanceled, QueryRunTerminated
 from .utils import sentry_tags
 
 if TYPE_CHECKING:
-    from .models import Query, QueryMatrixResult, Report, ReportResult
+    from .models import Query, QueryMatrixResult, ReportConfiguration, ReportResult
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ rds = StrictRedis(settings.REDIS_URL, decode_responses=True, charset="utf-8")
 
 
 class AbstractPowerQueryTask(AbortableTask):
-    model: "Union[Type[Query], Type[Report]]"
+    model: "Union[Type[Query], Type[ReportConfiguration]]"
     cache = caches[getattr(settings, "CELERY_TASK_LOCK_CACHE", "default")]
     lock_expiration = 60 * 60 * 24  # 1 day
     model_name: str = ""
@@ -125,11 +125,11 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportResult":
-    from hope_country_report.apps.power_query.models import Report
+    from hope_country_report.apps.power_query.models import ReportConfiguration
 
     result: "ReportResult" = []
     try:
-        report: Report = Report.objects.get(id=id)
+        report: ReportConfiguration = ReportConfiguration.objects.get(id=id)
         result = report.execute(run_query=True)
     except Exception as e:
         logger.exception(e)
@@ -139,9 +139,9 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def reports_refresh(self: AbortableTask, **kwargs) -> Any:
-    from hope_country_report.apps.power_query.models import Report
+    from hope_country_report.apps.power_query.models import ReportConfiguration
 
-    report: Report
+    report: ReportConfiguration
     result = {}
     if periodic_task_name := (getattr(self.request, "properties", {}) or {}).get("periodic_task_name"):
         periodic_task = PeriodicTask.objects.get(name=periodic_task_name)

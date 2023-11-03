@@ -5,7 +5,7 @@ import logging
 from django.core.signing import get_cookie_signer
 
 from hope_country_report.apps.tenant.config import conf
-from hope_country_report.state import state
+from hope_country_report.state import state, State
 
 if TYPE_CHECKING:
     from django.http import HttpResponse
@@ -63,11 +63,12 @@ def get_tenant_cookie_from_request(request: "AuthHttpRequest") -> str | None:
 
 
 class RequestHandler:
-    def process_request(self, request: "AuthHttpRequest") -> None:
+    def process_request(self, request: "AuthHttpRequest") -> State:
         state.reset()
         state.request = request
         state.tenant_cookie = get_tenant_cookie_from_request(request)
         state.tenant = get_selected_tenant()
+        return state
 
     def process_response(self, request: "AuthHttpRequest", response: "HttpResponse|None") -> None:
         if response:

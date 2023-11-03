@@ -1,9 +1,6 @@
 {% extends "web/office/_base.html" %}{% load i18n user_tz colors filters %}
 
 {% block content %}
-    <div class="box">
-        <h1>{% trans "Available Reports" %}</h1>
-    </div>
     {% if request.GET %}
         <div class="py-0 box">
             <div class="flex items-center py-3">
@@ -12,10 +9,14 @@
                         <a href="{% build_filter_url "tag" %}"><span
                                 class="tag {{ request.GET.tag|color }} ">{{ request.GET.tag }}</span></a>
                     {% endif %}
-                    {% if request.GET.active == "1" %}
-                        <a href="{% build_filter_url "active" %}"><span class="icon icon-check1 text-green-400"></span></a>
-                    {% elif request.GET.active == "0" %}
-                        <a href="{% build_filter_url "active" %}"><span class="icon icon-block text-red-400"></span></a>
+                    {% if request.GET.report %}
+                        <a href="{% build_filter_url "report" %}">{{ request.GET.report }}</a>
+                    {% endif %}
+                    {% if request.GET.active %}
+                        {% with request.GET.active|parse_bool|yesno:"t,f" as status %}
+                            <a href="{% build_filter_url "active" %}">
+                            <span class="tag blue">{{ status|parse_bool|yesno:"active, not active" }}</span></a>
+                        {% endwith %}
                     {% endif %}
                 </div>
                 <div class="flex-shrink">
@@ -28,36 +29,36 @@
     {% endif %}
 
     <div class="box">
-
         <table class="table-auto">
             <thead class="text-left border-b  text-xs">
             <tr class="my-4 h-16">
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "Active" %}</th>
+                <th>{% trans "Parametrized" %}</th>
                 <th>{% trans "Refreshed On" %}</th>
-{#                <th>{% trans "Status" %}</th>#}
                 <th>{% trans "Scheduling" %}</th>
+                <th>{% trans "Compress" %}</th>
                 <th>{% trans "Tags" %}</th>
             </tr>
             </thead>
             <tbody>
-            {% for doc in reportdocument_list %}
+            {% for report in reportconfiguration_list %}
                 <tr class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100 ">
-                    <td><a class="underline" href="{% url "office-report" selected_office.slug doc.report.pk %}">{{ doc.title }}</a></td>
-                    <td>{% if doc.report.active %}
-                        <a href="{% build_filter_url "active" 1 %}">
-                            <div class="icon icon-check1 text-green-400"></div>
-                        </a>
-                    {% else %}
-                        <a href="{% build_filter_url "active" 0 %}">
-                            <div class="icon icon-block text-red-400"></div>
-                        </a>
-                    {% endif %}
+                    <td><a class="underline"
+                           href="{% url "office-config" selected_office.slug report.pk %}">{{ report.title }}</a></td>
+                    <td>
+                        {% with report.active|yesno:"t,f" as status %}
+                            <a href="{% build_filter_url "active" status %}">
+                                {{ report.active|as_bool_icon }}
+                            </a>
+                        {% endwith %}
                     </td>
-                    <td>{{ doc.updated_on|userdatetime:"-" }}</td>
+                    <td>{{ report.query.parametrizer|as_bool_icon }}</td>
+                    <td>{{ updated_on|userdatetime:"-" }}</td>
                     <td>{% trans report.status %}</td>
-                    <td>{{ doc.report.schedule|default_if_none:"" }}</td>
-                    <td>{% for t in doc.report.tags.all %}
+                    <td>{{ report.schedule|default_if_none:"" }}</td>
+                    <td>{{ report.compress|default_if_none:"" }}</td>
+                    <td>{% for t in report.tags.all %}
                         <a href="{% build_filter_url "tag" t.name %}"><span
                                 class="tag {{ t.name|color }}">{{ t }}</span></a>
                     {% endfor %}

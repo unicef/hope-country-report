@@ -1,15 +1,17 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors %}
+{% extends "web/office/_base.html" %}{% load i18n user_tz colors browser %}
 
 {% block content %}
-    <div class="box">
-        <h1>{{ doc.title }}
-
-            {% if user.is_staff %}
-                <small class="float-right"><a target="_admin" href="{{ report.get_admin_url }}">View in
-                    Admin</a></small>
-                </h1>
-            {% endif %}
-    </div>
+    {#{% block page-title %}#}
+    {#    <div class="box">#}
+    {#        <h1>{{ doc.title }}#}
+    {##}
+    {#            {% if user.is_staff %}#}
+    {#                <small class="float-right"><a target="_admin" href="{{ report.get_admin_url }}">View in#}
+    {#                    Admin</a></small>#}
+    {#                </h1>#}
+    {#            {% endif %}#}
+    {#    </div>#}
+    {#{% endblock %}#}
     <div class="box">
 
         <table class="report-detail">
@@ -20,6 +22,10 @@
             <tr>
                 <th>{% trans "title" %}</th>
                 <td>{{ doc.title }}</td>
+            </tr>
+            <tr>
+                <th>{% trans "configuration" %}</th>
+                <td><a href="{{ doc.report.get_absolute_url }}">{{ doc.report }}</a></td>
             </tr>
             <tr>
                 <th>{% trans "Owner" %}</th>
@@ -36,10 +42,10 @@
                 <th>{% trans "date" %}</th>
                 <td>{{ doc.updated_on|userdatetime:"-" }}</td>
             </tr>
-            <tr>
-                <th>{% trans "scheduling" %}</th>
-                <td>{{ doc.report.schedule.name }}</td>
-            </tr>
+{#            <tr>#}
+{#                <th>{% trans "scheduling" %}</th>#}
+{#                <td>{{ doc.report.schedule.name }}</td>#}
+{#            </tr>#}
             {#        <tr>#}
             {#            <th>{% trans "status" %}</th>#}
             {#            <td>{{ report.status }}</td>#}
@@ -61,33 +67,36 @@
         <table class="document-list">
             <thead>
             <tr>
-                <th>{% trans "title" %}</th>
                 <th>{% trans "format" %}</th>
                 <th>{% trans "view" %}</th>
                 <th>{% trans "download" %}</th>
                 <th>{% trans "created" %}/{% trans "updated" %}</th>
             </tr>
             </thead>
-            {% for instance in report.documents.all %}
+            {% for instance in doc.formats %}
                 <tbody>
                 <tr>
-                    <td>{{ document.title }}</td>
                     <td class="text-center">
-                        <div class="icon {{ document.file_suffix|slice:"1:" }} text-4xl"></div>
-                        <div class="text-xs">{{ document.file_suffix }}</div>
+                        <div class="icon {{ instance.file_suffix|slice:"1:" }} text-4xl"></div>
+                        <div class="text-xs">{{ instance.file_suffix }}</div>
                     </td>
                     <td class="text-center">
-                        <a href="{% url "office-doc-display" selected_office.slug report.pk document.pk %}">
-                            <div class="icon icon-television text-4xl"></div>
-                        </a>
+                        {% is_media_supported instance.content_type as allow %}
+                        {% if allow %}
+                            <a href="{% url "office-doc-display" selected_office.slug instance.pk %}">
+                                <div class="icon icon-television text-4xl"></div>
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
                     </td>
                     <td class="text-center">
-                        <a href="{% url "office-doc-download" selected_office.slug report.pk document.pk %}">
+                        <a href="{% url "office-doc-download" selected_office.slug instance.pk %}">
                             <div class="icon icon-inbox-download1 text-4xl"></div>
                         </a>
                     </td>
                     <td>
-                        {{ document.updated_on|userdatetime:"-" }}
+                        {{ instance.updated_on|userdatetime:"-" }}
                     </td>
                 </tr>
                 </tbody>

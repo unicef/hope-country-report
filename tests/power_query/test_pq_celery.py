@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.apps.hope.models import Household
-    from hope_country_report.apps.power_query.models import Query, Report
+    from hope_country_report.apps.power_query.models import Query, ReportConfiguration
 
     class _DATA(TypedDict):
         co1: CountryOffice
@@ -78,9 +78,9 @@ while True:
 
 @pytest.fixture()
 def report(query1: "Query"):
-    from testutils.factories import ReportFactory
+    from testutils.factories import ReportConfigurationFactory
 
-    return ReportFactory(name="Celery Report", query=query1, owner=query1.owner)
+    return ReportConfigurationFactory(name="Celery Report", query=query1, owner=query1.owner)
 
 
 def test_run_background_query(settings, query1: "Query") -> None:
@@ -120,7 +120,7 @@ def test_run_background_query_terminate(settings, query1: "Query", monkeypatch) 
         assert result.state == "REJECTED"
 
 
-def test_refresh_report(report: "Report") -> None:
+def test_refresh_report(report: "ReportConfiguration") -> None:
     refresh_report.delay(report.pk)
     assert report.documents.exists()
 
@@ -134,7 +134,7 @@ def test_celery_no_worker(db, settings, query2: "Query") -> None:
     assert query2.status == "CANCELED"
 
 
-def test_celery_reports_refresh(db, settings, report: "Report") -> None:
+def test_celery_reports_refresh(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     pt = PeriodicTask.objects.first()
     report.schedule = pt

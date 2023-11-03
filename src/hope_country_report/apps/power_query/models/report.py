@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING
 import logging
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -11,10 +13,10 @@ from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from taggit.managers import TaggableManager
 
-from ...core.models import CountryOffice
+from ...core.models import CountryOffice, User
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
-from ._base import AdminReversable, CeleryEnabled, TimeStampMixin
+from ._base import AdminReversable, CeleryEnabled, PowerQueryModel, TimeStampMixin
 from .formatter import Formatter
 from .query import Query
 
@@ -29,7 +31,7 @@ logger = logging.getLogger(__name__)
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
+class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")
@@ -52,7 +54,15 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
     )
     last_run = models.DateTimeField(null=True, blank=True)
     validity_days = models.IntegerField(default=365)
-    context = models.JSONField(default=dict, encoder=PQJSONEncoder)
+    context = models.JSONField(default=dict, encoder=PQJSONEncoder, blank=True)
+
+    compress = models.BooleanField(default=False, blank=True, help_text=_("Compress reports with Zip"))
+    protect = models.BooleanField(
+        default=False, blank=True, help_text=_("Protect zip file with system generated password")
+    )
+    pwd = models.CharField(
+        editable=False, blank=True, null=True, help_text=_("Auto generated password to protect .zip files")
+    )
 
     tags = TaggableManager(blank=True)
     celery_task_name = "refresh_report"
@@ -71,6 +81,10 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
             self.name = slugify(self.title)
         super().save(force_insert, force_update, using, update_fields)
 
+    def clean(self) -> None:
+        if self.protect and not self.owner:
+            raise ValidationError("Cannot protect document without owner")
+
     def execute(self, run_query: bool = False) -> "ReportResult":
         from .report_document import ReportDocument
 
@@ -84,6 +98,9 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
         elif not query.datasets.exists():
             result = [_("No Dataset available")]
         else:
+            if self.protect:
+                self.pwd = User.objects.make_random_password()
+                self.save()
             for dataset in query.datasets.all():
                 for formatter in self.formatters.all():
                     res = ReportDocument.process(self, dataset, formatter)
@@ -98,5 +115,8 @@ class Report(CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
     def __str__(self) -> str:
         return self.name or ""
 
-    # def get_absolute_url(self) -> str:
-    #     return reverse("power_query:report", args=[self.pk])
+    def artifacts(self) -> str:
+        return self.documents.distinct("dataset")
+
+    def get_absolute_url(self):
+        return reverse("office-config", args=[self.country_office.slug, self.pk])

@@ -71,6 +71,10 @@
     content: "\e905";
     color: #ffffff;
 }
+.zip:before {
+    content: "\e945";
+    color: #ffc400;
+}
 
 /*----------- */
 
@@ -106,6 +110,12 @@
 }
 .icon-mail-envelope1:before {
   content: "\e926";
+}
+.icon-bookmark:before {
+  content: "\e940";
+}
+.icon-bookmark1:before {
+  content: "\e941";
 }
 .icon-document-graph:before {
   content: "\e900";
@@ -173,6 +183,18 @@
 .icon-stop-watch1:before {
   content: "\e92e";
 }
+.icon-file-html:before {
+  content: "\e94a";
+}
+.icon-file-html1:before {
+  content: "\e94b";
+}
+.icon-file-zip:before {
+  content: "\e942";
+}
+.icon-file-zip1:before {
+  content: "\e943";
+}
 .icon-document-file-numbers:before {
   content: "\e90a";
 }
@@ -233,6 +255,12 @@
 .icon-document-file-txt1:before {
   content: "\e91b";
 }
+.icon-document-file-zip:before {
+  content: "\e944";
+}
+.icon-document-file-zip1:before {
+  content: "\e945";
+}
 .icon-files:before {
   content: "\e933";
 }
@@ -283,6 +311,63 @@
 }
 .icon-television:before {
   content: "\e91f";
+}
+.icon-shield1:before {
+  content: "\e946";
+}
+.icon-shield:before {
+  content: "\e947";
+}
+.icon-security:before {
+  content: "\e947";
+}
+.icon-defense:before {
+  content: "\e947";
+}
+.icon-protection:before {
+  content: "\e947";
+}
+.icon-anti-virus:before {
+  content: "\e947";
+}
+.icon-cogs:before {
+  content: "\e948";
+}
+.icon-gears:before {
+  content: "\e948";
+}
+.icon-preferences:before {
+  content: "\e948";
+}
+.icon-settings:before {
+  content: "\e948";
+}
+.icon-generate:before {
+  content: "\e948";
+}
+.icon-control:before {
+  content: "\e948";
+}
+.icon-options:before {
+  content: "\e948";
+}
+.icon-equalizer:before {
+  content: "\e949";
+}
+.icon-sliders:before {
+  content: "\e949";
+}
+.icon-settings1:before {
+  content: "\e949";
+}
+.icon-preferences1:before {
+  content: "\e949";
+}
+.icon-dashboard:before {
+  content: "\e949";
+}
+.icon-control1:before {
+  content: "\e949";
 }
 .icon-notification1:before {
   content: "\e937";

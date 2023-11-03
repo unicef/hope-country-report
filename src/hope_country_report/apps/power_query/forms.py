@@ -69,14 +69,15 @@ class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
         exclude = ()
-        fields = (
-            "country_office",
-            "name",
-            "description",
-            "target",
-            "parametrizer",
-            "code",
-        )
+        # fields = (
+        #     "country_office",
+        #     "name",
+        #     "description",
+        #     "target",
+        #     "parametrizer",
+        #     "code",
+        #     "active"
+        # )
 
     def __init__(self, *args, **kwargs) -> None:
         from django.contrib.contenttypes.models import ContentType

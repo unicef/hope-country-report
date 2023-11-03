@@ -50,6 +50,7 @@
             </div>
         {% endblock %}
         <div class="overflow-y-auto p-1 bg-gray-200 w-full flex flex-1 flex-col">
+            {% block page-top %}{% endblock %}
             {% block content %}{% endblock %}
         </div>
     </div>

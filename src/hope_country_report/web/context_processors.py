@@ -13,4 +13,5 @@ def state(request: "AuthHttpRequest") -> "Dict[str, Any]":
     return {
         "state": global_state,
         "selected_tenant": get_selected_tenant(),
+        "tenant_cookie": global_state.tenant_cookie,
     }

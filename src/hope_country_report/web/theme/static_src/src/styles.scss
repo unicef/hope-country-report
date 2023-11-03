@@ -1,5 +1,8 @@
 .box {
   @apply mb-2 bg-white drop-shadow-md rounded p-4 ;
+  h3{
+    @apply font-extrabold text-sm;
+  }
 }
 
 * {
@@ -69,7 +72,7 @@ body.web {
     @apply text-sm;
   }
 
-  .tag {
+    .tag {
     @apply text-xs font-medium mr-2 px-2.5 py-0.5 rounded;
 
     &.blue {
@@ -180,4 +183,3 @@ body.web {
     }
   }
 }
-

@@ -11,6 +11,7 @@ from natural_keys import NaturalKeyModel
 
 from ...core.models import CountryOffice
 from ..processors import mimetype_map
+from ._base import AdminReversable
 
 if TYPE_CHECKING:
     from typing import Any, Dict, List
@@ -37,7 +38,7 @@ def validate_queryargs(value: "Any") -> None:
         )
 
 
-class Parametrizer(NaturalKeyModel, models.Model):
+class Parametrizer(NaturalKeyModel, AdminReversable, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
     code = models.SlugField(max_length=255, unique=True, editable=False)
     name = models.CharField(max_length=255, unique=True)

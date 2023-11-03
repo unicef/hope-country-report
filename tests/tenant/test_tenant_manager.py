@@ -17,10 +17,10 @@ def manager():
 
 
 @pytest.fixture()
-def household(country_office: "CountryOffice"):
+def household(afghanistan: "CountryOffice"):
     from testutils.factories import HouseholdFactory
 
-    return HouseholdFactory(business_area=country_office.business_area)
+    return HouseholdFactory(business_area=afghanistan.business_area)
 
 
 def test_get_tenant_filter_no_active_tenant(manager):
@@ -30,7 +30,7 @@ def test_get_tenant_filter_no_active_tenant(manager):
     assert manager.get_tenant_filter() == {}
 
 
-def test_get_tenant_filter_invalid_tenant(manager, country_office):
+def test_get_tenant_filter_invalid_tenant(manager, afghanistan):
     from hope_country_report.apps.hope.models import Household
 
     manager.model = Household
@@ -39,30 +39,30 @@ def test_get_tenant_filter_invalid_tenant(manager, country_office):
             manager.get_tenant_filter()
 
 
-def test_get_tenant_filter_valid_tenant(manager, country_office):
+def test_get_tenant_filter_valid_tenant(manager, afghanistan):
     from hope_country_report.apps.hope.models import Household
 
     manager.model = Household
-    with state.set(must_tenant=True, tenant=country_office):
-        assert manager.get_tenant_filter() == {"business_area": country_office.hope_id}
+    with state.set(must_tenant=True, tenant=afghanistan):
+        assert manager.get_tenant_filter() == {"business_area": afghanistan.hope_id}
 
 
-def test_get_tenant_filter_invalid_model(manager, country_office):
+def test_get_tenant_filter_invalid_model(manager, afghanistan):
     from hope_country_report.apps.hope.models import Household
 
     manager.model = Household
     with mock.patch("hope_country_report.apps.hope.models.Household.Tenant.tenant_filter_field", ""):
         with pytest.raises(ValueError):
-            with state.set(must_tenant=True, tenant=country_office):
+            with state.set(must_tenant=True, tenant=afghanistan):
                 manager.get_tenant_filter()
 
 
-def test_get_tenant_filter_all(manager, country_office):
+def test_get_tenant_filter_all(manager, afghanistan):
     from hope_country_report.apps.hope.models import Household
 
     manager.model = Household
     with mock.patch("hope_country_report.apps.hope.models.Household.Tenant.tenant_filter_field", "__all__"):
-        with state.set(must_tenant=True, tenant=country_office.business_area):
+        with state.set(must_tenant=True, tenant=afghanistan.business_area):
             assert manager.get_tenant_filter() == {}
 
 

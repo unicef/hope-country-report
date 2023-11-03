@@ -32,7 +32,7 @@ class Partner(HopeModel):
         return self.name
 
     @classmethod
-    def get_partners_as_choices(cls) -> list:
+    def get_partners_as_choices(cls) -> list[tuple[id, str]]:
         return [(role.id, role.name) for role in cls.objects.all()]
 
 

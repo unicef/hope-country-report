@@ -10,7 +10,9 @@ from flags import state as flag_state
 from flags.conditions import conditions
 
 if TYPE_CHECKING:
-    from typing import Any, Iterator
+    from typing import Any
+
+    from collections.abc import Iterator
 
     from django.http import HttpRequest
 

@@ -8,9 +8,14 @@
         </form>
     </div>
     <div class="flex-shrink align-middle pt-3 pr-10">
+        <div class="flex align-middle">
+        <div class="flex-shrink pt-2">{{ user }}</div>
+        <div class="flex-shrink mx-2">
         <a class="profile-link" href="{% url "user-profile" %}">
             <div class="icon icon-user text-3xl float-shrink"></div>
         </a>
+        </div>
+        </div>
     </div>
 {% endblock %}
 {% block menu %}
@@ -21,11 +26,26 @@
                 <div class="flex-grow pt-3 display-open">{% trans "Home" %}</div>
             </a>
         </li>
-        <li class="OfficeReportListView OfficeReportDetailView flex">
-            <a class="flex w-full px-4" href="{% url "office-reports" selected_office.slug %}">
-                <span class="flex text-2xl pt-2 pr-4 icon icon-folders"></span>
+        <li class="OfficeReportDocumentListView OfficeReportDocumentDetailView flex">
+            <a class="flex w-full px-4" href="{% url "office-doc-list" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-papers"></span>
                 <div class="flex-grow pt-3 display-open">{% trans "Reports" %}</div>
-            </a></li>
+            </a>
+        </li>
+        <li class="OfficeReportListView OfficeReportDetailView flex">
+            <a class="flex w-full px-4" href="{% url "office-config-list" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-equalizer"></span>
+                <div class="flex-grow pt-3 display-open">{% trans "Configuration" %}</div>
+            </a>
+        </li>
+        {% if CO_PREFERENCES %}
+        <li class="OfficeReportListView OfficeReportDetailView flex">
+            <a class="flex w-full px-4" href="{% url "office-config-list" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-options"></span>
+                <div class="flex-grow pt-3 display-open">{% trans "Settings" %}</div>
+            </a>
+        </li>
+        {% endif %}
         {% if ONLINE_PAGES %}
         <li class="OfficePageListView flex">
             <a class="flex w-full px-4" href="{% url "office-pages" selected_office.slug %}">
@@ -44,7 +64,7 @@
         {% if user.is_staff %}
             <li class="flex">
                 <a class="flex w-full px-4" href="{% url "admin:index" %}">
-                    <span class="flex text-2xl pt-2 pr-4 icon icon-cog-outline"></span>
+                    <span class="flex text-2xl pt-2 pr-4 icon icon-shield1"></span>
                     <div class="flex-grow  pt-3 display-open">{% trans "Admin" %}</div>
                 </a>
             </li>
@@ -57,4 +77,14 @@
             </div>
         </div>
     </ul>
+{% endblock %}
+{% block page-top %}
+    <div class="box">
+        <h1>{% block page-title %}{{ title }}{% endblock %}
+            {% if object and object.get_admin_url and user.is_staff %}
+                <small class="float-right"><a target="_admin" href="{{ object.get_admin_url }}">View in
+                    Admin</a></small>
+                </h1>
+            {% endif %}
+    </div>
 {% endblock %}

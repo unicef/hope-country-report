@@ -10,18 +10,18 @@ from hope_country_report.utils.media import resource_path
 UNDEFINED = object()
 
 
-def bytes_to_data(data: bytes, ext="png"):
+def bytes_to_data(data: bytes, ext: str = "png") -> str:
     base64_utf8_str = base64.b64encode(data).decode("utf-8")
     return f"data:image/{ext};base64,{base64_utf8_str}"
 
 
-def image_to_data(img: Image):
+def image_to_data(img: Image) -> str:
     buff = io.BytesIO()
     img.save(buff, format="PNG")
     return bytes_to_data(buff.getvalue(), "png")
 
 
-def get_file_as_data(p: Path):
+def get_file_as_data(p: Path) -> str:
     with p.open("rb") as f:
         data = f.read()
 

@@ -21,6 +21,7 @@ from concurrency.fields import AutoIncVersionField
 
 from hope_country_report.config.celery import app
 
+from ...core.utils import SmartManager
 from ...tenant.db import TenantModel
 from ..manager import PowerQueryManager
 from ..processors import mimetype_map
@@ -216,19 +217,20 @@ class CeleryEnabled(models.Model):
         app.control.purge()
 
 
-class PowerQueryModel(TenantModel):
-    class Meta:
-        abstract = True
-
-    objects = PowerQueryManager()
-
-
 class AdminReversable(models.Model):
     class Meta:
         abstract = True
 
     def get_admin_url(self):
         return reverse(admin_urlname(self._meta, "change"), args=[self.pk])
+
+
+class PowerQueryModel(AdminReversable, TenantModel):
+    class Meta:
+        abstract = True
+
+    objects = PowerQueryManager()
+    _all = SmartManager()
 
 
 class FileProviderMixin(models.Model):
