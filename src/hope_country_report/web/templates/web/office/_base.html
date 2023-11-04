@@ -7,6 +7,7 @@
             {% csrf_token %}{{ tenant_form.tenant }}
         </form>
     </div>
+    {% block user-prefs %}
     <div class="flex-shrink align-middle pt-3 pr-10">
         <div class="flex align-middle">
         <div class="flex-shrink pt-2">{{ user }}</div>
@@ -17,6 +18,7 @@
         </div>
         </div>
     </div>
+        {% endblock %}
 {% endblock %}
 {% block menu %}
     <ul class="menu p-0 w-full h-5/6 mt-10">
@@ -32,7 +34,7 @@
                 <div class="flex-grow pt-3 display-open">{% trans "Reports" %}</div>
             </a>
         </li>
-        <li class="OfficeReportListView OfficeReportDetailView flex">
+        <li class="OfficeConfigurationListView OfficeConfigurationDetailView flex">
             <a class="flex w-full px-4" href="{% url "office-config-list" selected_office.slug %}">
                 <span class="flex text-2xl pt-2 pr-4 icon icon-equalizer"></span>
                 <div class="flex-grow pt-3 display-open">{% trans "Configuration" %}</div>
@@ -69,13 +71,13 @@
                 </a>
             </li>
         {% endif %}
-        <div class="flex items-center p-2 border-t-black display-open">
+            <li class="flex items-center border-t-black display-open">
             <div class="m-auto text-gray-400 ">
                 <span>HOPE Reporting</span>
                 <span>{{ version }}</span>
                 <span>{{ release_date }}</span>
             </div>
-        </div>
+        </li>
     </ul>
 {% endblock %}
 {% block page-top %}

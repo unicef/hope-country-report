@@ -6,7 +6,6 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path
 
-from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.urls import reverse
@@ -45,7 +44,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
     formatter = models.ForeignKey(Formatter, on_delete=models.SET_NULL, blank=True, null=True)
 
     arguments = models.JSONField(default=dict, encoder=PQJSONEncoder)
-    limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
+    # limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
     info = models.JSONField(default=dict, blank=True, null=False)
 
     class Meta:

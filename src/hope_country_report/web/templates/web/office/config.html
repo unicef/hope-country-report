@@ -48,7 +48,31 @@
 
         </div>
     {% endif %}
-
+    {% if config.limit_access_to.count %}
+        <div class="box">
+            {% if request.user == config.owner or user.is_superuser %}
+                <h3>{% trans "Restrict Access To" %}</h3>
+                <table class="restricted-list">
+                    {% for u in config.limit_access_to.all %}
+                        <tbody>
+                        <tr>
+                            <td class="text-center">
+                                <div class="">{{ u }}</div>
+                            </td>
+                            <td class="text-center">
+                                <div class="">{{ u.email }}</div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <div>{% trans "Access to this report needs special permission" %}</div>
+                <a class="float-right button primary" type="button"
+                   href="{% url "request-access" config.country_office.slug config.pk %}">{% trans "Request Access" %}</a>
+            {% endif %}
+        </div>
+    {% endif %}
     {% if config.query.parametrizer %}
         <div class="box">
             {% if config.query.parametrizer.get_admin_url and user.is_staff %}
@@ -81,6 +105,6 @@
     {% endif %}
     <div class="box">
         <h3>{% trans "Documents" %}</h3>
-        <a href="{% url "office-doc-list" config.country_office.slug %}?report={{ config.name }}">{{  config.documents.count }}</a>
+        {% trans "Total linked documents: " %}{{ config.documents.count }} <a class="button primary small" href="{% url "office-doc-list" config.country_office.slug %}?report={{ config.name }}">view</a>
     </div>
 {% endblock %}

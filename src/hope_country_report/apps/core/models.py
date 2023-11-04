@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from django.db.models import QuerySet
+from django.urls import reverse
 from django.utils import dateformat
 from django.utils.functional import cached_property
 from django.utils.text import slugify
@@ -75,6 +76,9 @@ class CountryOffice(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    def get_absolute_url(self) -> str:
+        return reverse("office-index", args=[self.slug])
+
 
 DATE_FORMATS: list[tuple[str, str]]
 TIME_FORMATS: list[tuple[str, str]]
@@ -87,9 +91,7 @@ TIME_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["h:i a", "H:i"
 class User(AbstractUser):  # type: ignore
     timezone: ZoneInfo
     timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC")
-    language = models.CharField(
-        verbose_name=_("Language"), max_length=10, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
-    )
+    language = models.CharField(verbose_name=_("Language"), max_length=10, choices=settings.LANGUAGES, default="en")
     date_format = models.CharField(
         verbose_name=_("Date Format"),
         max_length=20,
@@ -116,6 +118,10 @@ class User(AbstractUser):  # type: ignore
     @cached_property
     def friendly_name(self) -> str:
         return self.first_name or self.username
+
+    @cached_property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}" or self.username
 
 
 class UserRole(models.Model):

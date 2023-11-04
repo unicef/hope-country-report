@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from django import forms
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 
 from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
@@ -22,7 +23,35 @@ class BaseAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: 
 
 @admin.register(User)
 class UserAdmin(_UserAdminPlus):  # type: ignore
-    pass
+    fieldsets = (
+        (None, {"fields": (("username", "azure_id"), "password")}),
+        (
+            _("Prefernces"),
+            {
+                "fields": (
+                    (
+                        "language",
+                        "timezone",
+                    ),
+                    ("date_format", "time_format"),
+                )
+            },
+        ),
+        (
+            _("Personal info"),
+            {
+                "fields": (
+                    (
+                        "first_name",
+                        "last_name",
+                    ),
+                    ("email", "display_name"),
+                    ("job_title",),
+                )
+            },
+        ),
+        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+    )
 
 
 class UserRoleForm(forms.ModelForm):  # type: ignore

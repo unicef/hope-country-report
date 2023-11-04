@@ -51,5 +51,16 @@
             });
         }, 300)).trigger("keyup").focus();
 
+        $(".messages .message .close").on("click", function () {
+            $(this).parent(".message").hide();
+        })
+
+        function close(t) {
+            return function () {
+                $(`.timeout-${t}`).hide()
+            };
+        }
+
+        setTimeout(close(5), 5000);
     })
 })(jQuery || django.jQuery)

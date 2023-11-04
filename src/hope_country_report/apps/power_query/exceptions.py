@@ -26,3 +26,8 @@ class QueryRunCanceled(PowerQueryError):
 
 class QueryRunTerminated(PowerQueryError):
     pass
+
+
+class RequestablePermissionDenied(PowerQueryError):
+    def __init__(self, object):
+        self.object = object

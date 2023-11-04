@@ -1,6 +1,6 @@
 .box {
   @apply mb-2 bg-white drop-shadow-md rounded p-4 ;
-  h3{
+  h3 {
     @apply font-extrabold text-sm;
   }
 }
@@ -10,6 +10,19 @@
 }
 
 body.web {
+  .button {
+    @apply text-white font-bold py-2 px-4 rounded focus:outline-none cursor-pointer;
+    &.small {
+      @apply py-1 px-2;
+    }
+    &.primary {
+      @apply bg-unicef-blue hover:bg-unicef-dark;
+    }
+
+    &.secondary {
+
+    }
+  }
 
   header {
     img {
@@ -64,6 +77,24 @@ body.web {
     }
   }
 
+  .messages {
+    @apply top-10 border-black drop-shadow-md rounded px-2 flex absolute  z-50 items-center;
+    .message {
+      @apply p-4 bg-red-400 w-full rounded top-10 font-bold;
+      &.success {
+        @apply bg-green-300 text-green-800;
+      }
+
+      &.error {
+        @apply bg-red-400 text-red-900;
+      }
+
+      &.warning, &.warn {
+        @apply bg-yellow-300 text-yellow-900;
+      }
+    }
+  }
+
   h1 {
     @apply text-2xl mb-4;
   }
@@ -72,7 +103,7 @@ body.web {
     @apply text-sm;
   }
 
-    .tag {
+  .tag {
     @apply text-xs font-medium mr-2 px-2.5 py-0.5 rounded;
 
     &.blue {

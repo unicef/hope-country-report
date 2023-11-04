@@ -425,7 +425,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
 
 
 @admin.register(ReportConfiguration)
-class ReportAdmin(
+class ReportConfigurationAdmin(
     AdminFiltersMixin,
     CeleryEnabledMixin,
     LinkedObjectsMixin,
@@ -435,7 +435,7 @@ class ReportAdmin(
 ):
     list_display = ("country_office", "name", "formatters", "last_run", "owner", "schedule")
     autocomplete_fields = ("query", "owner")
-    filter_horizontal = ["limit_access_to", "formatters"]
+    filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
     readonly_fields = (
         "last_run",
         "sentry_error_id",

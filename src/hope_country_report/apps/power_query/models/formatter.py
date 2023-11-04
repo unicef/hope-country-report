@@ -52,16 +52,16 @@ class Formatter(models.Model):
         self.processor.validate()
 
     def render(self, context: "Dict[str, Any]") -> bytearray:
+        ret = bytearray()
         if self.type == TYPE_LIST:
-            return self.processor.process(context)
+            ret.extend(self.processor.process(context))
         else:
-            ret = bytearray()
             ds = context.pop("dataset")
             for page, entry in enumerate(ds.data, 1):
                 context["page"] = page
                 context["record"] = entry
                 ret.extend(self.processor.process(context))
-            return ret
+        return ret
 
     def save(
         self,

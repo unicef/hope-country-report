@@ -1,8 +1,10 @@
 from typing import Any, TYPE_CHECKING, TypeVar
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.core.signing import get_cookie_signer
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
@@ -12,17 +14,21 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView
+from django.views.generic.edit import FormView
 
 import django_stubs_ext
+from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminfilters.utils import parse_bool
 
 from hope_country_report.apps.core.models import CountryOffice, User
+from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied
 from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.forms import SelectTenantForm
 from hope_country_report.apps.tenant.utils import set_selected_tenant
+from hope_country_report.utils.mail import send_request_access
 from hope_country_report.utils.media import download_media
-from hope_country_report.web.forms import UserProfileForm
+from hope_country_report.web.forms import RequestAccessForm, UserProfileForm
 
 django_stubs_ext.monkeypatch()
 
@@ -31,6 +37,8 @@ if TYPE_CHECKING:
     from django.core.paginator import _SupportsPagination
     from django.db.models import QuerySet
     from django.views.generic.edit import _ModelFormT
+
+    from hope_country_report.types.http import AuthHttpRequest, RedirectOrResponse
 
     _M = TypeVar("_M", bound=Model, covariant=True)
 
@@ -120,6 +128,14 @@ class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixi
     permission_required = ["power_query.view_reportdocument"]
     context_object_name = "doc"
 
+    def has_permission(self) -> bool:
+        obj: "ReportDocument" = self.get_object()
+        try:
+            perms = self.get_permission_required()
+            return self.request.user.has_perms(perms, obj)
+        except (PermissionDenied, RequestablePermissionDenied):
+            raise RequestablePermissionDenied(obj.report)
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(title=self.object.title, **kwargs)
 
@@ -137,9 +153,15 @@ class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, De
     def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
         return ReportDocument.objects.get(report__country_office=self.selected_office, id=self.kwargs["pk"])
 
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> StreamingHttpResponse:  # type: ignore[override]
-        doc: ReportDocument = self.get_object()
-        return StreamingHttpResponse(doc.file, content_type=doc.content_type)
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> "RedirectOrResponse":  # type: ignore[override]
+        try:
+            doc: ReportDocument = self.get_object()
+            if not doc.file.size:
+                raise FileNotFoundError
+            return StreamingHttpResponse(doc.file, content_type=doc.content_type)
+        except FileNotFoundError:
+            messages.error(request, _("File not found."))
+            return HttpResponseRedirectToReferrer(request)
 
 
 class OfficeDocumentDownloadView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
@@ -148,11 +170,17 @@ class OfficeDocumentDownloadView(SelectedOfficeMixin, PermissionRequiredMixin, D
     def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
         return ReportDocument.objects.get(report__country_office=self.selected_office, id=self.kwargs["pk"])
 
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> StreamingHttpResponse:  # type: ignore[override]
-        doc: ReportDocument = self.get_object()
-        response = StreamingHttpResponse(doc.file, content_type="application/force-download")
-        response["Content-Disposition"] = f"attachment; filename= {doc.title}{doc.file_suffix}"
-        return response
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> "RedirectOrResponse":  # type: ignore[override]
+        try:
+            doc: ReportDocument = self.get_object()
+            if not doc.file.size:
+                raise FileNotFoundError
+            response = StreamingHttpResponse(doc.file, content_type="application/force-download")
+            response["Content-Disposition"] = f"attachment; filename= {doc.title}{doc.file_suffix}"
+            return response
+        except FileNotFoundError:
+            messages.error(request, _("File not found."))
+            return HttpResponseRedirectToReferrer(request)
 
 
 class OfficeUserListView(SelectedOfficeMixin, ListView[User]):
@@ -171,7 +199,8 @@ class OfficePageListView(SelectedOfficeMixin, ListView[User]):
         return qs
 
 
-class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):
+class UserProfileView(SelectedOfficeMixin, UpdateView[User, Any]):
+    request: "AuthHttpRequest"
     form_class = UserProfileForm
     model = User
     template_name = "web/office/profile.html"
@@ -183,12 +212,34 @@ class UserProfileView(SelectedOfficeMixin, UpdateView["User, _ModelFormT"]):
         return CountryOffice.objects.get(slug=signer.unsign(str(self.request.COOKIES.get(conf.COOKIE_NAME))))
 
     def get_object(self, queryset: "QuerySet[AbstractBaseUser] | None" = None) -> "User":
-        return self.request.user  # type: ignore[return-value]
+        return self.request.user
 
     def form_valid(self, form: "_ModelFormT") -> "HttpResponse":
         response = super().form_valid(form)
         response.set_cookie(settings.LANGUAGE_COOKIE_NAME, self.request.user.language)
+        messages.success(self.request, _("Saved."))
         return response
+
+
+class RequestAccessView(SelectedOfficeMixin, FormView[Any]):
+    form_class = RequestAccessForm
+    template_name = "web/office/request_access.html"
+    request: "AuthHttpRequest"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        return super().get_context_data(object=self.get_object(), **kwargs)
+
+    def get_success_url(self) -> str:
+        return reverse("office-doc-list", args=[self.selected_office.slug])
+
+    def get_object(self, queryset: "QuerySet[AbstractBaseUser] | None" = None) -> "ReportConfiguration":
+        return ReportConfiguration.objects.get(country_office=self.selected_office, pk=self.kwargs["id"])
+
+    def form_valid(self, form: "_ModelFormT") -> "HttpResponse":
+        res = send_request_access(self.request.user, self.get_object(), message=form.cleaned_data["message"])
+        if res == 1:
+            messages.success(self.request, _("Request sent."))
+        return super().form_valid(form)
 
 
 @login_required

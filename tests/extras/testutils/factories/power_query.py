@@ -50,7 +50,7 @@ class ReportTemplateFactory(AutoRegisterModelFactory):
 
 class FormatterFactory(AutoRegisterModelFactory):
     name = "Queryset To HTML"
-    template = factory.SubFactory(ReportTemplateFactory)
+    template = None
     processor = fqn(ToHTML)
 
     class Meta:
@@ -99,7 +99,7 @@ class ReportConfigurationFactory(AutoRegisterModelFactory):
             create_defaults()
             fmt = Formatter.objects.get(name="Queryset To HTML")
             self.formatters.add(fmt)
-        self.execute(run_query=True)
+        self.execute(run_query=True, notify=False)
 
 
 class ReportDocumentFactory(AutoRegisterModelFactory):

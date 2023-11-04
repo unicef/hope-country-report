@@ -14,6 +14,7 @@ from .views import (
     OfficeReportDocumentDetailView,
     OfficeReportDocumentListView,
     OfficeUserListView,
+    RequestAccessView,
     select_tenant,
     UserProfileView,
 )
@@ -24,6 +25,7 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("profile/", UserProfileView.as_view(), name="user-profile"),
     path("select-tenant/", select_tenant, name="select-tenant"),
+    path("<slug:co>/request-access/<int:id>/", RequestAccessView.as_view(), name="request-access"),
     path("<slug:co>/", OfficeHomeView.as_view(), name="office-index"),
     path("<slug:co>/users/", OfficeUserListView.as_view(), name="office-users"),
     path("<slug:co>/pages/", OfficePageListView.as_view(), name="office-pages"),
@@ -34,4 +36,5 @@ urlpatterns = [
     path("<slug:co>/doc/<int:pk>/view/", OfficeDocumentDisplayView.as_view(), name="office-doc-display"),
     path("<slug:co>/doc/<int:pk>/download/", OfficeDocumentDownloadView.as_view(), name="office-doc-download"),
     path("errors/404/", TemplateView.as_view(template_name="404.html")),
+    path("errors/403/", TemplateView.as_view(template_name="403.html")),
 ]

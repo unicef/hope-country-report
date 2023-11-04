@@ -46,6 +46,7 @@ class ProcessorStrategy:
     file_suffix: str = ".txt"
     verbose_name = ""
     format: int
+    needs_file: bool = False
 
     def __init__(self, context: "Formatter"):
         self.formatter = context
@@ -61,7 +62,7 @@ class ProcessorStrategy:
     def content_type(cls) -> str:
         return mimetype_map[cls.file_suffix]
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "Dict[str, Any]") -> bytes:
         raise NotImplementedError
 
 
@@ -70,7 +71,7 @@ class ToXLS(ProcessorStrategy):
     format = TYPE_LIST
     verbose_name = "Dataset to XLS"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "Dict[str, Any]") -> bytes:
         dt = to_dataset(context["dataset"].data)
         return dt.export("xls")
 
@@ -80,7 +81,7 @@ class ToXLSX(ProcessorStrategy):
     format = TYPE_LIST
     verbose_name = "Dataset to XLSX"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "Dict[str, Any]") -> bytes:
         dt = to_dataset(context["dataset"].data)
         return dt.export("xlsx")
 
@@ -92,7 +93,7 @@ class ToJSON(ProcessorStrategy):
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         dt = to_dataset(context["dataset"].data)
-        return dt.export("json")
+        return dt.export("json").encode()
 
 
 class ToCSV(ProcessorStrategy):
@@ -102,7 +103,7 @@ class ToCSV(ProcessorStrategy):
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         dt = to_dataset(context["dataset"].data)
-        return dt.export("csv")
+        return dt.export("csv").encode()
 
 
 class ToYAML(ProcessorStrategy):
@@ -113,7 +114,7 @@ class ToYAML(ProcessorStrategy):
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         ds: "Dataset" = context["dataset"]
         dt = to_dataset(ds.data)
-        return dt.export("yaml")
+        return dt.export("yaml").encode()
 
 
 class ToHTML(ProcessorStrategy):
@@ -144,6 +145,7 @@ class ToText(ProcessorStrategy):
 class ToWord(ProcessorStrategy):
     file_suffix = ".docx"
     format = TYPE_BOTH
+    needs_file = True
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         from docxtpl import DocxTemplate
@@ -155,7 +157,7 @@ class ToWord(ProcessorStrategy):
         buffer = BytesIO()
         doc.save(buffer)
         buffer.seek(0)
-        return buffer
+        return buffer.getvalue()
 
 
 class ToPDF(ProcessorStrategy):
@@ -172,6 +174,7 @@ class ToPDF(ProcessorStrategy):
 class ToFormPDF(ProcessorStrategy):
     file_suffix = ".pdf"
     format = TYPE_DETAIL
+    needs_file = True
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         tpl = self.formatter.template
@@ -186,7 +189,7 @@ class ToFormPDF(ProcessorStrategy):
         output_stream = io.BytesIO()
         writer.write(output_stream)
         output_stream.seek(0)
-        return output_stream
+        return output_stream.getvalue()
 
 
 class ProcessorRegistry(Registry):

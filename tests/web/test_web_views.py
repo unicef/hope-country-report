@@ -4,6 +4,7 @@ import pytest
 
 from django.urls import reverse
 
+from testutils.factories import UserFactory
 from testutils.perms import user_grant_permissions
 
 from hope_country_report.state import state
@@ -20,13 +21,13 @@ if TYPE_CHECKING:
         hh1: tuple[Household, Household]
 
 
-# @pytest.fixture()
-# def afg_user(user, afghanistan):
-#     grant = user_grant_permissions(user, [], afghanistan)
-#     grant.start()
-#     yield user
-#     grant.stop()
-#
+@pytest.fixture()
+def restricted_document():
+    from testutils.factories import ReportDocumentFactory
+
+    doc: "ReportDocument" = ReportDocumentFactory(report__owner=UserFactory(username="owner"))
+    doc.report.limit_access_to.add(UserFactory(username="allowed"))
+    return doc
 
 
 @pytest.fixture()
@@ -128,6 +129,22 @@ def test_document(django_app, admin_user, report_document: "ReportDocument"):
     with user_grant_permissions(user, ["power_query.view_reportdocument"]):
         res = django_app.get(url, user=user)
     assert res.status_code == 200, f"{url}: {res.status_code} != 200"
+
+
+def test_document_restricted(django_app, user, restricted_document: "ReportDocument"):
+    config: "ReportConfiguration" = restricted_document.report
+    url = reverse("office-doc", args=[config.country_office.slug, restricted_document.pk])
+    with user_grant_permissions(user, ["power_query.view_reportdocument"]):
+        res = django_app.get(url, user=user, expect_errors=True)
+    assert res.status_code == 403
+
+
+def test_document_request_access(django_app, user, restricted_document: "ReportDocument"):
+    config: "ReportConfiguration" = restricted_document.report
+    url = reverse("request-access", args=[config.country_office.slug, restricted_document.report.pk])
+    with user_grant_permissions(user, ["power_query.view_reportdocument"]):
+        res = django_app.get(url, user=user, expect_errors=True)
+    assert res.status_code == 200
 
 
 def test_document_display(django_app, report_document):

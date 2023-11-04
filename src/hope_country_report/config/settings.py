@@ -108,8 +108,8 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = (
     "unicef_security.backends.UNICEFAzureADB2COAuth2",
-    "hope_country_report.apps.tenant.backend.TenantBackend",
     "hope_country_report.apps.power_query.backends.PowerQueryBackend",
+    "hope_country_report.apps.tenant.backend.TenantBackend",
     "django.contrib.auth.backends.ModelBackend",
     *env("AUTHENTICATION_BACKENDS"),
 )

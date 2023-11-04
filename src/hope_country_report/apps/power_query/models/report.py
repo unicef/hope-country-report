@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from taggit.managers import TaggableManager
 
+from ....utils.mail import notify_report_completion
 from ...core.models import CountryOffice, User
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
@@ -42,8 +43,10 @@ class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeS
     formatters = models.ManyToManyField(Formatter, blank=False)
     active = models.BooleanField(default=True)
     visible = models.BooleanField(default=True)
-    owner = models.ForeignKey(get_user_model(), blank=True, null=True, on_delete=models.CASCADE, related_name="+")
-    limit_access_to = models.ManyToManyField(get_user_model(), blank=True, related_name="+")
+    owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="+")
+    limit_access_to = models.ManyToManyField(
+        get_user_model(), blank=True, related_name="+", help_text=_("Limit access to selected users")
+    )
     schedule = models.ForeignKey(
         PeriodicTask,
         verbose_name=_("Scheduling"),
@@ -52,9 +55,18 @@ class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeS
         on_delete=models.SET_NULL,
         related_name="reports",
     )
+    notify_to = models.ManyToManyField(
+        get_user_model(),
+        blank=True,
+        related_name="+",
+        help_text=_("Users to be notified when report have been created/updated"),
+    )
+
     last_run = models.DateTimeField(null=True, blank=True)
-    validity_days = models.IntegerField(default=365)
-    context = models.JSONField(default=dict, encoder=PQJSONEncoder, blank=True)
+
+    context = models.JSONField(
+        default=dict, encoder=PQJSONEncoder, blank=True, help_text=_("Extra to add to the report context")
+    )
 
     compress = models.BooleanField(default=False, blank=True, help_text=_("Compress reports with Zip"))
     protect = models.BooleanField(
@@ -85,7 +97,7 @@ class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeS
         if self.protect and not self.owner:
             raise ValidationError("Cannot protect document without owner")
 
-    def execute(self, run_query: bool = False) -> "ReportResult":
+    def execute(self, run_query: bool = False, notify: bool = True) -> "ReportResult":
         from .report_document import ReportDocument
 
         query: Query = self.query
@@ -108,8 +120,8 @@ class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeS
             self.refresh_from_db()
             self.last_run = timezone.now()
             self.save()
-        # if not result:
-        #     result = [_("No Dataset available")]
+        if notify and self.documents.exists():
+            notify_report_completion(self)
         return result
 
     def __str__(self) -> str:
@@ -120,3 +132,7 @@ class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeS
 
     def get_absolute_url(self):
         return reverse("office-config", args=[self.country_office.slug, self.pk])
+
+    def get_documents_url(self):
+        base = reverse("office-doc-list", args=[self.country_office.slug])
+        return f"{base}?report={self.name}"

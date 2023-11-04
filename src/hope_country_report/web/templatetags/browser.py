@@ -16,5 +16,4 @@ def is_media_supported(context: Dict[str, Any], content_type: str) -> bool:
         "application/json",
     ]:
         return True
-    if content_type in context["request"].HTTP_ACCEPT:
-        return True
+    return content_type in context["request"].META["HTTP_ACCEPT"]

@@ -15,7 +15,7 @@ from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from hope_country_report.apps.core.models import CountryOffice
-    from hope_country_report.apps.power_query.models import Query
+    from hope_country_report.apps.power_query.models import Query, ReportDocument
 
 _DATA = namedtuple("_DATA", "afg,ukr,query_afg,query_ukr")
 
@@ -43,7 +43,16 @@ def backend():
     return PowerQueryBackend()
 
 
-def test_aaa(backend, user):
+@pytest.fixture()
+def restricted_document():
+    from testutils.factories import ReportDocumentFactory, UserFactory
+
+    doc: "ReportDocument" = ReportDocumentFactory(report__owner=UserFactory(username="owner"))
+    doc.report.limit_access_to.add(UserFactory(username="allowed"))
+    return doc
+
+
+def test_invalid_perm(backend, user):
     assert not backend.has_perm(user, "aaaa")
 
 
@@ -64,6 +73,14 @@ def test_be_has_perm(backend, user, data):
     with user_grant_permissions(user, "power_query.view_reportdocument", data.afg):
         assert backend.has_perm(user, "power_query.view_reportdocument", data.query_afg)
         assert not backend.has_perm(user, "power_query.view_reportdocument", data.query_ukr)
+
+
+def test_be_limit_access_to(backend, user, restricted_document):
+    allowed = restricted_document.report.limit_access_to.first()
+    assert not backend.has_perm(user, "power_query.view_reportdocument", restricted_document)
+    assert not backend.has_perm(allowed, "power_query.view_reportdocument", restricted_document)
+    with user_grant_permissions(allowed, "power_query.view_reportdocument", restricted_document.country_office):
+        assert backend.has_perm(allowed, "power_query.view_reportdocument", restricted_document)
 
 
 def test_be_owner_has_perm(backend, data):

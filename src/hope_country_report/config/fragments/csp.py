@@ -12,6 +12,8 @@ SOURCES = (
     # "unpkg.com",
     # "browser.sentry-cdn.com",
     # "cdnjs.cloudflare.com",
+    "d3js.org",
+    "raw.githubusercontent.com",
 )
 CSP_DEFAULT_SRC = SOURCES
 CSP_FRAME_SRC = []

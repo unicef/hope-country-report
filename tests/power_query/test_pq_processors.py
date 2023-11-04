@@ -1,9 +1,12 @@
-from typing import TYPE_CHECKING
+from typing import Type, TYPE_CHECKING
 
 import pickle
+from pathlib import Path
 
 import pytest
 from unittest.mock import Mock
+
+from django.core.files.base import ContentFile
 
 from docxtpl import DocxTemplate
 from pypdf import PdfReader
@@ -11,11 +14,18 @@ from strategy_field.utils import fqn
 from testutils.factories import DatasetFactory
 
 from hope_country_report.apps.power_query import processors
-from hope_country_report.apps.power_query.processors import registry
+from hope_country_report.apps.power_query.processors import ProcessorStrategy, registry
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from hope_country_report.apps.core.models import CountryOffice
+
+
+def pytest_generate_tests(metafunc):
+    if "pp" in metafunc.fixturenames:
+        m = [p for p in registry]
+        ids = [f"{p.__name__}|{p.file_suffix}" for p in registry]
+        metafunc.parametrize("pp", m, ids=ids)
 
 
 @pytest.fixture()
@@ -62,6 +72,19 @@ def dataset(data, report):
     return DatasetFactory(value=pickle.dumps(Household.objects.all()))
 
 
+def test_processor_process(dataset, tmp_path, pp: "Type[ProcessorStrategy]"):
+    from testutils.factories import FormatterFactory, ReportTemplateFactory
+
+    extra = {}
+    if pp.needs_file:
+        tpl = Path(__file__).parent / f"template{pp.file_suffix}"
+        extra = {"template": ReportTemplateFactory(doc=ContentFile(tpl.read_bytes(), name=tpl.name), name=tpl.name)}
+
+    fmt = FormatterFactory(name=f"Test {pp.file_suffix}", **extra)
+    out = pp(fmt).process({"dataset": dataset, "country_office": "Test"})
+    assert isinstance(out, (bytearray, bytes)), f"{type(out)} is not bytes or bytearray"
+
+
 def test_processor_html(dataset, tmp_path):
     from testutils.factories import FormatterFactory
 
@@ -98,7 +121,7 @@ def test_processor_docx(dataset, tmp_path):
     result = processors.ToWord(fmt).process({"dataset": dataset, "business_area": "Afghanistan", "country_office": ""})
     # try ti save and open
     output = tmp_path / "AAAA.docx"
-    output.write_bytes(result.read())
+    output.write_bytes(result)
     DocxTemplate(output)
     assert result
 
@@ -126,7 +149,7 @@ def test_processor_pdfform(dataset, tmp_path):
     result = processors.ToFormPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
     # try ti save and open
     output = tmp_path / "AAAA.pdf"
-    output.write_bytes(result.read())
+    output.write_bytes(result)
     PdfReader(output)
     assert result
 

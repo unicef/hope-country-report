@@ -1,12 +1,16 @@
-import tempfile
 from typing import TYPE_CHECKING
 
+import tempfile
 from pathlib import PurePath
 from zipfile import ZipFile
 
 import pytest
+from unittest import mock
+from unittest.mock import Mock
 
 from django.conf import settings
+
+from constance.test import override_config
 
 from hope_country_report.config.celery import app
 from hope_country_report.state import state
@@ -34,10 +38,11 @@ def query2(afg_user):
 
 
 @pytest.fixture()
-def report(query2: "Query"):
+def report(query2: "Query", monkeypatch):
     from testutils.factories import ReportConfigurationFactory
 
-    return ReportConfigurationFactory(name="Celery Report", query=query2, owner=query2.owner)
+    with mock.patch("hope_country_report.apps.power_query.models.report.notify_report_completion", Mock()):
+        return ReportConfigurationFactory(name="Celery Report", query=query2, owner=query2.owner)
 
 
 def test_celery_no_worker(db, settings, report: "ReportConfiguration") -> None:
@@ -59,6 +64,7 @@ def test_report_refresh(db, settings, report: "ReportConfiguration") -> None:
     assert doc.file
 
 
+@override_config(CATCH_ALL_EMAIL="")
 def test_report_zip(db, settings, report: "ReportConfiguration", mailoutbox) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     report.compress = True
@@ -78,6 +84,7 @@ def test_report_zip(db, settings, report: "ReportConfiguration", mailoutbox) -> 
     assert PurePath(page_document.name).suffix == doc.formatter.file_suffix
 
 
+@override_config(CATCH_ALL_EMAIL="")
 def test_report_zip_protected_notify_email(
     transactional_db, rf, settings, report: "ReportConfiguration", mailoutbox
 ) -> None:
@@ -90,8 +97,9 @@ def test_report_zip_protected_notify_email(
     with state.set(request=request, must_tenant=False):
         report.execute(True)
 
-    assert len(mailoutbox) == 1
-    assert mailoutbox[0].subject == "Document ready"
+    assert len(mailoutbox) == 1, [m.to for m in mailoutbox]
+    assert [m.to for m in mailoutbox] == [[report.owner.email]]
+    assert mailoutbox[0].subject == f"Your password for {report.title}"
 
 
 def test_report_zip_protected(transactional_db, rf, settings, report: "ReportConfiguration", mailoutbox) -> None:
