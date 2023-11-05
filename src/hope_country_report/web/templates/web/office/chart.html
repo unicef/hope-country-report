@@ -1,0 +1,50 @@
+{% extends "web/office/_base.html" %}{% load i18n %}
+{% block extrahead %}
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+
+{% endblock %}
+{% block page-title %}{% trans "Welcome to HOPE Reporting" %}: {{ selected_office }}{% endblock %}
+{% block content %}
+    111
+<div class="w-full">
+<div id="my_dataviz" class="w-full bg-white h-screen">
+  1111
+
+</div>
+    </div>
+    222
+<script>
+
+// The svg
+var svg = d3.select("#my_dataviz"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+// Map and projection
+var projection = d3.geoMercator()
+    .center([2, 47])                // GPS of location to zoom on
+    .scale(980)                       // This is like the zoom
+    .translate([ width/2, height/2 ])
+
+// Load external data and boot
+d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson", function(data){
+
+    // Filter data
+    data.features = data.features.filter(function(d){return d.properties.name=="{{ selected_office }}"})
+    console.log(11111, svg);
+    // Draw the map
+    svg.append("g")
+        .selectAll("path")
+        .data(data.features)
+        .enter()
+        .append("path")
+          .attr("fill", "grey")
+          .attr("d", d3.geoPath()
+              .projection(projection)
+          )
+        .style("stroke", "none")
+})
+
+</script>
+{% endblock %}

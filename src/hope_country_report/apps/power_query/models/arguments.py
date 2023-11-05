@@ -14,21 +14,26 @@ from ..processors import mimetype_map
 from ._base import AdminReversable
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
-
-    from collections.abc import Iterable
+    from typing import Any, Dict, List, Tuple, Iterable
 
 logger = logging.getLogger(__name__)
 
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-def validate_queryargs(value: "Any") -> None:
+def get_matrix(param, input: "Any" = None) -> "List[Dict[str,str]]":
+    if isinstance(input, dict):
+        product = list(itertools.product(*input.values()))
+        return [dict(zip(input.keys(), e)) for e in product]
+    else:
+        param = slugify(param).replace("-", "_")
+        return [{param: e} for e in input]
+
+
+def validate_queryargs(value: "Any") -> bool:
     try:
-        if not isinstance(value, dict):
-            raise ValidationError("QueryArgs must be a dict")
-        product = list(itertools.product(*value.values()))
-        [dict(zip(value.keys(), e)) for e in product]
+        get_matrix("test", value)
+        return True
     except ValidationError:
         raise
     except Exception as e:
@@ -55,15 +60,12 @@ class Parametrizer(NaturalKeyModel, AdminReversable, models.Model):
         tenant_filter_field = "country_office"
 
     def clean(self) -> None:
-        validate_queryargs(self.value)
+        return validate_queryargs(self.value)
 
-    def get_matrix(self) -> "List[Dict[str,str]]":
-        if isinstance(self.value, dict):
-            product = list(itertools.product(*self.value.values()))
-            return [dict(zip(self.value.keys(), e)) for e in product]
-        else:
-            param = slugify(self.code).replace("-", "_")
-            return [{param: e} for e in self.value]
+    def get_matrix(self, value: "Dict|List|Tuple|None" = None) -> "List[Dict[str,str]]":
+        input = value or self.value
+        param = slugify(self.code).replace("-", "_")
+        return get_matrix(param, input)
 
     def save(
         self,

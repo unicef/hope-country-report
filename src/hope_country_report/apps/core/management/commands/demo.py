@@ -69,6 +69,22 @@ extra={"monthname": calendar.month_name[month]}
                 code="""result=conn.all()""",
             ),
         )[0]
+
+        Query.objects.get_or_create(
+            name="Dev Query",
+            defaults=dict(
+                country_office=afg,
+                owner=None,
+                target=ContentType.objects.get_for_model(Household),
+                code="""import time
+        start=time.time()
+        while True:
+            time.sleep(1)
+            print(f"Query: {self} -  Aborted: {self.is_aborted()}")
+        """,
+            ),
+        )
+
         tags = ["tag%d" % d for d in range(10)]
         for q in [q1, q2, q3]:
             r = ReportConfiguration.objects.get_or_create(
@@ -79,20 +95,17 @@ extra={"monthname": calendar.month_name[month]}
             r.formatters.add(*Formatter.objects.all())
             r.tags.add(*random.choices(tags, k=random.choice([1, 2, 3])))
 
-        Query.objects.get_or_create(
-            name="Dev Query",
-            defaults=dict(
-                country_office=afg,
-                owner=None,
-                target=ContentType.objects.get_for_model(Household),
-                code="""import time
-start=time.time()
-while True:
-    time.sleep(1)
-    print(f"Query: {self} -  Aborted: {self.is_aborted()}")
-""",
-            ),
-        )
-        ReportConfiguration.objects.filter(query=q3).update(compress=True, protect=True)
+        for params in [
+            {"compress": True, "protect": True},
+            {"compress": True},
+        ]:
+            r = ReportConfiguration.objects.get_or_create(
+                title=f"{q2.name} #2",
+                country_office=q2.country_office,
+                defaults={"query": q2, "owner": q.owner, "context": {"extra_footer": "-- Report footer --", **params}},
+            )[0]
+            r.formatters.add(*Formatter.objects.all())
+            r.tags.add(*random.choices(tags, k=random.choice([1, 2, 3])))
+
         for r in ReportConfiguration.objects.all():
             r.execute(True)

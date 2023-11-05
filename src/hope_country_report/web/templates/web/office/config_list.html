@@ -37,6 +37,7 @@
                 <th>{% trans "Parametrized" %}</th>
                 <th>{% trans "Refreshed On" %}</th>
                 <th>{% trans "Scheduling" %}</th>
+                <th>{% trans "Restricted" %}</th>
                 <th>{% trans "Compress" %}</th>
                 <th>{% trans "Protected" %}</th>
                 <th>{% trans "Tags" %}</th>
@@ -57,6 +58,7 @@
                     <td>{{ report.query.parametrizer|as_bool_icon }}</td>
                     <td>{{ updated_on|userdatetime:"-" }}</td>
                     <td>{{ report.schedule|default_if_none:"" }}</td>
+                    <td>{{ report.restricted_to.count|as_bool_icon }}</td>
                     <td>{{ report.compress|as_bool_icon }}</td>
                     <td>{{ report.protect|as_bool_icon }}</td>
                     <td>{% for t in report.tags.all %}

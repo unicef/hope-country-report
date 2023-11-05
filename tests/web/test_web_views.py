@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from urllib.parse import urlencode
 
 import pytest
 
@@ -21,13 +22,7 @@ if TYPE_CHECKING:
         hh1: tuple[Household, Household]
 
 
-@pytest.fixture()
-def restricted_document():
-    from testutils.factories import ReportDocumentFactory
-
-    doc: "ReportDocument" = ReportDocumentFactory(report__owner=UserFactory(username="owner"))
-    doc.report.limit_access_to.add(UserFactory(username="allowed"))
-    return doc
+REPORT_NAME = "report-1"
 
 
 @pytest.fixture()
@@ -52,7 +47,7 @@ def report_configuration(query1: "Query"):
     from testutils.factories import ReportConfigurationFactory
 
     return ReportConfigurationFactory(
-        country_office=query1.country_office, query=query1, owner=query1.owner, compress=False
+        name=REPORT_NAME, country_office=query1.country_office, query=query1, owner=query1.owner, compress=False
     )
 
 
@@ -67,6 +62,15 @@ def report_template():
     from testutils.factories import ReportTemplate
 
     return ReportTemplate.objects.first()
+
+
+@pytest.fixture()
+def restricted_document():
+    from testutils.factories import ReportDocumentFactory
+
+    doc: "ReportDocument" = ReportDocumentFactory(report__name=REPORT_NAME, report__owner=UserFactory(username="owner"))
+    doc.report.limit_access_to.add(UserFactory(username="allowed"))
+    return doc
 
 
 def test_index(django_app, report_configuration):
@@ -104,6 +108,19 @@ def test_report_list(django_app, report_configuration: "ReportConfiguration"):
     assert res.status_code == 200
 
 
+@pytest.mark.parametrize(
+    "flt", [{"active": "t"}, {"tag": "tag1"}, {"report": REPORT_NAME}, {"active": "t", "tag": "tag1"}]
+)
+def test_report_list_filter(django_app, flt, report_configuration: "ReportConfiguration"):
+    user: "User" = report_configuration.owner
+    base_url = reverse("office-config-list", args=[report_configuration.country_office.slug])
+    url = f"{base_url}?%s" % urlencode(flt)
+    with user_grant_permissions(user, "power_query.view_reportconfiguration"):
+        with state.activate_tenant(report_configuration.country_office):
+            res = django_app.get(url, user=user)
+    assert res.status_code == 200
+
+
 def test_report(django_app, report_document: "ReportDocument"):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner
@@ -117,6 +134,19 @@ def test_document_list(django_app, report_document: "ReportDocument"):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner
     url = reverse("office-doc-list", args=[config.country_office.slug])
+    with user_grant_permissions(user, "power_query.view_reportdocument"):
+        res = django_app.get(url, user=user)
+    assert res.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "flt", [{"active": "t"}, {"tag": "tag1"}, {"report": REPORT_NAME}, {"active": "t", "tag": "tag1"}]
+)
+def test_document_list_filter(django_app, flt, report_document: "ReportDocument"):
+    config: "ReportConfiguration" = report_document.report
+    user: "User" = config.owner
+    base_url = reverse("office-doc-list", args=[config.country_office.slug])
+    url = f"{base_url}?%s" % urlencode(flt)
     with user_grant_permissions(user, "power_query.view_reportdocument"):
         res = django_app.get(url, user=user)
     assert res.status_code == 200

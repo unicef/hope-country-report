@@ -14,6 +14,7 @@ SOURCES = (
     # "cdnjs.cloudflare.com",
     "d3js.org",
     "raw.githubusercontent.com",
+    "unpkg.com",
 )
 CSP_DEFAULT_SRC = SOURCES
 CSP_FRAME_SRC = []
@@ -33,7 +34,15 @@ CSP_FRAME_SRC = []
 # CSP_CONNECT_SRC = ("self",)
 # CSP_FONT_SRC = ("self",)
 # CSP_FRAME_SRC = ("self",)
-CSP_IMG_SRC = ("'self'", "data:")
+CSP_IMG_SRC = (
+    "'self'",
+    "data:",
+    "openstreetmap.org",
+    "unpkg.com",
+    "*.tiles.mapbox.com",
+    "tile.openstreetmap.org",
+    "www.openstreetmap.org",
+)
 # CSP_MANIFEST_SRC = ("self",)
 # CSP_MEDIA_SRC = ("self",)
 # CSP_REPORT_URI = ("https://624948b721ea44ac2a6b4de4.endpoint.csper.io/?v=0;",)

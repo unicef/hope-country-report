@@ -77,6 +77,10 @@ class OfficeHomeView(SelectedOfficeMixin, TemplateView):
     template_name = "web/office/index.html"
 
 
+class OfficeTemplateView(SelectedOfficeMixin, TemplateView):
+    template_name = "web/office/index.html"
+
+
 class OfficeConfigurationListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[ReportConfiguration]):
     template_name = "web/office/config_list.html"
     permission_required = ["power_query.view_reportconfiguration"]
