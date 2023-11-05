@@ -6,7 +6,7 @@ groups = ["default", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:fef70ae8503b9afdfc77096433e21d46d19fd406759bd98b57cbc700563b0704"
+content_hash = "sha256:6f4b53d093955c4f448e3f0a06f4dbe25171b0aa3af16787a22c4878a9963d3a"
 
 [[package]]
 name = "amqp"
@@ -99,6 +99,19 @@ dependencies = [
 files = [
     {file = "azure-core-1.29.5.tar.gz", hash = "sha256:52983c89d394c6f881a121e5101c5fa67278ca3b1f339c8fb2ef39230c70e9ac"},
     {file = "azure_core-1.29.5-py3-none-any.whl", hash = "sha256:0fa04b7b1f7d44a4fb8468c4093deb2ea01fdf4faddbf802ed9205615f99d68c"},
+]
+
+[[package]]
+name = "azure-devops"
+version = "7.1.0b3"
+requires_python = ">=3.7"
+summary = "Python wrapper around the Azure DevOps 7.x APIs"
+dependencies = [
+    "msrest<0.8.0,>=0.7.1",
+]
+files = [
+    {file = "azure-devops-7.1.0b3.tar.gz", hash = "sha256:644e34d110f016e65c7b36647274c90c20223bf2ecca9be8806aa5a4c754b4e7"},
+    {file = "azure_devops-7.1.0b3-py3-none-any.whl", hash = "sha256:ef082a59e79e7f5d979481c7737093cb54618f362b216292fcce7f26d9c452c3"},
 ]
 
 [[package]]
@@ -721,6 +734,18 @@ files = [
 ]
 
 [[package]]
+name = "django-entangled"
+version = "0.5.4"
+summary = "Edit JSON field using Django Model Form"
+dependencies = [
+    "django>=2.1",
+]
+files = [
+    {file = "django-entangled-0.5.4.tar.gz", hash = "sha256:6cc787ee8c7bc8ac17abba4d59cded47bdd8da606628a3f6883b244a1f6c8605"},
+    {file = "django_entangled-0.5.4-py3-none-any.whl", hash = "sha256:5aa0e2bef5a64ddc06778847a3915d5b05563590afea444be0e524e0ec9c2c28"},
+]
+
+[[package]]
 name = "django-environ"
 version = "0.11.2"
 requires_python = ">=3.6,<4"
@@ -794,6 +819,18 @@ dependencies = [
 files = [
     {file = "django_js_asset-2.1.0-py3-none-any.whl", hash = "sha256:36a3a4dd6e9efc895fb127d13126020f6ec1ec9469ad42878d42143f22495d90"},
     {file = "django_js_asset-2.1.0.tar.gz", hash = "sha256:be6f69ae5c4865617aa7726c48eddb64089a1e7d4ea7d22a35a3beb8282020f6"},
+]
+
+[[package]]
+name = "django-jsoneditor"
+version = "0.2.4"
+summary = "Django JSON Editor"
+dependencies = [
+    "packaging",
+]
+files = [
+    {file = "django-jsoneditor-0.2.4.tar.gz", hash = "sha256:1d3dfca28f047feefa6ebc6f9541179eb815fb459b006faf3fb8d0fb2197d2df"},
+    {file = "django_jsoneditor-0.2.4-py2.py3-none-any.whl", hash = "sha256:d7a639a7251e376126b5be64ea588c925c7a40d45e0e212f66ef475d2f0f90bb"},
 ]
 
 [[package]]
@@ -1504,6 +1541,23 @@ dependencies = [
 files = [
     {file = "mkdocs-1.5.3-py3-none-any.whl", hash = "sha256:3b3a78e736b31158d64dbb2f8ba29bd46a379d0c6e324c2246c3bc3d2189cfc1"},
     {file = "mkdocs-1.5.3.tar.gz", hash = "sha256:eb7c99214dcb945313ba30426c2451b735992c73c2e10838f76d09e39ff4d0e2"},
+]
+
+[[package]]
+name = "msrest"
+version = "0.7.1"
+requires_python = ">=3.6"
+summary = "AutoRest swagger generator Python client runtime."
+dependencies = [
+    "azure-core>=1.24.0",
+    "certifi>=2017.4.17",
+    "isodate>=0.6.0",
+    "requests-oauthlib>=0.5.0",
+    "requests~=2.16",
+]
+files = [
+    {file = "msrest-0.7.1-py3-none-any.whl", hash = "sha256:21120a810e1233e5e6cc7fe40b474eeb4ec6f757a15d7cf86702c369f9567c32"},
+    {file = "msrest-0.7.1.zip", hash = "sha256:6e7661f46f3afd88b75667b7187a92829924446c7ea1d169be8c4bb7eeb788b9"},
 ]
 
 [[package]]

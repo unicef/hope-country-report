@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     # "unicef_security",  ## cannot be enabled it creates User model even if not used
     "django_cleanup.apps.CleanupSelectedConfig",
     "debug_toolbar",
+    "jsoneditor",
     "django.contrib.auth",
     "django.contrib.humanize",
     "django.contrib.messages",
@@ -159,7 +160,8 @@ LANGUAGES = (
     ("es", ugettext("Spanish")),  # type: ignore[no-untyped-call]
     ("fr", ugettext("French")),  # type: ignore[no-untyped-call]
     ("en", ugettext("English")),  # type: ignore[no-untyped-call]
-    # ("ar", ugettext("Arabic")),  # type: ignore[no-untyped-call]
+    ("ar", ugettext("Arabic")),  # type: ignore[no-untyped-call]
+    # ("pt", ugettext("Portuguese")),  # type: ignore[no-untyped-call]
 )
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

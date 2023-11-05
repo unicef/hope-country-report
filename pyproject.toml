@@ -68,6 +68,9 @@ dependencies = [
     "qrcode>=7.4.2",
     "django-anymail>=10.2",
     "pyminizip>=0.2.6",
+    "django-entangled>=0.5.4",
+    "django-jsoneditor>=0.2.4",
+    "azure-devops>=7.1.0b3",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"

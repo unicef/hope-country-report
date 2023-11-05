@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+
 from urllib.parse import urlencode
 
 import pytest
@@ -173,8 +174,10 @@ def test_document_request_access(django_app, user, restricted_document: "ReportD
     config: "ReportConfiguration" = restricted_document.report
     url = reverse("request-access", args=[config.country_office.slug, restricted_document.report.pk])
     with user_grant_permissions(user, ["power_query.view_reportdocument"]):
-        res = django_app.get(url, user=user, expect_errors=True)
-    assert res.status_code == 200
+        res = django_app.get(url, user=user)
+        assert res.status_code == 200
+        res = res.forms["request-access"].submit()
+        assert res.status_code == 302
 
 
 def test_document_display(django_app, report_document):

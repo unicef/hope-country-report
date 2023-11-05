@@ -2,12 +2,14 @@ from typing import TYPE_CHECKING
 
 from django import forms
 from django.contrib import admin
+from django.db.models.fields.json import JSONField
 from django.utils.translation import gettext_lazy as _
 
 from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
+from jsoneditor.forms import JSONEditor
 from smart_admin.mixins import DisplayAllMixin
 from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 
@@ -26,7 +28,7 @@ class UserAdmin(_UserAdminPlus):  # type: ignore
     fieldsets = (
         (None, {"fields": (("username", "azure_id"), "password")}),
         (
-            _("Prefernces"),
+            _("Preferences"),
             {
                 "fields": (
                     (
@@ -78,6 +80,14 @@ class UserRoleAdmin(AdminFiltersMixin, BaseAdmin):
 class CountryOfficeAdmin(AdminFiltersMixin, BaseAdmin):
     search_fields = ("name",)
     list_filter = ("active",)
+    formfield_overrides = {
+        JSONField: {
+            "widget": JSONEditor(
+                init_options={"mode": "view", "modes": ["view", "code", "tree"]},
+                ace_options={"readOnly": True},
+            )
+        }
+    }
 
     @button()
     def sync(self, request: "AuthHttpRequest") -> None:

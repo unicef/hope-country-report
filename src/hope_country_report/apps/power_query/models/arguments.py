@@ -14,7 +14,7 @@ from ..processors import mimetype_map
 from ._base import AdminReversable
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple, Iterable
+    from typing import Any, Dict, Iterable, List, Tuple
 
 logger = logging.getLogger(__name__)
 

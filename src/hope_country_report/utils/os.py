@@ -9,7 +9,8 @@ from pathlib import Path
 def pushd(path: str | Path) -> Iterator[None]:
     origin = Path().absolute()
     if not path:
-        path = "."
+        path = origin
+    path = Path(path).absolute()
     try:
         os.chdir(path)
         yield

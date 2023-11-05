@@ -36,6 +36,8 @@ class CountryOffice(models.Model):
     hope_id = models.CharField(unique=True, max_length=100, blank=True)
     slug = models.SlugField()
 
+    settings = models.JSONField(default=dict, blank=True)
+
     objects = CountryOfficeManager()
 
     class Meta:

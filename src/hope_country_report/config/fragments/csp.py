@@ -42,6 +42,9 @@ CSP_IMG_SRC = (
     "*.tiles.mapbox.com",
     "tile.openstreetmap.org",
     "www.openstreetmap.org",
+    "basemap.nationalmap.gov",
+    "*.tile.maps.openaip.net",
+    "tiles.stadiamaps.com",
 )
 # CSP_MANIFEST_SRC = ("self",)
 # CSP_MEDIA_SRC = ("self",)

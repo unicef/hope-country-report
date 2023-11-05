@@ -27,7 +27,7 @@ bootstrap:
 	python manage.py upgrade --admin-email admin@unicef.org --admin-password 123
 
 i18n:
-	./manage.py makemessages --locale es --locale fr --ignore '~*'
+	./manage.py makemessages --locale es --locale fr --locale ar --locale pt --ignore '~*'
 	./manage.py compilemessages
 
 test:

@@ -114,7 +114,7 @@ body.web table.document-list th {
       text-transform: capitalize;
     }
 
-body.web svg {
+body.web svg.sidebar-button  {
     fill: currentColor;
     width: 1em;
     height: 1em;
