@@ -10,8 +10,10 @@ from django.core.management import BaseCommand, call_command
 from django.core.management.base import CommandError, SystemCheckError
 from django.core.validators import validate_email
 
+from hope_country_report.apps.core.models import CountryShape
 from hope_country_report.apps.power_query.defaults import create_defaults, create_periodic_tasks
 from hope_country_report.config import env
+from hope_country_report.utils.media import resource_path
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
@@ -109,7 +111,7 @@ class Command(BaseCommand):
         sys.exit(1)
 
     def handle(self, *args: Any, **options: Any) -> None:
-        from hope_country_report.apps.core.models import User
+        from hope_country_report.apps.core.models import CountryOffice, User
 
         self.get_options(options)
         if self.verbosity >= 1:
@@ -162,14 +164,41 @@ class Command(BaseCommand):
                         verbosity=self.verbosity - 1,
                         interactive=False,
                     )
+            from django.contrib.gis.utils import LayerMapping
+
             from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
+            if not CountryShape.objects.exists():
+                data = resource_path("DATA/TM_WORLD_BORDERS-0.3.shp")
+                try:
+                    world_mapping = {
+                        "fips": "FIPS",
+                        "iso2": "ISO2",
+                        "iso3": "ISO3",
+                        "un": "UN",
+                        "name": "NAME",
+                        "area": "AREA",
+                        "region": "REGION",
+                        "subregion": "SUBREGION",
+                        "lon": "LON",
+                        "lat": "LAT",
+                        "mpoly": "MULTIPOLYGON",
+                    }
+                    lm = LayerMapping(CountryShape, data, world_mapping, transform=False)
+                    lm.save(strict=True)
+
+                except TypeError as e:
+                    print(e)
             echo("Create default group")
             get_or_create_reporter_group()
-            from hope_country_report.apps.core.models import CountryOffice
-
             echo("Sync Country Offices")
             CountryOffice.sync()
+            for c in CountryOffice.objects.all():
+                if s := CountryShape.objects.filter(name__iexact=c.slug).first():
+                    c.settings = {"map": s.pk}
+                    c.save()
+                else:
+                    print("src/hope_country_report/apps/core/management/commands/upgrade.py: 205", 111, c)
 
             created = create_defaults()
             if not created:

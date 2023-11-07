@@ -9,6 +9,7 @@ from pathlib import Path
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.urls import reverse
+from django.utils import timezone, translation
 from django.utils.functional import cached_property
 
 import pyminizip
@@ -62,7 +63,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
 
     @classmethod
     def process(
-        self, report: "ReportConfiguration", dataset: "Dataset", formatter: "Formatter"
+        self, report: "ReportConfiguration", dataset: "Dataset", formatter: "Formatter", notify: bool = True
     ) -> "Tuple[int|None, Exception|str]":
         try:
             context = {
@@ -76,31 +77,37 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                 title = report.title
             key = {"report": report, "dataset": dataset, "formatter": formatter}
             try:
-                with state.set(tenant=report.country_office):
-                    with profile() as perfs:
-                        output = formatter.render(
-                            {
-                                "dataset": dataset,
-                                "report": report,
-                                "title": title,
-                                "context": context,
-                            }
-                        )
+                with timezone.override(report.country_office.timezone):
+                    with translation.override(report.country_office.locale):
+                        with state.set(tenant=report.country_office):
+                            with profile() as perfs:
+                                output = formatter.render(
+                                    {
+                                        "dataset": dataset,
+                                        "report": report,
+                                        "title": title,
+                                        "context": context,
+                                    }
+                                )
                 # content = ContentFile(
                 #     output, name=f"r{report.pk}_ds{dataset.pk}_fmt{formatter.pk}{formatter.file_suffix}"
                 # )
                 filename = f"r{report.pk}_ds{dataset.pk}_fmt{formatter.pk}{formatter.file_suffix}"
-                notify = False
+                email_password = False
                 values = {
                     "title": title,
-                    "info": perfs,
+                    "info": {"perf": perfs},
                     "arguments": dataset.arguments,
                 }
                 if report.compress:
                     from zipfile import ZIP_DEFLATED, ZipFile
 
+                    values["info"]["zip"] = {
+                        "content_type": formatter.content_type,
+                        "file_suffix": formatter.file_suffix,
+                    }
                     if report.protect:
-                        notify = True
+                        email_password = True
                         with tempfile.TemporaryDirectory(prefix="___") as tdir:
                             with pushd(tdir):
                                 sourceFile = Path(filename)
@@ -137,7 +144,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                     doc = ReportDocument.objects.create(**key, file=content, **values)
                 result = doc.pk, doc.file.name
 
-                if notify:
+                if notify and email_password:
                     send_mail_on_commit = partial(send_document_password, report.owner, doc)
                     transaction.on_commit(send_mail_on_commit)
 

@@ -1,44 +1,48 @@
-{% extends "web/office/_base.html" %}{% load i18n %}
-{#{% block stylesheet %}{% endblock %}#}
-{#{% block scripts %}{% endblock %}#}
+{% extends "web/office/_base.html" %}{% load i18n leaflet_tags geojson_tags %}
 {% block extrahead %}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin=""/>
+    {% leaflet_css plugins="ALL" %}
+    {% leaflet_js plugins="ALL" %}
     <style>
-        #map {
-            height: 480px;
+
+        .leaflet-container { /* all maps */
+            width: 100%;
+            height: 600px;
+        }
+
+        #specialbigmap {
+            height: 800px;
+        }
+
+        /* Resize the "display_raw" textbox */
+        .django-leaflet-raw-textarea {
+            width: 100%;
         }
 
     </style>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
+    <script>
+        window.addEventListener("map:init", function (e) {
+            var detail = e.detail;
+            var map = detail.map;
+            map.dragging.disable();
+            map.touchZoom.disable();
+            map.removeControl(map.zoomControl);
+            map.removeControl(map.attributionControl);
+            map.scrollWheelZoom.disable();
+            map.doubleClickZoom.disable();
+
+            L.geoJson({{ feature }}).addTo(map);
+            map.setView([{{ selected_office.shape.lat}}, {{ selected_office.shape.lon }}], 6);
+            {% for d in values %}L.circle([d[0], d[1]], {color: 'red',
+            fillColor: '#FF0000', fillOpacity: 0.5, radius: d[3]}).addTo(map);{% endfor %}
+            map.on('click', function (e) {
+                var coord = e.latlng;
+                var lat = coord.lat;
+                var lng = coord.lng;
+            });
+        }, false);
+    </script>
 {% endblock %}
 {% block page-title %}{% trans "Country Map" %}: {{ selected_office }}{% endblock %}
 {% block content %}
-    <div id="map" class="bg-white"></div>
-    <script>
-        var map = L.map('map').setView([51.505, -0.09], 13);
-        var base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '--'
-        })
-        {# https://leaflet-extras.github.io/leaflet-providers/preview/index.html #}
-        base.addTo(map);
-        var marker = L.marker([51.5, -0.09]).addTo(map);
-        var circle = L.circle([51.508, -0.11], {
-            color: 'red',
-            fillColor: '#FF0000',
-            fillOpacity: 0.5,
-            radius: 500
-        }).addTo(map);
-        var polygon = L.polygon([
-            [51.509, -0.08],
-            [51.503, -0.06],
-            [51.51, -0.047]
-        ]).addTo(map);
-
-    </script>
-
+    {% leaflet_map "map" settings_overrides=aaa %}
 {% endblock %}

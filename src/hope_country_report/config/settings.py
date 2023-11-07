@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "django_cleanup.apps.CleanupSelectedConfig",
     "debug_toolbar",
     "jsoneditor",
+    "leaflet",
     "django.contrib.auth",
     "django.contrib.humanize",
     "django.contrib.messages",
@@ -70,10 +71,12 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "django.contrib.postgres",
     "hope_country_report.apps.admin",
+    "push_notifications",
     # "django.contrib.admin",
     # # "django_extensions",
     # # "django_filters",
     "django_select2",
+    "djgeojson",
     "flags",
     "silk",
     "tailwind",
@@ -253,7 +256,9 @@ from .fragments.csp import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
 from .fragments.hijack import *  # noqa
+from .fragments.leaflet import *  # noqa
 from .fragments.power_query import *  # noqa
+from .fragments.push_notifications import *  # noqa
 from .fragments.rest_framework import *  # noqa
 from .fragments.select2 import *  # noqa
 from .fragments.sentry import *  # noqa

@@ -22,6 +22,7 @@ MANDATORY = {
     "EMAIL_USE_SSL": (str, ""),
     "MAILJET_API_KEY": (str, ""),
     "MAILJET_SECRET_KEY": (str, ""),
+    "WP_PRIVATE_KEY": (str, ""),
 }
 
 DEVELOPMENT = {

@@ -1,6 +1,27 @@
 (function ($) {
 
     $(function () {
+        function updateQueryStringParameter(uri, key, value) {
+            var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+            var separator = uri.indexOf('?') !== -1 ? "&" : "?";
+            if (uri.match(re)) {
+                return uri.replace(re, '$1' + key + "=" + value + '$2');
+            } else {
+                return uri + separator + key + "=" + value;
+            }
+        }
+
+        function getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split('&');
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split('=');
+                if (decodeURIComponent(pair[0]) == variable) {
+                    return decodeURIComponent(pair[1]);
+                }
+            }
+            console.log('Query variable %s not found', variable);
+        }
 
         $("#close-sidebar").on("click", function () {
             $("#sidebar").addClass("w-16").removeClass("w-52");
@@ -20,6 +41,22 @@
         if (currentPage) {
             $(`.${currentPage}`).addClass("selected");
         }
+
+        $(".tag-filter").on("click", function (e) {
+            e.preventDefault();
+            // const url = new URL(location.href);
+            // const params = new URLSearchParams(url.search);
+            // console.log(1111, params);
+            if (e.shiftKey) {
+                let current = getQueryVariable("tag");
+
+                let newUrl = updateQueryStringParameter(location.href, "tag", $(this).data("tag"))
+            } else {
+                let newUrl = updateQueryStringParameter(location.href, "tag", $(this).data("tag"))
+            }
+
+            console.log(111111, newUrl);
+        });
 
 
         function delay(callback, ms) {

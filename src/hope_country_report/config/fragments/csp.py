@@ -4,8 +4,8 @@ SOURCES = (
     "'unsafe-eval'",
     # "inline",
     # "unsafe-inline",
-    # "data:",
-    # "blob:",
+    "data:",
+    "blob:",
     "'unsafe-inline'",
     # "img-src",
     # "localhost:8000",
@@ -15,6 +15,7 @@ SOURCES = (
     "d3js.org",
     "raw.githubusercontent.com",
     "unpkg.com",
+    "cdn.jsdelivr.net",
 )
 CSP_DEFAULT_SRC = SOURCES
 CSP_FRAME_SRC = []
@@ -40,7 +41,7 @@ CSP_IMG_SRC = (
     "openstreetmap.org",
     "unpkg.com",
     "*.tiles.mapbox.com",
-    "tile.openstreetmap.org",
+    "*.tile.openstreetmap.org",
     "www.openstreetmap.org",
     "basemap.nationalmap.gov",
     "*.tile.maps.openaip.net",

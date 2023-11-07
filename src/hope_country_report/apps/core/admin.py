@@ -10,10 +10,11 @@ from admin_extra_buttons.mixins import ExtraButtonsMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from jsoneditor.forms import JSONEditor
+from leaflet.admin import LeafletGeoAdmin
 from smart_admin.mixins import DisplayAllMixin
 from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 
-from hope_country_report.apps.core.models import CountryOffice, User, UserRole
+from hope_country_report.apps.core.models import CountryOffice, CountryShape, User, UserRole
 
 if TYPE_CHECKING:
     from hope_country_report.types.http import AuthHttpRequest
@@ -84,11 +85,17 @@ class CountryOfficeAdmin(AdminFiltersMixin, BaseAdmin):
         JSONField: {
             "widget": JSONEditor(
                 init_options={"mode": "view", "modes": ["view", "code", "tree"]},
-                ace_options={"readOnly": True},
+                ace_options={"readOnly": False},
             )
         }
     }
+    readonly_fields = ("hope_id",)
 
     @button()
     def sync(self, request: "AuthHttpRequest") -> None:
         CountryOffice.sync()
+
+
+@admin.register(CountryShape)
+class CountryShapeAdmin(LeafletGeoAdmin):
+    list_display = ("name", "area", "iso2", "iso3", "un", "region", "subregion")

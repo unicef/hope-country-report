@@ -7,7 +7,7 @@ import factory
 from social_django.models import UserSocialAuth
 from testutils.factories.base import AutoRegisterModelFactory
 
-from hope_country_report.apps.core.models import CountryOffice, DATE_FORMATS, TIME_FORMATS, User, UserRole
+from hope_country_report.apps.core.models import CountryOffice, CountryShape, DATE_FORMATS, TIME_FORMATS, User, UserRole
 
 from .django_auth import GroupFactory
 from .hope import BusinessAreaFactory
@@ -58,6 +58,23 @@ class LogEntryFactory(AutoRegisterModelFactory):
 
     class Meta:
         model = LogEntry
+
+
+class CountryShapeFactory(AutoRegisterModelFactory):
+    name = "Afghanistan"
+    area = 1
+    fips = "0"
+    iso2 = "AF"
+    iso3 = "AFG"
+    un = "4"
+    region = 1
+    subregion = 1
+    lon = 31
+    lat = 41
+    mpoly = None
+
+    class Meta:
+        model = CountryShape
 
 
 class CountryOfficeFactory(AutoRegisterModelFactory):

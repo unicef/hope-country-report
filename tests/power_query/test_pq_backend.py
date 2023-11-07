@@ -11,6 +11,7 @@ from testutils.factories import get_factory_for_model, UserFactory
 from testutils.perms import user_grant_permissions
 
 from hope_country_report.apps.power_query.backends import PowerQueryBackend
+from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -77,8 +78,11 @@ def test_be_has_perm(backend, user, data):
 
 def test_be_limit_access_to(backend, user, restricted_document):
     allowed = restricted_document.report.limit_access_to.first()
-    assert not backend.has_perm(user, "power_query.view_reportdocument", restricted_document)
+    with pytest.raises(RequestablePermissionDenied):
+        assert not backend.has_perm(user, "power_query.view_reportdocument", restricted_document)
+
     assert not backend.has_perm(allowed, "power_query.view_reportdocument", restricted_document)
+
     with user_grant_permissions(allowed, "power_query.view_reportdocument", restricted_document.country_office):
         assert backend.has_perm(allowed, "power_query.view_reportdocument", restricted_document)
 

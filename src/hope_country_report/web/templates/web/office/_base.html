@@ -1,6 +1,4 @@
 {% extends "layout.html" %}{% load i18n feature_flags %}
-{% flag_enabled 'ONLINE_PAGES' as ONLINE_PAGES %}
-
 {% block header %}
     <div class="pr-10 flex-grow align-middle pt-3">
         <form id="select-tenant" method="post" action="{% url 'select-tenant' %}">
@@ -21,6 +19,11 @@
         {% endblock %}
 {% endblock %}
 {% block menu %}
+    {% flag_enabled 'MENU_PREFERENCES' as FLAG_PAGES %}
+    {% flag_enabled 'MENU_PAGES' as FLAG_PREFERENCES %}
+    {% flag_enabled 'MENU_MAP' as FLAG_MAP %}
+    {% flag_enabled 'MENU_WORLD' as FLAG_WORLD %}
+    {% flag_enabled 'MENU_CHART' as FLAG_WORLD %}
     <ul class="menu p-0 w-full h-5/6 mt-10">
         <li class="flex OfficeHomeView h-12">
             <a class="flex w-full px-4" href="{% url "office-index" selected_office.slug %}">
@@ -37,22 +40,52 @@
         <li class="OfficeConfigurationListView OfficeConfigurationDetailView flex">
             <a class="flex w-full px-4" href="{% url "office-config-list" selected_office.slug %}">
                 <span class="flex text-2xl pt-2 pr-4 icon icon-equalizer"></span>
-                <div class="flex-grow pt-3 display-open">{% trans "Configuration" %}</div>
-            </a>
-        </li>
-        {% if CO_PREFERENCES %}
-        <li class="OfficeReportListView OfficeReportDetailView flex">
-            <a class="flex w-full px-4" href="{% url "office-config-list" selected_office.slug %}">
-                <span class="flex text-2xl pt-2 pr-4 icon icon-options"></span>
                 <div class="flex-grow pt-3 display-open">{% trans "Settings" %}</div>
             </a>
         </li>
+        {% if FLAG_PREFERENCES %}
+        <li class="OfficePreferences flex">
+            <a class="flex w-full px-4" href="{% url "office-preferences" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-settings"></span>
+                <div class="flex-grow pt-3 display-open">{% trans "Preferences" %}</div>
+            </a>
+        </li>
         {% endif %}
-        {% if ONLINE_PAGES %}
+        {% if FLAG_WORLD %}
+        <li class="OfficePreferences flex">
+            <a class="flex w-full px-4" href="{% url "office-world" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-globe"></span>
+                <div class="flex-grow pt-3 display-open">{% trans "World" %}</div>
+            </a>
+        </li>
+        {% endif %}
+        {% if FLAG_MAP %}
+        <li class="OfficePreferences flex">
+            <a class="flex w-full px-4" href="{% url "office-map" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-map"></span>
+                <div class="flex-grow pt-3 display-open">{% trans "Map" %}</div>
+            </a>
+        </li>
+        {% endif %}
+        {% if FLAG_CHART %}
+        <li class="OfficePageListView flex">
+            <a class="flex w-full px-4" href="{% url "office-chart" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
+                <div class="flex-grow  pt-3 display-open">{% trans "Charts" %}</div>
+            </a></li>
+        {% endif %}
+        {% if FLAG_PAGES %}
         <li class="OfficePageListView flex">
             <a class="flex w-full px-4" href="{% url "office-pages" selected_office.slug %}">
                 <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
                 <div class="flex-grow  pt-3 display-open">{% trans "Dashboards" %}</div>
+            </a></li>
+        {% endif %}
+        {% if FLAG_CHART %}
+            <li class="OfficePageListView flex">
+            <a class="flex w-full px-4" href="{% url "office-chart" selected_office.slug %}">
+                <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
+                <div class="flex-grow  pt-3 display-open">{% trans "Chart" %}</div>
             </a></li>
         {% endif %}
         <li class="OfficePageListView flex">

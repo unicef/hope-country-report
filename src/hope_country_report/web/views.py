@@ -1,5 +1,8 @@
 from typing import Any, TYPE_CHECKING, TypeVar
 
+import datetime
+from urllib.parse import urlparse
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,8 +12,9 @@ from django.core.signing import get_cookie_signer
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import resolve, reverse
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView
@@ -19,7 +23,9 @@ from django.views.generic.edit import FormView
 import django_stubs_ext
 from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminfilters.utils import parse_bool
+from djgeojson.templatetags.geojson_tags import geojsonfeature
 
+from hope_country_report.apps.core.forms import CountryOfficeForm
 from hope_country_report.apps.core.models import CountryOffice, User
 from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied
 from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument
@@ -46,7 +52,6 @@ if TYPE_CHECKING:
 @login_required
 def index(request: "HttpRequest") -> "HttpResponse":
     return redirect("select-tenant")
-    # return render(request, "home.html", {"tenant_form": SelectTenantForm(request=request)})
 
 
 class SelectedOfficeMixin(LoginRequiredMixin, View):
@@ -55,8 +60,7 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
         if self.request.user.is_superuser:
             co = CountryOffice.objects.get(slug=self.kwargs["co"])
         else:
-            # co = CountryOffice.objects.get(slug=self.kwargs["co"], userrole__user=self.request.user)
-            co = CountryOffice.objects.get(slug=self.kwargs["co"])
+            co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
         return co
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -73,12 +77,59 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
         return response
 
 
+class OfficePreferencesView(SelectedOfficeMixin, PermissionRequiredMixin, UpdateView[CountryOffice]):
+    template_name = "web/office/prefs.html"
+    permission_required = ["core.change_countryoffice"]
+    model = CountryOffice
+    form_class = CountryOfficeForm
+    success_url = "."
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        from django.utils import formats
+        from django.utils.translation import override
+
+        sample = datetime.datetime(2000, 12, 31, 23, 59)
+
+        with override(self.get_object().locale):
+            return super().get_context_data(
+                aaa=formats.date_format(sample),
+                bbb=formats.time_format(sample),
+                ccc=formats.number_format(12345678),
+                ddd=formats.number_format(123.45),
+                **kwargs,
+            )
+
+    def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
+        return self.selected_office
+
+    def form_valid(self, form: "_ModelFormT") -> "HttpResponse":
+        response = super().form_valid(form)
+        messages.success(self.request, _("Saved."))
+        return response
+
+
 class OfficeHomeView(SelectedOfficeMixin, TemplateView):
     template_name = "web/office/index.html"
 
 
 class OfficeTemplateView(SelectedOfficeMixin, TemplateView):
     template_name = "web/office/index.html"
+
+
+class OfficeMapView(SelectedOfficeMixin, TemplateView):
+    template_name = "web/office/map.html"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        return super().get_context_data(
+            aaa={
+                "DEFAULT_ZOOM": 13,
+                # "MIN_ZOOM": 12,
+                "MAX_ZOOM": 13,
+                "DEFAULT_CENTER": [self.selected_office.shape.lat, self.selected_office.shape.lon],
+            },
+            feature=mark_safe(geojsonfeature(self.selected_office.shape, ":mpoly")),
+            **kwargs,
+        )
 
 
 class OfficeConfigurationListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[ReportConfiguration]):
@@ -131,6 +182,11 @@ class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixi
     template_name = "web/office/document.html"
     permission_required = ["power_query.view_reportdocument"]
     context_object_name = "doc"
+
+    def handle_no_permission(self):
+        if not self.has_permission():
+            raise RequestablePermissionDenied(self.get_object().report)
+        return super().handle_no_permission()
 
     def has_permission(self) -> bool:
         obj: "ReportDocument" = self.get_object()
@@ -258,6 +314,14 @@ def select_tenant(request: "HttpRequest") -> "HttpResponse":
         if form.is_valid():
             office = form.cleaned_data["tenant"]
             set_selected_tenant(form.cleaned_data["tenant"])
+            try:
+                resolver = resolve(urlparse(request.META.get("HTTP_REFERER", "/")).path)
+                if list(resolver.kwargs.keys()) == ["co"]:
+                    return HttpResponseRedirect(reverse(resolver.url_name, args=[office.slug]))
+                else:
+                    raise Exception(resolver)
+            except Exception:
+                pass
             return HttpResponseRedirect(reverse("office-index", args=[office.slug]))
     else:
         return render(request, "select_tenant.html", {"tenant_form": SelectTenantForm(request=request)})

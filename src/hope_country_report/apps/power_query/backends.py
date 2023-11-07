@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import Permission
 
+from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied
 from hope_country_report.apps.power_query.models import ReportDocument
 
 if TYPE_CHECKING:
@@ -39,11 +40,10 @@ class PowerQueryBackend(ModelBackend):
                 if user_obj == obj.report.owner:
                     return True
                 elif (
-                    obj.report.limit_access_to.exists()
+                    obj.report.limit_access_to.count()
                     and not obj.report.limit_access_to.filter(id=user_obj.id).exists()
                 ):
-                    return False
-                    # raise RequestablePermissionDenied(obj.report)
+                    raise RequestablePermissionDenied(obj.report)
             else:
                 return perm in self.get_all_permissions(user_obj, obj)
         return super().has_perm(user_obj, perm, obj)

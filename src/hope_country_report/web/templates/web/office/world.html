@@ -1,0 +1,47 @@
+{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters %}
+{% block extrahead %}
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+{% endblock %}
+{% block content %}
+    <div class="box h-screen">
+        <svg id="d3" class="w-full h-5/6">
+            99999999
+        </svg>
+    </div>
+
+    <script>
+        const height = Math.min(width, 720); // Observable sets a responsive *width*
+        const dpr = window.devicePixelRatio ?? 1;
+        const canvas = d3.create("canvas")
+            .attr("width", dpr * width)
+            .attr("height", dpr * height)
+            .style("width", `${width}px`);
+        const context = canvas.node().getContext("2d");
+        context.scale(dpr, dpr);
+  const projection = d3.geoOrthographic().fitExtent([[10, 10], [width - 10, height - 10]], {type: "Sphere"});
+  const path = d3.geoPath(projection, context);
+  const tilt = 20;
+
+        {#let svg = d3.select("#d3").style("color", "blue");#}
+        {#let projection = d3.geoEquirectangular().center([0, 0]);#}
+        {#const pathGenerator = d3.geoPath().projection(projection);#}
+        {#let g = svg.append("g");#}
+        {#var data;#}
+        {#d3.json("https://raw.githubusercontent.com/iamspruce/intro-d3/main/data/countries-110m.geojson")#}
+        {#    .then((d) => {#}
+        {#        var data = d;#}
+        {#        g.selectAll("path")#}
+        {#            .data(data.features)#}
+        {#            .join("path")#}
+        {#            .attr("d", pathGenerator);#}
+        {#    });#}
+        {#Promise.all([#}
+        {#    d3.json("https://raw.githubusercontent.com/iamspruce/intro-d3/main/data/afghanistan_state_boundaries.geojson"),#}
+        {#    d3.json("https://raw.githubusercontent.com/iamspruce/intro-d3/main/data/afghanistan-states.json")#}
+        {#]).then(([geoJSONdata, countryData]) => {#}
+        {#    console.log(geoJSONdata)#}
+        {#    console.log(countryData)#}
+        {# });#}
+    </script>
+{% endblock %}

@@ -131,7 +131,7 @@ def test_report_config(browser: "SmartDriver", report_document: "ReportDocument"
     select = Select(browser.wait_for(By.NAME, "tenant"))
     select.select_by_visible_text("Afghanistan")
 
-    browser.wait_for(By.LINK_TEXT, "Configuration").click()
+    browser.wait_for(By.LINK_TEXT, "Settings").click()
     browser.wait_for_url("/afghanistan/configurations/")
     browser.wait_for(By.LINK_TEXT, "tag1").click()
     browser.wait_for(By.ID, "remove-filter").click()

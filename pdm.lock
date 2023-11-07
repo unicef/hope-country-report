@@ -6,7 +6,7 @@ groups = ["default", "test"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:6f4b53d093955c4f448e3f0a06f4dbe25171b0aa3af16787a22c4878a9963d3a"
+content_hash = "sha256:ef1540e355f5b1eb6f932de828c5d2cd7aba3aff91b3cf829b9305a7aadb2eeb"
 
 [[package]]
 name = "amqp"
@@ -782,6 +782,34 @@ files = [
 ]
 
 [[package]]
+name = "django-geojson"
+version = "4.0.0"
+requires_python = ">=3.5"
+summary = "Serve vectorial map layers with Django"
+dependencies = [
+    "Django>=3.2",
+]
+files = [
+    {file = "django-geojson-4.0.0.tar.gz", hash = "sha256:7c2085ef0d4b20f8538dcecb74c614369f5a076e9512c7516699a54c1639cb00"},
+    {file = "django_geojson-4.0.0-py3-none-any.whl", hash = "sha256:0671805adb329137b981be2e3080a81cd6ea413e7e370872d608da8a655d1b9b"},
+]
+
+[[package]]
+name = "django-geojson"
+version = "4.0.0"
+extras = ["field"]
+requires_python = ">=3.5"
+summary = "Serve vectorial map layers with Django"
+dependencies = [
+    "django-geojson==4.0.0",
+    "django-leaflet>=0.12",
+]
+files = [
+    {file = "django-geojson-4.0.0.tar.gz", hash = "sha256:7c2085ef0d4b20f8538dcecb74c614369f5a076e9512c7516699a54c1639cb00"},
+    {file = "django_geojson-4.0.0-py3-none-any.whl", hash = "sha256:0671805adb329137b981be2e3080a81cd6ea413e7e370872d608da8a655d1b9b"},
+]
+
+[[package]]
 name = "django-hijack"
 version = "3.4.2"
 summary = "django-hijack allows superusers to hijack (=login as) and work on behalf of another user."
@@ -831,6 +859,18 @@ dependencies = [
 files = [
     {file = "django-jsoneditor-0.2.4.tar.gz", hash = "sha256:1d3dfca28f047feefa6ebc6f9541179eb815fb459b006faf3fb8d0fb2197d2df"},
     {file = "django_jsoneditor-0.2.4-py2.py3-none-any.whl", hash = "sha256:d7a639a7251e376126b5be64ea588c925c7a40d45e0e212f66ef475d2f0f90bb"},
+]
+
+[[package]]
+name = "django-leaflet"
+version = "0.29.0"
+summary = "Use Leaflet in your django projects"
+dependencies = [
+    "Django",
+]
+files = [
+    {file = "django-leaflet-0.29.0.tar.gz", hash = "sha256:2f6dc8c7187fd22e62b6f2b7b42eed86920f81bec312aa654981ebe5bc8e0866"},
+    {file = "django_leaflet-0.29.0-py3-none-any.whl", hash = "sha256:ea35244539fe298156feafc7f1e2ce63067c8caa2ac6f8344069796b19d1ce9b"},
 ]
 
 [[package]]
@@ -1276,6 +1316,16 @@ files = [
 ]
 
 [[package]]
+name = "geojson"
+version = "3.1.0"
+requires_python = ">=3.7"
+summary = "Python bindings and utilities for GeoJSON"
+files = [
+    {file = "geojson-3.1.0-py3-none-any.whl", hash = "sha256:68a9771827237adb8c0c71f8527509c8f5bef61733aa434cefc9c9d4f0ebe8f3"},
+    {file = "geojson-3.1.0.tar.gz", hash = "sha256:58a7fa40727ea058efc28b0e9ff0099eadf6d0965e04690830208d3ef571adac"},
+]
+
+[[package]]
 name = "ghp-import"
 version = "2.1.0"
 summary = "Copy your docs directly to the gh-pages branch."
@@ -1621,6 +1671,25 @@ files = [
 ]
 
 [[package]]
+name = "numpy"
+version = "1.25.2"
+requires_python = ">=3.9"
+summary = "Fundamental package for array computing in Python"
+files = [
+    {file = "numpy-1.25.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:c5462d19336db4560041517dbb7759c21d181a67cb01b36ca109b2ae37d32418"},
+    {file = "numpy-1.25.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c5652ea24d33585ea39eb6a6a15dac87a1206a692719ff45d53c5282e66d4a8f"},
+    {file = "numpy-1.25.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0d60fbae8e0019865fc4784745814cff1c421df5afee233db6d88ab4f14655a2"},
+    {file = "numpy-1.25.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:60e7f0f7f6d0eee8364b9a6304c2845b9c491ac706048c7e8cf47b83123b8dbf"},
+    {file = "numpy-1.25.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:bb33d5a1cf360304754913a350edda36d5b8c5331a8237268c48f91253c3a364"},
+    {file = "numpy-1.25.2-cp311-cp311-win32.whl", hash = "sha256:5883c06bb92f2e6c8181df7b39971a5fb436288db58b5a1c3967702d4278691d"},
+    {file = "numpy-1.25.2-cp311-cp311-win_amd64.whl", hash = "sha256:5c97325a0ba6f9d041feb9390924614b60b99209a71a69c876f71052521d42a4"},
+    {file = "numpy-1.25.2-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:1a1329e26f46230bf77b02cc19e900db9b52f398d6722ca853349a782d4cff55"},
+    {file = "numpy-1.25.2-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4c3abc71e8b6edba80a01a52e66d83c5d14433cbcd26a40c329ec7ed09f37901"},
+    {file = "numpy-1.25.2-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:1b9735c27cea5d995496f46a8b1cd7b408b3f34b6d50459d9ac8fe3a20cc17bf"},
+    {file = "numpy-1.25.2.tar.gz", hash = "sha256:fd608e19c8d7c55021dffd43bfe5492fab8cc105cc8986f813f8c3c048b38760"},
+]
+
+[[package]]
 name = "oauthlib"
 version = "3.2.2"
 requires_python = ">=3.6"
@@ -1861,6 +1930,17 @@ summary = "library with cross-python path, ini-parsing, io, code, log facilities
 files = [
     {file = "py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"},
     {file = "py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
+]
+
+[[package]]
+name = "py-vapid"
+version = "1.9.0"
+summary = "Simple VAPID header generation library"
+dependencies = [
+    "cryptography>=2.5",
+]
+files = [
+    {file = "py-vapid-1.9.0.tar.gz", hash = "sha256:0664ab7899742ef2b287397a4d461ef691ed0cc2f587205128d8cf617ffdb919"},
 ]
 
 [[package]]
@@ -2379,6 +2459,32 @@ summary = "Easily download, build, install, upgrade, and uninstall Python packag
 files = [
     {file = "setuptools-68.2.2-py3-none-any.whl", hash = "sha256:b454a35605876da60632df1a60f736524eb73cc47bbc9f3f1ef1b644de74fd2a"},
     {file = "setuptools-68.2.2.tar.gz", hash = "sha256:4ac1475276d2f1c48684874089fefcd83bd7162ddaafb81fac866ba0db282a87"},
+]
+
+[[package]]
+name = "shapely"
+version = "2.0.2"
+requires_python = ">=3.7"
+summary = "Manipulation and analysis of geometric objects"
+dependencies = [
+    "numpy>=1.14",
+]
+files = [
+    {file = "shapely-2.0.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:5b0c052709c8a257c93b0d4943b0b7a3035f87e2d6a8ac9407b6a992d206422f"},
+    {file = "shapely-2.0.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:2d217e56ae067e87b4e1731d0dc62eebe887ced729ba5c2d4590e9e3e9fdbd88"},
+    {file = "shapely-2.0.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:94ac128ae2ab4edd0bffcd4e566411ea7bdc738aeaf92c32a8a836abad725f9f"},
+    {file = "shapely-2.0.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fa3ee28f5e63a130ec5af4dc3c4cb9c21c5788bb13c15e89190d163b14f9fb89"},
+    {file = "shapely-2.0.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:737dba15011e5a9b54a8302f1748b62daa207c9bc06f820cd0ad32a041f1c6f2"},
+    {file = "shapely-2.0.2-cp311-cp311-win32.whl", hash = "sha256:45ac6906cff0765455a7b49c1670af6e230c419507c13e2f75db638c8fc6f3bd"},
+    {file = "shapely-2.0.2-cp311-cp311-win_amd64.whl", hash = "sha256:dc9342fc82e374130db86a955c3c4525bfbf315a248af8277a913f30911bed9e"},
+    {file = "shapely-2.0.2-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:06f193091a7c6112fc08dfd195a1e3846a64306f890b151fa8c63b3e3624202c"},
+    {file = "shapely-2.0.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:eebe544df5c018134f3c23b6515877f7e4cd72851f88a8d0c18464f414d141a2"},
+    {file = "shapely-2.0.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:7e92e7c255f89f5cdf777690313311f422aa8ada9a3205b187113274e0135cd8"},
+    {file = "shapely-2.0.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:be46d5509b9251dd9087768eaf35a71360de6afac82ce87c636990a0871aa18b"},
+    {file = "shapely-2.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a5533a925d8e211d07636ffc2fdd9a7f9f13d54686d00577eeb11d16f00be9c4"},
+    {file = "shapely-2.0.2-cp312-cp312-win32.whl", hash = "sha256:084b023dae8ad3d5b98acee9d3bf098fdf688eb0bb9b1401e8b075f6a627b611"},
+    {file = "shapely-2.0.2-cp312-cp312-win_amd64.whl", hash = "sha256:ea84d1cdbcf31e619d672b53c4532f06253894185ee7acb8ceb78f5f33cbe033"},
+    {file = "shapely-2.0.2.tar.gz", hash = "sha256:1713cc04c171baffc5b259ba8531c58acc2a301707b7f021d88a15ed090649e7"},
 ]
 
 [[package]]

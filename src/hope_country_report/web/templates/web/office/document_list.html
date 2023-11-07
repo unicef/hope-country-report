@@ -59,8 +59,7 @@
 {#                    <td>{% trans report.status %}</td>#}
                     <td>{{ doc.report.owner|default_if_none:"" }}</td>
                     <td>{% for t in doc.report.tags.all %}
-                        <a href="{% build_filter_url "tag" t.name %}"><span
-                                class="tag {{ t.name|color }}">{{ t }}</span></a>
+                        <a href="{% build_filter_url "tag" t.name %}"><span class="tag {{ t.name|color }}">{{ t }}</span></a>
                     {% endfor %}
                     </td>
                 </tr>

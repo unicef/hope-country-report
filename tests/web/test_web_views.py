@@ -165,15 +165,19 @@ def test_document(django_app, admin_user, report_document: "ReportDocument"):
 def test_document_restricted(django_app, user, restricted_document: "ReportDocument"):
     config: "ReportConfiguration" = restricted_document.report
     url = reverse("office-doc", args=[config.country_office.slug, restricted_document.pk])
-    with user_grant_permissions(user, ["power_query.view_reportdocument"]):
+    with user_grant_permissions(user, ["power_query.view_reportdocument"], config.country_office):
         res = django_app.get(url, user=user, expect_errors=True)
-    assert res.status_code == 403
+    assert res.status_code == 302
+    assert (
+        res.headers["Location"]
+        == f"/{restricted_document.report.country_office.slug}/request-access/{restricted_document.report.pk}/"
+    )
 
 
 def test_document_request_access(django_app, user, restricted_document: "ReportDocument"):
     config: "ReportConfiguration" = restricted_document.report
     url = reverse("request-access", args=[config.country_office.slug, restricted_document.report.pk])
-    with user_grant_permissions(user, ["power_query.view_reportdocument"]):
+    with user_grant_permissions(user, ["power_query.view_reportdocument"], config.country_office):
         res = django_app.get(url, user=user)
         assert res.status_code == 200
         res = res.forms["request-access"].submit()
@@ -184,7 +188,7 @@ def test_document_display(django_app, report_document):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner
     url = reverse("office-doc-display", args=[config.country_office.slug, config.documents.first().pk])
-    with user_grant_permissions(config.owner, ["power_query.view_reportconfiguration"]):
+    with user_grant_permissions(config.owner, ["power_query.view_reportconfiguration"], config.country_office):
         res = django_app.get(url, user=user)
     assert res.status_code == 200
 

@@ -2,6 +2,7 @@ from typing import Any
 
 import logging
 import random
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -33,8 +34,9 @@ class Command(BaseCommand):
         )
         Site.objects.clear_cache()
 
-        FlagState.objects.get_or_create(name="DEVELOP_DEBUG_TOOLBAR", condition="hostname", value="127.0.0.1,localhost")
-        FlagState.objects.get_or_create(name="DEVELOP_DEBUG_TOOLBAR", condition="debug", value="1", required=True)
+        for flag in settings.FLAGS.keys():
+            FlagState.objects.get_or_create(name=flag, condition="hostname", value="127.0.0.1,localhost")
+
         reporters = Group.objects.get(name=settings.REPORTERS_GROUP_NAME)
         afg, __ = CountryOffice.objects.get_or_create(slug="afghanistan")
         user, __ = User.objects.get_or_create(username="user")
@@ -100,12 +102,14 @@ extra={"monthname": calendar.month_name[month]}
             {"compress": True},
         ]:
             r = ReportConfiguration.objects.get_or_create(
-                title=f"{q2.name} #2",
+                name=f"{urlencode(params)}",
+                title=f"{urlencode(params)}",
                 country_office=q2.country_office,
-                defaults={"query": q2, "owner": q.owner, "context": {"extra_footer": "-- Report footer --", **params}},
+                defaults={"query": q2, "owner": q.owner, "context": {"extra_footer": "-- Report footer --"}, **params},
             )[0]
             r.formatters.add(*Formatter.objects.all())
             r.tags.add(*random.choices(tags, k=random.choice([1, 2, 3])))
+            print("--------", r.pk, r.name)
 
         for r in ReportConfiguration.objects.all():
-            r.execute(True)
+            r.execute(True, notify=False)

@@ -1,5 +1,5 @@
-{% load static i18n %}<!DOCTYPE html>
-<html lang="en">
+{% load static i18n %}{% get_current_language_bidi as LANGUAGE_BIDI %}<!DOCTYPE html>
+<html lang="en" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
     <title>{{ title|default_if_none:"HOPE Reporting" }}</title>
     {% block meta %}

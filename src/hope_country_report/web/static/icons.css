@@ -78,6 +78,42 @@
 
 /*----------- */
 
+.icon-location-pin:before {
+  content: "\e94f";
+}
+.icon-map:before {
+  content: "\e950";
+}
+.icon-location1:before {
+  content: "\e951";
+}
+.icon-block:before {
+  content: "\e939";
+}
+.icon-attachment:before {
+  content: "\e936";
+}
+.icon-close1:before {
+  content: "\e922";
+}
+.icon-close2:before {
+  content: "\e923";
+}
+.icon-cross:before {
+  content: "\e924";
+}
+.icon-world:before {
+  content: "\e94c";
+}
+.icon-globe:before {
+  content: "\e94c";
+}
+.icon-internet:before {
+  content: "\e94c";
+}
+.icon-network:before {
+  content: "\e94c";
+}
 .icon-bargraph:before {
   content: "\e93e";
 }
@@ -111,11 +147,29 @@
 .icon-mail-envelope1:before {
   content: "\e926";
 }
+.icon-mail-envelope-closed:before {
+  content: "\e952";
+}
+.icon-mail-envelope-closed1:before {
+  content: "\e953";
+}
 .icon-bookmark:before {
   content: "\e940";
 }
 .icon-bookmark1:before {
   content: "\e941";
+}
+.icon-star:before {
+  content: "\e954";
+}
+.icon-star1:before {
+  content: "\e955";
+}
+.icon-key:before {
+  content: "\e956";
+}
+.icon-key1:before {
+  content: "\e957";
 }
 .icon-document-graph:before {
   content: "\e900";
@@ -159,6 +213,18 @@
 .icon-folders1:before {
   content: "\e93d";
 }
+.icon-document-zip:before {
+  content: "\e958";
+}
+.icon-document-zip1:before {
+  content: "\e959";
+}
+.icon-zip:before {
+  content: "\e95a";
+}
+.icon-zip1:before {
+  content: "\e95b";
+}
 .icon-search:before {
   content: "\e927";
 }
@@ -177,11 +243,23 @@
 .icon-unlock1:before {
   content: "\e92c";
 }
+.icon-tag-add:before {
+  content: "\e95c";
+}
+.icon-tag-add1:before {
+  content: "\e95d";
+}
 .icon-stop-watch:before {
   content: "\e92d";
 }
 .icon-stop-watch1:before {
   content: "\e92e";
+}
+.icon-warning4:before {
+  content: "\e95e";
+}
+.icon-warning5:before {
+  content: "\e95f";
 }
 .icon-file-html:before {
   content: "\e94a";
@@ -273,6 +351,9 @@
 .icon-documents:before {
   content: "\e933";
 }
+.icon-world-outline:before {
+  content: "\e94d";
+}
 .icon-cog-outline:before {
   content: "\e93a";
 }
@@ -294,23 +375,29 @@
 .icon-share:before {
   content: "\e921";
 }
-.icon-block:before {
-  content: "\e939";
-}
-.icon-attachment:before {
-  content: "\e936";
-}
-.icon-close1:before {
-  content: "\e922";
-}
-.icon-close2:before {
-  content: "\e923";
-}
-.icon-cross:before {
-  content: "\e924";
-}
 .icon-television:before {
   content: "\e91f";
+}
+.icon-users:before {
+  content: "\e960";
+}
+.icon-group:before {
+  content: "\e960";
+}
+.icon-team:before {
+  content: "\e960";
+}
+.icon-members:before {
+  content: "\e960";
+}
+.icon-community:before {
+  content: "\e960";
+}
+.icon-collaborate:before {
+  content: "\e960";
+}
+.icon-location:before {
+  content: "\e94e";
 }
 .icon-shield1:before {
   content: "\e946";

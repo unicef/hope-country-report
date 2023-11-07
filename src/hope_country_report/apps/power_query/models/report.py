@@ -115,7 +115,7 @@ class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeS
                 self.save()
             for dataset in query.datasets.all():
                 for formatter in self.formatters.all():
-                    res = ReportDocument.process(self, dataset, formatter)
+                    res = ReportDocument.process(self, dataset, formatter, notify=notify)
                     result.append(res)
             self.refresh_from_db()
             self.last_run = timezone.now()

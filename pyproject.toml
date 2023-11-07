@@ -71,6 +71,11 @@ dependencies = [
     "django-entangled>=0.5.4",
     "django-jsoneditor>=0.2.4",
     "azure-devops>=7.1.0b3",
+    "django-geojson[field]>=4.0.0",
+    "django-leaflet>=0.29.0",
+    "shapely>=2.0.2",
+    "geojson>=3.1.0",
+    "py-vapid>=1.9.0",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"
