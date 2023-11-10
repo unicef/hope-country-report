@@ -52,6 +52,9 @@ class CountryOffice(models.Model):
     class Meta:
         ordering = ("name",)
 
+    def __str__(self) -> str:
+        return self.name
+
     @cached_property
     def business_area(self) -> "BusinessArea|None":
         from hope_country_report.apps.hope.models import BusinessArea
@@ -62,7 +65,7 @@ class CountryOffice(models.Model):
     def shape(self) -> "CountryShape|None":
         return CountryShape.objects.get(pk=self.settings.get("map"))
 
-    def get_map_settings(self):
+    def get_map_settings(self) -> dict[str, int | float]:
         lat = self.settings.get("map", {}).get("center", {}).get("lat", 0)
         lng = self.settings.get("map", {}).get("center", {}).get("lng", 0)
         zoom = self.settings.get("map", {}).get("zoom", 8)
@@ -80,6 +83,7 @@ class CountryOffice(models.Model):
             hope_id=CountryOffice.HQ,
             defaults={
                 "name": "Headquarter",
+                "slug": "-",
                 "long_name": "Headquarter",
                 "active": True,
                 "code": CountryOffice.HQ,
@@ -97,9 +101,6 @@ class CountryOffice(models.Model):
                 "slug": slugify(ba.name),
             }
             CountryOffice.objects.update_or_create(hope_id=ba.id, defaults=values)
-
-    def __str__(self) -> str:
-        return self.name
 
     def get_absolute_url(self) -> str:
         return reverse("office-index", args=[self.slug])

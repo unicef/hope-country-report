@@ -6,6 +6,7 @@ import factory
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query.models import (
+    ChartPage,
     Dataset,
     Formatter,
     Parametrizer,
@@ -125,3 +126,12 @@ class ParametrizerFactory(AutoRegisterModelFactory):
     class Meta:
         model = Parametrizer
         django_get_or_create = ("code",)
+
+
+class ChartPageFactory(AutoRegisterModelFactory):
+    country_office = factory.SubFactory(CountryOfficeFactory)
+    title = factory.Sequence(lambda n: "ChartPage %s" % n)
+
+    class Meta:
+        model = ChartPage
+        django_get_or_create = ("title",)

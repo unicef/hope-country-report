@@ -1,10 +1,12 @@
+from typing import Any
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from cryptography.hazmat.primitives import serialization
 
 
-def clean_key(value):
+def clean_key(value: str) -> str:
     return value.replace("\n", "").replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "")
 
 
@@ -13,7 +15,7 @@ class Command(BaseCommand):
     output_transaction = False
     requires_system_checks = []
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> str | None:
         from py_vapid import b64urlencode, Vapid02
 
         print("Add this env vars\n")

@@ -76,6 +76,8 @@ INSTALLED_APPS = [
     # # "django_extensions",
     # # "django_filters",
     "django_select2",
+    "chartjs",
+    "crispy_forms",
     "djgeojson",
     "flags",
     "silk",
@@ -111,7 +113,7 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = (
-    "unicef_security.backends.UNICEFAzureADB2COAuth2",
+    "social_core.backends.azuread_tenant.AzureADTenantOAuth2",
     "hope_country_report.apps.power_query.backends.PowerQueryBackend",
     "hope_country_report.apps.tenant.backend.TenantBackend",
     "django.contrib.auth.backends.ModelBackend",
@@ -268,3 +270,5 @@ from .fragments.social_auth import *  # noqa
 from .fragments.storage import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
+
+CRISPY_TEMPLATE_PACK = "bootstrap4"

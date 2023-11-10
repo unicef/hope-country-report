@@ -15,12 +15,12 @@ from .views import (
     OfficePreferencesView,
     OfficeReportDocumentDetailView,
     OfficeReportDocumentListView,
-    OfficeTemplateView,
-    OfficeUserListView,
     RequestAccessView,
     select_tenant,
     UserProfileView,
 )
+from .views.base import OfficeTemplateView
+from .views.charts import ChartDetailView, ChartListView
 
 urlpatterns = [
     path("", index, name="index"),
@@ -31,9 +31,10 @@ urlpatterns = [
     path("<slug:co>/request-access/<int:id>/", RequestAccessView.as_view(), name="request-access"),
     path("<slug:co>/", OfficeHomeView.as_view(), name="office-index"),
     path("<slug:co>/map/", OfficeMapView.as_view(), name="office-map"),
-    path("<slug:co>/chart/", OfficeTemplateView.as_view(template_name="web/office/chart.html"), name="office-chart"),
+    path("<slug:co>/charts/", ChartListView.as_view(), name="office-chart-list"),
+    path("<slug:co>/charts/<int:pk>/", ChartDetailView.as_view(), name="office-chart"),
     path("<slug:co>/world/", OfficeTemplateView.as_view(template_name="web/office/world.html"), name="office-world"),
-    path("<slug:co>/users/", OfficeUserListView.as_view(), name="office-users"),
+    # path("<slug:co>/users/", OfficeUserListView.as_view(), name="office-users"),
     path("<slug:co>/pages/", OfficePageListView.as_view(), name="office-pages"),
     path("<slug:co>/preferences/", OfficePreferencesView.as_view(), name="office-preferences"),
     path("<slug:co>/configurations/", OfficeConfigurationListView.as_view(), name="office-config-list"),

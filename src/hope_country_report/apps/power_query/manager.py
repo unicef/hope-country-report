@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class PowerQueryManager(SmartManager["_PowerQueryModel"]):
-    def get_tenant_filter(self) -> "Q":
+    def get_tenant_filter(self, selected_tenant=None) -> "Q":
         _filter = Q()
         if must_tenant():
             tenant_filter_field = self.model.Tenant.tenant_filter_field
@@ -31,7 +31,7 @@ class PowerQueryManager(SmartManager["_PowerQueryModel"]):
             if tenant_filter_field == "__all__":
                 return Q()
             else:
-                active_tenant = get_selected_tenant()
+                active_tenant = selected_tenant or get_selected_tenant()
                 if active_tenant:
                     _filter = Q(**{tenant_filter_field: active_tenant})
         return _filter

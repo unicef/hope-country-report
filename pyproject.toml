@@ -1,6 +1,6 @@
 [project]
-name = ""
-version = ""
+name = "hope-reporting"
+version = "0.1"
 description = ""
 authors = [
     {name = "sax", email = "s.apostolico@gmail.com"},
@@ -76,6 +76,14 @@ dependencies = [
     "shapely>=2.0.2",
     "geojson>=3.1.0",
     "py-vapid>=1.9.0",
+    "django-slick-reporting>=1.2.0",
+    "drf-nested-routers>=0.93.4",
+    "django-chartjs>=2.3.0",
+]
+
+[project.optional-dependencies]
+d = [
+    "pytest-echo>=1.7.1",
 ]
 [tool.pdm.scripts]
 lint = "pre-commit run --all-files"
@@ -112,6 +120,7 @@ test = [
     "django-stubs-ext>=4.2.2",
     "types-setuptools>=68.2.0.0",
     "mkdocs>=1.5.3",
+    "tox>=4.11.3",
 ]
 
 [tool.black]

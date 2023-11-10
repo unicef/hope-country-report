@@ -169,7 +169,7 @@ class Command(BaseCommand):
             from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
             if not CountryShape.objects.exists():
-                data = resource_path("DATA/TM_WORLD_BORDERS-0.3.shp")
+                data = resource_path("INITIAL_DATA/TM_WORLD_BORDERS-0.3.shp")
                 try:
                     world_mapping = {
                         "fips": "FIPS",
@@ -197,8 +197,6 @@ class Command(BaseCommand):
                 if s := CountryShape.objects.filter(name__iexact=c.slug).first():
                     c.settings = {"map": s.pk}
                     c.save()
-                else:
-                    print("src/hope_country_report/apps/core/management/commands/upgrade.py: 205", 111, c)
 
             created = create_defaults()
             if not created:

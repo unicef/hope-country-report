@@ -17,7 +17,7 @@ from ....utils.mail import notify_report_completion
 from ...core.models import CountryOffice, User
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
-from ._base import AdminReversable, CeleryEnabled, PowerQueryModel, TimeStampMixin
+from ._base import AdminReversable, CeleryEnabled, ManageableObject, PowerQueryModel, TimeStampMixin
 from .formatter import Formatter
 from .query import Query
 
@@ -32,7 +32,9 @@ logger = logging.getLogger(__name__)
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-class ReportConfiguration(PowerQueryModel, CeleryEnabled, AdminReversable, TimeStampMixin, models.Model):
+class ReportConfiguration(
+    PowerQueryModel, ManageableObject, CeleryEnabled, AdminReversable, TimeStampMixin, models.Model
+):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     title = models.CharField(max_length=255, blank=False, null=False, verbose_name="Report Title")

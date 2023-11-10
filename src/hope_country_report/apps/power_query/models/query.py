@@ -24,13 +24,11 @@ from ..celery_tasks import PowerQueryTask
 from ..exceptions import QueryRunCanceled
 from ..json import PQJSONEncoder
 from ..utils import dict_hash, to_dataset
-from ._base import AdminReversable, CeleryEnabled
+from ._base import AdminReversable, CeleryEnabled, PowerQueryModel
 from .arguments import Parametrizer
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Tuple
-
-    from collections.abc import Iterable
+    from typing import Any, Dict, Iterable, Tuple
 
     from django.db.models import QuerySet
 
@@ -41,7 +39,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Query(CeleryEnabled, AdminReversable, models.Model):
+class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     datasets: "QuerySet[Dataset]"

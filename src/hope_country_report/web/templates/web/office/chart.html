@@ -1,34 +1,25 @@
-{% extends "web/office/_base.html" %}{% load i18n %}
-{% block extrahead %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% load static %}
+<html>
+    <head>
+        <title>django-chartjs line chart demo</title>
+        <!--[if lte IE 8]>
+            <script src="{% static 'js/excanvas.js' %}"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <h1>Some Line Charts loaded in Ajax!</h1>
 
-{% endblock %}
-{% block page-title %}{% trans "Welcome to HOPE Reporting" %}: {{ selected_office }}{% endblock %}
-{% block content %}
-<div>
-  <canvas id="myChart"></canvas>
-</div>
-<script>
-  const ctx = document.getElementById('myChart');
+        <canvas id="myChart" width="500" height="400"></canvas>
 
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-      datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-</script>
-
-{% endblock %}
+        <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
+        <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
+        <script type="text/javascript">
+            $.get('{% url "line_chart_json" %}', function(data) {
+                var ctx = $("#myChart").get(0).getContext("2d");
+                new Chart(ctx, {
+                    type: 'line', data: data
+                });
+            });
+        </script>
+    </body>
+</html>

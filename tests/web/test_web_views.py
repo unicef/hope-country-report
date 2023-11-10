@@ -86,10 +86,11 @@ def test_select_tenant(django_app, report_configuration):
     assert res.status_code == 302
 
 
-def test_user_list(django_app, report_configuration):
-    url = reverse("office-users", args=[report_configuration.country_office.slug])
-    res = django_app.get(url, user=report_configuration.owner)
-    assert res.status_code == 200
+# def test_user_list(django_app, report_configuration):
+#     url = reverse("office-users", args=[report_configuration.country_office.slug])
+#     res = django_app.get(url, user=report_configuration.owner)
+#     assert res.status_code == 200
+#
 
 
 def test_dashboard_list(django_app, report_configuration: "ReportConfiguration"):
@@ -157,6 +158,8 @@ def test_document(django_app, admin_user, report_document: "ReportDocument"):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner
     url = reverse("office-doc", args=[config.country_office.slug, report_document.pk])
+    res = django_app.get(url, user=user)
+    assert res.status_code == 302
     with user_grant_permissions(user, ["power_query.view_reportdocument"]):
         res = django_app.get(url, user=user)
     assert res.status_code == 200, f"{url}: {res.status_code} != 200"

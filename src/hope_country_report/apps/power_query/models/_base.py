@@ -264,3 +264,10 @@ class TimeStampMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+class ManageableObject(models.Model):
+    parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True

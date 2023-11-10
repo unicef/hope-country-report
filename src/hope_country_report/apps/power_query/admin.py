@@ -34,6 +34,7 @@ from ...utils.perf import profile
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import (
     CeleryEnabled,
+    ChartPage,
     Dataset,
     Formatter,
     Parametrizer,
@@ -545,3 +546,15 @@ class ReportDocumentAdmin(
         self.object = self.get_object(request, pk)
         s = send_document_password(request.user, self.object)
         self.message_user(request, f"{s}")
+
+
+@admin.register(ChartPage)
+class ChartPageAdmin(
+    AdminFiltersMixin,
+    LinkedObjectsMixin,
+    ExtraButtonsMixin,
+    DisplayAllMixin,
+    AdminActionPermMixin,
+    ModelAdmin,
+):
+    pass

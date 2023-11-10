@@ -1,5 +1,6 @@
 from ._base import CeleryEnabled
 from .arguments import Parametrizer
+from .chart import ChartPage
 from .dataset import Dataset
 from .formatter import Formatter
 from .query import Query

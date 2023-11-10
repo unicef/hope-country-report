@@ -23,7 +23,7 @@
     {% flag_enabled 'MENU_PAGES' as FLAG_PREFERENCES %}
     {% flag_enabled 'MENU_MAP' as FLAG_MAP %}
     {% flag_enabled 'MENU_WORLD' as FLAG_WORLD %}
-    {% flag_enabled 'MENU_CHART' as FLAG_WORLD %}
+    {% flag_enabled 'MENU_CHART' as FLAG_CHART %}
     <ul class="menu p-0 w-full h-5/6 mt-10">
         <li class="flex OfficeHomeView h-12">
             <a class="flex w-full px-4" href="{% url "office-index" selected_office.slug %}">
@@ -69,7 +69,7 @@
         {% endif %}
         {% if FLAG_CHART %}
         <li class="OfficePageListView flex">
-            <a class="flex w-full px-4" href="{% url "office-chart" selected_office.slug %}">
+            <a class="flex w-full px-4" href="{% url "office-chart-list" selected_office.slug %}">
                 <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
                 <div class="flex-grow  pt-3 display-open">{% trans "Charts" %}</div>
             </a></li>
@@ -79,13 +79,6 @@
             <a class="flex w-full px-4" href="{% url "office-pages" selected_office.slug %}">
                 <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
                 <div class="flex-grow  pt-3 display-open">{% trans "Dashboards" %}</div>
-            </a></li>
-        {% endif %}
-        {% if FLAG_CHART %}
-            <li class="OfficePageListView flex">
-            <a class="flex w-full px-4" href="{% url "office-chart" selected_office.slug %}">
-                <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
-                <div class="flex-grow  pt-3 display-open">{% trans "Chart" %}</div>
             </a></li>
         {% endif %}
         <li class="OfficePageListView flex">

@@ -56,7 +56,7 @@ def as_zip_icon(value: Any) -> str:
 
 
 @register.filter()
-def as_icon(value: Any, cfg) -> str:
+def as_icon(value: Any, cfg: str) -> str:
     icon, color_true, color_false = cfg.split(",")
     if parse_bool(value):
         snip = f'<div class="icon {icon} {color_true}"></div>'
