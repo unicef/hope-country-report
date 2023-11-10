@@ -28,19 +28,20 @@
                     {{ form }}
                 </table>
                 <div class="text-center">
-                    <button class="bg-unicef-blue hover:bg-blue text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                            type="submit">
+                    <button class="button primary" type="submit">
                         {% trans "Login" %}
                     </button>
                 </div>
                 </form>
             {% endif %}
             <div class="text-center mt-10">
-                <button class="bg-unicef-blue hover:bg-blue text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                        type="submit">
-                    SSO Login
-                </button>
-            </div>
+                <a class="button primary" href="{% url 'social:begin' 'azuread-tenant-oauth2' %}">{% trans "SSO Login" %}</a>
+
+{#                <button class="bg-unicef-blue hover:bg-blue text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"#}
+{#                        type="submit">#}
+{#                    SSO Login#}
+{#                </button>#}
+                </div>
         </div>
     </div>
 {% endblock %}
