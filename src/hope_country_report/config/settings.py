@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "tailwind",
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_gis",
     "corsheaders",
     "social_django",
     "admin_extra_buttons",
@@ -248,6 +249,9 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 EMAIL_USE_SSL = env("EMAIL_USE_SSL")
 
+SERIALIZATION_MODULES = {
+    "geojson2": "hope_country_report.apps.charts.serializers",
+}
 
 from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa

@@ -9,5 +9,6 @@ FLAGS = {
     "MENU_MAP": [],
     "MENU_WORLD": [],
     "MENU_CHART": [],
+    "MENU_API": [],
     "SILK_PROFILING": [],
 }

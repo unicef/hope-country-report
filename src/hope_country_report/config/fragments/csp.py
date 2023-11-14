@@ -14,6 +14,10 @@ SOURCES = (
     # "cdnjs.cloudflare.com",
     "d3js.org",
     "raw.githubusercontent.com",
+    "cdnjs.cloudflare.com",
+    "bl.ocks.org",
+    "gist.github.com",
+    "gist.githubusercontent.com",
     "unpkg.com",
     "cdn.jsdelivr.net",
 )
