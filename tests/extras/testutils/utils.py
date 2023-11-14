@@ -1,4 +1,3 @@
-import contextlib
 import json
 import re
 from pathlib import Path
@@ -154,14 +153,46 @@ def matcher_debugger(return_value=True):
 #     return browser
 
 
-@contextlib.contextmanager
-def set_flag(flag_name, on_off):
-    from flags.state import _set_flag_state, flag_state
+# @contextlib.contextmanager
+# def set_flag(flag_name, on_off):
+#     from flags.state import _set_flag_state, flag_state
+#
+#     state = flag_state(flag_name)
+#     _set_flag_state(flag_name, on_off)
+#     yield
+#     _set_flag_state(flag_name, state)
 
-    state = flag_state(flag_name)
-    _set_flag_state(flag_name, on_off)
-    yield
-    _set_flag_state(flag_name, state)
+
+class set_flag(ContextDecorator):  # noqa
+    def __init__(self, flag_name: str, on_off: bool):
+        self.flag_name = flag_name
+        self.on_off = on_off
+        self.old_state = None
+
+    def __enter__(self):
+        from flags.state import _set_flag_state, flag_state
+
+        self.old_state = flag_state(self.flag_name)
+        _set_flag_state(self.flag_name, self.on_off)
+
+        return self
+
+    def __exit__(self, e_typ, e_val, trcbak):
+        from flags.state import _set_flag_state
+
+        _set_flag_state(self.flag_name, self.old_state)
+
+        if e_typ:
+            raise e_val.with_traceback(trcbak)
+
+    def start(self):
+        """Activate a patch, returning any created mock."""
+        result = self.__enter__()
+        return result
+
+    def stop(self):
+        """Stop an active patch."""
+        return self.__exit__(None, None, None)
 
 
 def get_messages(res):

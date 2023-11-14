@@ -7,14 +7,14 @@
     <script src="https://cdn.jsdelivr.net/npm/d3-geo-projection@4"></script>
     <script src="https://unpkg.com/topojson@3"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
-{#https://github.com/topojson/topojson #}
-    {#    <script src="https://unpkg.com/topojson@3"></script>#}
-{#    <script>#}
-{##}
-{#var topology = topojson.topology({foo: geojson});#}
-{##}
-{#</script>#}
-{#    #}
+{#    https://github.com/topojson/topojson #}
+{#    <script src="https://unpkg.com/topojson@3"></script>#}
+    {#    <script>#}
+    {##}
+    {#var topology = topojson.topology({foo: geojson});#}
+    {##}
+    {#</script>#}
+    {#    #}
     <style>
         svg {
             width: 100%;
@@ -53,16 +53,16 @@
 {% endblock %}
 {% block page-title %}&nbsp;<span id="current">AAAA</span>{% endblock %}
 {% block content %}
-    <div id="viz_container"></div>
+    <div class="h-50" id="viz_container"></div>
     <script>
         //set svg parameters
-        const width = 450,
-            height = 350;
+        const width = 550,
+            height = 200;
         const svg = d3.select("#viz_container")
             .append("svg")
             .attr("width", "100%")
             .attr("height", "100%")
-            .attr("viewBox", "0 0  450 350")
+            .attr("viewBox", "0 0  550 200")
             .attr("preserveAspectRatio", "xMinYMin");
 
         // set map scale, location on screen and its projection
@@ -79,7 +79,7 @@
         const color = d3.scaleThreshold()
             .domain([10000, 100000, 1000000, 1000000])
             .range(["#DCE9FF", "#8EBEFF", "#589BE5", "#0072BC"])
-            .unknown("#E6E6E6");
+            .unknown("#FF0000");
 
         //declare polygon and polyline
         const poly = svg.append("g");
@@ -87,8 +87,11 @@
 
         // declare URL
         const dataURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/choropleth_map.csv";
-        const polygonsURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_polygons_simplified.json";
+        {#const polygonsURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_polygons_simplified.json";#}
         const polylinesURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_lines_simplified.json";
+
+        {#const polygonsURL = "http://localhost:8000/api/home/boundaries/";#}
+        const polygonsURL = "http://localhost:8000/api/home/topology/";
 
         // load data
         const promises = [
@@ -99,7 +102,6 @@
         Promise.all(promises).then(ready)
 
         function ready([topology, population]) {
-
             // prepare pop data to join shapefile
             const data = {};
             population.forEach(function (d) {
@@ -131,10 +133,13 @@
             // load and draw polygons
             poly
                 .selectAll("path")
-                .data(topojson.feature(topology, topology.objects.world_polygons_simplified).features)
+                {#.data(topology.features)#}
+                .data(topojson.feature(topology, topology.objects.countries).features)
+                {#.data(topojson.feature(topology, topology.objects.world_polygons_simplified).features)#}
                 .join("path")
                 .attr("fill", function (d) {
-                    return color(d.refugees = data[d.properties.color_code])
+                    return color(d.refugees = 9999999)
+                    {#return color(d.refugees = data[d.properties.color_code])#}
                 })
                 .attr("d", path)
                 .attr("class", function (d) {
@@ -164,7 +169,7 @@
         });
 
         //zoom function
-        const zoom = true
+        const zoom = false
         if (zoom) {
             var zoomFunction = d3.zoom()
                 .scaleExtent([1, 8])
@@ -176,7 +181,7 @@
                 });
             svg.call(zoomFunction);
         }
-        ;
+
 
         // set legend
         svg.append("g")
@@ -200,15 +205,15 @@
             .attr('x', width * 0.01)
             .attr('y', height * 0.96)
             .attr('text-anchor', 'start')
-            .style('font-size', 7)
-            .text('Source: UNHCR Refugee Data Finder');
+            .style('font-size', 6)
+            .text('Source: UNICEF - HOPE');
         svg
             .append('text')
             .attr('class', 'note')
             .attr('x', width * 0.01)
             .attr('y', height * 0.99)
             .attr('text-anchor', 'start')
-            .style('font-size', 7)
+            .style('font-size', 5)
             .text('The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.');
     </script>
 {% endblock %}

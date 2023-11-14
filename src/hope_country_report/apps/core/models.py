@@ -13,13 +13,13 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from timezone_field import TimeZoneField
-from unicef_security.models import AbstractUser
+from unicef_security.models import AbstractUser, TimeStampedModel
 
 from hope_country_report.apps.hope.models import BusinessArea
 from hope_country_report.state import state
 
 
-class CountryShape(models.Model):
+class CountryShape(TimeStampedModel, models.Model):
     name = models.CharField(max_length=50, blank=True, null=True)
     area = models.IntegerField(blank=True, null=True)
     fips = models.CharField("FIPS Code", max_length=2, null=True)
@@ -80,7 +80,7 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
                 c.save()
 
 
-class CountryOffice(models.Model):
+class CountryOffice(TimeStampedModel, models.Model):
     HQ = "HQ"
     name = models.CharField(max_length=100, blank=True)
     active = models.BooleanField(default=False, blank=True)
@@ -141,7 +141,7 @@ DATE_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["Y M d", "j M 
 TIME_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["h:i a", "H:i"]]
 
 
-class User(AbstractUser):  # type: ignore
+class User(TimeStampedModel, AbstractUser):  # type: ignore
     timezone: ZoneInfo
     timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC")
     language = models.CharField(verbose_name=_("Language"), max_length=10, choices=settings.LANGUAGES, default="en")
@@ -178,7 +178,7 @@ class User(AbstractUser):  # type: ignore
         return f"{self.first_name} {self.last_name}" or self.username
 
 
-class UserRole(models.Model):
+class UserRole(TimeStampedModel, models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="roles")
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE)

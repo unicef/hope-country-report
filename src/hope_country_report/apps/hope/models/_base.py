@@ -7,7 +7,7 @@ from django.db import models
 from hope_country_report.apps.tenant.db import TenantModel
 
 
-class TimeStampedUUIDModel(models.Model):
+class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 

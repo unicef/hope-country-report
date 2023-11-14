@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from ..apps.core.models import CountryOffice, CountryShape
 from ..apps.power_query.models import Query
 from ..utils.media import resource_path
-from .serializers import CountryOfficeSerializer, LocationSerializer, QueryDataSerializer
+from .serializers import CountryOfficeSerializer, LocationSerializer, QueryDataSerializer, BoundarySerializer
 
 
 class SelectedOfficeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -29,14 +29,14 @@ class HCRHomeView(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
-    def topology2(self, request):
+    def topology(self, request):
         from pytopojson import topology
 
         topology_ = topology.Topology()
 
         # fname = resource_path("apps/charts/data/topology.json")
         # data = json.load(fname.open("r"))
-        qs = CountryShape.objects.filter(countryoffice__active=True)
+        qs = CountryShape.objects.filter()
         # ser = LocationSerializer(qs, many=True)
         geojson = json.loads(serialize("geojson", qs, geometry_field="mpoly", id_field="un", fields=["name"]))
 
@@ -46,16 +46,21 @@ class HCRHomeView(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
-    def topology(self, request):
-        fname = resource_path("apps/charts/data/topology.json")
+    def topology_file(self, request):
+        fname = resource_path("apps/charts/datasets/topology.json")
         data = json.load(fname.open("r"))
-        # qs = CountryOffice.objects.filter(shape__isnull=True).select_related("shape").order_by("slug")
-        # ser = LocationSerializer(qs, many=True)
         return JsonResponse(data, content_type="text/json")
 
     @action(detail=False)
+    # @method_decorator(cache_page(60*60*2))
+    def boundaries(self, request):
+        qs = CountryShape.objects.all()
+        ser = BoundarySerializer(qs, many=True)
+        return JsonResponse(ser.data, content_type="text/json")
+
+    @action(detail=False)
     def offices(self, request):
-        qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", flat=True)
+        qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name")
         return JsonResponse(list(qs), safe=False, content_type="text/plain")
 
     @action(detail=False)

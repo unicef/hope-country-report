@@ -33,6 +33,13 @@ class LocationSerializer(GeoFeatureModelSerializer):
             return None
 
 
+class BoundarySerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = CountryShape
+        geo_field = "mpoly"
+        fields = ("name", "mpoly", "iso2", "iso3", "un")
+
+
 class CountryOfficeSerializer(serializers.HyperlinkedModelSerializer):
     queries = NestedHyperlinkedRelatedField(
         view_name="office-queries-list",

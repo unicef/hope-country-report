@@ -217,6 +217,8 @@ def mocked_responses():
 
 @pytest.fixture(autouse=True)
 def state_context(db):
+    from testutils.utils import set_flag
+
     from hope_country_report.apps.core.utils import get_or_create_reporter_group
     from hope_country_report.apps.power_query.defaults import create_defaults, create_periodic_tasks
     from hope_country_report.config.celery import app
@@ -227,6 +229,6 @@ def state_context(db):
     get_or_create_reporter_group()
 
     app.control.purge()
-
+    set_flag("LOCAL_LOGIN", True).start()
     with state.configure():
         yield
