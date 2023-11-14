@@ -10,6 +10,7 @@ else:
     router = routers.SimpleRouter()
 
 router.register(r"offices", views.CountryOfficeViewSet)
+router.register(r"home", views.HCRHomeView, basename="home")
 
 office_router = routers.NestedSimpleRouter(router, "offices", lookup="office")
 office_router.register(r"queries", views.QueryDataViewSet, basename="office-queries")

@@ -2,6 +2,8 @@ from django.urls import include, path
 
 from .router import office_router, router
 
+app_name = "api"
+
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(office_router.urls)),

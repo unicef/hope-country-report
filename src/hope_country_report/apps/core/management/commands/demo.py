@@ -97,6 +97,25 @@ extra={"monthname": calendar.month_name[month]}
             r.formatters.add(*Formatter.objects.all())
             r.tags.add(*random.choices(tags, k=random.choice([1, 2, 3])))
 
+        CountryOffice.objects.filter(
+            slug__in=[
+                "south-sudan",
+                "sudan",
+                "ukraine",
+                "afghanistan",
+                "democratic-republic-of-congo",
+                "sri-lanka",
+                "barbados",
+                "bangladesh",
+                "central-african-republic",
+                "niger",
+                "palestine-state-of",
+                "philippines",
+                "slovakia",
+                "trinidad-tobago",
+            ]
+        ).update(active=True)
+
         for params in [
             {"compress": True, "protect": True},
             {"compress": True},

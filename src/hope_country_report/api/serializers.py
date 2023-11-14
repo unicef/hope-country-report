@@ -1,15 +1,14 @@
+from djgeojson.fields import MultiPolygonField
 from rest_framework import serializers
+from rest_framework_gis.fields import GeometrySerializerMethodField
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from rest_framework_nested.relations import NestedHyperlinkedRelatedField
-from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
-from hope_country_report.apps.core.models import CountryOffice
+from hope_country_report.apps.core.models import CountryOffice, CountryShape
 from hope_country_report.apps.power_query.models import Query
 
 
 class QueryDataSerializer(serializers.HyperlinkedModelSerializer):
-    # parent_lookup_kwargs = {
-    #     "country_office": "country_office__slug",
-    # }
     country_office = NestedHyperlinkedRelatedField(
         view_name="countryoffice-detail", lookup_field="slug", read_only=True
     )
@@ -19,9 +18,22 @@ class QueryDataSerializer(serializers.HyperlinkedModelSerializer):
         fields = ["name", "description", "country_office"]
 
 
-class CountryOfficeSerializer(NestedHyperlinkedModelSerializer):
-    # id = serializers.HyperlinkedIdentityField(view_name="office-detail", read_only=True)
+class LocationSerializer(GeoFeatureModelSerializer):
+    geom = GeometrySerializerMethodField()
 
+    class Meta:
+        model = CountryOffice
+        geo_field = "geom"
+        fields = ("id", "name", "geom")
+
+    def get_geom(self, obj: "CountryOffice") -> "MultiPolygonField|None":
+        try:
+            return obj.shape.mpoly
+        except CountryShape.DoesNotExist:
+            return None
+
+
+class CountryOfficeSerializer(serializers.HyperlinkedModelSerializer):
     queries = NestedHyperlinkedRelatedField(
         view_name="office-queries-list",
         read_only=True,

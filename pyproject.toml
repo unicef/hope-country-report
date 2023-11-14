@@ -79,6 +79,8 @@ dependencies = [
     "django-slick-reporting>=1.2.0",
     "drf-nested-routers>=0.93.4",
     "django-chartjs>=2.3.0",
+    "djangorestframework-gis>=1.0",
+    "pytopojson>=1.1.2",
 ]
 
 [project.optional-dependencies]

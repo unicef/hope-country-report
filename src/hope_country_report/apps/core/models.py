@@ -19,64 +19,34 @@ from hope_country_report.apps.hope.models import BusinessArea
 from hope_country_report.state import state
 
 
+class CountryShape(models.Model):
+    name = models.CharField(max_length=50, blank=True, null=True)
+    area = models.IntegerField(blank=True, null=True)
+    fips = models.CharField("FIPS Code", max_length=2, null=True)
+    iso2 = models.CharField("2 Digit ISO", max_length=2, blank=True, null=True)
+    iso3 = models.CharField("3 Digit ISO", max_length=3, blank=True, null=True)
+    un = models.IntegerField("United Nations Code", blank=True, null=True)
+    region = models.IntegerField("Region Code", blank=True, null=True)
+    subregion = models.IntegerField("Sub-Region Code", blank=True, null=True)
+    lon = models.FloatField(blank=True, null=True)
+    lat = models.FloatField(blank=True, null=True)
+
+    mpoly = MultiPolygonField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("name",)
+
+    def __str__(self):
+        return self.name
+
+
 class CountryOfficeManager(models.Manager["CountryOffice"]):
     def get_queryset(self) -> QuerySet["CountryOffice"]:
         if state.tenant:
             return super().get_queryset().filter(id=state.tenant.pk)
         return super().get_queryset()
 
-
-class CountryOffice(models.Model):
-    HQ = "HQ"
-    name = models.CharField(max_length=100, blank=True)
-    active = models.BooleanField(default=False, blank=True)
-    code = models.CharField(max_length=10, unique=True, blank=True)
-    long_name = models.CharField(max_length=255, blank=True)
-    region_code = models.CharField(max_length=8, blank=True)
-    region_name = models.CharField(max_length=8, blank=True)
-    hope_id = models.CharField(unique=True, max_length=100, blank=True)
-    slug = models.SlugField(unique=True)
-
-    timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC", help_text=_("Country default timezone."))
-    locale = models.CharField(
-        verbose_name=_("Locale"),
-        max_length=10,
-        choices=settings.LANGUAGES,
-        default="en",
-        help_text=_("Country default locale. It affects dates and number formats"),
-    )
-    settings = models.JSONField(default=dict, blank=True)
-
-    objects = CountryOfficeManager()
-
-    class Meta:
-        ordering = ("name",)
-
-    def __str__(self) -> str:
-        return self.name
-
-    @cached_property
-    def business_area(self) -> "BusinessArea|None":
-        from hope_country_report.apps.hope.models import BusinessArea
-
-        return BusinessArea.objects.filter(id=self.hope_id).first()
-
-    @cached_property
-    def shape(self) -> "CountryShape|None":
-        return CountryShape.objects.get(pk=self.settings.get("map"))
-
-    def get_map_settings(self) -> dict[str, int | float]:
-        lat = self.settings.get("map", {}).get("center", {}).get("lat", 0)
-        lng = self.settings.get("map", {}).get("center", {}).get("lng", 0)
-        zoom = self.settings.get("map", {}).get("zoom", 8)
-        return {
-            "lat": lat,
-            "lng": lng,
-            "zoom": zoom,
-        }
-
-    @classmethod
-    def sync(cls) -> None:
+    def sync(self) -> None:
         from hope_country_report.apps.hope.models import BusinessArea
 
         CountryOffice.objects.update_or_create(
@@ -101,6 +71,63 @@ class CountryOffice(models.Model):
                 "slug": slugify(ba.name),
             }
             CountryOffice.objects.update_or_create(hope_id=ba.id, defaults=values)
+        self.link_shapes()
+
+    def link_shapes(self) -> QuerySet["CountryOffice"]:
+        for c in CountryOffice.objects.filter(shape__isnull=True):
+            if s := CountryShape.objects.filter(name__iexact=c.slug).first():
+                c.shape = s
+                c.save()
+
+
+class CountryOffice(models.Model):
+    HQ = "HQ"
+    name = models.CharField(max_length=100, blank=True)
+    active = models.BooleanField(default=False, blank=True)
+    code = models.CharField(max_length=10, unique=True, blank=True)
+    long_name = models.CharField(max_length=255, blank=True)
+    region_code = models.CharField(max_length=8, blank=True)
+    region_name = models.CharField(max_length=8, blank=True)
+    hope_id = models.CharField(unique=True, max_length=100, blank=True)
+    slug = models.SlugField(unique=True)
+
+    timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC", help_text=_("Country default timezone."))
+    locale = models.CharField(
+        verbose_name=_("Locale"),
+        max_length=10,
+        choices=settings.LANGUAGES,
+        default="en",
+        help_text=_("Country default locale. It affects dates and number formats"),
+    )
+    settings = models.JSONField(default=dict, blank=True)
+    shape = models.ForeignKey(CountryShape, blank=True, null=True, on_delete=models.SET_NULL)
+    objects = CountryOfficeManager()
+
+    class Meta:
+        ordering = ("name",)
+
+    def __str__(self) -> str:
+        return self.name
+
+    @cached_property
+    def geom(self) -> "MultiPolygonField|None":
+        return self.shape.mpoly
+
+    @cached_property
+    def business_area(self) -> "BusinessArea|None":
+        from hope_country_report.apps.hope.models import BusinessArea
+
+        return BusinessArea.objects.filter(id=self.hope_id).first()
+
+    def get_map_settings(self) -> dict[str, int | float]:
+        lat = self.settings.get("map", {}).get("center", {}).get("lat", 0)
+        lng = self.settings.get("map", {}).get("center", {}).get("lng", 0)
+        zoom = self.settings.get("map", {}).get("zoom", 8)
+        return {
+            "lat": lat,
+            "lng": lng,
+            "zoom": zoom,
+        }
 
     def get_absolute_url(self) -> str:
         return reverse("office-index", args=[self.slug])
@@ -133,13 +160,14 @@ class User(AbstractUser):  # type: ignore
         help_text=_("Only applied to user interface. It will not be applied to the reports"),
     )
 
+    class Meta:
+        permissions = (("access_api", "Can access API"),)
+        app_label = "core"
+        swappable = "AUTH_USER_MODEL"
+
     @cached_property
     def datetime_format(self) -> str:
         return f"{self.date_format} {self.time_format}"
-
-    class Meta:
-        app_label = "core"
-        swappable = "AUTH_USER_MODEL"
 
     @cached_property
     def friendly_name(self) -> str:
@@ -162,18 +190,3 @@ class UserRole(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} {self.group.name}"
-
-
-class CountryShape(models.Model):
-    name = models.CharField(max_length=50)
-    area = models.IntegerField()
-    fips = models.CharField("FIPS Code", max_length=2, null=True)
-    iso2 = models.CharField("2 Digit ISO", max_length=2)
-    iso3 = models.CharField("3 Digit ISO", max_length=3)
-    un = models.IntegerField("United Nations Code")
-    region = models.IntegerField("Region Code")
-    subregion = models.IntegerField("Sub-Region Code")
-    lon = models.FloatField()
-    lat = models.FloatField()
-
-    mpoly = MultiPolygonField(null=True)

@@ -79,8 +79,9 @@ class UserRoleAdmin(AdminFiltersMixin, BaseAdmin):
 
 @admin.register(CountryOffice)
 class CountryOfficeAdmin(AdminFiltersMixin, BaseAdmin):
+    list_display = ("name", "active", "code", "slug", "shape")
     search_fields = ("name",)
-    list_filter = ("active",)
+    list_filter = ("active", "region_code")
     formfield_overrides = {
         JSONField: {
             "widget": JSONEditor(
@@ -90,6 +91,10 @@ class CountryOfficeAdmin(AdminFiltersMixin, BaseAdmin):
         }
     }
     readonly_fields = ("hope_id",)
+    autocomplete_fields = ("shape",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("shape")
 
     @button()
     def sync(self, request: "AuthHttpRequest") -> None:
@@ -99,3 +104,4 @@ class CountryOfficeAdmin(AdminFiltersMixin, BaseAdmin):
 @admin.register(CountryShape)
 class CountryShapeAdmin(LeafletGeoAdmin):
     list_display = ("name", "area", "iso2", "iso3", "un", "region", "subregion")
+    search_fields = ("name", "iso3")

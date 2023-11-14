@@ -5,12 +5,14 @@ import os
 import sys
 from pathlib import Path
 
+from django.contrib.gis.utils import LayerMapping
 from django.core.exceptions import ValidationError
 from django.core.management import BaseCommand, call_command
 from django.core.management.base import CommandError, SystemCheckError
 from django.core.validators import validate_email
 
 from hope_country_report.apps.core.models import CountryShape
+from hope_country_report.apps.core.utils import get_or_create_reporter_group
 from hope_country_report.apps.power_query.defaults import create_defaults, create_periodic_tasks
 from hope_country_report.config import env
 from hope_country_report.utils.media import resource_path
@@ -164,9 +166,6 @@ class Command(BaseCommand):
                         verbosity=self.verbosity - 1,
                         interactive=False,
                     )
-            from django.contrib.gis.utils import LayerMapping
-
-            from hope_country_report.apps.core.utils import get_or_create_reporter_group
 
             if not CountryShape.objects.exists():
                 data = resource_path("INITIAL_DATA/TM_WORLD_BORDERS-0.3.shp")
@@ -186,17 +185,13 @@ class Command(BaseCommand):
                     }
                     lm = LayerMapping(CountryShape, data, world_mapping, transform=False)
                     lm.save(strict=True)
-
                 except TypeError as e:
                     print(e)
+
             echo("Create default group")
             get_or_create_reporter_group()
             echo("Sync Country Offices")
-            CountryOffice.sync()
-            for c in CountryOffice.objects.all():
-                if s := CountryShape.objects.filter(name__iexact=c.slug).first():
-                    c.settings = {"map": s.pk}
-                    c.save()
+            CountryOffice.objects.sync()
 
             created = create_defaults()
             if not created:
