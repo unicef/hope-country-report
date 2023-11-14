@@ -12,6 +12,7 @@ omit =
     **/management/commands/demo.py
     **/management/commands/pq.py
     **/management/commands/pqr.py
+    **/management/commands/topology.py
     src/hope_country_report/types/*.py
 
 
