@@ -1,7 +1,7 @@
 import json
 
 from django.core.serializers import serialize
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse
 
 from django_filters import rest_framework as filters
 from rest_framework import permissions, viewsets
@@ -11,7 +11,6 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from ..apps.core.models import CountryOffice, CountryShape
 from ..apps.power_query.models import Dataset, Query, ReportConfiguration, ReportDocument
-from ..utils.media import resource_path
 from .serializers import (
     BoundarySerializer,
     CountryOfficeSerializer,
@@ -28,7 +27,7 @@ class SelectedOfficeViewSet(viewsets.ReadOnlyModelViewSet):
         return CountryOffice.objects.get(id=self.kwargs["slug"])
 
 
-class HCRHomeView(viewsets.ReadOnlyModelViewSet):
+class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CountryOffice.objects.all().order_by("slug")
     serializer_class = LocationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
@@ -43,42 +42,39 @@ class HCRHomeView(viewsets.ReadOnlyModelViewSet):
 
         topology_ = topology.Topology()
 
-        # fname = resource_path("apps/charts/data/topology.json")
-        # data = json.load(fname.open("r"))
         qs = CountryShape.objects.filter()
-        # ser = LocationSerializer(qs, many=True)
         geojson = json.loads(serialize("geojson", qs, geometry_field="mpoly", id_field="un", fields=["name"]))
 
         topojson = topology_({"countries": geojson}, quantization=0)
 
-        return JsonResponse(topojson, content_type="text/json", safe=False)
+        return JsonResponse(topojson, content_type="application/json", safe=False)
 
-    @action(detail=False)
-    # @method_decorator(cache_page(60*60*2))
-    def topology_file(self, request):
-        fname = resource_path("apps/charts/datasets/topology.json")
-        data = json.load(fname.open("r"))
-        return JsonResponse(data, content_type="text/json")
+    # @action(detail=False)
+    # # @method_decorator(cache_page(60*60*2))
+    # def topology_file(self, request):
+    #     fname = resource_path("apps/charts/datasets/topology.json")
+    #     data = json.load(fname.open("r"))
+    #     return JsonResponse(data, content_type="application/json")
 
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
     def boundaries(self, request):
         qs = CountryShape.objects.all()
         ser = BoundarySerializer(qs, many=True)
-        return JsonResponse(ser.data, content_type="text/json")
+        return JsonResponse(ser.data, content_type="application/json")
 
     @action(detail=False)
     def offices(self, request):
         qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name")
-        return JsonResponse(list(qs), safe=False, content_type="text/plain")
+        return JsonResponse(list(qs), safe=False, content_type="application/json")
 
-    @action(detail=False)
-    def country_names(self, request):
-        fname = resource_path("apps/charts/data/world-country-names.tsv")
-        data = fname.read_bytes()
-        # qs = CountryOffice.objects.filter(shape__isnull=True).select_related("shape").order_by("slug")
-        # ser = LocationSerializer(qs, many=True)
-        return HttpResponse(data, content_type="text/plain")
+    # @action(detail=False)
+    # def country_names(self, request):
+    #     fname = resource_path("apps/charts/data/world-country-names.tsv")
+    #     data = fname.read_bytes()
+    #     # qs = CountryOffice.objects.filter(shape__isnull=True).select_related("shape").order_by("slug")
+    #     # ser = LocationSerializer(qs, many=True)
+    #     return HttpResponse(data, content_type="text/plain")
 
 
 class CountryOfficeFilter(filters.FilterSet):

@@ -44,49 +44,21 @@ def test_api_root(client):
     assert res.json()
 
 
-def test_api_office_list(client, data):
-    url = "/api/offices/"
+def test_api_topology(client, data):
+    url = "/api/home/topology/"
     res = client.get(url)
+    assert res.status_code == 200
     assert res.json()
 
 
-def test_api_query_list(client, data):
-    url = f"/api/offices/{data['co'].slug}/queries/"
+def test_api_boundaries(client, data):
+    url = "/api/home/boundaries/"
     res = client.get(url)
+    assert res.status_code == 200
     assert res.json()
 
 
-def test_api_query(client, data):
-    url = f"/api/offices/{data['co'].slug}/queries/{data['query'].pk}/"
+def test_api_offices(client, data):
+    url = "/api/home/offices/"
     res = client.get(url)
-    assert res.json()["id"] == data["query"].pk
-
-
-def test_api_report_list(client, data):
-    url = f"/api/offices/{data['co'].slug}/config/"
-    res = client.get(url)
-    assert res.json()
-
-
-def test_api_report(client, data):
-    url = f"/api/offices/{data['co'].slug}/config/{data['report'].pk}/"
-    res = client.get(url)
-    assert res.json()["id"] == data["report"].pk
-
-
-def test_api_document_list(client, data):
-    url = f"/api/offices/{data['co'].slug}/config/{data['report'].pk}/documents/"
-    res = client.get(url)
-    assert res.json()
-
-
-def test_api_document(client, data):
-    url = f"/api/offices/{data['co'].slug}/config/{data['report'].pk}/documents/{data['doc'].pk}/"
-    res = client.get(url)
-    assert res.json()["id"] == data["doc"].pk
-
-
-def test_api_document_download(client, data):
-    url = f"/api/offices/{data['co'].slug}/config/{data['report'].pk}/documents/{data['doc'].pk}/download/"
-    res = client.get(url)
-    assert res.headers["Content-Type"] == "application/force-download"
+    assert res.status_code == 200

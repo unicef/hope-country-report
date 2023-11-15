@@ -9,6 +9,7 @@ class SimpleRouterWithNesting(NestedRouterMixin, DefaultRouter):
 
 
 router = SimpleRouterWithNesting()
+router.register("home", views.HCRHomeViewSet, basename="home")
 
 
 office = router.register(r"offices", views.CountryOfficeViewSet)
