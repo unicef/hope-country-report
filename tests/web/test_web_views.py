@@ -237,3 +237,18 @@ def test_download_media_handle_missing(django_app, user):
     url = reverse("download-media", args=["missing-file.zap"])
     res = django_app.get(url, user=user, expect_errors=True)
     assert res.status_code == 404
+
+
+def test_office_preferences(django_app, afg_user, afghanistan):
+    url = reverse("office-preferences", args=[afghanistan.slug])
+    with user_grant_permissions(afg_user, ["core.change_countryoffice"], afghanistan):
+        res = django_app.get(url, user=afg_user)
+        form = res.forms["office-profile"]
+        form["locale"] = "es"
+        form["timezone"] = "Europe/Rome"
+        res = form.submit().follow()
+    assert res.status_code == 200
+    afghanistan.refresh_from_db()
+
+    assert afghanistan.locale == "es"
+    assert afghanistan.timezone.key == "Europe/Rome"

@@ -3,7 +3,7 @@
 {% block page-title %}{% trans "Country Office Preferences" %}{% endblock %}
 {% block content %}
     <div class="box">
-        <form method="post" id="user-profile">
+        <form method="post" id="office-profile">
             {% csrf_token %}
             <table>{{ form }}</table>
             <button class="button primary"
