@@ -13,7 +13,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from timezone_field import TimeZoneField
-from unicef_security.models import AbstractUser, TimeStampedModel
+from unicef_security.models import AbstractUser, SecurityMixin, TimeStampedModel
 
 from hope_country_report.apps.hope.models import BusinessArea
 from hope_country_report.state import state
@@ -141,7 +141,7 @@ DATE_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["Y M d", "j M 
 TIME_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["h:i a", "H:i"]]
 
 
-class User(TimeStampedModel, AbstractUser):  # type: ignore
+class User(TimeStampedModel, SecurityMixin, AbstractUser):  # type: ignore
     timezone: ZoneInfo
     timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC")
     language = models.CharField(verbose_name=_("Language"), max_length=10, choices=settings.LANGUAGES, default="en")

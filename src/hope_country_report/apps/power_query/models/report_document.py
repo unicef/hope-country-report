@@ -61,6 +61,10 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
     def formats(self):
         return ReportDocument.objects.filter(report=self.report, dataset=self.dataset)
 
+    @cached_property
+    def filename(self):
+        return f"{self.title}{self.file_suffix}"
+
     @classmethod
     def process(
         self, report: "ReportConfiguration", dataset: "Dataset", formatter: "Formatter", notify: bool = True

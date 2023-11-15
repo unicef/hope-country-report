@@ -98,7 +98,7 @@ class CountryOfficeAdmin(AdminFiltersMixin, BaseAdmin):
 
     @button()
     def sync(self, request: "AuthHttpRequest") -> None:
-        CountryOffice.sync()
+        CountryOffice.objects.sync()
 
 
 @admin.register(CountryShape)

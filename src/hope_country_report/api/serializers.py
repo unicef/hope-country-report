@@ -2,20 +2,21 @@ from djgeojson.fields import MultiPolygonField
 from rest_framework import serializers
 from rest_framework_gis.fields import GeometrySerializerMethodField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from rest_framework_nested.relations import NestedHyperlinkedRelatedField
 
 from hope_country_report.apps.core.models import CountryOffice, CountryShape
-from hope_country_report.apps.power_query.models import Query
+from hope_country_report.apps.power_query.models import Dataset, Query, ReportConfiguration, ReportDocument
 
 
-class QueryDataSerializer(serializers.HyperlinkedModelSerializer):
-    country_office = NestedHyperlinkedRelatedField(
-        view_name="countryoffice-detail", lookup_field="slug", read_only=True
-    )
-
+class QuerySerializer(serializers.ModelSerializer):
     class Meta:
         model = Query
-        fields = ["name", "description", "country_office"]
+        fields = ["id", "name", "description", "country_office"]
+
+
+class DatasetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dataset
+        fields = ["hash", "last_run"]
 
 
 class LocationSerializer(GeoFeatureModelSerializer):
@@ -41,20 +42,21 @@ class BoundarySerializer(GeoFeatureModelSerializer):
 
 
 class CountryOfficeSerializer(serializers.HyperlinkedModelSerializer):
-    queries = NestedHyperlinkedRelatedField(
-        view_name="office-queries-list",
-        read_only=True,
-        parent_lookup_kwargs={"slug": "office__slug"},
-        lookup_url_kwarg="slug",
-    )
+    url = serializers.HyperlinkedIdentityField(view_name="api:countryoffice-detail", lookup_field="slug")
 
     class Meta:
         model = CountryOffice
-        fields = ("id", "name", "active", "slug", "hope_id", "queries", "url")
+        fields = ("id", "name", "active", "slug", "hope_id", "url")
         lookup_field = "slug"
-        extra_kwargs = {"url": {"lookup_field": "slug"}}
 
-    # queries = HyperlinkedIdentityField(
-    #     view_name='office-query-list',
-    #     lookup_url_kwarg='office'
-    # )
+
+class ReportConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReportConfiguration
+        fields = ["id", "country_office", "title", "query", "formatters"]
+
+
+class ReportDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReportDocument
+        fields = ["id", "title", "report", "dataset", "formatter", "filename"]

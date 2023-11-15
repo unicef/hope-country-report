@@ -77,7 +77,6 @@ INSTALLED_APPS = [
     # # "django_filters",
     "django_select2",
     "chartjs",
-    "crispy_forms",
     "djgeojson",
     "flags",
     "silk",
@@ -249,9 +248,6 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 EMAIL_USE_SSL = env("EMAIL_USE_SSL")
 
-SERIALIZATION_MODULES = {
-    "geojson2": "hope_country_report.apps.charts.serializers",
-}
 
 from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa
@@ -262,6 +258,7 @@ from .fragments.csp import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
 from .fragments.hijack import *  # noqa
+from .fragments.jsoneditor import *  # noqa
 from .fragments.leaflet import *  # noqa
 from .fragments.power_query import *  # noqa
 from .fragments.push_notifications import *  # noqa
@@ -274,5 +271,3 @@ from .fragments.social_auth import *  # noqa
 from .fragments.storage import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
-
-CRISPY_TEMPLATE_PACK = "bootstrap4"

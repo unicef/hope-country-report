@@ -1,5 +1,6 @@
 import json
 import re
+from contextlib import ContextDecorator
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -136,31 +137,6 @@ def matcher_debugger(return_value=True):
         return return_value
 
     return debugger
-
-
-# def _selenium_login(user, browser, live_server):
-#     browser.implicitly_wait(3)
-#     browser.get(f"{live_server.url}/i/")
-#
-#     link = browser.find_element_by_partial_link_text("My Bob")
-#     link.click()
-#
-#     browser.find_element_by_name("auth-username").send_keys(user.username)
-#     browser.find_element_by_name("auth-password").send_keys(user._password)
-#     browser.find_element_by_id("login-button").click()
-#     browser.live_server = live_server
-#     browser.user = user
-#     return browser
-
-
-# @contextlib.contextmanager
-# def set_flag(flag_name, on_off):
-#     from flags.state import _set_flag_state, flag_state
-#
-#     state = flag_state(flag_name)
-#     _set_flag_state(flag_name, on_off)
-#     yield
-#     _set_flag_state(flag_name, state)
 
 
 class set_flag(ContextDecorator):  # noqa

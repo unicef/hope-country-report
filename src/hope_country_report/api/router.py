@@ -1,16 +1,39 @@
-from django.conf import settings
-
-from rest_framework_nested import routers
+from rest_framework.routers import DefaultRouter
+from rest_framework_extensions.routers import NestedRouterMixin
 
 from . import views
 
-if settings.DEBUG:
-    router = routers.DefaultRouter()
-else:
-    router = routers.SimpleRouter()
 
-router.register(r"offices", views.CountryOfficeViewSet)
-router.register(r"home", views.HCRHomeView, basename="home")
+class SimpleRouterWithNesting(NestedRouterMixin, DefaultRouter):
+    pass
 
-office_router = routers.NestedSimpleRouter(router, "offices", lookup="office")
-office_router.register(r"queries", views.QueryDataViewSet, basename="office-queries")
+
+router = SimpleRouterWithNesting()
+
+
+office = router.register(r"offices", views.CountryOfficeViewSet)
+q = office.register(r"queries", views.QueryViewSet, basename="queries", parents_query_lookups=["country_office__slug"])
+d = q.register(
+    r"dataset", views.DatasetViewSet, basename="dataset", parents_query_lookups=["country_office__slug", "query"]
+)
+
+report = office.register(
+    r"reports", views.ReportViewSet, basename="reports", parents_query_lookups=["country_office__slug"]
+)
+report.register(
+    r"documents",
+    views.DocumentViewSet,
+    basename="reports",
+    parents_query_lookups=["report__country_office__slug", "report"],
+)
+
+
+router.register(r"queries", views.QueryViewSet)
+#
+# office_router = routers.ExtendedSimpleRouter()
+#
+# office_router.register(r'tasks', TaskViewSet)
+#           .register(r'comments',
+#                     CommentViewSet,
+#                     'tasks-comment',
+#                     parents_query_lookups=['object_id'])

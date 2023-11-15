@@ -1,6 +1,7 @@
 from typing import Any, TYPE_CHECKING, TypeVar
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.core.signing import get_cookie_signer
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
@@ -23,11 +24,14 @@ if TYPE_CHECKING:
 class SelectedOfficeMixin(LoginRequiredMixin, View):
     @cached_property
     def selected_office(self) -> CountryOffice:
-        if self.request.user.is_superuser:
-            co = CountryOffice.objects.get(slug=self.kwargs["co"])
-        else:
-            co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
-        return co
+        try:
+            if self.request.user.is_superuser:
+                co = CountryOffice.objects.get(slug=self.kwargs["co"])
+            else:
+                co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
+            return co
+        except (CountryOffice.DoesNotExist, IndexError):
+            raise PermissionDenied
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         kwargs["view"] = self

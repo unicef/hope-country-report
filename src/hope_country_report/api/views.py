@@ -1,17 +1,26 @@
 import json
 
 from django.core.serializers import serialize
-from django.db.models import QuerySet
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 
+from django_filters import rest_framework as filters
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from ..apps.core.models import CountryOffice, CountryShape
-from ..apps.power_query.models import Query
+from ..apps.power_query.models import Dataset, Query, ReportConfiguration, ReportDocument
 from ..utils.media import resource_path
-from .serializers import CountryOfficeSerializer, LocationSerializer, QueryDataSerializer, BoundarySerializer
+from .serializers import (
+    BoundarySerializer,
+    CountryOfficeSerializer,
+    DatasetSerializer,
+    LocationSerializer,
+    QuerySerializer,
+    ReportConfigurationSerializer,
+    ReportDocumentSerializer,
+)
 
 
 class SelectedOfficeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -72,17 +81,54 @@ class HCRHomeView(viewsets.ReadOnlyModelViewSet):
         return HttpResponse(data, content_type="text/plain")
 
 
+class CountryOfficeFilter(filters.FilterSet):
+    slug = filters.CharFilter(lookup_expr="istartswith")
+
+
 class CountryOfficeViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = CountryOffice.objects.all().order_by("slug")
+    queryset = CountryOffice.objects.all()
     serializer_class = CountryOfficeSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+    filterset_class = CountryOfficeFilter
     lookup_field = "slug"
 
 
-class QueryDataViewSet(SelectedOfficeViewSet):
+class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Query.objects.all().order_by("-pk")
-    serializer_class = QueryDataSerializer
+    serializer_class = QuerySerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
-    def get_queryset(self) -> QuerySet[Query]:
-        return Query.objects.filter(country_office__slug=self.kwargs["office_slug"])
+
+class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = Dataset.objects.all().order_by("-pk")
+    serializer_class = DatasetSerializer
+    permission_classes = [permissions.DjangoObjectPermissions]
+
+
+class ReportViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = ReportConfiguration.objects.all().order_by("-pk")
+    serializer_class = ReportConfigurationSerializer
+    permission_classes = [permissions.DjangoObjectPermissions]
+
+
+class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOnlyModelViewSet):
+    queryset = ReportDocument.objects.all().order_by("-pk")
+    serializer_class = ReportDocumentSerializer
+    permission_classes = [permissions.DjangoObjectPermissions]
+    # lookup_field = "slug"
+
+    @action(detail=True)
+    def download(self, request, parent_lookup_report__country_office__slug, parent_lookup_report, pk):
+        try:
+            doc = ReportDocument.objects.get(
+                report__country_office__slug=parent_lookup_report__country_office__slug,
+                report=parent_lookup_report,
+                pk=pk,
+            )
+            if not doc.file.size:
+                raise FileNotFoundError
+            response = StreamingHttpResponse(doc.file, content_type="application/force-download")
+            response["Content-Disposition"] = f"attachment; filename= {doc.filename}"
+            return response
+        except FileNotFoundError:
+            return Response({"Error": 404}, status=404)

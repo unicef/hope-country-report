@@ -157,10 +157,16 @@ def test_document_list_filter(django_app, flt, report_document: "ReportDocument"
 def test_document(django_app, admin_user, report_document: "ReportDocument"):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner
+    alien: "User" = UserFactory()
     url = reverse("office-doc", args=[config.country_office.slug, report_document.pk])
+
     res = django_app.get(url, user=user)
-    assert res.status_code == 302
-    with user_grant_permissions(user, ["power_query.view_reportdocument"]):
+    assert res.status_code == 200
+
+    res = django_app.get(url, user=alien, expect_errors=True)
+    assert res.status_code == 403
+
+    with user_grant_permissions(alien, ["power_query.view_reportdocument"]):
         res = django_app.get(url, user=user)
     assert res.status_code == 200, f"{url}: {res.status_code} != 200"
 
