@@ -69,6 +69,7 @@ config:
   STATIC_ROOT: "/static"
   STATIC_URL: "/static/"
   SENTRY_DSN: "https://1cdaf6f05dcd4658a0ff175983082b32@excubo.unicef.io/55"
+  CATCH_ALL_EMAIL: ""
 
 
 redis:
