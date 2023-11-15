@@ -92,6 +92,10 @@ class CountryOfficeViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = CountryOfficeFilter
     lookup_field = "slug"
 
+    # @action(detail=True)
+    # def queries(self, **kwargs):
+    #     return HttpResponseRedirect(reverse("api:queries-list", args=[kwargs["slug"]]))
+
 
 class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Query.objects.all().order_by("-pk")
@@ -115,14 +119,13 @@ class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOn
     queryset = ReportDocument.objects.all().order_by("-pk")
     serializer_class = ReportDocumentSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
-    # lookup_field = "slug"
 
     @action(detail=True)
-    def download(self, request, parent_lookup_report__country_office__slug, parent_lookup_report, pk):
+    def download(self, request, parent_lookup_report__country_office__slug, parent_lookup_report__id, pk):
         try:
             doc = ReportDocument.objects.get(
                 report__country_office__slug=parent_lookup_report__country_office__slug,
-                report=parent_lookup_report,
+                report__id=parent_lookup_report__id,
                 pk=pk,
             )
             if not doc.file.size:

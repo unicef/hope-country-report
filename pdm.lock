@@ -5,7 +5,7 @@
 groups = ["default", "dev", "test"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:8e939db29af1e719f85e229865c76174cecc0a21726ccb0cd795b45911281a09"
+content_hash = "sha256:f329aacd451c6cab62d99bdf8e5e09853328b33b35f001d63d36afada9b05e39"
 
 [[package]]
 name = "amqp"
@@ -1872,6 +1872,16 @@ summary = "Utility library for gitignore style pattern matching of file paths."
 files = [
     {file = "pathspec-0.11.2-py3-none-any.whl", hash = "sha256:1d6ed233af05e679efb96b1851550ea95bbb64b7c490b0f5aa52996c11e92a20"},
     {file = "pathspec-0.11.2.tar.gz", hash = "sha256:e0d8d0ac2f12da61956eb2306b69f9469b42f4deb0f3cb6ed47b9cce9996ced3"},
+]
+
+[[package]]
+name = "pathvalidate"
+version = "3.2.0"
+requires_python = ">=3.7"
+summary = "pathvalidate is a Python library to sanitize/validate a string such as filenames/file-paths/etc."
+files = [
+    {file = "pathvalidate-3.2.0-py3-none-any.whl", hash = "sha256:cc593caa6299b22b37f228148257997e2fa850eea2daf7e4cc9205cef6908dee"},
+    {file = "pathvalidate-3.2.0.tar.gz", hash = "sha256:5e8378cf6712bff67fbe7a8307d99fa8c1a0cb28aa477056f8fc374f0dff24ad"},
 ]
 
 [[package]]

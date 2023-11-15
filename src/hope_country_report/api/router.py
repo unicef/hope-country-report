@@ -18,13 +18,13 @@ d = q.register(
 )
 
 report = office.register(
-    r"reports", views.ReportViewSet, basename="reports", parents_query_lookups=["country_office__slug"]
+    r"config", views.ReportViewSet, basename="config", parents_query_lookups=["country_office__slug"]
 )
 report.register(
     r"documents",
     views.DocumentViewSet,
-    basename="reports",
-    parents_query_lookups=["report__country_office__slug", "report"],
+    basename="document",
+    parents_query_lookups=["report__country_office__slug", "report__id"],
 )
 
 

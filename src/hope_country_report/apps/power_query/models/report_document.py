@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 
 import pyminizip
 from django_cleanup import cleanup
+from pathvalidate import sanitize_filename
 from sentry_sdk import capture_exception
 
 from ....state import state
@@ -63,7 +64,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
 
     @cached_property
     def filename(self):
-        return f"{self.title}{self.file_suffix}"
+        return sanitize_filename(f"{self.title}{self.file_suffix}").lower()
 
     @classmethod
     def process(

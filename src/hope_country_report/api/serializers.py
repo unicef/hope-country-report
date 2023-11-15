@@ -1,5 +1,8 @@
+from django.utils.functional import cached_property
+
 from djgeojson.fields import MultiPolygonField
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 from rest_framework_gis.fields import GeometrySerializerMethodField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
@@ -7,16 +10,103 @@ from hope_country_report.apps.core.models import CountryOffice, CountryShape
 from hope_country_report.apps.power_query.models import Dataset, Query, ReportConfiguration, ReportDocument
 
 
-class QuerySerializer(serializers.ModelSerializer):
+class SelectedOfficeSerializer(serializers.ModelSerializer):
+    co_key = "parent_lookup_country_office__slug"
+    office = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReportConfiguration
+        fields = [
+            "office",
+        ]
+
+    @cached_property
+    def selected_office(self):
+        co_slug: str = self.context["view"].kwargs[self.co_key]
+        return CountryOffice.objects.get(slug=co_slug)
+
+    def get_office(self, obj):
+        return self.context["request"].build_absolute_uri(
+            reverse("api:countryoffice-detail", args=[self.selected_office.slug])
+        )
+
+
+class CountryOfficeSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="api:countryoffice-detail", lookup_field="slug")
+    queries = serializers.HyperlinkedIdentityField(
+        view_name="api:queries-list", lookup_field="slug", lookup_url_kwarg="parent_lookup_country_office__slug"
+    )
+    configs = serializers.HyperlinkedIdentityField(
+        view_name="api:config-list", lookup_field="slug", lookup_url_kwarg="parent_lookup_country_office__slug"
+    )
+
+    class Meta:
+        model = CountryOffice
+        fields = ("id", "name", "active", "slug", "hope_id", "url", "queries", "configs")
+        lookup_field = "slug"
+
+
+class QuerySerializer(SelectedOfficeSerializer):
     class Meta:
         model = Query
-        fields = ["id", "name", "description", "country_office"]
+        fields = ["id", "name", "description", "office"]
 
 
 class DatasetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dataset
         fields = ["hash", "last_run"]
+
+
+class ReportConfigurationSerializer(SelectedOfficeSerializer):
+    url = serializers.SerializerMethodField()
+    documents = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReportConfiguration
+        fields = ["id", "office", "name", "title", "query", "formatters", "url", "documents"]
+
+    def get_url(self, obj: ReportConfiguration):
+        return self.context["request"].build_absolute_uri(
+            reverse("api:config-detail", args=[self.selected_office.slug, obj.pk])
+        )
+
+    def get_documents(self, obj: ReportConfiguration):
+        return self.context["request"].build_absolute_uri(
+            reverse("api:document-list", args=[self.selected_office.slug, obj.pk])
+        )
+
+
+class ReportDocumentSerializer(SelectedOfficeSerializer):
+    url = serializers.SerializerMethodField()
+    site_url = serializers.SerializerMethodField()
+    co_key = "parent_lookup_report__country_office__slug"
+
+    class Meta:
+        model = ReportDocument
+        fields = [
+            "id",
+            "url",
+            "title",
+            "report",
+            "dataset",
+            "formatter",
+            "filename",
+            "office",
+            "file_suffix",
+            "compressed",
+            "protected",
+            "content_type",
+            "site_url",
+        ]
+
+    def get_url(self, obj: ReportDocument):
+        return self.context["request"].build_absolute_uri(
+            reverse("api:document-detail", args=[self.selected_office.slug, obj.report.pk, obj.pk])
+        )
+
+    def get_site_url(self, obj: ReportDocument):
+        return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 
 
 class LocationSerializer(GeoFeatureModelSerializer):
@@ -39,24 +129,3 @@ class BoundarySerializer(GeoFeatureModelSerializer):
         model = CountryShape
         geo_field = "mpoly"
         fields = ("name", "mpoly", "iso2", "iso3", "un")
-
-
-class CountryOfficeSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="api:countryoffice-detail", lookup_field="slug")
-
-    class Meta:
-        model = CountryOffice
-        fields = ("id", "name", "active", "slug", "hope_id", "url")
-        lookup_field = "slug"
-
-
-class ReportConfigurationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ReportConfiguration
-        fields = ["id", "country_office", "title", "query", "formatters"]
-
-
-class ReportDocumentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ReportDocument
-        fields = ["id", "title", "report", "dataset", "formatter", "filename"]

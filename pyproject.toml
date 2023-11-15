@@ -82,6 +82,7 @@ dependencies = [
     "tablib>=3.5.0",
     "tzdata>=2023.3",
     "unicef-security>=1.4.4",
+    "pathvalidate>=3.2.0",
 ]
 
 [tool.pdm.scripts]

@@ -205,6 +205,7 @@ def afg_user(user, afghanistan):
         afghanistan,
     )
     grant.start()
+    user._afghanistan = afghanistan
     yield user
     grant.stop()
 
