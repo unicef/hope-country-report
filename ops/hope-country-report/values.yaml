@@ -68,6 +68,7 @@ config:
   CACHE_URL: "redis://hcr-redis-master:6379"
   STATIC_ROOT: "/static"
   STATIC_URL: "/static/"
+  SENTRY_DSN: "https://1cdaf6f05dcd4658a0ff175983082b32@excubo.unicef.io/55"
 
 
 redis:

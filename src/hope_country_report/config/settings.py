@@ -239,7 +239,7 @@ AUTH_USER_MODEL = "core.User"
 HOST = env("HOST", default="http://localhost:8000")
 SIGNING_BACKEND = env("SIGNING_BACKEND")
 
-CATCH_ALL_EMAIL = env("CATCH_ALL_EMAIL")
+CATCH_ALL_EMAIL = env("CATCH_ALL_EMAIL", default="")
 DEFAULT_FROM_EMAIL = "hope-reporting@unicef.org"
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 EMAIL_HOST = env("EMAIL_HOST")
