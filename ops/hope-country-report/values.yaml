@@ -102,6 +102,7 @@ statics:
   storage: 4Gi
 
 postgresql:
-  postgresqlUsername: "hcr"
-  postgresqlPassword: ""
-  postgresqlDatabase: "hcr"
+  auth:
+    username: "hcr"
+    password: ""
+    database: "hcr"
