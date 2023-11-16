@@ -3,12 +3,15 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 
 import pytest
+from unittest import mock
+from unittest.mock import Mock
 
 from django.urls import reverse
 
 from testutils.factories import UserFactory
 from testutils.perms import user_grant_permissions
 
+from hope_country_report.apps.power_query.models import Query, ReportConfiguration, ReportDocument, ReportTemplate
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -16,7 +19,6 @@ if TYPE_CHECKING:
 
     from hope_country_report.apps.core.models import CountryOffice, User
     from hope_country_report.apps.hope.models import Household
-    from hope_country_report.apps.power_query.models import Query, ReportConfiguration, ReportDocument, ReportTemplate
 
     class _DATA(TypedDict):
         co1: CountryOffice
@@ -202,6 +204,18 @@ def test_document_display(django_app, report_document):
     assert res.status_code == 200
 
 
+def test_document_display_no_file(django_app, report_document):
+    doc = Mock(spec=ReportDocument)()
+    doc.file.size = 0
+    with mock.patch("hope_country_report.api.views.ReportDocument.objects.get", lambda **k: doc):
+        config: "ReportConfiguration" = report_document.report
+        user: "User" = config.owner
+        with user_grant_permissions(user, ["power_query.download_reportdocument"], config.country_office):
+            url = reverse("office-doc-display", args=[config.country_office.slug, config.documents.first().pk])
+            res = django_app.get(url, user=user)
+    assert res.status_code == 302
+
+
 def test_document_download(django_app, report_document):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner
@@ -209,6 +223,18 @@ def test_document_download(django_app, report_document):
         url = reverse("office-doc-download", args=[config.country_office.slug, config.documents.first().pk])
         res = django_app.get(url, user=user)
     assert res.status_code == 200, res.headers["Location"]
+
+
+def test_document_download_no_file(django_app, report_document):
+    doc = Mock(spec=ReportDocument)()
+    doc.file.size = 0
+    with mock.patch("hope_country_report.api.views.ReportDocument.objects.get", lambda **k: doc):
+        config: "ReportConfiguration" = report_document.report
+        user: "User" = config.owner
+        with user_grant_permissions(user, ["power_query.download_reportdocument"], config.country_office):
+            url = reverse("office-doc-download", args=[config.country_office.slug, config.documents.first().pk])
+            res = django_app.get(url, user=user)
+    assert res.status_code == 302
 
 
 def test_user_profile(django_app, afghanistan, afg_user):

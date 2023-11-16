@@ -44,6 +44,13 @@ def test_api_root(client):
     assert res.json()
 
 
+def test_api_home(client):
+    url = "/api/home/"
+    res = client.get(url)
+    assert res.status_code == 200
+    assert res.json() == {}
+
+
 def test_api_topology(client, data):
     url = "/api/home/topology/"
     res = client.get(url)

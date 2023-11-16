@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from rest_framework.test import APIClient
 from testutils.factories import QueryFactory, ReportConfigurationFactory
 
-from hope_country_report.apps.power_query.models import Query
+from hope_country_report.apps.power_query.models import Query, ReportDocument
 from hope_country_report.state import state
 
 pytestmark = [pytest.mark.api, pytest.mark.django_db]
@@ -36,12 +36,6 @@ def client(admin_user):
     c = APIClient()
     c.force_authenticate(user=admin_user)
     return c
-
-
-def test_api_root(client):
-    url = "/api/"
-    res = client.get(url)
-    assert res.json()
 
 
 def test_api_office_list(client, data):
@@ -90,3 +84,12 @@ def test_api_document_download(client, data):
     url = f"/api/offices/{data['co'].slug}/config/{data['report'].pk}/documents/{data['doc'].pk}/download/"
     res = client.get(url)
     assert res.headers["Content-Type"] == "application/force-download"
+
+
+def test_api_document_download_no_file(client, data):
+    url = f"/api/offices/{data['co'].slug}/config/{data['report'].pk}/documents/{data['doc'].pk}/download/"
+    doc = Mock(spec=ReportDocument)()
+    doc.file.size = 0
+    with mock.patch("hope_country_report.api.views.ReportDocument.objects.get", lambda **k: doc):
+        res = client.get(url)
+    assert res.status_code == 404
