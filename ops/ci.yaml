@@ -44,18 +44,19 @@ stages:
               --push \
               ./
             displayName: Docker build dev
-          - script: |
-              docker buildx create --use
-              docker buildx build \
-              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
-              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
-              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
-              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
-              -t $(Docker.url)/$(Docker.backend.repository):dev-$(tag) \
-              --target dev \
-              --push \
-              ./
-            displayName: Docker build dev
+          # TODO: dist
+          # - script: |
+          #     docker buildx create --use
+          #     docker buildx build \
+          #     --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
+          #     --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
+          #     --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
+          #     --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
+          #     -t $(Docker.url)/$(Docker.backend.repository):dev-$(tag) \
+          #     --target dev \
+          #     --push \
+          #     ./
+          #   displayName: Docker build dev
           - script: echo $(Build.SourceVersionMessage)
             displayName: 'Display Build.SourceVersionMessage'
 
