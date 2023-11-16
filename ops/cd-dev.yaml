@@ -54,6 +54,7 @@ stages:
                 image.repository=$(Docker.url)/$(Docker.backend.repository),\
                 image.tag=dev-$(tag),\
                 ingress.annotations.appgw\\.ingress\\.kubernetes\\.io/appgw-ssl-certificate=kv-cert-unitst,\
+                postgresql.postgresqlPassword=$(POSTGRESQL_PASSWORD),\
                 secret.DATABASE_HOPE_URL=$(DATABASE_HOPE_URL),\
                 secret.DATABASE_URL=$(DATABASE_URL),\
                 secret.SECRET_KEY=$(SECRET_KEY)
