@@ -106,8 +106,11 @@ postgresql:
     username: "hcr"
     password: ""
     database: "hcr"
+    postgresPassword: ""
   primary:
     initdb:
+      user: postgres
+      password: ""
       scripts:
         init.sql: |
           CREATE EXTENSION IF NOT EXISTS postgis;
