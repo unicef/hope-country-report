@@ -19,6 +19,11 @@ services:
       - ALLOWED_HOSTS=backend,localhost
       - STATIC_ROOT=/
       - STATIC_URL=/static/
+      - EMAIL_BACKEND=
+      - EMAIL_HOST=
+      - EMAIL_PORT=
+      - EMAIL_USE_TLS=
+      - EMAIL_USE_SSL=
     ports:
       - 8000:8000
     volumes:
