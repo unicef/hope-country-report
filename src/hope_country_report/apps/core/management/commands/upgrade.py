@@ -141,6 +141,7 @@ class Command(BaseCommand):
 
             if self.migrate:
                 echo("Run migrations")
+                call_command("diffsettings")
                 call_command("migrate", **extra)
                 call_command("create_extra_permissions")
 
