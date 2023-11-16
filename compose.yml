@@ -24,6 +24,10 @@ services:
       - EMAIL_PORT=
       - EMAIL_USE_TLS=
       - EMAIL_USE_SSL=
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - MAILJET_API_KEY=
+      - MAILJET_SECRET_KEY=
+      - WP_PRIVATE_KEY=
     ports:
       - 8000:8000
     volumes:

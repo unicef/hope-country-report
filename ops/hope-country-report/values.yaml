@@ -31,7 +31,7 @@ ingress:
     appgw.ingress.kubernetes.io/request-timeout: "240"
     appgw.ingress.kubernetes.io/appgw-ssl-certificate: ""
   hosts:
-    - host: cr-hope-dev.unitst.org
+    - host: reporting-hope-dev.unitst.org
       paths:
         - path: /
           pathType: Prefix
@@ -75,6 +75,10 @@ config:
   EMAIL_PORT: ""
   EMAIL_USE_TLS: ""
   EMAIL_USE_SSL: ""
+  CELERY_BROKER_URL: "redis://hcr-redis-master:6379"
+  MAILJET_API_KEY: ""
+  MAILJET_SECRET_KEY: ""
+  WP_PRIVATE_KEY: ""
 
 
 redis:
