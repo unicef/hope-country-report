@@ -21,11 +21,12 @@ fi
 
 case "$1" in
     dev)
+        ./wait-for-it.sh db:5432
         python3 manage.py migrate
         python3 manage.py runserver 0.0.0.0:8000
     ;;
     tests)
-        sleep 10 # FIXME: hack to wait for postgis init
+        ./wait-for-it.sh db:5432
         pytest tests/ --create-db --cov-report term --maxfail 5 --with-selenium
     ;;
     prd)
