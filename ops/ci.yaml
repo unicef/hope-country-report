@@ -32,18 +32,18 @@ stages:
             inputs:
               containerRegistry: '$(Docker.registryConnection)'
               command: 'login'
-          # - script: |
-          #     docker buildx create --use
-          #     docker buildx build \
-          #     --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:prd-$(additionalTag) \
-          #     --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:prd-latest \
-          #     --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:prd-$(additionalTag) \
-          #     --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:prd-latest \
-          #     -t $(Docker.url)/$(Docker.backend.repository):prd-$(tag) \
-          #     --target prd \
-          #     --push \
-          #     ./
-          #   displayName: Docker build prd
+          - script: |
+              docker buildx create --use
+              docker buildx build \
+              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:prd-$(additionalTag) \
+              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:prd-latest \
+              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:prd-$(additionalTag) \
+              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:prd-latest \
+              -t $(Docker.url)/$(Docker.backend.repository):prd-$(tag) \
+              --target prd \
+              --push \
+              ./
+            displayName: Docker build prd
           - script: |
               docker buildx create --use
               docker buildx build \

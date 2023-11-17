@@ -52,7 +52,7 @@ stages:
               arguments: "--timeout 600s"
               overrideValues: "
                 image.repository=$(Docker.url)/$(Docker.backend.repository),\
-                image.tag=dev-$(tag),\
+                image.tag=prd-$(tag),\
                 ingress.annotations.appgw\\.ingress\\.kubernetes\\.io/appgw-ssl-certificate=kv-cert-unitst,\
                 postgresql.auth.password=$(POSTGRESQL_PASSWORD),\
                 postgresql.auth.postgresPassword=$(POSTGRES_POSTGRESQL_PASSWORD),\
