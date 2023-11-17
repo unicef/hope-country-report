@@ -83,6 +83,8 @@ dependencies = [
     "tzdata>=2023.3",
     "unicef-security>=1.4.4",
     "pathvalidate>=3.2.0",
+    "django-stubs>=4.2.6",
+    "django-stubs-ext>=4.2.5",
 ]
 
 [tool.pdm.scripts]
