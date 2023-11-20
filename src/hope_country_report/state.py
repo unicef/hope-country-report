@@ -22,6 +22,7 @@ class State(local):
     must_tenant: "bool|None" = None
     cookies: "dict[str, List[Any]]" = {}
     filters: "List[Any]" = []
+    inspecting: bool = False
 
     def __repr__(self) -> str:
         return f"<State {id(self)}: {self.tenant_cookie}:{self.must_tenant}>"
@@ -89,6 +90,7 @@ class State(local):
         self.request = None
         self.cookies = {}
         self.filters = []
+        self.inspecting = False
 
 
 state = State()

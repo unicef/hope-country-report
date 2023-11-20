@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from django.apps import apps
 from django.core.files.base import ContentFile
 
 import factory
@@ -67,7 +68,12 @@ class DatasetFactory(AutoRegisterModelFactory):
 
     @classmethod
     def create(cls, **kwargs: "Dict") -> Dataset:
-        q: Query = cls.query.get_factory().create()
+        # q: Query = cls.query.get_factory().create()
+        q: Query = QueryFactory()
+        assert q.target.app_label
+        assert q.target.model
+        assert apps.get_model(q.target.app_label, q.target.model)
+        assert q.target.model_class()
         q.run(persist=True)
         return q.datasets.first()
 

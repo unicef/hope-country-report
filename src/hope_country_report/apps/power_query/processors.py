@@ -62,7 +62,7 @@ class ProcessorStrategy:
     def content_type(cls) -> str:
         return mimetype_map[cls.file_suffix]
 
-    def process(self, context: "Dict[str, Any]") -> bytes:
+    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         raise NotImplementedError
 
 
@@ -200,9 +200,7 @@ class ProcessorRegistry(Registry):
 
     def as_choices(self, _filter: Callable[[type], bool] | None = None) -> "List[Tuple[str, str]]":
         if _filter:
-            return sorted(
-                (str(fqn(klass)), self.get_name(klass)) for klass in self if _filter(klass)
-            )  # type: ignore[return-value]
+            return sorted((str(fqn(klass)), self.get_name(klass)) for klass in self if _filter(klass))
         elif not self._choices:
             self._choices = sorted((fqn(klass), self.get_name(klass)) for klass in self)  # type: ignore[return-value]
 

@@ -1,3 +1,5 @@
+from typing import Any, TYPE_CHECKING
+
 import datetime
 from zoneinfo import ZoneInfo
 
@@ -15,8 +17,10 @@ from django.utils.translation import gettext_lazy as _
 from timezone_field import TimeZoneField
 from unicef_security.models import AbstractUser, SecurityMixin, TimeStampedModel
 
-from hope_country_report.apps.hope.models import BusinessArea
 from hope_country_report.state import state
+
+if TYPE_CHECKING:
+    from hope_country_report.types.hope import _BusinessArea
 
 
 class CountryShape(TimeStampedModel, models.Model):
@@ -36,7 +40,7 @@ class CountryShape(TimeStampedModel, models.Model):
     class Meta:
         ordering = ("name",)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -82,14 +86,14 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
 
 class CountryOffice(TimeStampedModel, models.Model):
     HQ = "HQ"
-    name = models.CharField(max_length=100, blank=True)
-    active = models.BooleanField(default=False, blank=True)
-    code = models.CharField(max_length=10, unique=True, blank=True)
-    long_name = models.CharField(max_length=255, blank=True)
-    region_code = models.CharField(max_length=8, blank=True)
-    region_name = models.CharField(max_length=8, blank=True)
-    hope_id = models.CharField(unique=True, max_length=100, blank=True)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    active = models.BooleanField(default=False, blank=True, null=True)
+    code = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    long_name = models.CharField(max_length=255, blank=True, null=True)
+    region_code = models.CharField(max_length=8, blank=True, null=True)
+    region_name = models.CharField(max_length=8, blank=True, null=True)
+    hope_id = models.CharField(unique=True, max_length=100, blank=True, null=True)
+    slug = models.SlugField(unique=True, null=True)
 
     timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC", help_text=_("Country default timezone."))
     locale = models.CharField(
@@ -110,11 +114,11 @@ class CountryOffice(TimeStampedModel, models.Model):
         return self.name
 
     @cached_property
-    def geom(self) -> "MultiPolygonField|None":
+    def geom(self) -> "MultiPolygonField[Any, Any]|None":
         return self.shape.mpoly
 
     @cached_property
-    def business_area(self) -> "BusinessArea|None":
+    def business_area(self) -> "_BusinessArea|None":
         from hope_country_report.apps.hope.models import BusinessArea
 
         return BusinessArea.objects.filter(id=self.hope_id).first()

@@ -21,6 +21,7 @@ from .views import (
 )
 from .views.base import OfficeTemplateView
 from .views.charts import ChartDetailView, ChartListView
+from .views.generic import SimpleView
 
 urlpatterns = [
     path("", index, name="index"),
@@ -45,4 +46,5 @@ urlpatterns = [
     path("<slug:co>/doc/<int:pk>/download/", OfficeDocumentDownloadView.as_view(), name="office-doc-download"),
     path("errors/404/", TemplateView.as_view(template_name="404.html")),
     path("errors/403/", TemplateView.as_view(template_name="403.html")),
+    path("health/", SimpleView.as_view(content="Ok")),
 ]

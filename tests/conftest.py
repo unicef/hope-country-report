@@ -115,8 +115,11 @@ def pytest_configure(config):
     if not config.option.enable_selenium:
         config.option.enable_selenium = "selenium" in config.option.markexpr
 
-    if not config.option.enable_selenium:
-        config.option.markexpr = "not selenium"
+    # if not config.option.enable_selenium:
+    #     if config.option.markexpr:
+    #         config.option.markexpr = "not selenium"
+    #     elif config.option.markexpr:
+    #         config.option.markexpr += " and not selenium"
 
     config.addinivalue_line("markers", "skip_test_if_env(env): this mark skips the tests for the given env")
     _setup_models()
@@ -149,6 +152,14 @@ def pytest_runtest_setup(item):
     if env_names:
         if item.config.getoption("--env") in os.environ:
             pytest.skip(f"Test skipped because env {env_names!r} is present")
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.option.enable_selenium:
+        skip_mymarker = pytest.mark.skip(reason="selenium not enabled")
+        for item in items:
+            if list(item.iter_markers(name="selenium")):
+                item.add_marker(skip_mymarker)
 
 
 @pytest.fixture

@@ -22,6 +22,10 @@ GLOBAL_EXCLUDED_MODELS = RegexList(
     [
         r"django_celery_beat\.ClockedSchedule",
         r"contenttypes\.ContentType",
+        r"hope\.Individual",
+        r"hope\.Household",
+        r"hope\.Program",
+        r"hope\.PaymentPlan",
         r"hope\.Area",
         r"hope\.AreaType",
         r"hope\.Country",
@@ -105,7 +109,7 @@ def record(db, request):
         try:
             instance = factory(**KWARGS.get(full_name, {}))
         except Exception as e:
-            raise Exception(f"Error creating fixture for {modeladmin.model}") from e
+            raise Exception(f"Error creating fixture using {factory}") from e
     return instance
 
 

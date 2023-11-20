@@ -5,14 +5,11 @@ from django.db.models import Model
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, ListView
 
-import django_stubs_ext
 from adminfilters.utils import parse_bool
 
 from hope_country_report.apps.power_query.models import ReportConfiguration
 
 from .base import SelectedOfficeMixin
-
-django_stubs_ext.monkeypatch()
 
 if TYPE_CHECKING:
     from django.core.paginator import _SupportsPagination

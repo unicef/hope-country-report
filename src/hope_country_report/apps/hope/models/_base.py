@@ -16,7 +16,7 @@ class TimeStampedModel(models.Model):
 
 
 class HopeModel(TenantModel, models.Model):
-    id = models.CharField(primary_key=True, max_length=100, editable=False)
+    # id = models.CharField(primary_key=True, max_length=100, editable=False)
 
     class Meta:
         abstract = True

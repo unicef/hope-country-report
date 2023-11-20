@@ -22,11 +22,11 @@ class SelectDatasetForm(forms.Form):
 
 
 class ExportForm(forms.Form):
-    formatter = forms.ModelChoiceField(queryset=Formatter.objects)  # type: ignore
+    formatter = forms.ModelChoiceField(queryset=Formatter.objects)
 
 
 class FormatterTestForm(forms.Form):
-    dataset = forms.ModelChoiceField(Dataset.objects)  # type: ignore
+    dataset = forms.ModelChoiceField(Dataset.objects)
 
 
 class ExplainQueryForm(forms.Form):

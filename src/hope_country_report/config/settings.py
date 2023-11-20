@@ -2,11 +2,13 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
+import django_stubs_ext
+
 from . import env
 
-SETTINGS_DIR = Path(__file__).parent
-PACKAGE_DIR = SETTINGS_DIR.parent
-DEVELOPMENT_DIR = PACKAGE_DIR.parent.parent
+SETTINGS_DIR = Path(__file__).parent  # .../src/hope_country_report/config
+PACKAGE_DIR = SETTINGS_DIR.parent  # .../src/hope_country_report/
+SOURCE_DIR = PACKAGE_DIR.parent.parent  # .../src
 
 DEBUG = env.bool("DEBUG")
 
@@ -271,3 +273,5 @@ from .fragments.social_auth import *  # noqa
 from .fragments.storage import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
+
+django_stubs_ext.monkeypatch()

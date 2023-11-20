@@ -1,3 +1,5 @@
+from typing import Any, Dict, Tuple, TYPE_CHECKING
+
 import json
 
 from django.core.serializers import serialize
@@ -21,6 +23,9 @@ from .serializers import (
     ReportDocumentSerializer,
 )
 
+if TYPE_CHECKING:
+    from ..types.http import AnyRequest
+
 
 class SelectedOfficeViewSet(viewsets.ReadOnlyModelViewSet):
     def selected_office(self) -> CountryOffice:
@@ -32,12 +37,12 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LocationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request: "AnyRequest", *args: Tuple[Any], **kwargs: Dict[str, str]) -> Response:
         return Response({})
 
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
-    def topology(self, request):
+    def topology(self, request: "AnyRequest") -> JsonResponse:
         from pytopojson import topology
 
         topology_ = topology.Topology()
@@ -58,13 +63,13 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
-    def boundaries(self, request):
+    def boundaries(self, request: "AnyRequest") -> JsonResponse:
         qs = CountryShape.objects.all()
         ser = BoundarySerializer(qs, many=True)
         return JsonResponse(ser.data, content_type="application/json")
 
     @action(detail=False)
-    def offices(self, request):
+    def offices(self, request: "AnyRequest") -> JsonResponse:
         qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
 
@@ -117,7 +122,13 @@ class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOn
     permission_classes = [permissions.DjangoObjectPermissions]
 
     @action(detail=True)
-    def download(self, request, parent_lookup_report__country_office__slug, parent_lookup_report__id, pk):
+    def download(
+        self,
+        request: "AnyRequest",
+        parent_lookup_report__country_office__slug: str,
+        parent_lookup_report__id: str,
+        pk: str,
+    ) -> "Response|StreamingHttpResponse":
         try:
             doc = ReportDocument.objects.get(
                 report__country_office__slug=parent_lookup_report__country_office__slug,

@@ -21,13 +21,13 @@ logger = logging.getLogger(__name__)
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-def get_matrix(param, input: "Any" = None) -> "List[Dict[str,str]]":
-    if isinstance(input, dict):
-        product = list(itertools.product(*input.values()))
-        return [dict(zip(input.keys(), e)) for e in product]
+def get_matrix(param, input_: "Iterable" = None) -> "List[Dict[str,str]]":
+    if isinstance(input_, dict):
+        product = list(itertools.product(*input_.values()))
+        return [dict(zip(input_.keys(), e)) for e in product]
     else:
         param = slugify(param).replace("-", "_")
-        return [{param: e} for e in input]
+        return [{param: e} for e in input_]
 
 
 def validate_queryargs(value: "Any") -> bool:

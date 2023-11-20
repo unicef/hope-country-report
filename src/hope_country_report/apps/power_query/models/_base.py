@@ -22,7 +22,6 @@ from concurrency.fields import AutoIncVersionField
 from hope_country_report.config.celery import app
 
 from ...core.utils import SmartManager
-from ...tenant.db import TenantModel
 from ..manager import PowerQueryManager
 from ..processors import mimetype_map
 
@@ -225,7 +224,7 @@ class AdminReversable(models.Model):
         return reverse(admin_urlname(self._meta, "change"), args=[self.pk])
 
 
-class PowerQueryModel(AdminReversable, TenantModel):
+class PowerQueryModel(AdminReversable, models.Model):
     class Meta:
         abstract = True
 

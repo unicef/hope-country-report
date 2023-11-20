@@ -1,6 +1,7 @@
 from typing import Any
 
 from django import forms
+from django.forms import Media
 from django.templatetags.static import static
 
 
@@ -39,8 +40,13 @@ class PythonFormatterEditor(FormatterEditor):
         super().__init__(*args, **kwargs)
         self.attrs["class"] = "python-editor"
 
-    class Media(FormatterEditor.Media):
-        js = FormatterEditor.Media.js + (
-            static("admin/power_query/codemirror/python.js"),
-            static("admin/power_query/codemirror/django.js"),
+    @property
+    def media(self) -> Media:
+        ret = super().media
+        ret += Media(
+            js=(
+                static("admin/power_query/codemirror/python.js"),
+                static("admin/power_query/codemirror/django.js"),
+            )
         )
+        return ret

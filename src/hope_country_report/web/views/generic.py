@@ -12,9 +12,9 @@ from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import ListView, TemplateView, UpdateView
 
-import django_stubs_ext
 from djgeojson.templatetags.geojson_tags import geojsonfeature
 
 from hope_country_report.apps.core.forms import CountryOfficeForm
@@ -24,8 +24,6 @@ from hope_country_report.apps.tenant.utils import set_selected_tenant
 from hope_country_report.utils.media import download_media
 
 from .base import SelectedOfficeMixin
-
-django_stubs_ext.monkeypatch()
 
 if TYPE_CHECKING:
     from django.core.paginator import _SupportsPagination
@@ -38,6 +36,16 @@ if TYPE_CHECKING:
 @login_required
 def index(request: "HttpRequest") -> "HttpResponse":
     return redirect("select-tenant")
+
+
+class SimpleView(View):
+    content = "Ok"
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse(self.get_content(request))
+
+    def get_content(self, request) -> str:
+        return self.content
 
 
 #

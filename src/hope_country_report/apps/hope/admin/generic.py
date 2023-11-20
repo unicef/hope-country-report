@@ -4,52 +4,30 @@ from collections.abc import Sequence
 
 from django.contrib import admin
 
-from admin_cursor_paginator import CursorPaginatorAdmin
-from admin_extra_buttons.api import ExtraButtonsMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.combo import RelatedFieldComboFilter
 from adminfilters.dates import DateRangeFilter
 from adminfilters.json import JsonFieldFilter
-from adminfilters.mixin import AdminFiltersMixin
 from adminfilters.querystring import QueryStringFilter
 from adminfilters.value import ValueFilter
-from smart_admin.mixins import DisplayAllMixin
 
-from . import models
+from .. import models
+from ._base import HopeModelAdmin
+from .utils import modeladmin_factory
 
 if TYPE_CHECKING:
     from django.contrib.admin.options import _ListFilterT, _ModelT
-    from django.db.models import Model, QuerySet
+    from django.db.models import QuerySet
     from django.http import HttpRequest
 
-    from ...types.http import AuthHttpRequest
-
-
-class ReadOnlyMixin:
-    def has_add_permission(self, request: "HttpRequest", obj: "Model | None" = None) -> bool:
-        return False
-
-    def has_delete_permission(self, request: "HttpRequest", obj: "Model | None" = None) -> bool:
-        return False
-
-    def has_change_permission(self, request: "HttpRequest", obj: "Model | None" = None) -> bool:
-        return False
-
-
-class CursorButtonMixin(ExtraButtonsMixin, CursorPaginatorAdmin):
-    change_list_template = "admin/hope/change_list.html"
-
-
-class HopeModelAdmin(ReadOnlyMixin, AdminFiltersMixin, DisplayAllMixin, CursorButtonMixin):  # type: ignore
-    def has_module_permission(self, request: "HttpRequest") -> bool:
-        return True
-        # return super().has_module_permission(request)
+    from hope_country_report.types.http import AuthHttpRequest
 
 
 @admin.register(models.BusinessArea)
 class BusinessAreaAdmin(HopeModelAdmin):
     search_fields = ("name",)
     list_filter = ("active", "region_name")
+    ordering = ("name",)
 
 
 class AutoBusinessAreaCol:
@@ -64,22 +42,33 @@ class AutoBusinessAreaCol:
         return (("business_area", AutoCompleteFilter), *base)
 
 
-@admin.register(models.Household)
-class HouseholdAdmin(AutoBusinessAreaCol, HopeModelAdmin):
-    list_display = (
+HouseholdAdmin = modeladmin_factory(
+    models.BusinessArea,
+    list_display=(
         "unicef_id",
         "withdrawn",
         "size",
         "first_registration_date",
-    )
-    list_filter = (
-        ("unicef_id", ValueFilter),
-        "withdrawn",
-        QueryStringFilter,
-        ("admin_area", AutoCompleteFilter),
-        ("flex_fields", JsonFieldFilter),
-        ("first_registration_date", DateRangeFilter),
-    )
+    ),
+)
+
+
+admin.register(models.Household)(HouseholdAdmin)
+# class HouseholdAdmin(AutoBusinessAreaCol, AutoFiltersMixin, HopeModelAdmin):
+#     list_display = (
+#         "unicef_id",
+#         "withdrawn",
+#         "size",
+#         "first_registration_date",
+#     )
+# list_filter = (
+#     ("unicef_id", ValueFilter),
+#     "withdrawn",
+#     QueryStringFilter,
+#     ("admin_area", AutoCompleteFilter),
+#     ("flex_fields", JsonFieldFilter),
+#     ("first_registration_date", DateRangeFilter),
+# )
 
 
 @admin.register(models.Individual)
@@ -104,7 +93,7 @@ class ProgramAdmin(AutoBusinessAreaCol, HopeModelAdmin):
     )
 
 
-@admin.register(models.Cycle)
+@admin.register(models.ProgramCycle)
 class CycleAdmin(HopeModelAdmin):
     list_display = ("program", "status", "start_date", "end_date")
     list_filter = ("status",)
@@ -116,7 +105,7 @@ class CountryAdmin(HopeModelAdmin):
     search_fields = ("name",)
 
 
-@admin.register(models.AreaType)
+@admin.register(models.Areatype)
 class AreaTypeAdmin(HopeModelAdmin):
     list_display = ("name", "country", "parent", "area_level")
     list_filter = (
@@ -139,6 +128,16 @@ class AreaAdmin(HopeModelAdmin):
 
     def get_queryset(self, request: "HttpRequest") -> "QuerySet[_ModelT]":
         return super().get_queryset(request).select_related("parent", "area_type")
+
+
+@admin.register(models.PaymentPlan)
+class PaymentPaymentplanAdmin(HopeModelAdmin):
+    search_fields = ("name",)
+
+
+@admin.register(models.PaymentRecord)
+class PaymentPaymentrecordAdmin(HopeModelAdmin):
+    search_fields = ("name",)
 
 
 #

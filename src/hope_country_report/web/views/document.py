@@ -11,7 +11,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import FormView
 
-import django_stubs_ext
 from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminfilters.utils import parse_bool
 
@@ -21,8 +20,6 @@ from hope_country_report.utils.mail import send_request_access
 from hope_country_report.web.forms import RequestAccessForm
 
 from .base import SelectedOfficeMixin
-
-django_stubs_ext.monkeypatch()
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser

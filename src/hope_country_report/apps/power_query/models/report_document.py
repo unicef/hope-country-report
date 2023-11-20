@@ -13,7 +13,6 @@ from django.utils import timezone, translation
 from django.utils.functional import cached_property
 
 import pyminizip
-from django_cleanup import cleanup
 from pathvalidate import sanitize_filename
 from sentry_sdk import capture_exception
 
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-@cleanup.select
+# @cleanup.select
 class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.Model):
     title = models.CharField(max_length=300)
     report = models.ForeignKey(ReportConfiguration, on_delete=models.CASCADE, related_name="documents")
@@ -184,5 +183,5 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
     def content_type(self) -> str:
         return mimetype_map[self.file_suffix]
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("office-doc", args=[self.country_office.slug, self.pk])

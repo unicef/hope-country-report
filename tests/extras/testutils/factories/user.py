@@ -8,6 +8,7 @@ from social_django.models import UserSocialAuth
 from testutils.factories.base import AutoRegisterModelFactory
 
 from hope_country_report.apps.core.models import CountryOffice, CountryShape, DATE_FORMATS, TIME_FORMATS, User, UserRole
+from hope_country_report.state import state
 
 from .django_auth import GroupFactory
 from .hope import BusinessAreaFactory
@@ -90,12 +91,20 @@ class CountryOfficeFactory(AutoRegisterModelFactory):
         if ba := kwargs.pop("business_area", None):
             pass
         else:
-            ba = BusinessAreaFactory(name=kwargs["name"])
-
+            with state.set(must_tenant=False):
+                ba = BusinessAreaFactory(
+                    id=uuid4(),
+                    name=kwargs["name"],
+                    **{
+                        k.replace("business_area__", ""): v
+                        for k, v in kwargs.items()
+                        if k.startswith("business_area__")
+                    },
+                )
         values = {
             "hope_id": str(ba.id),
             "name": ba.name,
-            "active": ba.active,
+            "active": bool(ba.active),
             "code": kwargs["code"],
             "long_name": ba.long_name,
             "region_code": ba.region_code,

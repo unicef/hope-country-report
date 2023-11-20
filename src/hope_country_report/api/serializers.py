@@ -1,3 +1,6 @@
+from typing import Any
+
+from django.db.models import Model
 from django.utils.functional import cached_property
 
 from djgeojson.fields import MultiPolygonField
@@ -21,11 +24,11 @@ class SelectedOfficeSerializer(serializers.ModelSerializer):
         ]
 
     @cached_property
-    def selected_office(self):
+    def selected_office(self) -> CountryOffice:
         co_slug: str = self.context["view"].kwargs[self.co_key]
         return CountryOffice.objects.get(slug=co_slug)
 
-    def get_office(self, obj):
+    def get_office(self, obj: "Model"):
         return self.context["request"].build_absolute_uri(
             reverse("api:countryoffice-detail", args=[self.selected_office.slug])
         )
@@ -66,12 +69,12 @@ class ReportConfigurationSerializer(SelectedOfficeSerializer):
         model = ReportConfiguration
         fields = ["id", "office", "name", "title", "query", "formatters", "url", "documents"]
 
-    def get_url(self, obj: ReportConfiguration):
+    def get_url(self, obj: ReportConfiguration) -> str:
         return self.context["request"].build_absolute_uri(
             reverse("api:config-detail", args=[self.selected_office.slug, obj.pk])
         )
 
-    def get_documents(self, obj: ReportConfiguration):
+    def get_documents(self, obj: ReportConfiguration) -> str:
         return self.context["request"].build_absolute_uri(
             reverse("api:document-list", args=[self.selected_office.slug, obj.pk])
         )
@@ -100,12 +103,12 @@ class ReportDocumentSerializer(SelectedOfficeSerializer):
             "site_url",
         ]
 
-    def get_url(self, obj: ReportDocument):
+    def get_url(self, obj: ReportDocument) -> str:
         return self.context["request"].build_absolute_uri(
             reverse("api:document-detail", args=[self.selected_office.slug, obj.report.pk, obj.pk])
         )
 
-    def get_site_url(self, obj: ReportDocument):
+    def get_site_url(self, obj: ReportDocument) -> str:
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 
 
@@ -117,7 +120,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
         geo_field = "geom"
         fields = ("id", "name", "geom")
 
-    def get_geom(self, obj: "CountryOffice") -> "MultiPolygonField|None":
+    def get_geom(self, obj: "CountryOffice") -> "MultiPolygonField[Any]|None":
         try:
             return obj.shape.mpoly
         except CountryShape.DoesNotExist:

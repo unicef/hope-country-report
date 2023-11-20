@@ -1,13 +1,13 @@
 [project]
-name = "hope-reporting"
+name = "hcr"
 version = "0.1"
 description = ""
 authors = [
     {name = "sax", email = "s.apostolico@gmail.com"},
 ]
-requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "Private"}
+requires-python = ">=3.11"
 
 dependencies = [
     "django>=4.2.7",
@@ -83,19 +83,16 @@ dependencies = [
     "tzdata>=2023.3",
     "unicef-security>=1.4.4",
     "pathvalidate>=3.2.0",
-    "django-stubs>=4.2.6",
     "django-stubs-ext>=4.2.5",
 ]
 
-[tool.pdm.scripts]
-lint = "pre-commit run --all-files"
-
 [tool.pdm.dev-dependencies]
-test = [
+dev = [
     "black>=23.9.1",
-    "django-stubs-ext>=4.2.2",
     "django-stubs>=4.2.4",
+    "django-stubs-ext>=4.2.5",
     "django-webtest>=1.9.10",
+    "drf-api-checker>=0.8.0",
     "factory-boy>=3.3.0",
     "flake8>=6.1.0",
     "freezegun>=1.2.2",
@@ -123,11 +120,9 @@ test = [
     "types-pytz>=2023.3.0.1",
     "types-redis>=4.6.0.5",
     "types-requests>=2.31.0.2",
-    "types-setuptools>=68.2.0.0",
+    "types-setuptools>=68.2.0.0"
 ]
-dev = [
-    "tox-pdm>=0.7.0",
-]
+
 
 [tool.black]
 line-length = 120

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Callable, List, Tuple, TYPE_CHECKING
 
 import logging
 from collections.abc import Sequence
@@ -9,7 +9,8 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.db import connections, models
 from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.forms import Media
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
@@ -43,6 +44,7 @@ from .models import (
     ReportDocument,
     ReportTemplate,
 )
+from .models._base import FileProviderMixin
 from .utils import to_dataset
 from .widget import FormatterEditor
 
@@ -54,7 +56,10 @@ if TYPE_CHECKING:
     from django.contrib.admin.options import _ListFilterT
 
     from ...types.django import AnyModel
+    from ...types.http import AuthHttpRequest
     from .processors import ProcessorStrategy
+
+    _ListDisplayT = List[str | Callable[[Any], str | bool]] | Tuple[str | Callable[[Any], str | bool],] | tuple[()]
 
 
 class CeleryEnabledMixin(admin.ModelAdmin):
@@ -80,7 +85,7 @@ class CeleryEnabledMixin(admin.ModelAdmin):
         self.model.purge()
 
     @view()
-    def celery_terminate(self, request: HttpRequest, pk: int) -> "HttpResponse":
+    def celery_terminate(self, request: HttpRequest, pk: str) -> "HttpResponse":
         obj: CeleryEnabled = self.get_object(request, pk)
         obj.terminate()
 
@@ -114,14 +119,14 @@ class CeleryEnabledMixin(admin.ModelAdmin):
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
     @property
-    def media(self):
+    def media(self) -> Media:
         response = super().media
         response._js_lists.append(["admin/celery.js"])
         return response
 
 
 class AutoProjectCol(admin.ModelAdmin):
-    def get_list_display(self, request: "HttpRequest") -> Sequence[str]:
+    def get_list_display(self, request: "HttpRequest") -> "_ListDisplayT":
         base = super().get_list_display(request)
         if state.tenant is None:
             return ("country_office", *base)
@@ -144,7 +149,7 @@ class QueryAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[Query],
 ):
     list_display = ("name", "target", "owner", "active", "success", "last_run", "status")
     search_fields = ("name",)
@@ -279,10 +284,11 @@ class QueryAdmin(
 class FileProviderAdmin(admin.ModelAdmin):
     actions = ["check_files"]
 
-    def check_files(self, request: HttpRequest, queryset) -> HttpResponse:
+    def check_files(self, request: "HttpRequest", queryset: "QuerySet[Any, Any]") -> None:
+        m: FileProviderMixin
         for m in queryset.all():
             try:
-                if not m.file.exists():
+                if m.file and not m.file.exists():
                     m.file = None
                     m.save()
             except Exception:
@@ -290,7 +296,7 @@ class FileProviderAdmin(admin.ModelAdmin):
 
     @button()
     def _check_files(self, request: HttpRequest) -> HttpResponse:
-        return self.check_files(request, self.model.objects.all())
+        self.check_files(request, self.model.objects.all())
 
 
 @admin.register(Dataset)
@@ -300,7 +306,7 @@ class DatasetAdmin(
     DisplayAllMixin,
     AdminActionPermMixin,
     FileProviderAdmin,
-    ModelAdmin,
+    ModelAdmin[Dataset],
 ):
     search_fields = ("query__name",)
     list_display = (
@@ -360,7 +366,7 @@ class FormatterAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[Formatter],
 ):
     list_display = ("name", "strategy", "content_type")
     search_fields = ("name",)
@@ -395,7 +401,7 @@ class FormatterAdmin(
 
 
 @admin.register(ReportTemplate)
-class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin):
+class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin[ReportTemplate]):
     list_display = (
         "name",
         "doc",
@@ -432,7 +438,7 @@ class ReportConfigurationAdmin(
     LinkedObjectsMixin,
     ExtraButtonsMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[ReportConfiguration],
 ):
     list_display = ("country_office", "name", "formatters", "last_run", "owner", "schedule", "compress", "protect")
     autocomplete_fields = ("query", "owner")
@@ -496,7 +502,7 @@ class QueryArgsAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[Parametrizer],
 ):
     list_display = ("name", "code", "system")
     list_filter = ("system",)
@@ -522,7 +528,7 @@ class ReportDocumentAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[ReportDocument],
 ):
     list_display = ("title", "content_type", "report", "file", "compressed", "protected")
     list_filter = (("report", AutoCompleteFilter), "report__compress", "report__protect")
@@ -537,14 +543,14 @@ class ReportDocumentAdmin(
         return False
 
     @button()
-    def download(self, request: HttpRequest, pk: str) -> HttpResponse:
+    def download(self, request: HttpRequest, pk: str) -> HttpResponse | StreamingHttpResponse:
         doc = self.get_object(request, pk)
         return download_media(doc.file.path, response_class=HttpResponse)
 
     @button()
-    def resend_password(self, request: HttpRequest, pk: str) -> HttpResponse:
-        self.object = self.get_object(request, pk)
-        s = send_document_password(request.user, self.object)
+    def resend_password(self, request: "AuthHttpRequest", pk: str) -> HttpResponse:
+        obj: ReportDocument = self.get_object(request, pk)
+        s = send_document_password(request.user, obj)
         self.message_user(request, f"{s}")
 
 
@@ -555,6 +561,6 @@ class ChartPageAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[ChartPage],
 ):
     pass

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 
 import base64
 import binascii
@@ -19,29 +19,14 @@ import tablib
 from constance import config
 from sentry_sdk import configure_scope
 
+if TYPE_CHECKING:
+    from hope_country_report.types.django import AnyModel
+
+
 logger = logging.getLogger(__name__)
 
 
-# def fqn(o: Any) -> str:
-#     parts = []
-#
-#     if inspect.isclass(o):
-#         cls = o
-#     else:
-#         cls = type(o)
-#     if hasattr(o, "__module__"):
-#         parts.append(o.__module__)
-#         parts.append(get_classname(o))
-#     elif inspect.ismodule(o):
-#         return o.__name__
-#     else:
-#         parts.append(cls.__name__)
-#     if not parts:
-#         raise ValueError(f"Invalid argument `{o}`")
-#     return ".".join(parts)
-
-
-def is_valid_template(filename: Path):
+def is_valid_template(filename: Path) -> bool:
     if filename.suffix not in [".docx", ".pdf"]:
         return False
     if filename.stem.startswith("~"):
@@ -51,7 +36,7 @@ def is_valid_template(filename: Path):
     return True
 
 
-def to_dataset(result: "QuerySet|Iterable|tablib.Dataset|Dict") -> tablib.Dataset:
+def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str,Any]") -> tablib.Dataset:
     if isinstance(result, QuerySet):
         data = tablib.Dataset()
         fields = result.__dict__["_fields"]
@@ -97,7 +82,7 @@ def get_sentry_url(event_id: int, html: bool = False) -> str:
     return url
 
 
-def basicauth(view: Callable) -> Callable:
+def basicauth(view: Callable[..., Callable]) -> Callable[..., Any]:
     def wrap(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if request.user.is_authenticated:
             return view(request, *args, **kwargs)
@@ -144,7 +129,7 @@ def dict_hash(dictionary: dict[str, Any]) -> str:
     return dhash.hexdigest()
 
 
-def sentry_tags(func: Callable) -> Callable:
+def sentry_tags(func: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         with configure_scope() as scope:

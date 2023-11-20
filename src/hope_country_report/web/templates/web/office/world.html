@@ -7,14 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/d3-geo-projection@4"></script>
     <script src="https://unpkg.com/topojson@3"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
-{#    https://github.com/topojson/topojson #}
-{#    <script src="https://unpkg.com/topojson@3"></script>#}
-    {#    <script>#}
-    {##}
-    {#var topology = topojson.topology({foo: geojson});#}
-    {##}
-    {#</script>#}
-    {#    #}
+
     <style>
         svg {
             width: 100%;
@@ -28,24 +21,24 @@
         }
 
         .solid {
-            stroke: white;
+            stroke: black;
             stroke-width: 0.2;
         }
 
         .dashed {
-            stroke: white;
+            stroke: black;
             stroke-width: 0.2;
             stroke-dasharray: 1, 0.5
         }
 
         .dotted {
-            stroke: white;
+            stroke: black;
             stroke-width: 0.2;
             stroke-dasharray: 0.2, 0.5
         }
 
         .dashed-dot {
-            stroke: white;
+            stroke: black;
             stroke-width: 0.2;
             stroke-dasharray: 1, 0.5, 0.2, 0.5
         }
@@ -138,7 +131,7 @@
                 {#.data(topojson.feature(topology, topology.objects.world_polygons_simplified).features)#}
                 .join("path")
                 .attr("fill", function (d) {
-                    return color(d.refugees = 9999999)
+                    return color(d.refugees = 0)
                     {#return color(d.refugees = data[d.properties.color_code])#}
                 })
                 .attr("d", path)

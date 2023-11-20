@@ -9,13 +9,9 @@ from django.utils.functional import cached_property
 from django.views import View
 from django.views.generic import TemplateView
 
-import django_stubs_ext
-
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.forms import SelectTenantForm
-
-django_stubs_ext.monkeypatch()
 
 if TYPE_CHECKING:
     _M = TypeVar("_M", bound=Model, covariant=True)

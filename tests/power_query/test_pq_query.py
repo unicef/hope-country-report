@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from uuid import UUID
+
 import pytest
 
 from django.conf import settings
@@ -118,12 +120,12 @@ def test_filter_query(req, data: "_DATA"):
 
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
-
+    assert tenant  # safety check
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
         q: "Query" = QueryFactory(owner=data["user"], country_office=state.tenant)
         ds, extra = q.run()
         assert ds.data.count() == 2
-        assert ds.data.first() == data["hh1"][0]
+        assert ds.data.first().pk == UUID(data["hh1"][0].pk)
 
 
 def test_query_execution(query1: "Query"):
@@ -158,7 +160,7 @@ def test_query_silk(query1: "Query", data):
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
         ds, extra = query1.run()
     assert ds.data.count() == 2
-    assert ds.data.first() == data["hh1"][0]
+    assert ds.data.first().pk == UUID(data["hh1"][0].pk)
     db_info = ds.info["perfs"]["db"][settings.POWER_QUERY_DB_ALIAS]
     assert db_info["count"] == 1
     assert db_info["queries"][0][1] == (tenant_slug,)
@@ -172,7 +174,7 @@ def test_query_log(query_log: "Query", data):
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
         ds, extra = query_log.run()
     assert ds.data.count() == 2
-    assert ds.data.first() == data["hh1"][0]
+    assert ds.data.first().pk == UUID(data["hh1"][0].pk)
     assert ds.info["debug"] == [("08:00:00", "start"), ("08:00:00", "end")]
 
 
@@ -183,4 +185,4 @@ def test_query_marshalling(query1: "Query", data):
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
         ds, extra = query1.run()
     assert ds.data.count() == 2
-    assert ds.data.first() == data["hh1"][0]
+    assert ds.data.first().pk == UUID(data["hh1"][0].pk)

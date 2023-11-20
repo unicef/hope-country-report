@@ -1,6 +1,6 @@
 import typing
 
-from .base import AutoRegisterModelFactory, factories_registry, TAutoRegisterModelFactory
+from .base import AutoRegisterModelFactory, factories_registry, HopeAutoRegisterModelFactory, TAutoRegisterModelFactory
 
 # isort: split
 from .adv_filters import AdvancedFilterFactory
@@ -16,6 +16,10 @@ def get_factory_for_model(_model) -> type[TAutoRegisterModelFactory]:
     class Meta:
         model = _model
 
+    bases = (AutoRegisterModelFactory,)
     if _model in factories_registry:
         return factories_registry[_model]
-    return type(f"{_model._meta.model_name}Factory", (AutoRegisterModelFactory,), {"Meta": Meta})
+    if _model._meta.app_label in ["hope"]:
+        bases = (HopeAutoRegisterModelFactory,)
+
+    return type(f"{_model._meta.model_name}Factory", bases, {"Meta": Meta})

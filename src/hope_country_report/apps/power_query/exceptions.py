@@ -1,4 +1,7 @@
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from hope_country_report.types.django import AnyModel
 
 
 class PowerQueryError(Exception):
@@ -29,5 +32,5 @@ class QueryRunTerminated(PowerQueryError):
 
 
 class RequestablePermissionDenied(PowerQueryError):
-    def __init__(self, object):
+    def __init__(self, object: "AnyModel"):
         self.object = object

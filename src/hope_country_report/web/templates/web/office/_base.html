@@ -84,7 +84,7 @@
         {% endif %}
         {% if FLAG_API and perms.access_api %}
         <li class="OfficePageListView flex">
-            <a class="flex w-full px-4" href="{% url "api:api-root" %}">
+            <a class="flex w-full px-4" target="_api" href="{% url "api:api-root" %}">
                 <span class="flex text-2xl pt-2 pr-4 icon icon-bargraph"></span>
                 <div class="flex-grow  pt-3 display-open">{% trans "API" %}</div>
             </a></li>
@@ -99,7 +99,7 @@
     <ul class="menu d-block block">
         {% if user.is_staff %}
             <li class="flex">
-                <a class="flex w-full px-4" href="{% url "admin:index" %}">
+                <a class="flex w-full px-4" target="_admin" href="{% url "admin:index" %}">
                     <span class="flex text-2xl pt-2 pr-4 icon icon-shield1"></span>
                     <div class="flex-grow  pt-3 display-open">{% trans "Admin" %}</div>
                 </a>

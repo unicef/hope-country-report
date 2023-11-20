@@ -1,4 +1,4 @@
-from typing import Any, Type, TYPE_CHECKING, Union
+from typing import Any, Dict, Tuple, Type, TYPE_CHECKING, Union
 
 import logging
 import signal
@@ -8,8 +8,10 @@ from django.apps import apps
 from django.conf import settings
 from django.core.cache import caches
 from django.db import connection
+from django.db.models import Model
 from django.utils.functional import cached_property
 
+from billiard.einfo import ExceptionInfo
 from celery import group
 from celery.contrib.abortable import AbortableTask
 from celery.exceptions import Ignore, Reject
@@ -44,31 +46,33 @@ class AbstractPowerQueryTask(AbortableTask):
     abstract = True
 
     @cached_property
-    def model(self):
+    def model(self) -> Type[Model]:
         return apps.get_app_config("power_query").get_model(self.model_name)
 
-    def after_return(self, *args, **kwargs):
+    def after_return(self, *args: Any, **kwargs: Any) -> None:
         if not settings.CELERY_TASK_ALWAYS_EAGER:
             connection.close()
 
-    def on_success(self, retval, task_id, args, kwargs):
+    def on_success(self, retval: Any, task_id: str, args: Tuple, kwargs: Dict[str, str]) -> None:
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
         super().on_success(retval, task_id, args, kwargs)
 
-    def on_failure(self, exc, task_id, args, kwargs, einfo):
+    def on_failure(
+        self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict[str, str], einfo: ExceptionInfo
+    ) -> None:
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
         super().on_failure(exc, task_id, args, kwargs, einfo)
 
     @property
-    def lock_key(self):
+    def lock_key(self) -> str:
         return f"PowerQueryLock_{self.__class__.__name__}_{self.request.id}_{self.request.retries}"
 
-    def acquire_lock(self):
+    def acquire_lock(self) -> bool:
         lock_acquired = bool(rds.set(self.lock_key, self.lock_signature, ex=self.lock_expiration, nx=True))
         logger.debug("Acquiring %s key %s", self.lock_key, "succeed" if lock_acquired else "failed")
         return lock_acquired
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Tuple, **kwargs: Dict[str, str]) -> Any:
         self.lock_signature = str(uuid.uuid4())
         if self.acquire_lock():
             logger.debug("Task %s execution with lock started", self.request.id)
@@ -97,7 +101,7 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
         if query.status == Query.CANCELED:
             raise Ignore()
 
-        def trap(sig, frame):
+        def trap(sig: Any, frame: Any):
             raise QueryRunTerminated
 
         for sig in ("TERM", "HUP", "INT", "USR1"):
@@ -138,7 +142,7 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
 
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
-def reports_refresh(self: AbortableTask, **kwargs) -> Any:
+def reports_refresh(self: AbortableTask, **kwargs: Dict[str, Any]) -> Any:
     from hope_country_report.apps.power_query.models import ReportConfiguration
 
     report: ReportConfiguration

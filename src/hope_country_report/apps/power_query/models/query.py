@@ -17,7 +17,6 @@ from sentry_sdk import capture_exception, configure_scope
 
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.state import state
-from hope_country_report.types.django import AnyModel
 from hope_country_report.utils.perf import profile
 
 from ..celery_tasks import PowerQueryTask
@@ -32,6 +31,7 @@ if TYPE_CHECKING:
 
     from django.db.models import QuerySet
 
+    from hope_country_report.types.django import AnyModel
     from hope_country_report.types.pq import QueryMatrixResult
 
     from .dataset import Dataset

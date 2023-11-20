@@ -8,8 +8,7 @@ class DbRouter:
     @staticmethod
     def select_db(model: type[Model] | None) -> str | None:
         if model._meta.proxy:
-            # model = model._meta.proxy_for_model
-            raise NotImplementedError
+            model = model._meta.proxy_for_model
         return settings.DATABASE_APPS_MAPPING.get(model._meta.app_label)  # type: ignore[no-any-return]
 
     def db_for_read(self, model: type[Model] | None, **hints: Any) -> str | None:

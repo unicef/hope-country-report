@@ -49,7 +49,7 @@ def must_tenant() -> bool:
             state.must_tenant = True
         else:
             state.must_tenant = None
-    return state.must_tenant
+    return bool(state.must_tenant)
 
 
 def get_tenant_cookie_from_request(request: "AuthHttpRequest") -> str | None:
