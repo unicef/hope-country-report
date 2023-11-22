@@ -42,6 +42,9 @@ ENTRYPOINT ["entrypoint.sh"]
 
 FROM base AS prd
 
+# FIXME
+RUN pip3 install uwsgi==2.0.23
+
 COPY --chown=hcr:hcr ./ ./
 COPY --chown=hcr:hcr --from=builder $VIRTUAL_ENV $VIRTUAL_ENV
 USER hcr

@@ -84,6 +84,7 @@ dependencies = [
     "unicef-security>=1.4.4",
     "pathvalidate>=3.2.0",
     "django-stubs-ext>=4.2.5",
+    "uwsgi>=2.0.23",
 ]
 
 [tool.pdm.dev-dependencies]
