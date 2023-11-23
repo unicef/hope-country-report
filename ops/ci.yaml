@@ -83,3 +83,13 @@ stages:
               dockerComposeCommand: 'up --exit-code-from backend'
               dockerComposeFileArgs: |
                 backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
+
+  - stage: deploy
+    jobs:
+      - script: |
+          curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $(System.AccessToken)" \
+              --data "{ \"definition\": { \"id\": CD_PIPELINE_ID_OF_REPO_Y }}\" \
+              "https://dev.azure.com/YOUR_ORG/YOUR_PROJECT/_apis/build/builds?api-version=6.0"
+        displayName: 'Trigger CD Pipeline in Repo Y'
