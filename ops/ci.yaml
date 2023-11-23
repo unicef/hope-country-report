@@ -86,10 +86,15 @@ stages:
 
   - stage: deploy
     jobs:
-      - script: |
-          curl -X POST \
-              -H "Content-Type: application/json" \
-              -H "Authorization: Bearer $(System.AccessToken)" \
-              --data "{ \"definition\": { \"id\": [CD] HOPE COUNTRY REPORT DEV }}\" \
-              "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/build/builds?api-version=6.0"
-        displayName: 'Trigger CD Pipeline in Repo Y'
+      - job: deploy
+        pool:
+          vmImage: ubuntu-latest
+        displayName: "[DEPLOY]"
+        steps:
+        - script: |
+            curl -X POST \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $(System.AccessToken)" \
+                --data "{ \"definition\": { \"id\": [CD] HOPE COUNTRY REPORT DEV }}\" \
+                "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/build/builds?api-version=6.0"
+          displayName: 'Trigger CD Pipeline in Repo Y'
