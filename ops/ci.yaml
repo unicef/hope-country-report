@@ -95,6 +95,6 @@ stages:
             curl -X POST \
                 -H "Content-Type: application/json" \
                 -H "Content-Length: 0" \
-                -d '{}'
+                -d '{}' \
                 "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/pipelines/1101/runs?api-version=7.1-preview.1"
           displayName: 'Trigger CD Pipeline for hope-country-report'
