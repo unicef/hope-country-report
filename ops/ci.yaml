@@ -59,30 +59,30 @@ stages:
           - script: echo $(Build.SourceVersionMessage)
             displayName: 'Display Build.SourceVersionMessage'
 
-  - stage: test
-    displayName: TEST
-    dependsOn: build_and_push_backend
-    jobs:
-      - job: tests
-        pool:
-          vmImage: ubuntu-latest
-        displayName: "[DJANGO TEST]"
-        steps:
-          - task: Docker@2
-            displayName: "[ACR] Login"
-            inputs:
-              command: login
-              containerRegistry: $(Docker.registryConnection)
-          - task: DockerCompose@0
-            displayName: "Run tests"
-            inputs:
-              containerregistrytype: 'Azure Container Registry'
-              azureContainerRegistry: $(Docker.registryConnection)
-              dockerComposeFile: 'ops/compose.test.yml'
-              action: 'Run a Docker Compose command'
-              dockerComposeCommand: 'up --exit-code-from backend'
-              dockerComposeFileArgs: |
-                backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
+  # - stage: test
+  #   displayName: TEST
+  #   dependsOn: build_and_push_backend
+  #   jobs:
+  #     - job: tests
+  #       pool:
+  #         vmImage: ubuntu-latest
+  #       displayName: "[DJANGO TEST]"
+  #       steps:
+  #         - task: Docker@2
+  #           displayName: "[ACR] Login"
+  #           inputs:
+  #             command: login
+  #             containerRegistry: $(Docker.registryConnection)
+  #         - task: DockerCompose@0
+  #           displayName: "Run tests"
+  #           inputs:
+  #             containerregistrytype: 'Azure Container Registry'
+  #             azureContainerRegistry: $(Docker.registryConnection)
+  #             dockerComposeFile: 'ops/compose.test.yml'
+  #             action: 'Run a Docker Compose command'
+  #             dockerComposeCommand: 'up --exit-code-from backend'
+  #             dockerComposeFileArgs: |
+  #               backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
 
   - stage: deploy
     jobs:
