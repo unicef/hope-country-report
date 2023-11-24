@@ -92,5 +92,9 @@ stages:
         displayName: "[DEPLOY]"
         steps:
         - script: |
-            curl -X POST "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/pipelines/1101/runs?api-version=7.1-preview.1"
+            curl -X POST \
+                -H "Content-Type: application/json" \
+                -H "Content-Length: 0" \
+                -d '{}'
+                "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/pipelines/1101/runs?api-version=7.1-preview.1"
           displayName: 'Trigger CD Pipeline for hope-country-report'
