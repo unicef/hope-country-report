@@ -1,0 +1,90 @@
+version: '3.8'
+
+volumes:
+  postgres_data:
+  hope_postgres_data:
+  backend-static:
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prd
+    command: prd
+    environment:
+      - SECRET_KEY=secret-key
+      - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
+      - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
+      - CACHE_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=backend,localhost
+      - STATIC_ROOT=/static
+      - STATIC_URL=/static/
+      - EMAIL_BACKEND=
+      - EMAIL_HOST=
+      - EMAIL_PORT=
+      - EMAIL_USE_TLS=
+      - EMAIL_USE_SSL=
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - MAILJET_API_KEY=
+      - MAILJET_SECRET_KEY=
+      - WP_PRIVATE_KEY=
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/code
+      - backend-static:/static
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://backend:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgis/postgis:15-3.4
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hcr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      start_period: 5s
+      interval: 5s
+      timeout: 4s
+      retries: 5
+
+  hopedb:
+    image: postgis/postgis:15-3.4
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hopedb
+    volumes:
+      - hope_postgres_data:/var/lib/postgresql/data/
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      start_period: 5s
+      interval: 5s
+      timeout: 4s
+      retries: 5
+
+  redis:
+    image: redis:7.2
+    ports:
+      - 6379:6379
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      start_period: 5s
+      interval: 5s
+      timeout: 4s
+      retries: 5

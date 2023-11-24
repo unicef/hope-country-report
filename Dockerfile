@@ -9,8 +9,8 @@ RUN apt-get update \
         --system --uid 82 \
         --disabled-password --home /home/hcr \
         --shell /sbin.nologin --group hcr --gecos hcr \
-    && mkdir -p /code /tmp /data \
-    && chown -R hcr:hcr /code /tmp /data
+    && mkdir -p /code /tmp /data /static \
+    && chown -R hcr:hcr /code /tmp /data /static
 
 ENV PACKAGES_DIR=/packages
 ENV VIRTUAL_ENV=$PACKAGES_DIR/.venv/lib/python3.11/site-packages

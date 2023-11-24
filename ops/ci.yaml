@@ -92,9 +92,5 @@ stages:
         displayName: "[DEPLOY]"
         steps:
         - script: |
-            curl -X POST \
-                -H "Content-Type: application/json" \
-                -H "Authorization: Bearer $(System.AccessToken)" \
-                --data "{ \"definition\": { \"id\": \"[CD] HOPE COUNTRY REPORT DEV\"" }}" \
-                "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/build/builds?api-version=6.0"
-          displayName: 'Trigger CD Pipeline in Repo Y'
+            curl -X POST "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/pipelines/1101/runs?api-version=7.1-preview.1"
+          displayName: 'Trigger CD Pipeline for hope-country-report'
