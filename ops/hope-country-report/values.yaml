@@ -81,7 +81,7 @@ config:
   MAILJET_SECRET_KEY: ""
   WP_PRIVATE_KEY: ""
   SECURE_SSL_REDIRECT: "True"
-  ALLOWED_HOSTS: ["reporting-hope-dev.unitst.org"]
+  ALLOWED_HOSTS: "reporting-hope-dev.unitst.org,"
 
 
 redis:
