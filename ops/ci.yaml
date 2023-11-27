@@ -83,18 +83,3 @@ stages:
   #             dockerComposeCommand: 'up --exit-code-from backend'
   #             dockerComposeFileArgs: |
   #               backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
-
-  - stage: deploy
-    jobs:
-      - job: deploy
-        pool:
-          vmImage: ubuntu-latest
-        displayName: "[DEPLOY]"
-        steps:
-        - script: |
-            curl -X POST \
-                -H "Content-Type: application/json" \
-                -H "Content-Length: 0" \
-                -d '{}' \
-                "https://dev.azure.com/unicef/ICTD-HCT-MIS/_apis/pipelines/1101/runs?api-version=7.1-preview.1"
-          displayName: 'Trigger CD Pipeline for hope-country-report'

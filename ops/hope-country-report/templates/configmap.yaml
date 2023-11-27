@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hope-country-report.fullname" . }}-backend
+  labels:
+    {{- include "hope-country-report.labels" . | nindent 4 }}
+data:
+{{- range $key, $value :=  .Values.config }}
+  {{- if eq $value "" }}
+  {{ $key }}: {{ $value | quote }} # empty strings are ok
+  {{- else }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
