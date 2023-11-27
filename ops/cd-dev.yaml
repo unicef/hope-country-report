@@ -57,6 +57,9 @@ stages:
                 postgresql.auth.password=$(POSTGRESQL_PASSWORD),\
                 postgresql.auth.postgresPassword=$(POSTGRES_POSTGRESQL_PASSWORD),\
                 postgresql.primary.initdb.password=$(POSTGRES_POSTGRESQL_PASSWORD),\
+                secret.AZURE_CLIENT_ID=$(AZURE_CLIENT_ID),\
+                secret.AZURE_CLIENT_SECRET=$(AZURE_CLIENT_SECRET),\
+                secret.AZURE_TENANT_KEY=$(AZURE_TENANT_KEY),\
                 secret.DATABASE_HOPE_URL=$(DATABASE_HOPE_URL),\
                 secret.DATABASE_URL=$(DATABASE_URL),\
                 secret.SECRET_KEY=$(SECRET_KEY)

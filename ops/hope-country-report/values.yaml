@@ -64,6 +64,9 @@ secret:
   SECRET_KEY: ""
   DATABASE_HOPE_URL: ""
   DATABASE_URL: ""
+  AZURE_CLIENT_ID: ""
+  AZURE_CLIENT_SECRET: ""
+  AZURE_TENANT_KEY: ""
 
 config:
   CACHE_URL: "redis://hcr-redis-master:6379"
