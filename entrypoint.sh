@@ -12,7 +12,8 @@ production() {
         --http :8000 \
         --master \
         --module=src.hope_country_report.config.wsgi \
-        --processes=2
+        --processes=2 \
+        --buffer-size=8192
 }
 
 if [ $# -eq 0 ]; then
