@@ -28,6 +28,8 @@ spec:
               value: "/:localhost:{{ .Values.service.port }}"
             - name: STATICS
               value: "/static:/static"
+            - name: NGINX_PORT
+              value: "80"
           ports:
             - name: http
               containerPort: 80
