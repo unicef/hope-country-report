@@ -80,6 +80,7 @@ config:
   MAILJET_API_KEY: ""
   MAILJET_SECRET_KEY: ""
   WP_PRIVATE_KEY: ""
+  SECURE_SSL_REDIRECT: "False"
 
 
 redis:

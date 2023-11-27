@@ -28,6 +28,7 @@ services:
       - MAILJET_API_KEY=
       - MAILJET_SECRET_KEY=
       - WP_PRIVATE_KEY=
+      - SECURE_SSL_REDIRECT=False
     ports:
       - 8000:8000
     volumes:
