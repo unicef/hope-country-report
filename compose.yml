@@ -12,6 +12,7 @@ services:
       target: dev
     command: dev
     environment:
+      - ALLOWED_HOSTS=*
       - SECRET_KEY=secret-key
       - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
       - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
