@@ -42,7 +42,7 @@ OPTIONAL = {
     "DEBUG": (bool, False, "Django DEBUG"),
     # "DEFAULT_FILE_STORAGE": (str, "django.core.files.storage.FileSystemStorage"),
     "DEFAULT_FILE_STORAGE": (str, "hope_country_report.apps.power_query.storage.DataSetStorage"),
-    "EMAIL_BACKEND": (str, ""),
+    "EMAIL_BACKEND": (str, "anymail.backends.mailjet.EmailBackend"),
     "EMAIL_HOST": (str, ""),
     "EMAIL_PORT": (str, ""),
     "EMAIL_USE_SSL": (str, ""),
