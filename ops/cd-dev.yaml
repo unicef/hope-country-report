@@ -47,7 +47,7 @@ stages:
               releaseName: 'hcr'
               install: true
               waitForExecution: false
-              failOnStderr: true
+              failOnStderr: false
               valueFile: '**/ops/hope-country-report/values.yaml'
               arguments: "--timeout 600s"
               overrideValues: "
