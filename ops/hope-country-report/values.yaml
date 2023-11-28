@@ -82,17 +82,15 @@ config:
 
 
 redis:
-  enabled: true
-  fullnameOverride: "hcr-redis"
-  persistence.enabled: true
-  usePassword: false
-  redis:
-    usePassword: false
-  cluster:
-    slaveCount: 0
+  auth:
     enabled: false
-  image:
-    tag: 7.2.1
+
+  master:
+    count: 1
+
+  replica:
+    replicaCount: 1
+
 
 tls:
   crt: ""
