@@ -67,6 +67,9 @@ secret:
   AZURE_CLIENT_ID: ""
   AZURE_CLIENT_SECRET: ""
   AZURE_TENANT_KEY: ""
+  WP_PRIVATE_KEY: ""
+  MAILJET_API_KEY: ""
+  MAILJET_SECRET_KEY: ""
 
 config:
   CACHE_URL: "redis://hcr-redis-master:6379"
@@ -74,9 +77,6 @@ config:
   STATIC_URL: "/static/"
   SENTRY_DSN: "https://1cdaf6f05dcd4658a0ff175983082b32@excubo.unicef.io/55"
   CELERY_BROKER_URL: "redis://hcr-redis-master:6379"
-  MAILJET_API_KEY: ""
-  MAILJET_SECRET_KEY: ""
-  WP_PRIVATE_KEY: ""
   SECURE_SSL_REDIRECT: "True"
   ALLOWED_HOSTS: "reporting-hope-dev.unitst.org,"
 
