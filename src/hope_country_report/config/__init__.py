@@ -66,7 +66,7 @@ OPTIONAL = {
     "SESSION_COOKIE_SECURE": (bool, True),
     "MAILJET_TEMPLATE_REPORT_READY": (str, ""),
     "MAILJET_TEMPLATE_ZIP_PASSWORD": (str, ""),
-    "SOCIAL_AUTH_REDIRECT_IS_HTTPS": (str, ""),
+    "SOCIAL_AUTH_REDIRECT_IS_HTTPS": (str, True),
     "STATIC_URL": (str, "/static/"),
     "STATIC_ROOT": (str, "/tmp/static/"),
     "TIME_ZONE": (str, "UTC"),
