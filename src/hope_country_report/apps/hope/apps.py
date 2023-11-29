@@ -10,5 +10,5 @@ class Config(AppConfig):
     def ready(self):
         from .patcher import patch
 
-        if not state.inspecting:
+        if not state.inspecting:  # pragma: no branch
             patch()

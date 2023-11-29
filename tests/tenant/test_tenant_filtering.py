@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 @pytest.fixture()
 def data(reporters):
     from testutils.factories import CountryOfficeFactory, HouseholdFactory, UserFactory, UserRoleFactory
+
     from hope_country_report.apps.hope.models import Country
 
     with state.set(must_tenant=False):

@@ -81,9 +81,9 @@
         // declare URL
         const dataURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/choropleth_map.csv";
         {#const polygonsURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_polygons_simplified.json";#}
-        const polylinesURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_lines_simplified.json";
-
-        {#const polygonsURL = "http://localhost:8000/api/home/boundaries/";#}
+        {#const polylinesURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_lines_simplified.json";#}
+{##}
+{#        const polylinesURL = "http://localhost:8000/api/home/topology/";#}
         const polygonsURL = "http://localhost:8000/api/home/topology/";
 
         // load data
@@ -122,16 +122,18 @@
                     .duration(100)
                     .style("opacity", 1)
             };
-
+            const tj = topojson.feature(topology, topology.objects.countries).features;
             // load and draw polygons
             poly
                 .selectAll("path")
                 {#.data(topology.features)#}
-                .data(topojson.feature(topology, topology.objects.countries).features)
+                .data(tj)
                 {#.data(topojson.feature(topology, topology.objects.world_polygons_simplified).features)#}
                 .join("path")
                 .attr("fill", function (d) {
-                    return color(d.refugees = 0)
+                    console.log(11111, d.properties)
+                    return "#37b0f8"
+                    {#return color(d.refugees = 0)#}
                     {#return color(d.refugees = data[d.properties.color_code])#}
                 })
                 .attr("d", path)
@@ -142,24 +144,35 @@
                 .on("mouseleave", mouseleave)
                 .append("title")
                 .text(function (d) {
-                        return `${d.properties.gis_name} \nRefugee Population: ${d3.format(",")(d.refugees)}`
+                        return `${d.properties.name} \nTotal beneficiaries: ${d3.format(",")(d.refugees)}`
                     }
                 )
+            {#line#}
+            {#    .selectAll("path")#}
+            {#    .data(tj)#}
+            {#    .enter()#}
+            {#    .append("path")#}
+            {#    .attr("d", path)#}
+            {#    .style("fill", "none")#}
+            {#    .attr("class", function (d) {#}
+            {#        return "solid"#}
+                    {#return d.properties.type;#}
+            {#     })#}
         };
 
         //load and draw lines
-        d3.json(polylinesURL).then(function (topology) {
-            line
-                .selectAll("path")
-                .data(topojson.feature(topology, topology.objects.world_lines_simplified).features)
-                .enter()
-                .append("path")
-                .attr("d", path)
-                .style("fill", "none")
-                .attr("class", function (d) {
-                    return d.properties.type;
-                })
-        });
+        {#d3.json(polylinesURL).then(function (topology) {#}
+        {#    line#}
+        {#        .selectAll("path")#}
+        {#        .data(topojson.feature(topology, topology.objects.countries).features)#}
+        {#        .enter()#}
+        {#        .append("path")#}
+        {#        .attr("d", path)#}
+        {#        .style("fill", "none")#}
+        {#        .attr("class", function (d) {#}
+        {#            return d.properties.type;#}
+        {#        })#}
+        {# });#}
 
         //zoom function
         const zoom = false

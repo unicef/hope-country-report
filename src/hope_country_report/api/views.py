@@ -47,8 +47,8 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
         topology_ = topology.Topology()
 
-        qs = CountryShape.objects.filter()
-        geojson = json.loads(serialize("geojson", qs, geometry_field="mpoly", id_field="un", fields=["name"]))
+        qs = CountryShape.objects.all()
+        geojson = json.loads(serialize("geojson", qs, geometry_field="mpoly", id_field="un", fields=["name", "active"]))
 
         topojson = topology_({"countries": geojson}, quantization=0)
 
@@ -70,7 +70,7 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     def offices(self, request: "AnyRequest") -> JsonResponse:
-        qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name")
+        qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name", "active")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
 
     # @action(detail=False)
