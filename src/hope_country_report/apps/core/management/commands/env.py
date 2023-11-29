@@ -10,8 +10,6 @@ DEVELOP = {
     "SECRET_KEY": "only-development-secret-key",
 }
 
-MUST_BE_SET = []
-
 
 class Command(BaseCommand):
     requires_migrations_checks = False

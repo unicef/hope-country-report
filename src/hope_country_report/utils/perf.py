@@ -48,10 +48,12 @@ def profile() -> "Iterator[Any]":
     info["db"] = {
         "default": {
             "count": metrics1.count,
-            "queries": metrics1.clauses,
+            # "queries": metrics1.clauses,
+            "queries": [],
         },
         settings.POWER_QUERY_DB_ALIAS: {
             "count": metrics2.count,
-            "queries": metrics2.clauses,
+            # "queries": metrics2.clauses,
+            "queries": [],
         },
     }

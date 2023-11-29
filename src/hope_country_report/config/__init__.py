@@ -17,7 +17,7 @@ class Group(Enum):
 
 
 NOT_SET = "<- not set ->"
-EXPLICIT_SET = ["sqlite://", NOT_SET]
+EXPLICIT_SET = ["sqlite://", "https://example.com", NOT_SET]
 
 
 CONFIG = {
@@ -83,7 +83,7 @@ CONFIG = {
     "SECURE_HSTS_PRELOAD": (bool, True, setting("secure-hsts-preload")),
     "SECURE_HSTS_SECONDS": (int, 60, setting("secure-hsts-seconds")),
     "SECURE_SSL_REDIRECT": (bool, True, setting("secure-ssl-redirect")),
-    "SENTRY_DSN": (str, NOT_SET, "https://develop.sentry.dev/config/"),
+    "SENTRY_DSN": (str, "", "https://develop.sentry.dev/config/"),
     "SENTRY_ENVIRONMENT": (str, NOT_SET, "https://develop.sentry.dev/config/"),
     "SENTRY_URL": (str, "https://excubo.unicef.org/", "Sentry server url"),
     "SESSION_COOKIE_DOMAIN": (str, "unicef.org", setting("std-setting-SESSION_COOKIE_DOMAIN")),
