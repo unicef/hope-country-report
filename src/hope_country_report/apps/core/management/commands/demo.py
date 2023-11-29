@@ -121,8 +121,8 @@ extra={"monthname": calendar.month_name[month]}
             {"compress": True},
         ]:
             r = ReportConfiguration.objects.get_or_create(
-                name=f"{urlencode(params)}",
-                title=f"{urlencode(params)}",
+                name=q2.name + ": " + " & ".join([k for k,v in params.items()]),
+                title=q2.name + ": " + "-".join([k for k,v in params.items()]),
                 country_office=q2.country_office,
                 defaults={"query": q2, "owner": q.owner, "context": {"extra_footer": "-- Report footer --"}, **params},
             )[0]

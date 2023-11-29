@@ -168,7 +168,7 @@ class User(TimeStampedModel, SecurityMixin, AbstractUser):  # type: ignore
         help_text=_("Only applied to user interface. It will not be applied to the reports"),
     )
     time_format = models.CharField(
-        verbose_name=_("Date Format"),
+        verbose_name=_("Time Format"),
         max_length=20,
         choices=TIME_FORMATS,
         default=TIME_FORMATS[0][0],
