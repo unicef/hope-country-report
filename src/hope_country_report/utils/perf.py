@@ -13,18 +13,20 @@ if TYPE_CHECKING:
 
 
 class DBMetrics:
-    def __init__(self, conn: str) -> None:
-        self.conn = conn
+    def __init__(self, db_alias: str) -> None:
+        self.db_alias = db_alias
+        self.conn = connections[self.db_alias]
         self.count = 0
         self.elapsed_query_time = 0.0
         self.clauses = []
 
     def __call__(self, execute: "Any", sql: "Any", params: "Any", many: "Any", context: "Any") -> "Any":
         start_time = time.time()
+
         try:
             return execute(sql, params, many, context)
         finally:
-            self.clauses.append([sql, params])
+            self.clauses.append(self.conn.ops.compose_sql(str(sql), params))
             self.count += 1
             self.elapsed_query_time += time.time() - start_time
 
@@ -48,12 +50,10 @@ def profile() -> "Iterator[Any]":
     info["db"] = {
         "default": {
             "count": metrics1.count,
-            # "queries": metrics1.clauses,
-            "queries": [],
+            "queries": metrics1.clauses,
         },
         settings.POWER_QUERY_DB_ALIAS: {
             "count": metrics2.count,
-            # "queries": metrics2.clauses,
-            "queries": [],
+            "queries": metrics2.clauses,
         },
     }
