@@ -66,7 +66,6 @@ def patch() -> None:
         if model in TENANT_MAPPING:
             model.Tenant.tenant_filter_field = TENANT_MAPPING[model]
         else:
-            logger.warning(f"{model} has not tenant restrictions enabled")
             model.Tenant.tenant_filter_field = "__notset__"
 
         if model in ORDERING:

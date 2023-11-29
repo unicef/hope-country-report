@@ -1,13 +1,6 @@
 repos:
   - repo: local
     hooks:
-#      - id: pyupgrade
-#        name: pyupgrade
-#        entry: pyupgrade
-#        args: [ '--py311-plus', '--keep-runtime-typing' ]
-#        language: python
-#        additional_dependencies: [pyupgrade]
-#        types: [ python ]
       # Configuration for black exists in pyproject.toml,
       # but we let pre-commit take care of the file filtering.
       - id: black
