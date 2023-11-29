@@ -115,11 +115,11 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = (
+    *env("AUTHENTICATION_BACKENDS"),
     "social_core.backends.azuread_tenant.AzureADTenantOAuth2",
     "hope_country_report.apps.power_query.backends.PowerQueryBackend",
     "hope_country_report.apps.tenant.backend.TenantBackend",
     "django.contrib.auth.backends.ModelBackend",
-    *env("AUTHENTICATION_BACKENDS"),
 )
 
 # path
