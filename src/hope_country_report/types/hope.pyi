@@ -1,8 +1,8 @@
-from django.db.models import ManyToManyField
+from django.db.models import ManyToManyField, QuerySet
 
-from hope_country_report.apps.hope.models import BusinessArea
+from hope_country_report.apps.hope.models import BusinessArea, Country
 from hope_country_report.apps.hope.patcher.ba import BusinessAreaManager
 
-class _BusinessArea(BusinessArea):
+class TBusinessArea(BusinessArea):
     objects: BusinessAreaManager
-    countries: ManyToManyField
+    countries: QuerySet[Country]

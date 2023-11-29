@@ -17,10 +17,11 @@ from django.utils.translation import gettext_lazy as _
 from timezone_field import TimeZoneField
 from unicef_security.models import AbstractUser, SecurityMixin, TimeStampedModel
 
+from hope_country_report.apps.hope.models import Country
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
-    from hope_country_report.types.hope import _BusinessArea
+    from hope_country_report.types.hope import TBusinessArea
 
 
 class CountryShape(TimeStampedModel, models.Model):
@@ -63,7 +64,7 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
                 "code": CountryOffice.HQ,
             },
         )
-
+        ba: TBusinessArea
         for ba in BusinessArea.objects.all():
             values = {
                 "hope_id": str(ba.id),
@@ -74,14 +75,23 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
                 "region_code": ba.region_code,
                 "slug": slugify(ba.name),
             }
+            # country: Country = ba.countries.first()
+            # shape: CountryShape = CountryShape.objects.filter()
             CountryOffice.objects.update_or_create(hope_id=ba.id, defaults=values)
         self.link_shapes()
 
     def link_shapes(self) -> QuerySet["CountryOffice"]:
+        c: CountryOffice
         for c in CountryOffice.objects.filter(shape__isnull=True):
-            if s := CountryShape.objects.filter(name__iexact=c.slug).first():
-                c.shape = s
-                c.save()
+            if c.business_area:
+                country: Country = c.business_area.countries.first()
+                if country:
+                    c.shape = CountryShape.objects.filter(iso2=country.iso_code2).first()
+                else:
+                    c.shape = CountryShape.objects.filter(name__iexact=c.slug).first()
+
+                if c.shape:
+                    c.save(update_fields=["shape"])
 
 
 class CountryOffice(TimeStampedModel, models.Model):
@@ -118,10 +128,11 @@ class CountryOffice(TimeStampedModel, models.Model):
         return self.shape.mpoly
 
     @cached_property
-    def business_area(self) -> "_BusinessArea|None":
+    def business_area(self) -> "TBusinessArea|None":
         from hope_country_report.apps.hope.models import BusinessArea
 
-        return BusinessArea.objects.filter(id=self.hope_id).first()
+        if self.hope_id not in [CountryOffice.HQ, None]:
+            return BusinessArea.objects.filter(id=self.hope_id).first()
 
     def get_map_settings(self) -> dict[str, int | float]:
         lat = self.settings.get("map", {}).get("center", {}).get("lat", 0)
