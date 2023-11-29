@@ -30,7 +30,11 @@ ABOUT HOPE Country Report
 
 ### 2. configure your environment
 
-Uses `./manage.py env` to check required (and optional) variables to put 
+Uses `./manage.py env` to configure your environment 
+
+    ./manage.py env > .evnvrc
+
+and check required (and optional) variables to put 
 
     ./manage.py env --check
 
