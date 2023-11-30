@@ -94,6 +94,8 @@ def pytest_configure(config):
         EMAIL_USE_TLS="",
         MAILJET_API_KEY="",
         MAILJET_SECRET_KEY="",
+        MAILJET_TEMPLATE_REPORT_READY="",
+        MAILJET_TEMPLATE_ZIP_PASSWORD="",
         MEDIA_ROOT="/tmp/media",
         SECURE_HSTS_PRELOAD="False",
         SECURE_SSL_REDIRECT="False",

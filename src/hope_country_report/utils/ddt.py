@@ -18,6 +18,8 @@ TEMPLATE = """
     <table>
         <tbody>
             <tr><th>User</th><td>{{state.request.user}}</td><tr>
+            <tr><th></th><td> - superuser: {{state.request.user.is_superuser}}</td><tr>
+            <tr><th></th><td> - staff: {{state.request.user.is_staff}}</td><tr>
             <tr><th>Active</th><td>{{tenant_status}}</td><tr>
             <tr><th>Business Area</th><td>{{active_tenant}}</td><tr>
             <tr><th>Country Office</th><td>{{active_tenant.business_area}}</td><tr>

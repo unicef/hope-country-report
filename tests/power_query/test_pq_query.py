@@ -157,14 +157,14 @@ def test_query_parametrizer(query3: "Query"):
 def test_query_silk(query1: "Query", data):
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
+    uid = str(data["hh1"][0].business_area.pk)
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
         ds, extra = query1.run()
     assert ds.data.count() == 2
     assert ds.data.first().pk == UUID(data["hh1"][0].pk)
     db_info = ds.info["perfs"]["db"][settings.POWER_QUERY_DB_ALIAS]
     assert db_info["count"] == 1
-    assert db_info["queries"][0][1] == (tenant_slug,)
-    assert 'WHERE "_hope_ro__hope_household"."business_area_id" = %s' in db_info["queries"][0][0]
+    assert f'WHERE "_hope_ro__hope_household"."business_area_id" = \'{uid}\'::uuid' in db_info["queries"][0]
 
 
 @freeze_time("2012-01-14 08:00:00")

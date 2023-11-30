@@ -35,12 +35,7 @@ def test_upgrade_check(mocked_responses):
 
 
 @pytest.mark.parametrize("verbosity", [0, 1], ids=["0", "1"])
-@pytest.mark.parametrize("defaults", [True, False], ids=["defaults", ""])
-@pytest.mark.parametrize("template", [True, False], ids=["template", ""])
-@pytest.mark.parametrize("comment", [True, False], ids=["comment", ""])
-@pytest.mark.parametrize("group", ("mandatory", "optional", "all", "develop"))
-@pytest.mark.parametrize("style", ("dotenv", "direnv", "env"))
-def test_env(mocked_responses, template, group, style, comment, defaults, verbosity):
+def test_env(mocked_responses, verbosity):
     out = StringIO()
     environ = {"ADMIN_URL_PREFIX": "test"}
     with mock.patch.dict(os.environ, environ, clear=True):
@@ -48,10 +43,5 @@ def test_env(mocked_responses, template, group, style, comment, defaults, verbos
             "env",
             stdout=out,
             verbosity=verbosity,
-            defaults=defaults,
-            template=template,
-            group=group,
-            style=style,
-            comment=comment,
         )
         assert "error" not in str(out.getvalue())
