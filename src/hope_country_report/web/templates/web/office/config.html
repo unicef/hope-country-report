@@ -104,6 +104,15 @@
         </div>
     {% endif %}
     <div class="box">
+        <h3>{% trans "Formatters" %}</h3>
+        {% trans "Total linked documents: " %}{{ config.formatters.count }}
+        <ul class="list-disc">
+            {% for formatter in config.formatters.all %}
+                <li>- {{formatter.name}}</li>
+            {% endfor %}
+        <ul>
+    </div>
+    <div class="box">
         <h3>{% trans "Documents" %}</h3>
         {% trans "Total linked documents: " %}{{ config.documents.count }} <a class="button primary small" href="{% url "office-doc-list" config.country_office.slug %}?report={{ config.name }}">view</a>
     </div>

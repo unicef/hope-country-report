@@ -63,7 +63,7 @@ extra={"monthname": calendar.month_name[month]}
             ),
         )[0]
         q3 = Query.objects.get_or_create(
-            name="Program List",
+            name="Programme List",
             defaults=dict(
                 country_office=afg,
                 owner=user,
