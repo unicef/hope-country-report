@@ -3,7 +3,8 @@ trigger:
   branches:
     include:
     - develop
-pr: none
+pr:
+  - develop
 resources:
   - repo: self
 
@@ -19,9 +20,63 @@ variables:
 
 
 stages:
-  - stage: build_and_push_backend
+  - stage: build_and_push_backend_dev
     dependsOn: []
-    displayName: BUILD and PUSH
+    displayName: BUILD and PUSH DEV
+    jobs:
+      - job: build_push_backend
+        pool:
+          vmImage: ubuntu-latest
+        displayName: "[BACKEND_BUILD]"
+        steps:
+          - task: Docker@2
+            inputs:
+              containerRegistry: '$(Docker.registryConnection)'
+              command: 'login'
+          - script: |
+              docker buildx create --use
+              docker buildx build \
+              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
+              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
+              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
+              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
+              -t $(Docker.url)/$(Docker.backend.repository):dev-$(tag) \
+              --target dev \
+              --push \
+              ./
+            displayName: Docker build dev
+          - script: echo $(Build.SourceVersionMessage)
+            displayName: 'Display Build.SourceVersionMessage'
+
+  - stage: test_dev
+    displayName: TEST
+    dependsOn: build_and_push_backend_dev
+    jobs:
+      - job: tests
+        pool:
+          vmImage: ubuntu-latest
+        displayName: "[DJANGO TEST]"
+        steps:
+          - task: Docker@2
+            displayName: "[ACR] Login"
+            inputs:
+              command: login
+              containerRegistry: $(Docker.registryConnection)
+          - task: DockerCompose@0
+            displayName: "Run tests"
+            inputs:
+              containerregistrytype: 'Azure Container Registry'
+              azureContainerRegistry: $(Docker.registryConnection)
+              dockerComposeFile: 'ops/compose.test.yml'
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'up --exit-code-from backend'
+              dockerComposeFileArgs: |
+                backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
+
+  - stage: build_prd
+    displayName: BUILD AND PUSH PRD
+    dependsOn: test_dev
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
     jobs:
       - job: build_push_backend
         pool:
@@ -44,42 +99,3 @@ stages:
               --push \
               ./
             displayName: Docker build prd
-          - script: |
-              docker buildx create --use
-              docker buildx build \
-              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
-              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
-              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
-              --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
-              -t $(Docker.url)/$(Docker.backend.repository):dev-$(tag) \
-              --target dev \
-              --push \
-              ./
-            displayName: Docker build dev
-          - script: echo $(Build.SourceVersionMessage)
-            displayName: 'Display Build.SourceVersionMessage'
-
-  - stage: test
-    displayName: TEST
-    dependsOn: build_and_push_backend
-    jobs:
-      - job: tests
-        pool:
-          vmImage: ubuntu-latest
-        displayName: "[DJANGO TEST]"
-        steps:
-          - task: Docker@2
-            displayName: "[ACR] Login"
-            inputs:
-              command: login
-              containerRegistry: $(Docker.registryConnection)
-          - task: DockerCompose@0
-            displayName: "Run tests"
-            inputs:
-              containerregistrytype: 'Azure Container Registry'
-              azureContainerRegistry: $(Docker.registryConnection)
-              dockerComposeFile: 'ops/compose.test.yml'
-              action: 'Run a Docker Compose command'
-              dockerComposeCommand: 'up --exit-code-from backend'
-              dockerComposeFileArgs: |
-                backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
