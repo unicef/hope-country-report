@@ -1,4 +1,4 @@
-Wtrigger: none
+trigger: none
 pr: none
 resources:
   - repo: self
