@@ -26,6 +26,8 @@ services:
       - MAILJET_SECRET_KEY=
       - WP_PRIVATE_KEY=
       - CACHE_URL=redis://redis:6379/1
+      - AZURE_TENANT_ID=
+      - AZURE_CLIENT_KEY=
     depends_on:
       db:
         condition: service_healthy
