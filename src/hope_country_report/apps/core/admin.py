@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 from django import forms
 from django.contrib import admin
 from django.db.models.fields.json import JSONField
+from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 from admin_extra_buttons.decorators import button
@@ -55,6 +56,11 @@ class UserAdmin(_UserAdminPlus):  # type: ignore
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
+
+    def get_fieldsets(self, request: HttpRequest, obj: Optional[Any] = None) -> Any:
+        if not request.user.is_superuser:
+            return super().get_fieldsets(request, obj)
+        return _UserAdminPlus.fieldsets
 
 
 class UserRoleForm(forms.ModelForm):  # type: ignore

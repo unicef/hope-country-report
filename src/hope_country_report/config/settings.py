@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     "django_filters",
     "admin_cursor_paginator",
     "django_celery_results",
-    # "unicef_security",  ## cannot be enabled it creates User model even if not used
+    "unicef_security",
     "django_cleanup.apps.CleanupSelectedConfig",
     "debug_toolbar",
     "jsoneditor",

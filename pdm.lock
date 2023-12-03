@@ -3,10 +3,9 @@
 
 [metadata]
 groups = ["default", "dev"]
-cross_platform = true
-static_urls = false
-lock_version = "4.3"
-content_hash = "sha256:2cac9f645938e447fae866013cfc59fa2dd3691daa24e5325f3a49533f7372a0"
+strategy = ["cross_platform"]
+lock_version = "4.4"
+content_hash = "sha256:6cdc163ec62bc724c9307f51a333d2e69c43621a81b035e66d01a257bc4dde9d"
 
 [[package]]
 name = "amqp"
