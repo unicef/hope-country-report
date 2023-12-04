@@ -2,8 +2,6 @@
 
 set -eou pipefail
 
-export PYTHONPATH="$PYTHONPATH:/code/src" # without this, uwsgi can't load python modules
-
 production() {
     python3 manage.py env --check
     python3 manage.py check --deploy
@@ -32,6 +30,10 @@ case "$1" in
     ;;
     prd)
         production
+    ;;
+    celery_worker)
+        export C_FORCE_ROOT=1
+        celery -A src.hope_country_report.config.celery worker -l info
     ;;
     *)
         exec "$@"
