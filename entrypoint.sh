@@ -3,9 +3,6 @@
 set -eou pipefail
 
 production() {
-    python3 manage.py env --check
-    python3 manage.py check --deploy
-    python3 manage.py upgrade
     uwsgi \
         --http :8000 \
         --master \
