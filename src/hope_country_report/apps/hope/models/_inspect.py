@@ -5,9 +5,8 @@
 #   * Make sure each model has one field with primary_key=True
 #   * Make sure each ForeignKey has `on_delete` set to the desired behavior.
 # DO NOT rename the models, AND don't rename db_table values or field names.
-import django.contrib.postgres.fields
 from django.contrib.gis.db import models
-
+import django.contrib.postgres.fields
 from hope_country_report.apps.hope.models._base import HopeModel
 
 
@@ -93,8 +92,16 @@ class DataCollectingType(HopeModel):
     id = models.BigAutoField(primary_key=True)
     created = models.DateTimeField(null=True)
     modified = models.DateTimeField(null=True)
-    code = models.CharField(unique=True, max_length=60, null=True)
+    code = models.CharField(max_length=32, null=True)
     description = models.TextField(null=True)
+    active = models.BooleanField(null=True)
+    individual_filters_available = models.BooleanField(null=True)
+    household_filters_available = models.BooleanField(null=True)
+    label = models.CharField(max_length=32, null=True)
+    recalculate_composition = models.BooleanField(null=True)
+    deprecated = models.BooleanField(null=True)
+    type = models.CharField(max_length=32, blank=True, null=True)
+    weight = models.SmallIntegerField(null=True)
 
     class Meta:
         managed = False
@@ -125,6 +132,26 @@ class DatacollectingtypeCompatibleTypes(HopeModel):
     class Meta:
         managed = False
         db_table = "core_datacollectingtype_compatible_types"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class DatacollectingtypeLimitTo(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    datacollectingtype = models.ForeignKey(
+        DataCollectingType,
+        on_delete=models.DO_NOTHING,
+        related_name="datacollectingtypelimitto_datacollectingtype",
+        null=True,
+    )
+    businessarea = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="datacollectingtypelimitto_businessarea", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "core_datacollectingtype_limit_to"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -456,13 +483,7 @@ class Household(HopeModel):
         blank=True,
         null=True,
     )
-    data_collecting_type = models.ForeignKey(
-        DataCollectingType,
-        on_delete=models.DO_NOTHING,
-        related_name="household_data_collecting_type",
-        blank=True,
-        null=True,
-    )
+    is_recalculated_group_ages = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -586,6 +607,7 @@ class Individual(HopeModel):
         blank=True,
         null=True,
     )
+    payment_delivery_phone_no = models.CharField(max_length=128, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -852,7 +874,7 @@ class Financialserviceproviderxlsxtemplate(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     name = models.CharField(max_length=120, null=True)
-    columns = models.CharField(max_length=500, null=True)
+    columns = models.CharField(max_length=1000, null=True)
     core_fields = models.TextField(null=True)  # This field type is a guess.
 
     class Meta:
@@ -937,11 +959,10 @@ class Payment(HopeModel):
         "Program", on_delete=models.DO_NOTHING, related_name="payment_program", blank=True, null=True
     )
     token_number = models.IntegerField(blank=True, null=True)
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="payment_copied_from", blank=True, null=True
-    )
-    is_migration_handled = models.BooleanField(null=True)
-    is_original = models.BooleanField(null=True)
+    additional_collector_name = models.CharField(max_length=64, blank=True, null=True)
+    additional_document_number = models.CharField(max_length=128, blank=True, null=True)
+    additional_document_type = models.CharField(max_length=128, blank=True, null=True)
+    signature_hash = models.CharField(max_length=40, null=True)
 
     class Meta:
         managed = False
@@ -1070,11 +1091,6 @@ class PaymentRecord(HopeModel):
     )
     registration_ca_id = models.CharField(max_length=255, blank=True, null=True)
     entitlement_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="paymentrecord_copied_from", blank=True, null=True
-    )
-    is_migration_handled = models.BooleanField(null=True)
-    is_original = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -1215,6 +1231,7 @@ class Program(HopeModel):
         blank=True,
         null=True,
     )
+    is_visible = models.BooleanField(null=True)
 
     class Meta:
         managed = False

@@ -144,7 +144,7 @@ class Command(BaseCommand):
             help="---",
         )
 
-    def handle(self, **options: Dict[Any]):
+    def handle(self, **options: "Dict[Any]"):
         try:
             output_file = options["output_file"]
             buffer = io.StringIO()
