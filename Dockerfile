@@ -42,8 +42,7 @@ ENTRYPOINT ["entrypoint.sh"]
 
 FROM base AS prd
 
-# FIXME
-RUN pip3 install uwsgi==2.0.23
+ENV PATH=$PATH:/code/.venv/bin/
 
 COPY --chown=hcr:hcr ./ ./
 COPY --chown=hcr:hcr --from=builder $VIRTUAL_ENV $VIRTUAL_ENV
