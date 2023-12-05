@@ -13,10 +13,10 @@ RUN apt-get update \
     && chown -R hcr:hcr /code /tmp /data /static
 
 ENV PACKAGES_DIR=/packages
-ENV VIRTUAL_ENV=$PACKAGES_DIR/.venv/lib/python3.11/site-packages
-ENV PYTHONPYCACHEPREFIX=/tmp/pycache
-ENV PYTHONPATH=$PYTHONPATH:$VIRTUAL_ENV:/code/src
-ENV PATH=$PATH:$PACKAGES_DIR/.venv/bin/
+ENV PYPACKAGES=$PACKAGES_DIR/__pypackages__/3.11
+ENV LIB_DIR=$PYPACKAGES/lib
+ENV PYTHONPATH=$PYTHONPATH:$LIB_DIR:/code/src
+ENV PATH=$PATH:$PYPACKAGES/bin
 
 WORKDIR /code
 
@@ -45,7 +45,7 @@ FROM base AS prd
 ENV PATH=$PATH:/code/.venv/bin/
 
 COPY --chown=hcr:hcr ./ ./
-COPY --chown=hcr:hcr --from=builder $VIRTUAL_ENV $VIRTUAL_ENV
+COPY --chown=hcr:hcr --from=builder $PACKAGES_DIR $PACKAGES_DIR
 USER hcr
 
 ADD entrypoint.sh /usr/local/bin/entrypoint.sh
