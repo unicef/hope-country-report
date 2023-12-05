@@ -29,3 +29,6 @@ SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = env.bool("SOCIAL_AUTH_REDIRECT_IS_HTTPS")
 
 SOCIAL_LOGIN_URL = "/social/azuread-tenant-oauth2"
+
+USER_FIELDS = ["username", "email", "first_name", "last_name"]
+USERNAME_IS_FULL_EMAIL = True
