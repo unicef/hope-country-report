@@ -113,10 +113,18 @@ class AreaFactory(AutoRegisterModelFactory):
 
 
 class DataCollectingTypeFactory(AutoRegisterModelFactory):
+    id = factory.Sequence(lambda x: x)
     code = factory.Iterator(["hh only", "full", "partial"])
 
     class Meta:
         model = hope_models.DataCollectingType
+
+
+class DatacollectingtypeLimitToFactory(AutoRegisterModelFactory):
+    id = factory.Sequence(lambda x: x)
+
+    class Meta:
+        model = hope_models.DatacollectingtypeLimitTo
 
 
 class DatacollectingtypeCompatibleTypesFactory(AutoRegisterModelFactory):
