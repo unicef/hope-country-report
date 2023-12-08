@@ -440,7 +440,7 @@ class ReportConfigurationAdmin(
     AdminActionPermMixin,
     ModelAdmin[ReportConfiguration],
 ):
-    list_display = ("country_office", "name", "formatters", "last_run", "owner", "schedule", "compress", "protect")
+    list_display = ("title", "get_formatter", "last_run", "owner", "schedule", "compress", "protect", "country_office")
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
     readonly_fields = (

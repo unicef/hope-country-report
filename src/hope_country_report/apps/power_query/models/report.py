@@ -138,3 +138,6 @@ class ReportConfiguration(
     def get_documents_url(self):
         base = reverse("office-doc-list", args=[self.country_office.slug])
         return f"{base}?report={self.name}"
+
+    def get_formatter(self, obj):
+        return "\n".join([p.name for p in obj.formatters.all()])
