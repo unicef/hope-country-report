@@ -484,6 +484,13 @@ class Household(HopeModel):
         null=True,
     )
     is_recalculated_group_ages = models.BooleanField(null=True)
+    registration_data_import = models.ForeignKey(
+        "RegistrationDataImport",
+        related_name="households_registration_data_import",
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     class Meta:
         managed = False
@@ -608,6 +615,13 @@ class Individual(HopeModel):
         null=True,
     )
     payment_delivery_phone_no = models.CharField(max_length=128, blank=True, null=True)
+    registration_data_import = models.ForeignKey(
+        "RegistrationDataImport",
+        related_name="individuals_registration_data_import",
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     class Meta:
         managed = False
@@ -1448,6 +1462,48 @@ class Targetpopulation(HopeModel):
     class Meta:
         managed = False
         db_table = "targeting_targetpopulation"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class RegistrationDataImport(HopeModel):
+    name = models.CharField(max_length=255, unique=True)
+    status = models.CharField(max_length=255, null=True)
+    import_date = models.DateTimeField(blank=True, null=True)
+    data_source = models.CharField(max_length=255, blank=True, null=True)
+    number_of_individuals = models.PositiveIntegerField()
+    number_of_households = models.PositiveIntegerField()
+    datahub_id = models.UUIDField(null=True, default=None, blank=True)
+    error_message = models.TextField(blank=True)
+
+    pull_pictures = models.BooleanField(default=True)
+    business_area = models.ForeignKey(
+        BusinessArea, null=True, related_name="registrationdataimport_busines_area", on_delete=models.DO_NOTHING
+    )
+    screen_beneficiary = models.BooleanField(default=False)
+    excluded = models.BooleanField(default=False, help_text="Exclude RDI in UI")
+    erased = models.BooleanField(default=False, help_text="Abort RDI")
+    refuse_reason = models.CharField(max_length=100, blank=True, null=True)
+    # TODO: in future will use one program per RDI after migration
+    program = models.ForeignKey(
+        Program,
+        null=True,
+        blank=True,
+        related_name="registration_imports_program",
+        on_delete=models.DO_NOTHING,
+    )
+    programs = models.ManyToManyField(
+        Program,
+        related_name="registration_imports_programs",
+    )
+
+    class Meta:
+        managed = False
+        db_table = "registration_data_registrationdataimport"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
