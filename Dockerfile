@@ -23,7 +23,7 @@ WORKDIR /code
 FROM base as builder
 
 WORKDIR $PACKAGES_DIR
-RUN pip install pdm==2.9.3
+RUN pip install pdm==2.10.4
 ADD pyproject.toml ./
 
 ADD pdm.toml ./
