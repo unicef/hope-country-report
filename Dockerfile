@@ -25,7 +25,11 @@ FROM base as builder
 WORKDIR $PACKAGES_DIR
 RUN pip install pdm==2.9.3
 ADD pyproject.toml ./
+
 ADD pdm.toml ./
+# so on local machine we can use venv and in docker we can use system python
+RUN sed -i 's/use_venv = true/use_venv = false/' pdm.toml
+
 ADD pdm.lock ./
 RUN pdm sync --prod --no-editable --no-self
 
