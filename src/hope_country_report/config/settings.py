@@ -39,6 +39,12 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": env("STATIC_FILE_STORAGE"),
     },
+    "media": {
+        "BACKEND": env("MEDIA_FILE_STORAGE"),
+    },
+    "hope": {
+        "BACKEND": env("HOPE_FILE_STORAGE"),
+    },
 }
 INSTALLED_APPS = [
     "hope_country_report.web",
