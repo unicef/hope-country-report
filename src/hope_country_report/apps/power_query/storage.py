@@ -14,10 +14,10 @@ class HCRAzureStorage(AzureStorage):
     prefix = ""
 
     def get_default_settings(self):
-        base = {**self.get_default_settings()}
+        base = super().get_default_settings()
         for k, v in base.items():
-            if hasattr(settings, f"{self.prefix}_{k.upper()}"):
-                base[k] = getattr(f"{self.prefix}_{k.upper()}")
+            if value := getattr(settings, f"{self.prefix}_AZURE_{k.upper()}", None):
+                base[k] = value
         return base
 
 

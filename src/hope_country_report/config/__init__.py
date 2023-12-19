@@ -73,6 +73,10 @@ CONFIG = {
     "EMAIL_PORT": (str, ""),
     "EMAIL_USE_SSL": (str, ""),
     "EMAIL_USE_TLS": (str, ""),
+    "HOPE_AZURE_ACCOUNT_NAME": (str, ""),
+    "HOPE_AZURE_ACCOUNT_KEY": (str, ""),
+    "HOPE_AZURE_AZURE_CONTAINER": (str, ""),
+    "HOPE_AZURE_SAS_TOKEN": (str, ""),
     "HOPE_FILE_STORAGE": (
         str,
         "hope_country_report.apps.power_query.storage.HopeStorage",
@@ -82,6 +86,10 @@ CONFIG = {
     "MAILJET_SECRET_KEY": (str, NOT_SET),
     "MAILJET_TEMPLATE_REPORT_READY": (str, NOT_SET),
     "MAILJET_TEMPLATE_ZIP_PASSWORD": (str, NOT_SET),
+    "MEDIA_AZURE_ACCOUNT_NAME": (str, ""),
+    "MEDIA_AZURE_ACCOUNT_KEY": (str, ""),
+    "MEDIA_AZURE_AZURE_CONTAINER": (str, ""),
+    "MEDIA_AZURE_SAS_TOKEN": (str, ""),
     "MEDIA_FILE_STORAGE": (
         str,
         "hope_country_report.apps.power_query.storage.MediaStorage",
