@@ -130,3 +130,4 @@ stages:
                 fi
               done
             displayName: "Trigger deploy"
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
