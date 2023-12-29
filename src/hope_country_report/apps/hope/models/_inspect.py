@@ -1342,7 +1342,7 @@ class DataRegistrationdataimport(HopeModel):
 
 
 class DataRegistrationdataimportPrograms(HopeModel):
-    id = models.BigAutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True)
     registrationdataimport = models.ForeignKey(
         DataRegistrationdataimport,
         on_delete=models.DO_NOTHING,
