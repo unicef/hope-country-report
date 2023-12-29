@@ -35,6 +35,7 @@ WANTED_TABLES = IRegexList(
         "geo.*",
         "payment.*",
         "targeting.*",
+        "registration_data.*",
     ]
 )
 
