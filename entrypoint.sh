@@ -30,10 +30,10 @@ case "$1" in
     ;;
     celery_worker)
         export C_FORCE_ROOT=1
-        celery -A src.hope_country_report.config.celery worker -l info
+        celery -A hope_country_report.config.celery worker -l info
     ;;
     celery_beat)
-        celery -A src.hope_country_report.config.celery beat -l info
+        celery -A hope_country_report.config.celery beat -l info
     ;;
     *)
         exec "$@"
