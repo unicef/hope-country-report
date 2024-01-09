@@ -109,3 +109,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    command: celery_beat
+    environment: *django-env
+    volumes:
+      - .:/code
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
