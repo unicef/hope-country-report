@@ -42,8 +42,6 @@ stages:
               --push \
               ./
             displayName: Docker build dev
-          - script: echo $(Build.SourceVersionMessage)
-            displayName: 'Display Build.SourceVersionMessage'
 
   - stage: test_dev
     displayName: TEST
