@@ -50,8 +50,8 @@ class CeleryEnabled(models.Model):
     NOT_SCHEDULED = "Not scheduled"
 
     version = AutoIncVersionField()
-    sentry_error_id = models.CharField(max_length=400, blank=True, null=True)
-    error_message = models.CharField(max_length=400, blank=True, null=True)
+    sentry_error_id = models.CharField(max_length=512, blank=True, null=True)
+    error_message = models.CharField(max_length=1024, blank=True, null=True)
     last_run = models.DateTimeField(null=True, blank=True)
 
     curr_async_result_id = models.CharField(
