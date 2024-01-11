@@ -51,7 +51,7 @@ class CeleryEnabled(models.Model):
 
     version = AutoIncVersionField()
     sentry_error_id = models.CharField(max_length=512, blank=True, null=True)
-    error_message = models.CharField(max_length=1024, blank=True, null=True)
+    error_message = models.TextField(blank=True, null=True)
     last_run = models.DateTimeField(null=True, blank=True)
 
     curr_async_result_id = models.CharField(
