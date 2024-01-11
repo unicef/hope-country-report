@@ -32,7 +32,7 @@ CONFIG = {
     "AZURE_CONTAINER": (str, ""),
     "AZURE_TENANT_KEY": (str, ""),
     "CACHE_URL": (str, "redis://localhost:6379/0"),
-    "CATCH_ALL_EMAIL": (str, True),
+    "CATCH_ALL_EMAIL": (str, ""),
     "CELERY_BROKER_URL": (
         str,
         NOT_SET,
