@@ -33,5 +33,5 @@ CONSTANCE_CONFIG = {
         "Mailjet template ID used to notify report execution",
         str,
     ),
-    "CATCH_ALL_EMAIL": (env("CATCH_ALL_EMAIL"), "If set all emails will be sent to this address", "email"),
+    "CATCH_ALL_EMAIL": (env("CATCH_ALL_EMAIL"), "If set all emails will be sent to this address", "str"),
 }
