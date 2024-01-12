@@ -103,7 +103,7 @@ CONFIG = {
     "SECURE_SSL_REDIRECT": (bool, True, setting("secure-ssl-redirect")),
     "SENTRY_DSN": (str, "", "https://develop.sentry.dev/config/"),
     "SENTRY_ENVIRONMENT": (str, NOT_SET, "https://develop.sentry.dev/config/"),
-    "SENTRY_URL": (str, "https://excubo.unicef.io/", "Sentry server url"),
+    "SENTRY_URL": (str, "https://excubo.unicef.io/sentry/hope-cr/", "Sentry server url"),
     "SESSION_COOKIE_DOMAIN": (str, "unicef.org", setting("std-setting-SESSION_COOKIE_DOMAIN")),
     "SESSION_COOKIE_HTTPONLY": (bool, True, setting("session-cookie-httponly")),
     "SESSION_COOKIE_NAME": (str, "hcr_session", setting("session-cookie-name")),
