@@ -108,9 +108,9 @@ class ReportConfiguration(
         if run_query:
             query.execute_matrix()
         if not self.formatters.exists():
-            result = [_("No Formatters available")]
+            result = [(None, _("No Formatters available"))]
         elif not query.datasets.exists():
-            result = [_("No Dataset available")]
+            result = [(None, _("No Dataset available"))]
         else:
             if self.protect:
                 self.pwd = User.objects.make_random_password()
