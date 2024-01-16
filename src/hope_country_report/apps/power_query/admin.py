@@ -481,7 +481,10 @@ class ReportConfigurationAdmin(
         try:
             results = self.object.execute(run_query=True)
             errors = [r[1] for r in results if isinstance(r[1], Exception)]
-            if len(errors) == 0:
+            if len(results) == 1 and isinstance(results[0][0], BaseException):
+                self.message_user(request, results[0][1], messages.ERROR)
+                results = []
+            elif len(errors) == 0:
                 self.message_user(request, "Documents creation success", messages.SUCCESS)
             elif len(errors) == len(results):
                 self.message_user(request, "All documents failed", messages.ERROR)

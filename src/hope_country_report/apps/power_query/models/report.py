@@ -106,7 +106,9 @@ class ReportConfiguration(
         dataset: "Dataset"
         result: "ReportResult" = []
         if run_query:
-            query.execute_matrix()
+            query_result = query.execute_matrix()
+            if "error_message" in query_result:
+                return [(BaseException("Query Error"), query_result["error_message"])]
         if not self.formatters.exists():
             result = [(None, _("No Formatters available"))]
         elif not query.datasets.exists():
