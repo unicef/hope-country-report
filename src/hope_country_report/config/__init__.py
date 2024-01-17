@@ -63,7 +63,7 @@ CONFIG = {
     "DEBUG": (bool, False, setting("debug")),
     "DEFAULT_FILE_STORAGE": (
         str,
-        "hope_country_report.apps.power_query.storage.DataSetStorage",
+        "hope_country_report.apps.power_query.storage.MediaStorage",
         setting("storages"),
     ),
     "EMAIL_BACKEND": (str, "anymail.backends.mailjet.EmailBackend", "Do not change in prod"),
