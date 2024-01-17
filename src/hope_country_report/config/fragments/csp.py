@@ -20,6 +20,7 @@ SOURCES = (
     "gist.githubusercontent.com",
     "unpkg.com",
     "cdn.jsdelivr.net",
+    "saunihopedev.blob.core.windows.net/",
 )
 CSP_DEFAULT_SRC = SOURCES
 CSP_FRAME_SRC = []
