@@ -20,7 +20,7 @@ SOURCES = (
     "gist.githubusercontent.com",
     "unpkg.com",
     "cdn.jsdelivr.net",
-    "saunihopedev.blob.core.windows.net/",
+    "saunihopedev.blob.core.windows.net",
 )
 CSP_DEFAULT_SRC = SOURCES
 CSP_FRAME_SRC = []
@@ -51,6 +51,7 @@ CSP_IMG_SRC = (
     "basemap.nationalmap.gov",
     "*.tile.maps.openaip.net",
     "tiles.stadiamaps.com",
+    "saunihopedev.blob.core.windows.net",
 )
 # CSP_MANIFEST_SRC = ("self",)
 # CSP_MEDIA_SRC = ("self",)
