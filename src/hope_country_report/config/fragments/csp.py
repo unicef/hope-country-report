@@ -53,6 +53,16 @@ CSP_IMG_SRC = (
     "tiles.stadiamaps.com",
     "saunihopedev.blob.core.windows.net",
 )
+CSP_FONT_SRC = (
+    "'self'",
+    "data:",
+    "fonts.gstatic.com",
+    "maxcdn.bootstrapcdn.com",
+    "saunihopedev.blob.core.windows.net",
+    "saunihopestg.blob.core.windows.net",
+    "saunihopetrn.blob.core.windows.net",
+    "saunihopeprd.blob.core.windows.net",
+)
 # CSP_MANIFEST_SRC = ("self",)
 # CSP_MEDIA_SRC = ("self",)
 # CSP_REPORT_URI = ("https://624948b721ea44ac2a6b4de4.endpoint.csper.io/?v=0;",)
