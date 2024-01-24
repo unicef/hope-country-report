@@ -21,9 +21,9 @@ class BusinessArea(HopeModel):
     region_name = models.CharField(max_length=8, null=True)
     kobo_username = models.CharField(max_length=255, blank=True, null=True)
     slug = models.CharField(unique=True, max_length=250, null=True)
-    rapid_pro_payment_verification_token = models.CharField(max_length=40, blank=True, null=True)
     rapid_pro_host = models.CharField(max_length=200, blank=True, null=True)
     has_data_sharing_agreement = models.BooleanField(null=True)
+    rapid_pro_payment_verification_token = models.CharField(max_length=40, blank=True, null=True)
     is_split = models.BooleanField(null=True)
     parent = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="businessarea_parent", blank=True, null=True
@@ -58,6 +58,7 @@ class BusinessArea(HopeModel):
 
 
 class BusinessareaCountries(HopeModel):
+    id = models.BigAutoField(primary_key=True)
     businessarea = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareacountries_businessarea", null=True
     )
@@ -249,6 +250,576 @@ class Country(HopeModel):
         return str(self.name)
 
 
+class Grievancedocument(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    file = models.CharField(max_length=100, blank=True, null=True)
+    file_size = models.IntegerField(blank=True, null=True)
+    content_type = models.CharField(max_length=100, null=True)
+    grievance_ticket = models.ForeignKey(
+        "Grievanceticket",
+        on_delete=models.DO_NOTHING,
+        related_name="grievancedocument_grievance_ticket",
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_grievancedocument"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Grievanceticket(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    user_modified = models.DateTimeField(blank=True, null=True)
+    status = models.IntegerField(null=True)
+    category = models.IntegerField(null=True)
+    issue_type = models.IntegerField(blank=True, null=True)
+    description = models.TextField(null=True)
+    area = models.CharField(max_length=250, null=True)
+    language = models.TextField(null=True)
+    consent = models.BooleanField(null=True)
+    business_area = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="grievanceticket_business_area", null=True
+    )
+    version = models.BigIntegerField(null=True)
+    registration_data_import = models.ForeignKey(
+        "DataRegistrationdataimport",
+        on_delete=models.DO_NOTHING,
+        related_name="grievanceticket_registration_data_import",
+        blank=True,
+        null=True,
+    )
+    last_notification_sent = models.DateTimeField(blank=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    extras = models.JSONField(null=True)
+    admin2 = models.ForeignKey(
+        Area, on_delete=models.DO_NOTHING, related_name="grievanceticket_admin2", blank=True, null=True
+    )
+    ignored = models.BooleanField(null=True)
+    household_unicef_id = models.CharField(max_length=250, blank=True, null=True)
+    comments = models.TextField(blank=True, null=True)
+    priority = models.IntegerField(null=True)
+    programme = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="grievanceticket_programme", blank=True, null=True
+    )
+    urgency = models.IntegerField(null=True)
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="grievanceticket_copied_from", blank=True, null=True
+    )
+    is_migration_handled = models.BooleanField(null=True)
+    is_original = models.BooleanField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_grievanceticket"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.description)
+
+
+class GrievanceticketPrograms(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    grievanceticket = models.ForeignKey(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="grievanceticketprograms_grievanceticket", null=True
+    )
+    program = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="grievanceticketprograms_program", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_grievanceticket_programs"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Grievanceticketthrough(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    linked_ticket = models.ForeignKey(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="grievanceticketthrough_linked_ticket", null=True
+    )
+    main_ticket = models.ForeignKey(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="grievanceticketthrough_main_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_grievanceticketthrough"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketaddindividualdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    individual_data = models.JSONField(blank=True, null=True)
+    household = models.ForeignKey(
+        "Household",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketaddindividualdetails_household",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketaddindividualdetails_ticket", null=True
+    )
+    approve_status = models.BooleanField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketaddindividualdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketcomplaintdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    household = models.ForeignKey(
+        "Household", on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_household", blank=True, null=True
+    )
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketcomplaintdetails_individual",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_ticket", null=True
+    )
+    payment_object_id = models.UUIDField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketcomplaintdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketdeletehouseholddetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    role_reassign_data = models.JSONField(null=True)
+    approve_status = models.BooleanField(null=True)
+    household = models.ForeignKey(
+        "Household",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketdeletehouseholddetails_household",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketdeletehouseholddetails_ticket", null=True
+    )
+    reason_household = models.ForeignKey(
+        "Household",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketdeletehouseholddetails_reason_household",
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketdeletehouseholddetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketdeleteindividualdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketdeleteindividualdetails_individual",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketdeleteindividualdetails_ticket", null=True
+    )
+    approve_status = models.BooleanField(null=True)
+    role_reassign_data = models.JSONField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketdeleteindividualdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Tickethouseholddataupdatedetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    household_data = models.JSONField(blank=True, null=True)
+    household = models.ForeignKey(
+        "Household",
+        on_delete=models.DO_NOTHING,
+        related_name="tickethouseholddataupdatedetails_household",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="tickethouseholddataupdatedetails_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_tickethouseholddataupdatedetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketindividualdataupdatedetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    individual_data = models.JSONField(blank=True, null=True)
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketindividualdataupdatedetails_individual",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketindividualdataupdatedetails_ticket", null=True
+    )
+    role_reassign_data = models.JSONField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketindividualdataupdatedetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketneedsadjudicationdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    selected_individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetails_selected_individual",
+        blank=True,
+        null=True,
+    )
+    role_reassign_data = models.JSONField(null=True)
+    golden_records_individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetails_golden_records_individual",
+        null=True,
+    )
+    possible_duplicate = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetails_possible_duplicate",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketneedsadjudicationdetails_ticket", null=True
+    )
+    extra_data = models.JSONField(null=True)
+    score_max = models.FloatField(null=True)
+    score_min = models.FloatField(null=True)
+    is_multiple_duplicates_version = models.BooleanField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketneedsadjudicationdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class TicketneedsadjudicationdetailsPossibleDuplicates(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    ticketneedsadjudicationdetails = models.ForeignKey(
+        Ticketneedsadjudicationdetails,
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetailspossibleduplicates_ticketneedsadjudicationdetails",
+        null=True,
+    )
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetailspossibleduplicates_individual",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketneedsadjudicationdetails_possible_duplicates"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class TicketneedsadjudicationdetailsSelectedIndividuals(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    ticketneedsadjudicationdetails = models.ForeignKey(
+        Ticketneedsadjudicationdetails,
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetailsselectedindividuals_ticketneedsadjudicationdetails",
+        null=True,
+    )
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetailsselectedindividuals_individual",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketneedsadjudicationdetails_selected_individuals"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketnegativefeedbackdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    household = models.ForeignKey(
+        "Household",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketnegativefeedbackdetails_household",
+        blank=True,
+        null=True,
+    )
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketnegativefeedbackdetails_individual",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketnegativefeedbackdetails_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketnegativefeedbackdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketnote(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    description = models.TextField(null=True)
+    ticket = models.ForeignKey(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketnote_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketnote"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.description)
+
+
+class Ticketpaymentverificationdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    payment_verification_status = models.CharField(max_length=50, null=True)
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketpaymentverificationdetails_ticket", null=True
+    )
+    approve_status = models.BooleanField(null=True)
+    new_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    payment_verification = models.ForeignKey(
+        "Paymentverification",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketpaymentverificationdetails_payment_verification",
+        blank=True,
+        null=True,
+    )
+    new_status = models.CharField(max_length=50, blank=True, null=True)
+    old_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketpaymentverificationdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class TicketpaymentverificationdetailsPaymentVerificaf7C9(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    ticketpaymentverificationdetails = models.ForeignKey(
+        Ticketpaymentverificationdetails,
+        on_delete=models.DO_NOTHING,
+        related_name="ticketpaymentverificationdetailspaymentverificaf7c9_ticketpaymentverificationdetails",
+        null=True,
+    )
+    paymentverification = models.ForeignKey(
+        "Paymentverification",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketpaymentverificationdetailspaymentverificaf7c9_paymentverification",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketpaymentverificationdetails_payment_verificaf7c9"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketpositivefeedbackdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    household = models.ForeignKey(
+        "Household",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketpositivefeedbackdetails_household",
+        blank=True,
+        null=True,
+    )
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketpositivefeedbackdetails_individual",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketpositivefeedbackdetails_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketpositivefeedbackdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketreferraldetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    household = models.ForeignKey(
+        "Household", on_delete=models.DO_NOTHING, related_name="ticketreferraldetails_household", blank=True, null=True
+    )
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketreferraldetails_individual",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketreferraldetails_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketreferraldetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketsensitivedetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    household = models.ForeignKey(
+        "Household", on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_household", blank=True, null=True
+    )
+    individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketsensitivedetails_individual",
+        blank=True,
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_ticket", null=True
+    )
+    payment_object_id = models.UUIDField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketsensitivedetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketsystemflaggingdetails(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    approve_status = models.BooleanField(null=True)
+    role_reassign_data = models.JSONField(null=True)
+    golden_records_individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketsystemflaggingdetails_golden_records_individual",
+        null=True,
+    )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketsystemflaggingdetails_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketsystemflaggingdetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
 class BankaccountInfo(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -267,8 +838,6 @@ class BankaccountInfo(HopeModel):
     )
     is_migration_handled = models.BooleanField(null=True)
     is_original = models.BooleanField(null=True)
-    account_holder_name = models.CharField(max_length=255, null=True)
-    bank_branch_name = models.CharField(max_length=255, null=True)
 
     class Meta:
         managed = False
@@ -425,7 +994,6 @@ class Household(HopeModel):
     village = models.CharField(max_length=250, null=True)
     consent = models.BooleanField(blank=True, null=True)
     is_removed = models.BooleanField(null=True)
-    collect_individual_data = models.CharField(max_length=250, null=True)
     currency = models.CharField(max_length=250, null=True)
     female_age_group_18_59_count = models.IntegerField(blank=True, null=True)
     female_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
@@ -436,11 +1004,12 @@ class Household(HopeModel):
     male_age_group_60_count = models.IntegerField(blank=True, null=True)
     male_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
     registration_method = models.CharField(max_length=250, null=True)
+    collect_individual_data = models.CharField(max_length=250, null=True)
     unhcr_id = models.CharField(max_length=250, null=True)
     version = models.BigIntegerField(null=True)
+    removed_date = models.DateTimeField(blank=True, null=True)
     withdrawn = models.BooleanField(null=True)
     withdrawn_date = models.DateTimeField(blank=True, null=True)
-    removed_date = models.DateTimeField(blank=True, null=True)
     user_fields = models.JSONField(null=True)
     country = models.ForeignKey(
         Country, on_delete=models.DO_NOTHING, related_name="household_country", blank=True, null=True
@@ -451,7 +1020,6 @@ class Household(HopeModel):
     admin_area = models.ForeignKey(
         Area, on_delete=models.DO_NOTHING, related_name="household_admin_area", blank=True, null=True
     )
-    kobo_asset_id = models.CharField(max_length=150, null=True)
     row_id = models.IntegerField(blank=True, null=True)
     children_count = models.IntegerField(blank=True, null=True)
     children_disabled_count = models.IntegerField(blank=True, null=True)
@@ -461,6 +1029,7 @@ class Household(HopeModel):
     male_children_disabled_count = models.IntegerField(blank=True, null=True)
     total_cash_received = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
     total_cash_received_usd = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
+    kobo_asset_id = models.CharField(max_length=150, null=True)
     family_id = models.CharField(max_length=100, blank=True, null=True)
     admin1 = models.ForeignKey(
         Area, on_delete=models.DO_NOTHING, related_name="household_admin1", blank=True, null=True
@@ -493,7 +1062,6 @@ class Household(HopeModel):
         null=True,
     )
     is_recalculated_group_ages = models.BooleanField(null=True)
-    migrated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -504,6 +1072,7 @@ class Household(HopeModel):
 
 
 class HouseholdPrograms(HopeModel):
+    id = models.BigAutoField(primary_key=True)
     household = models.ForeignKey(
         Household, on_delete=models.DO_NOTHING, related_name="householdprograms_household", null=True
     )
@@ -567,10 +1136,10 @@ class Individual(HopeModel):
     first_registration_date = models.DateField(null=True)
     last_registration_date = models.DateField(null=True)
     unicef_id = models.CharField(max_length=255, blank=True, null=True)
-    deduplication_golden_record_status = models.CharField(max_length=50, null=True)
-    deduplication_golden_record_results = models.JSONField(null=True)
     sanction_list_possible_match = models.BooleanField(null=True)
     pregnant = models.BooleanField(blank=True, null=True)
+    deduplication_golden_record_results = models.JSONField(null=True)
+    deduplication_golden_record_status = models.CharField(max_length=50, null=True)
     deduplication_batch_results = models.JSONField(null=True)
     deduplication_batch_status = models.CharField(max_length=50, null=True)
     imported_individual_id = models.UUIDField(blank=True, null=True)
@@ -588,11 +1157,11 @@ class Individual(HopeModel):
     )
     is_removed = models.BooleanField(null=True)
     version = models.BigIntegerField(null=True)
-    duplicate = models.BooleanField(null=True)
     duplicate_date = models.DateTimeField(blank=True, null=True)
-    withdrawn = models.BooleanField(null=True)
-    withdrawn_date = models.DateTimeField(blank=True, null=True)
     removed_date = models.DateTimeField(blank=True, null=True)
+    withdrawn_date = models.DateTimeField(blank=True, null=True)
+    duplicate = models.BooleanField(null=True)
+    withdrawn = models.BooleanField(null=True)
     sanction_list_confirmed_match = models.BooleanField(null=True)
     user_fields = models.JSONField(null=True)
     child_hoh = models.BooleanField(null=True)
@@ -625,7 +1194,6 @@ class Individual(HopeModel):
         null=True,
     )
     payment_delivery_phone_no = models.CharField(max_length=128, blank=True, null=True)
-    migrated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -691,7 +1259,6 @@ class Individualroleinhousehold(HopeModel):
     is_migration_handled = models.BooleanField(null=True)
     is_original = models.BooleanField(null=True)
     is_removed = models.BooleanField(null=True)
-    migrated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -796,7 +1363,7 @@ class Cashplan(HopeModel):
     program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="cashplan_program", null=True)
     exchange_rate = models.DecimalField(max_digits=14, decimal_places=8, blank=True, null=True)
     service_provider = models.ForeignKey(
-        "Serviceprovider", on_delete=models.DO_NOTHING, related_name="cashplan_service_provider", blank=True, null=True
+        "ServiceProvider", on_delete=models.DO_NOTHING, related_name="cashplan_service_provider", blank=True, null=True
     )
     total_delivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     total_entitled_quantity_revised_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
@@ -1042,7 +1609,7 @@ class PaymentPlan(HopeModel):
     )
     program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="paymentplan_program", null=True)
     target_population = models.ForeignKey(
-        "Targetpopulation", on_delete=models.DO_NOTHING, related_name="paymentplan_target_population", null=True
+        "TargetPoulation", on_delete=models.DO_NOTHING, related_name="paymentplan_target_population", null=True
     )
     steficon_applied_date = models.DateTimeField(blank=True, null=True)
     imported_file_date = models.DateTimeField(blank=True, null=True)
@@ -1096,10 +1663,10 @@ class PaymentRecord(HopeModel):
         Household, on_delete=models.DO_NOTHING, related_name="paymentrecord_household", null=True
     )
     service_provider = models.ForeignKey(
-        "Serviceprovider", on_delete=models.DO_NOTHING, related_name="paymentrecord_service_provider", null=True
+        "ServiceProvider", on_delete=models.DO_NOTHING, related_name="paymentrecord_service_provider", null=True
     )
     target_population = models.ForeignKey(
-        "Targetpopulation", on_delete=models.DO_NOTHING, related_name="paymentrecord_target_population", null=True
+        "TargetPoulation", on_delete=models.DO_NOTHING, related_name="paymentrecord_target_population", null=True
     )
     transaction_reference_id = models.CharField(max_length=255, blank=True, null=True)
     vision_id = models.CharField(max_length=255, blank=True, null=True)
@@ -1197,7 +1764,7 @@ class Paymentverificationsummary(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class Serviceprovider(HopeModel):
+class ServiceProvider(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
@@ -1230,7 +1797,7 @@ class Program(HopeModel):
     budget = models.DecimalField(max_digits=11, decimal_places=2, null=True)
     frequency_of_payments = models.CharField(max_length=50, null=True)
     sector = models.CharField(max_length=50, null=True)
-    scope = models.CharField(max_length=50, blank=True, null=True)
+    scope = models.CharField(max_length=50, null=True)
     cash_plus = models.BooleanField(null=True)
     population_goal = models.IntegerField(null=True)
     administrative_areas_of_implementation = models.CharField(max_length=255, null=True)
@@ -1264,6 +1831,7 @@ class Program(HopeModel):
 
 
 class ProgramAdminAreas(HopeModel):
+    id = models.BigAutoField(primary_key=True)
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="programadminareas_program", null=True
     )
@@ -1331,12 +1899,6 @@ class DataRegistrationdataimport(HopeModel):
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", blank=True, null=True
     )
-    batch_duplicates = models.IntegerField(null=True)
-    batch_possible_duplicates = models.IntegerField(null=True)
-    batch_unique = models.IntegerField(null=True)
-    golden_record_duplicates = models.IntegerField(null=True)
-    golden_record_possible_duplicates = models.IntegerField(null=True)
-    golden_record_unique = models.IntegerField(null=True)
 
     class Meta:
         managed = False
@@ -1349,6 +1911,26 @@ class DataRegistrationdataimport(HopeModel):
         return str(self.name)
 
 
+class DataRegistrationdataimportPrograms(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    registrationdataimport = models.ForeignKey(
+        DataRegistrationdataimport,
+        on_delete=models.DO_NOTHING,
+        related_name="dataregistrationdataimportprograms_registrationdataimport",
+        null=True,
+    )
+    program = models.ForeignKey(
+        Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimportprograms_program", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "registration_data_registrationdataimport_programs"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
 class Householdselection(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -1358,7 +1940,7 @@ class Householdselection(HopeModel):
         Household, on_delete=models.DO_NOTHING, related_name="householdselection_household", null=True
     )
     target_population = models.ForeignKey(
-        "Targetpopulation", on_delete=models.DO_NOTHING, related_name="householdselection_target_population", null=True
+        "TargetPoulation", on_delete=models.DO_NOTHING, related_name="householdselection_target_population", null=True
     )
     is_migration_handled = models.BooleanField(null=True)
     is_original = models.BooleanField(null=True)
@@ -1471,29 +2053,29 @@ class Targetingindividualrulefilterblock(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class Targetpopulation(HopeModel):
+class TargetPoulation(HopeModel):
     is_removed = models.BooleanField(null=True)
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
+    name = models.TextField(unique=True, null=True)  # This field type is a guess.
     status = models.CharField(max_length=256, null=True)
     total_households_count = models.IntegerField(blank=True, null=True)
     total_individuals_count = models.IntegerField(blank=True, null=True)
     targeting_criteria = models.OneToOneField(
         Targetingcriteria,
         on_delete=models.DO_NOTHING,
-        related_name="targetpopulation_targeting_criteria",
+        related_name="targetpoulation_targeting_criteria",
         blank=True,
         null=True,
     )
     program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="targetpopulation_program", blank=True, null=True
+        Program, on_delete=models.DO_NOTHING, related_name="targetpoulation_program", blank=True, null=True
     )
     change_date = models.DateTimeField(blank=True, null=True)
     finalized_at = models.DateTimeField(blank=True, null=True)
     business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="targetpopulation_business_area", blank=True, null=True
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="targetpoulation_business_area", blank=True, null=True
     )
     sent_to_datahub = models.BooleanField(null=True)
     ca_hash_id = models.TextField(blank=True, null=True)  # This field type is a guess.

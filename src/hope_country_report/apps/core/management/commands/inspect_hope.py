@@ -36,6 +36,7 @@ WANTED_TABLES = IRegexList(
         "payment.*",
         "targeting.*",
         "registration_data.*",
+        "grievance.*",
     ]
 )
 
@@ -97,6 +98,8 @@ MODEL_RENAME = {
     "Paymentplan": "PaymentPlan",
     "Paymentrecord": "PaymentRecord",
     "Programcycle": "ProgramCycle",
+    "Targetpopulation": "TargetPoulation",
+    "Serviceprovider": "ServiceProvider",
 }
 
 
