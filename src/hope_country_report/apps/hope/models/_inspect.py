@@ -332,7 +332,7 @@ class Grievanceticket(HopeModel):
 
 
 class GrievanceticketPrograms(HopeModel):
-    id = models.BigAutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True)
     grievanceticket = models.ForeignKey(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="grievanceticketprograms_grievanceticket", null=True
     )
@@ -567,7 +567,7 @@ class Ticketneedsadjudicationdetails(HopeModel):
 
 
 class TicketneedsadjudicationdetailsPossibleDuplicates(HopeModel):
-    id = models.BigAutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True)
     ticketneedsadjudicationdetails = models.ForeignKey(
         Ticketneedsadjudicationdetails,
         on_delete=models.DO_NOTHING,
@@ -590,7 +590,7 @@ class TicketneedsadjudicationdetailsPossibleDuplicates(HopeModel):
 
 
 class TicketneedsadjudicationdetailsSelectedIndividuals(HopeModel):
-    id = models.BigAutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True)
     ticketneedsadjudicationdetails = models.ForeignKey(
         Ticketneedsadjudicationdetails,
         on_delete=models.DO_NOTHING,
@@ -691,7 +691,7 @@ class Ticketpaymentverificationdetails(HopeModel):
 
 
 class TicketpaymentverificationdetailsPaymentVerificaf7C9(HopeModel):
-    id = models.BigAutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True)
     ticketpaymentverificationdetails = models.ForeignKey(
         Ticketpaymentverificationdetails,
         on_delete=models.DO_NOTHING,
@@ -1912,7 +1912,7 @@ class DataRegistrationdataimport(HopeModel):
 
 
 class DataRegistrationdataimportPrograms(HopeModel):
-    id = models.BigAutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True)
     registrationdataimport = models.ForeignKey(
         DataRegistrationdataimport,
         on_delete=models.DO_NOTHING,
