@@ -21,9 +21,10 @@ class AutoRegisterModelFactory(factory.django.DjangoModelFactory, metaclass=Auto
 
 
 class HopeAutoRegisterModelFactory(AutoRegisterModelFactory):
-    id = Faker("uuid4")
+    # id = Faker("uuid4")
     # id = factory.LazyFunction(lambda: str(uuid.uuid4()))
-
+    pass
+    
     # @classmethod
     # def create(cls, **kwargs):
     #     if "id" in kwargs:
