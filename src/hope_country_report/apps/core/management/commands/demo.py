@@ -2,7 +2,6 @@ from typing import Any
 
 import logging
 import random
-from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -121,8 +120,8 @@ extra={"monthname": calendar.month_name[month]}
             {"compress": True},
         ]:
             r = ReportConfiguration.objects.get_or_create(
-                name=q2.name + ": " + " & ".join([k for k,v in params.items()]),
-                title=q2.name + ": " + "-".join([k for k,v in params.items()]),
+                name=q2.name + ": " + " & ".join([k for k, v in params.items()]),
+                title=q2.name + ": " + "-".join([k for k, v in params.items()]),
                 country_office=q2.country_office,
                 defaults={"query": q2, "owner": q.owner, "context": {"extra_footer": "-- Report footer --"}, **params},
             )[0]
