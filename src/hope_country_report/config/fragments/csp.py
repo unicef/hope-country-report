@@ -21,6 +21,9 @@ SOURCES = (
     "unpkg.com",
     "cdn.jsdelivr.net",
     "saunihopedev.blob.core.windows.net",
+    "saunihopestg.blob.core.windows.net",
+    "saunihopetrn.blob.core.windows.net",
+    "saunihopeprd.blob.core.windows.net",
 )
 CSP_DEFAULT_SRC = SOURCES
 CSP_FRAME_SRC = []
@@ -38,7 +41,7 @@ CSP_FRAME_SRC = []
 # CSP_OBJECT_SRC = ("self",)
 # CSP_BASE_URI = ("self", "http://localhost:8000",)
 # CSP_CONNECT_SRC = ("self",)
-# CSP_FONT_SRC = ("self",)
+CSP_FONT_SRC = SOURCES
 # CSP_FRAME_SRC = ("self",)
 CSP_IMG_SRC = (
     "'self'",
@@ -52,16 +55,6 @@ CSP_IMG_SRC = (
     "*.tile.maps.openaip.net",
     "tiles.stadiamaps.com",
     "saunihopedev.blob.core.windows.net",
-)
-CSP_FONT_SRC = (
-    "'self'",
-    "data:",
-    "fonts.gstatic.com",
-    "maxcdn.bootstrapcdn.com",
-    "saunihopedev.blob.core.windows.net",
-    "saunihopestg.blob.core.windows.net",
-    "saunihopetrn.blob.core.windows.net",
-    "saunihopeprd.blob.core.windows.net",
 )
 # CSP_MANIFEST_SRC = ("self",)
 # CSP_MEDIA_SRC = ("self",)
