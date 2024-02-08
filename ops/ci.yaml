@@ -68,10 +68,9 @@ stages:
               dockerComposeFileArgs: |
                 backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
 
-  - stage: build_prd
+  - stage: build_and_push_backend_prd
     displayName: BUILD AND PUSH PRD
-    dependsOn: test_dev
-    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    dependsOn: [build_and_push_backend_dev]
     jobs:
       - job: build_push_backend
         pool:
@@ -85,6 +84,8 @@ stages:
           - script: |
               docker buildx create --use
               docker buildx build \
+              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-$(additionalTag) \
+              --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:dev-latest \
               --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:prd-$(additionalTag) \
               --cache-from=$(Docker.url)/$(Docker.backend.repository)-cache:prd-latest \
               --cache-to=$(Docker.url)/$(Docker.backend.repository)-cache:prd-$(additionalTag) \
@@ -95,9 +96,30 @@ stages:
               ./
             displayName: Docker build prd
 
+  - stage: trivy
+    dependsOn: [build_and_push_backend_prd]
+    displayName: Trivy
+    jobs:
+      - job: run_trivy
+        pool:
+          vmImage: ubuntu-latest
+        displayName: "[TRIVY]"
+        steps:
+          - task: Docker@2
+            displayName: "[ACR] Login"
+            inputs:
+              command: login
+              containerRegistry: $(Docker.registryConnection)
+          - script: |
+              docker pull $(Docker.url)/$(Docker.backend.repository):prd-$(tag)
+              docker run -v /var/run/docker.sock:/var/run/docker.sock -e TRIVY_EXIT_CODE=2 -e TRIVY_SEVERITY=HIGH,CRITICAL aquasec/trivy:0.47.0 image $(Docker.url)/$(Docker.backend.repository):prd-$(tag)
+            continueOnError: true
+
+
   - stage: trigger_deploy
     displayName: Trigger deploy
-    dependsOn: [build_prd]
+    dependsOn: [build_and_push_backend_prd, test_dev]
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
     jobs:
       - job: trigger_deploy
         pool:
