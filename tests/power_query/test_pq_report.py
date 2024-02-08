@@ -11,13 +11,69 @@ from unittest.mock import Mock
 from django.conf import settings
 
 from constance.test import override_config
+from extras.testutils.factories import ReportConfigurationFactory
 
+from hope_country_report.apps.power_query.models import ReportConfiguration
 from hope_country_report.config.celery import app
 from hope_country_report.state import state
 from hope_country_report.utils.os import pushd
 
 if TYPE_CHECKING:
-    from hope_country_report.apps.power_query.models import Query, ReportConfiguration, ReportDocument
+    from typing import TypedDict
+
+    from hope_country_report.apps.core.models import CountryOffice, User
+    from hope_country_report.apps.hope.models import Household
+    from hope_country_report.apps.power_query.models import Query, ReportDocument
+
+    class _DATA(TypedDict):
+        user: User
+        co1: CountryOffice
+        co2: CountryOffice
+        hh1: tuple[Household, Household]
+        hh2: tuple[Household, Household]
+
+
+@pytest.fixture()
+def data(reporters) -> "_DATA":
+    from testutils.factories import CountryOfficeFactory, HouseholdFactory, UserFactory, UserRoleFactory
+
+    with state.set(must_tenant=False):
+        co1: "CountryOffice" = CountryOfficeFactory(name="Afghanistan")
+        co2: "CountryOffice" = CountryOfficeFactory(name="Niger")
+
+        h11: "Household" = HouseholdFactory(unicef_id="u1", business_area=co1.business_area, withdrawn=True)
+        h12: "Household" = HouseholdFactory(unicef_id="u2", business_area=co1.business_area, withdrawn=False)
+        h21: "Household" = HouseholdFactory(unicef_id="u3", business_area=co2.business_area, withdrawn=True)
+        h22: "Household" = HouseholdFactory(unicef_id="u4", business_area=co2.business_area, withdrawn=False)
+
+        user = UserFactory(username="user", is_staff=False, is_superuser=False, is_active=True)
+        UserRoleFactory(country_office=co1, group=reporters, user=user)
+
+    return {"co1": co1, "co2": co2, "hh1": (h11, h12), "hh2": (h21, h22), "user": user}
+
+
+@pytest.fixture()
+def query(data: "_DATA"):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    return QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Query",
+        code="result=conn.all()",
+    )
+
+
+@pytest.fixture()
+def query_impl(data: "_DATA", query):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    return QueryFactory(
+        target=None,
+        name="Query Implement",
+        parent=query,
+        country_office=data["co1"],
+        code=None,
+    )
 
 
 @pytest.fixture()
@@ -129,3 +185,10 @@ def test_report_zip_protected(transactional_db, rf, settings, report: "ReportCon
     tdir = tempfile.TemporaryDirectory(prefix="~")
     with pushd(tdir.name):
         archive.extract(filename, filename)
+
+
+def test_report_abstract(db, query_impl: "Query") -> None:
+    with mock.patch("hope_country_report.apps.power_query.models.report.notify_report_completion", Mock()):
+        rep = ReportConfigurationFactory(name="Test Report", query=query_impl.parent, owner=query_impl.owner)
+    assert query_impl.parent.abstract
+    assert ReportConfiguration.objects.filter(parent=rep, query=query_impl).exists()

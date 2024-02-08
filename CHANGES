@@ -1,3 +1,12 @@
+Release 0.2
+----------------
+* add mailjet
+* SSO support
+* handle not uuid hope model
+* parent query
+* multiobjects page
+
+
 Release 0.1
 ----------------
 * Initial release
