@@ -1,7 +1,7 @@
-from enum import Enum
 from typing import Any, Dict, reveal_type, Tuple
 
 from collections.abc import Mapping
+from enum import Enum
 
 from environ import Env
 

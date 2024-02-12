@@ -2,7 +2,6 @@
 import os
 import sys
 
-
 if __name__ == "__main__":
     from hope_country_report.state import state
 

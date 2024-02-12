@@ -1,4 +1,5 @@
 from django.contrib.auth.views import LoginView
+from django.http import HttpResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
@@ -21,7 +22,6 @@ from .views import (
 )
 from .views.base import OfficeTemplateView
 from .views.charts import ChartDetailView, ChartListView
-from django.http import HttpResponse
 
 urlpatterns = [
     path("", index, name="index"),
