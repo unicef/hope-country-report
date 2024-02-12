@@ -11,5 +11,6 @@ if SENTRY_DSN:  # pragma: no cover
         dsn=SENTRY_DSN,
         environment=env("SENTRY_ENVIRONMENT"),
         send_default_pii=True,
+        enable_tracing=True,
         integrations=[DjangoIntegration(), CeleryIntegration()],
     )
