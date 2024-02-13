@@ -74,7 +74,7 @@ dependencies = [
     "pytz",
     "qrcode",
     "redis",
-    "sentry-sdk",
+    "sentry-sdk==1.40.4",
     "shapely",
     "social-auth-app-django",
     "sqlparse",
