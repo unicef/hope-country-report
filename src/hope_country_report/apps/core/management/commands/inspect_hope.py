@@ -195,10 +195,11 @@ class Command(BaseCommand):
             yield "#   * Make sure each ForeignKey has `on_delete` set to the desired behavior."
             yield "# DO NOT rename the models, AND don't rename db_table values or field names."
             # yield "from django.db import models"
-            yield "from django.contrib.gis.db import models"
             yield "import django.contrib.postgres.fields"
+            yield "from django.contrib.gis.db import models"
 
             yield "from hope_country_report.apps.hope.models._base import HopeModel"
+            yield "from hope_country_report.apps.power_query.storage import HopeStorage"
             basemodel = "HopeModel"
 
             known_models = []
@@ -324,6 +325,9 @@ class Command(BaseCommand):
                         field_desc += ", on_delete=models.DO_NOTHING"
                         field_desc += f", related_name='{_related_name}'"
 
+                    if field_type.startswith("ImageField("):
+                        field_desc += "storage=HopeStorage()"
+
                     if extra_params:
                         if not field_desc.endswith("("):
                             field_desc += ", "
@@ -337,7 +341,7 @@ class Command(BaseCommand):
 
                 yield ""
                 yield "    class Tenant:"
-                yield '        tenant_filter_field:str = "__all__"'
+                yield '        tenant_filter_field: str = "__all__"'
                 for attr in ["name", "username", "code", "description"]:
                     if attr in known_fields:
                         yield "    def __str__(self) -> str:"
@@ -436,6 +440,19 @@ class Command(BaseCommand):
             else:
                 field_params["max_digits"] = row[4]
                 field_params["decimal_places"] = row[5]
+
+        image_fields = {
+            "household_household": [
+                "consent_sign",
+            ],
+            "household_document": [
+                "photo",
+            ],
+            "household_individual": ["photo", "disability_certificate_picture"],
+        }
+        if row[0] in image_fields.get(table_name, []):
+            field_type = "ImageField"
+            field_params.pop("max_length", None)
 
         return field_type, field_params, field_notes
 
