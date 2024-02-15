@@ -22,6 +22,8 @@ variables:
     pipelineId: 1149
   ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
     pipelineId: 1233
+  ${{ else }}:
+    pipelineId: null
 
 stages:
 - stage: build_and_push_backend_dev
