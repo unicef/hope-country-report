@@ -16,7 +16,6 @@ variables:
   Docker.url: "uniappsakshopedev.azurecr.io"
   tag: $(Build.SourceVersion)
   additionalTag: $(Build.SourceBranchName)
-  pipelineId: 1149
 
   ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
     pipelineId: 1149
