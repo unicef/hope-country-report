@@ -1,11 +1,11 @@
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
-from django.core.exceptions import MultipleObjectsReturned
 from django.db import models
 
-from hope_country_report.types.django import AnyModel
+if TYPE_CHECKING:
+    from hope_country_report.types.django import AnyModel
 
 
 def get_or_create_reporter_group() -> "Group":
@@ -22,16 +22,14 @@ def get_or_create_reporter_group() -> "Group":
 
 
 class SmartQuerySet(models.QuerySet["AnyModel"]):
-    def get(self, *args: Any, **kwargs: Any) -> AnyModel:
+    def get(self, *args: Any, **kwargs: Any) -> "AnyModel":
         try:
             return super().get(*args, **kwargs)
-        except MultipleObjectsReturned as e:
-            raise MultipleObjectsReturned(f"{e} {args} {kwargs}")
         except self.model.DoesNotExist:
             raise self.model.DoesNotExist(
-                "%s matching query does not exist. Using %s %s" % (self.model._meta.object_name, args, kwargs)
+                f"{self.model._meta.object_name} matching query does not exist. Using {args} {kwargs}"
             )
 
 
-class SmartManager(models.Manager[AnyModel]):
+class SmartManager(models.Manager["AnyModel"]):
     _queryset_class = SmartQuerySet

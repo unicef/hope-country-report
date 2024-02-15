@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.apps.hope.models import Household
-    from hope_country_report.apps.power_query.models import Query, Report
+    from hope_country_report.apps.power_query.models import Query, ReportConfiguration
 
     class _DATA(TypedDict):
         co1: CountryOffice
@@ -46,6 +46,13 @@ def query1(data: "_DATA"):
 
 
 @pytest.fixture()
+def query_exception(data: "_DATA"):
+    from testutils.factories import QueryFactory, UserFactory
+
+    yield QueryFactory(owner=UserFactory(), code="raise Exception('internal exc')")
+
+
+@pytest.fixture()
 def query2():
     from testutils.factories import Query, QueryFactory
 
@@ -59,7 +66,7 @@ start=time.time()
 while True:
     time.sleep(1)
     print(f"Query: {self} -  Aborted: {self.is_aborted()}")
-    if time.time() > start + 5:  # max 5 secs
+    if time.time() > start + 10:  # max 10 secs
         break
 """,
     )
@@ -71,14 +78,9 @@ while True:
 
 @pytest.fixture()
 def report(query1: "Query"):
-    from testutils.factories import ReportFactory
+    from testutils.factories import ReportConfigurationFactory
 
-    return ReportFactory(name="Celery Report", query=query1, owner=query1.owner)
-
-
-@pytest.fixture(scope="session")
-def celery_config():
-    return {"broker_url": "redis://", "result_backend": "redis://"}
+    return ReportConfigurationFactory(name="Celery Report", query=query1, owner=query1.owner)
 
 
 def test_run_background_query(settings, query1: "Query") -> None:
@@ -118,7 +120,7 @@ def test_run_background_query_terminate(settings, query1: "Query", monkeypatch) 
         assert result.state == "REJECTED"
 
 
-def test_refresh_report(report: "Report") -> None:
+def test_refresh_report(report: "ReportConfiguration") -> None:
     refresh_report.delay(report.pk)
     assert report.documents.exists()
 
@@ -132,7 +134,7 @@ def test_celery_no_worker(db, settings, query2: "Query") -> None:
     assert query2.status == "CANCELED"
 
 
-def test_celery_reports_refresh(db, settings, report: "Report") -> None:
+def test_celery_reports_refresh(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     pt = PeriodicTask.objects.first()
     report.schedule = pt
@@ -145,4 +147,45 @@ def test_celery_reports_refresh(db, settings, report: "Report") -> None:
     assert result.state == "SUCCESS"
 
 
+# @pytest.fixture(scope="session")
+# def celery_config():
+#     return {"broker_url": settings.CELERY_BROKER_URL, "result_backend": settings.CELERY_BROKER_URL}
 #
+#
+# @pytest.fixture(scope="session")
+# def celery_enable_logging():
+#     return True
+#
+#
+# @pytest.fixture(scope="session")
+# def celery_worker_pool():
+#     return "prefork"
+#
+
+
+@pytest.mark.django_db(transaction=True)
+def test_celery_error(settings, query_exception: "Query") -> None:
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    query_exception.last_run = None
+    result = query_exception.queue()
+    assert result
+    query_exception.refresh_from_db()
+    assert query_exception.last_run
+    assert query_exception.curr_async_result_id == result
+    assert query_exception.status == "Not scheduled"
+    assert query_exception.error_message
+
+
+#
+#
+# @pytest.mark.django_db(transaction=True)
+# def test_celery_async(settings, celery_worker, query_exception: "Query") -> None:
+#     settings.CELERY_TASK_ALWAYS_EAGER = True
+#     query_exception.last_run = None
+#     result = query_exception.queue()
+#     assert result
+#     query_exception.refresh_from_db()
+#     assert query_exception.last_run
+#     assert query_exception.curr_async_result_id == result
+#     assert query_exception.status == "Not scheduled"
+#     assert query_exception.error_message

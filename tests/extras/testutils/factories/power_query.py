@@ -1,14 +1,18 @@
 from typing import TYPE_CHECKING
 
+from django.apps import apps
+from django.core.files.base import ContentFile
+
 import factory
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query.models import (
+    ChartPage,
     Dataset,
     Formatter,
     Parametrizer,
     Query,
-    Report,
+    ReportConfiguration,
     ReportDocument,
     ReportTemplate,
 )
@@ -48,7 +52,7 @@ class ReportTemplateFactory(AutoRegisterModelFactory):
 
 class FormatterFactory(AutoRegisterModelFactory):
     name = "Queryset To HTML"
-    template = factory.SubFactory(ReportTemplateFactory)
+    template = None
     processor = fqn(ToHTML)
 
     class Meta:
@@ -64,20 +68,26 @@ class DatasetFactory(AutoRegisterModelFactory):
 
     @classmethod
     def create(cls, **kwargs: "Dict") -> Dataset:
-        q: Query = cls.query.get_factory().create()
+        # q: Query = cls.query.get_factory().create()
+        q: Query = QueryFactory()
+        assert q.target.app_label
+        assert q.target.model
+        assert apps.get_model(q.target.app_label, q.target.model)
+        assert q.target.model_class()
         q.run(persist=True)
         return q.datasets.first()
 
 
-class ReportFactory(AutoRegisterModelFactory):
+class ReportConfigurationFactory(AutoRegisterModelFactory):
     name = factory.Sequence(lambda n: "Report %s" % n)
     title = factory.Sequence(lambda n: "Report %s" % n)
     query = factory.SubFactory(QueryFactory)
     owner = factory.SubFactory(UserFactory)
     country_office = factory.SubFactory(CountryOfficeFactory)
+    compress = False
 
     class Meta:
-        model = Report
+        model = ReportConfiguration
         django_get_or_create = ("name",)
 
     @factory.post_generation
@@ -96,43 +106,23 @@ class ReportFactory(AutoRegisterModelFactory):
             create_defaults()
             fmt = Formatter.objects.get(name="Queryset To HTML")
             self.formatters.add(fmt)
-        self.execute(run_query=True)
+        self.execute(run_query=True, notify=False)
 
 
 class ReportDocumentFactory(AutoRegisterModelFactory):
-    report = factory.SubFactory(ReportFactory)
+    report = factory.SubFactory(ReportConfigurationFactory)
     dataset = factory.SubFactory(DatasetFactory)
     formatter = factory.SubFactory(FormatterFactory)
 
     class Meta:
         model = ReportDocument
 
-    # @classmethod
-    # def create(cls, **kwargs: "Dict") -> ReportDocument:
-    #     from hope_country_report.apps.power_query.defaults import create_defaults
-    #
-    #     create_defaults()
-    #     fmt = Formatter.objects.get(name="Queryset To HTML")
-    #     r: Report = ReportFactory(query=QueryFactory(), formatter=fmt)
-    #     r.execute(run_query=True)
-    #     return r.documents.first()
-
-    # @factory.post_generation
-    # def formatters(self, create, formatters, **kwargs):
-    #     from hope_country_report.apps.power_query.defaults import create_defaults
-    #     if not create:
-    #         # Simple build, do nothing.
-    #         return
-    #
-    #     if formatters:
-    #         # A list of groups were passed in, use them
-    #         for formatter in formatters:
-    #             self.formatters.add(formatter)
-    #     else:
-    #         create_defaults()
-    #         fmt = Formatter.objects.get(name="Queryset To HTML")
-    #         r: Report = ReportFactory(query=QueryFactory(), formatter=fmt)
-    #         r.execute(run_query=True)
+    @classmethod
+    def create(cls, **kwargs: "Dict") -> ReportDocument:
+        ret = super().create(**kwargs)
+        ret.file = ContentFile("", f"test{ret.formatter.file_suffix}")
+        ret.save()
+        return ret
 
 
 class ParametrizerFactory(AutoRegisterModelFactory):
@@ -142,3 +132,12 @@ class ParametrizerFactory(AutoRegisterModelFactory):
     class Meta:
         model = Parametrizer
         django_get_or_create = ("code",)
+
+
+class ChartPageFactory(AutoRegisterModelFactory):
+    country_office = factory.SubFactory(CountryOfficeFactory)
+    title = factory.Sequence(lambda n: "ChartPage %s" % n)
+
+    class Meta:
+        model = ChartPage
+        django_get_or_create = ("title",)

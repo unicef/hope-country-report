@@ -11,23 +11,29 @@ from natural_keys import NaturalKeyModel
 
 from ...core.models import CountryOffice
 from ..processors import mimetype_map
+from ._base import AdminReversable
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
-
-    from collections.abc import Iterable
+    from typing import Any, Dict, Iterable, List, Tuple
 
 logger = logging.getLogger(__name__)
 
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-def validate_queryargs(value: "Any") -> None:
+def get_matrix(param, input_: "Iterable" = None) -> "List[Dict[str,str]]":
+    if isinstance(input_, dict):
+        product = list(itertools.product(*input_.values()))
+        return [dict(zip(input_.keys(), e)) for e in product]
+    else:
+        param = slugify(param).replace("-", "_")
+        return [{param: e} for e in input_]
+
+
+def validate_queryargs(value: "Any") -> bool:
     try:
-        if not isinstance(value, dict):
-            raise ValidationError("QueryArgs must be a dict")
-        product = list(itertools.product(*value.values()))
-        [dict(zip(value.keys(), e)) for e in product]
+        get_matrix("test", value)
+        return True
     except ValidationError:
         raise
     except Exception as e:
@@ -37,7 +43,7 @@ def validate_queryargs(value: "Any") -> None:
         )
 
 
-class Parametrizer(NaturalKeyModel, models.Model):
+class Parametrizer(NaturalKeyModel, AdminReversable, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
     code = models.SlugField(max_length=255, unique=True, editable=False)
     name = models.CharField(max_length=255, unique=True)
@@ -54,15 +60,12 @@ class Parametrizer(NaturalKeyModel, models.Model):
         tenant_filter_field = "country_office"
 
     def clean(self) -> None:
-        validate_queryargs(self.value)
+        return validate_queryargs(self.value)
 
-    def get_matrix(self) -> "List[Dict[str,str]]":
-        if isinstance(self.value, dict):
-            product = list(itertools.product(*self.value.values()))
-            return [dict(zip(self.value.keys(), e)) for e in product]
-        else:
-            param = slugify(self.code).replace("-", "_")
-            return [{param: e} for e in self.value]
+    def get_matrix(self, value: "Dict|List|Tuple|None" = None) -> "List[Dict[str,str]]":
+        input = value or self.value
+        param = slugify(self.code).replace("-", "_")
+        return get_matrix(param, input)
 
     def save(
         self,

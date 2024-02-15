@@ -9,7 +9,7 @@ from django.urls import reverse
 from admin_extra_buttons.handlers import ChoiceHandler
 from django_regex.utils import RegexList as _RegexList
 
-pytestmark = pytest.mark.admin
+pytestmark = [pytest.mark.admin, pytest.mark.smoke, pytest.mark.django_db]
 
 
 class RegexList(_RegexList):
@@ -22,6 +22,10 @@ GLOBAL_EXCLUDED_MODELS = RegexList(
     [
         r"django_celery_beat\.ClockedSchedule",
         r"contenttypes\.ContentType",
+        r"hope\.Individual",
+        r"hope\.Household",
+        r"hope\.Program",
+        r"hope\.PaymentPlan",
         r"hope\.Area",
         r"hope\.AreaType",
         r"hope\.Country",
@@ -33,8 +37,8 @@ GLOBAL_EXCLUDED_MODELS = RegexList(
 
 GLOBAL_EXCLUDED_BUTTONS = RegexList(
     [
-        "core.UserAdminPlus:link_user_data",
-        "core.UserAdminPlus:ad",
+        "core.UserAdmin:link_user_data",
+        "core.UserAdmin:ad",
         "power_query.QueryAdmin:run",
     ]
 )
@@ -105,7 +109,7 @@ def record(db, request):
         try:
             instance = factory(**KWARGS.get(full_name, {}))
         except Exception as e:
-            raise Exception(f"Error creating fixture for {modeladmin.model}") from e
+            raise Exception(f"Error creating fixture using {factory}") from e
     return instance
 
 
@@ -120,7 +124,6 @@ def app(django_app_factory, mocked_responses, monkeypatch):
     return django_app
 
 
-@pytest.mark.django_db
 def test_admin_index(app):
     url = reverse("admin:index")
 
@@ -128,7 +131,6 @@ def test_admin_index(app):
     assert res.status_code == 200
 
 
-@pytest.mark.django_db
 @pytest.mark.skip_models(
     "constance.Config",
 )
@@ -146,10 +148,9 @@ def show_error(res):
     errors = []
     for k, v in dict(res.context["adminform"].form.errors).items():
         errors.append(f'{k}: {"".join(v)}')
-    return ("Form submitting failed: {}: {}".format(res.status_code, errors),)
+    return (f"Form submitting failed: {res.status_code}: {errors}",)
 
 
-@pytest.mark.django_db()
 @pytest.mark.skip_models("constance.Config", "hope", "advanced_filters.AdvancedFilter")
 def test_admin_changeform(app, modeladmin, record):
     opts: Options = modeladmin.model._meta
@@ -162,7 +163,6 @@ def test_admin_changeform(app, modeladmin, record):
         assert res.status_code in [302, 200]
 
 
-@pytest.mark.django_db
 @pytest.mark.skip_models("constance.Config", "djstripe.WebhookEndpoint", "advanced_filters.AdvancedFilter")
 def test_admin_add(app, modeladmin):
     url = reverse(admin_urlname(modeladmin.model._meta, "add"))
@@ -174,7 +174,6 @@ def test_admin_add(app, modeladmin):
         pytest.skip("No 'add' permission")
 
 
-@pytest.mark.django_db
 @pytest.mark.skip_models(
     "constance.Config",
     "hope",
@@ -189,7 +188,6 @@ def test_admin_delete(app, modeladmin, record, monkeypatch):
         pytest.skip("No 'delete' permission")
 
 
-@pytest.mark.django_db
 @pytest.mark.skip_buttons()
 def test_admin_buttons(app, modeladmin, button_handler, record, monkeypatch):
     from admin_extra_buttons.handlers import LinkHandler

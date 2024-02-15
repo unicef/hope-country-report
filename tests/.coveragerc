@@ -11,6 +11,10 @@ omit =
     **/debug_toolbar.py
     **/management/commands/demo.py
     **/management/commands/pq.py
+    **/management/commands/pqr.py
+    **/management/commands/topology.py
+    **/management/commands/inspect_hope.py
+    **/management/commands/vapid.py
     src/hope_country_report/types/*.py
 
 

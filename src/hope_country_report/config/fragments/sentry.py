@@ -9,7 +9,8 @@ SENTRY_URL = env("SENTRY_URL")
 if SENTRY_DSN:  # pragma: no cover
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        # by default this is False, must be set to True so the library attaches the request data to the event
+        environment=env("SENTRY_ENVIRONMENT"),
         send_default_pii=True,
+        enable_tracing=True,
         integrations=[DjangoIntegration(), CeleryIntegration()],
     )

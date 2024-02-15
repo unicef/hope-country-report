@@ -1,15 +1,16 @@
 {% extends "web/office/_base.html" %}{% load i18n %}
-
+{% block extrahead %}{{ form.media }}{% endblock %}
+{% block page-title %}{% trans "User Preferences" %}{% endblock %}
 {% block content %}
-    <form method="post" id="user-profile">
-        {% csrf_token %}
+    <div class="box">
+        <form method="post" id="user-profile">
+            {% csrf_token %}
+            <table>{{ form }}</table>
+            <button class="button primary"
+                    type="submit">
+                {% trans "Save" %}
+            </button>
+        </form>
+    </div>
 
-        <table>
-            {{ form }}
-        </table>
-        <button class="bg-unicef-blue hover:bg-blue text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                type="submit">
-            {% trans "Save" %}
-        </button>
-    </form>
 {% endblock %}

@@ -1,35 +1,14 @@
-from typing import TYPE_CHECKING
-
-import contextlib
 import os
 
 import pytest
 
-if TYPE_CHECKING:
-    from testutils.selenium import SmartDriver
+from testutils.selenium import SmartDriver
 
 
 def pytest_configure(config):
     if not config.option.driver:
         setattr(config.option, "driver", "chrome")
     os.environ["DISPLAY"] = ":10.0"
-
-
-# @pytest.fixture(scope="session")
-# def mock_proxy():
-#     import shutil
-#     import tempfile
-#
-#     temp_folder = tempfile.mkdtemp()
-#     setattr(IntegrationTestsRequestHandler, "workspace", temp_folder)
-#
-#     proxy = MockProxy(IntegrationTestsRequestHandler)
-#     proxy.startup()
-#
-#     yield Proxy(proxy.proxy_name, proxy.proxy_port)
-#
-#     proxy.shutdown()
-#     shutil.rmtree(temp_folder)
 
 
 @pytest.fixture
@@ -82,17 +61,7 @@ def chrome_options(request, chrome_options):
     chrome_options.add_argument("--disable-translate")
     chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--lang=en-GB")
-
-    # chrome_options.add_argument("--window-position=0,0")
-    # chrome_options.add_argument("--window-size=1920,1080")
-    # chrome_options.add_argument("--no-pings")
-    # chrome_options.add_argument("--disable-3d-apis")
-    # chrome_options.add_argument("--disable-background-mode")
     chrome_options.add_argument("--disable-gpu")
-    # chrome_options.add_argument("--disable-plugins")
-    # chrome_options.add_argument("--disable-plugins-discovery")
-    # chrome_options.add_argument("--disable-preconnect")
-    # chrome_options.add_argument("--remote-debugging-port=9222")  # solves 'DevToolsActivePort file doesn't exist'
     chrome_options.add_argument("--disable-browser-side-navigation")
     chrome_options.add_argument("--ignore-certificate-errors")
     chrome_options.add_argument("--proxy-server='direct://'")
@@ -105,65 +74,37 @@ def chrome_options(request, chrome_options):
 
 
 SELENIUM_DEFAULT_PAGE_LOAD_TIMEOUT = 20
-SELENIUM_DEFAULT_IMPLICITLY_WAIT = 5
-SELENIUM_DEFAULT_SCRIPT_TIMEOUT = 5
-
-
-# @contextlib.contextmanager
-# def page_load_timeout(driver, secs):
-#     driver.set_page_load_timeout(secs)
-#     yield
-#     driver.set_page_load_timeout(SELENIUM_DEFAULT_PAGE_LOAD_TIMEOUT)
-#
-#
-# @contextlib.contextmanager
-# def implicitly_wait(driver, secs):
-#     driver.implicitly_wait(secs)
-#     yield
-#     driver.implicitly_wait(SELENIUM_DEFAULT_IMPLICITLY_WAIT)
-#
-
-
-@contextlib.contextmanager
-def timeouts(driver, wait=None, page=None, script=None):
-    from selenium.webdriver.common.timeouts import Timeouts
-
-    _current: Timeouts = driver.timeouts
-    if wait:
-        driver.implicitly_wait(wait)
-    if page:
-        driver.set_page_load_timeout(page)
-    if script:
-        driver.set_script_timeout(script)
-    yield
-    driver.timeouts = _current
-
-
-def set_input_value(driver, *args):
-    rules = args[:-1]
-    el = driver.find_element(*rules)
-    el.clear()
-    el.send_keys(args[-1])
+SELENIUM_DEFAULT_IMPLICITLY_WAIT = 1
+SELENIUM_DEFAULT_SCRIPT_TIMEOUT = 1
 
 
 @pytest.fixture
-def browser(transactional_db, driver, live_server, settings, monkeypatch) -> "SmartDriver":
+def driver(driver, live_server):
+    return SmartDriver.factory(driver, live_server)
+
+
+@pytest.fixture
+def browser(transactional_db, driver: "SmartDriver", live_server, settings, monkeypatch) -> "SmartDriver":
     from django.core.handlers.wsgi import WSGIRequest
 
-    from testutils.utils import find_by_css, force_login, wait_for, wait_for_url
+    # from testutils.utils import find_by_css, force_login, wait_for, wait_for_url
 
     monkeypatch.setattr(WSGIRequest, "user_ip", "127.0.0.1", raising=False)
 
-    driver.with_timeouts = timeouts.__get__(driver)
-    driver.set_input_value = set_input_value.__get__(driver)
+    # driver.live_server = live_server
 
-    driver.wait_for = wait_for.__get__(driver)
-    driver.find_by_css = find_by_css.__get__(driver)
-    driver.wait_for_url = wait_for_url.__get__(driver)
-    driver.login = force_login.__get__(driver)
-    driver.live_server = live_server
-    driver.maximize_window()
-    driver.fullscreen_window()
+    # driver.go = go.__get__(driver)
+    # driver.select2 = select2.__get__(driver)
+    # driver.highlight = highlight.__get__(driver)
+    # driver.with_timeouts = timeouts.__get__(driver)
+    # driver.set_input_value = set_input_value.__get__(driver)
+    #
+    # driver.wait_for = wait_for.__get__(driver)
+    # driver.find_by_css = find_by_css.__get__(driver)
+    # driver.wait_for_url = wait_for_url.__get__(driver)
+    # driver.login = force_login.__get__(driver)
+    # driver.maximize_window()
+    # driver.fullscreen_window()
 
     yield driver
 

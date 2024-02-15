@@ -1,14 +1,17 @@
-{% extends "admin/base.html" %}{% load static %}
-{% block extrastyle %}<link rel="stylesheet" href="{% static 'admin/hr.css' %}">{% endblock %}
-{% block branding %}HOPE Reporting{% endblock  %}
-{% block breadcrumbs %}{% endblock  %}
+{% extends "layout.html" %}{% load i18n %}
+{% block logo %}{% endblock %}
+{% block user-prefs  %}{% endblock %}
+{% block sidebar %}{% endblock %}
 {% block content %}
-    <div class="container">
-{#    <div class="center-h w-screen">#}
-{#        <h1>403</h1>#}
-{#    </div>#}
-    <div class="center-h w-screen">
-        <a href="{% url "admin:select_tenant" %}">Select Tenant</a>
+    <div class="flex flex-col items-center justify-center">
+        <div class="mt-40 text-9xl font-extralight">
+            403
+        </div>
+        <div class="text-2xl font-extralight">
+            {% trans "Forbidden" %}
+        </div>
+        <div class="text-2xl mt-10 font-extralight">
+            <a href="javascript:history.back()">{% trans "back" %}</a>
+        </div>
     </div>
-    </div>
-{% endblock  %}
+{% endblock %}

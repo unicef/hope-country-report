@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from .config import conf
 
@@ -14,12 +15,12 @@ if TYPE_CHECKING:
 
 class TenantAuthenticationForm(AdminAuthenticationForm):
     def confirm_login_allowed(self, user: "AbstractBaseUser") -> None:
-        if not user.is_active:
+        if not user.is_active:  # pragma: no cover
             raise ValidationError(self.error_messages["inactive"], code="inactive")
 
 
 class SelectTenantForm(forms.Form):
-    tenant = forms.ModelChoiceField(label="Office", queryset=None, required=True, blank=False)
+    tenant = forms.ModelChoiceField(label=_("Office"), queryset=None, required=True, blank=False)
     next = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args: "Any", **kwargs: "Any") -> None:

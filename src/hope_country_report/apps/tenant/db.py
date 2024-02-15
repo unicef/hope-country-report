@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ...types.django import AnyModel
 
 
-class TenantManager(models.Manager["AnyModel"]):
+class TenantManager(models.Manager["TenantModel"]):
     def must_tenant(self) -> bool:
         return must_tenant()
 
@@ -26,14 +26,16 @@ class TenantManager(models.Manager["AnyModel"]):
             )
         if tenant_filter_field == "__all__":
             return {}
-        # if tenant_filter_field == "__none__":
-        #     return {"pk__lt": -1}
+        if tenant_filter_field == "__notset__":
+            return {}
+        if tenant_filter_field == "__none__":
+            return {"pk__isnull": True}
         active_tenant = get_selected_tenant()
         if not active_tenant:
             raise InvalidTenantError("State does not have any active tenant")
         return {tenant_filter_field: state.tenant.hope_id}
 
-    def get_queryset(self) -> "QuerySet[AnyModel]":
+    def get_queryset(self) -> "QuerySet[AnyModel, AnyModel]":
         flt = self.get_tenant_filter()
         if flt:
             state.filters.append({self.model: str(flt)})
@@ -48,17 +50,3 @@ class TenantModel(models.Model):
         tenant_filter_field = None
 
     objects = TenantManager()
-    #
-    # def save(
-    #     self,
-    #     force_insert: bool = ...,
-    #     force_update: bool = ...,
-    #     using: Optional[str] = ...,
-    #     update_fields: Optional[Iterable[str]] = ...,
-    # ) -> None:
-    #     t = getattr(self, self.Tenant.tenant_filter_field)
-    #     assert conf.auth.get_allowed_tenants().filter(pk=t.pk).exists()
-    #     super().save(force_insert, force_update, using, update_fields)
-    #
-    # def delete(self, using: Any = None, keep_parents: bool = False) -> Tuple[int, Dict[str, int]]:
-    #     return 0, {}

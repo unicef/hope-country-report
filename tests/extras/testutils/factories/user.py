@@ -7,7 +7,8 @@ import factory
 from social_django.models import UserSocialAuth
 from testutils.factories.base import AutoRegisterModelFactory
 
-from hope_country_report.apps.core.models import CountryOffice, User, UserRole
+from hope_country_report.apps.core.models import CountryOffice, CountryShape, DATE_FORMATS, TIME_FORMATS, User, UserRole
+from hope_country_report.state import state
 
 from .django_auth import GroupFactory
 from .hope import BusinessAreaFactory
@@ -18,6 +19,9 @@ class UserFactory(AutoRegisterModelFactory):
     username = factory.Sequence(lambda n: "m%03d@example.com" % n)
     password = factory.django.Password(_password)
     email = factory.Sequence(lambda n: "m%03d@example.com" % n)
+    language = "en"
+    date_format = DATE_FORMATS[0][0]
+    time_format = TIME_FORMATS[0][0]
     first_name = "Jhon"
     last_name = "Doe"
     is_superuser = False
@@ -57,6 +61,23 @@ class LogEntryFactory(AutoRegisterModelFactory):
         model = LogEntry
 
 
+class CountryShapeFactory(AutoRegisterModelFactory):
+    name = "Afghanistan"
+    area = 1
+    fips = "0"
+    iso2 = "AF"
+    iso3 = "AFG"
+    un = "4"
+    region = 1
+    subregion = 1
+    lon = 31
+    lat = 41
+    mpoly = None
+
+    class Meta:
+        model = CountryShape
+
+
 class CountryOfficeFactory(AutoRegisterModelFactory):
     name = factory.Iterator(["Afghanistan", "Ukraine", "Niger", "South Sudan"])
     code = factory.Sequence(lambda x: str(x))
@@ -70,12 +91,20 @@ class CountryOfficeFactory(AutoRegisterModelFactory):
         if ba := kwargs.pop("business_area", None):
             pass
         else:
-            ba = BusinessAreaFactory(name=kwargs["name"])
-
+            with state.set(must_tenant=False):
+                ba = BusinessAreaFactory(
+                    id=uuid4(),
+                    name=kwargs["name"],
+                    **{
+                        k.replace("business_area__", ""): v
+                        for k, v in kwargs.items()
+                        if k.startswith("business_area__")
+                    },
+                )
         values = {
             "hope_id": str(ba.id),
             "name": ba.name,
-            "active": ba.active,
+            "active": bool(ba.active),
             "code": kwargs["code"],
             "long_name": ba.long_name,
             "region_code": ba.region_code,

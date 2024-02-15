@@ -4,9 +4,12 @@ import logging
 
 from django.db import models
 from django.db.models import JSONField
+from django.utils.functional import cached_property
+
+from django_cleanup import cleanup
 
 from ...core.models import CountryOffice
-from ._base import FileProviderMixin, PowerQueryModel
+from ._base import FileProviderMixin, PowerQueryModel, TimeStampMixin
 from .query import Query
 
 if TYPE_CHECKING:
@@ -15,14 +18,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Dataset(PowerQueryModel, FileProviderMixin, models.Model):
+@cleanup.select
+class Dataset(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.Model):
     hash = models.CharField(unique=True, max_length=200, editable=False)
     last_run = models.DateTimeField(null=True, blank=True)
     description = models.CharField(max_length=100)
     query = models.ForeignKey(Query, on_delete=models.CASCADE, related_name="datasets")
 
     info = JSONField(default=dict, blank=True)
-    extra = models.BinaryField(null=True, blank=True, help_text="Any other attribute to pass to the formatter")
 
     class Tenant:
         tenant_filter_field = "query__country_office"
@@ -30,10 +33,14 @@ class Dataset(PowerQueryModel, FileProviderMixin, models.Model):
     def __str__(self) -> str:
         return f"Result of {self.query.name} {self.arguments}"
 
-    @property
+    @cached_property
     def country_office(self) -> "CountryOffice":
         return self.query.country_office
 
-    @property
+    @cached_property
     def arguments(self) -> "Dict[str, int|str]":
-        return self.info.get("arguments", {})
+        return self.info.get("arguments", {}) or {}
+
+    @cached_property
+    def extra(self) -> "Dict[str, int|str]":
+        return self.info.get("extra", {}) or {}

@@ -2,7 +2,7 @@ from typing import Any
 
 from django.core.management import BaseCommand, CommandError, CommandParser
 
-from hope_country_report.apps.power_query.models import Report
+from hope_country_report.apps.power_query.models import ReportConfiguration
 
 
 class Command(BaseCommand):
@@ -41,16 +41,16 @@ class Command(BaseCommand):
         subparsers.add_parser("list")
 
     def _list(self, *args: Any, **options: Any) -> None:
-        from hope_country_report.apps.power_query.models import Report
+        from hope_country_report.apps.power_query.models import ReportConfiguration
 
         line = "#{id:>5}   {name:<32} {status:<25} {last_run} "
         self.stdout.write(line.format(id="id", name="name", status="status", last_run="last run"))
-        for q in Report.objects.all():
+        for q in ReportConfiguration.objects.all():
             self.stdout.write(line.format(id=q.id, name=q.name[:30], status=q.status, last_run=q.last_run))
 
     def _run(self, *args: Any, **options: Any) -> None:
         try:
-            r: Report = Report.objects.get(pk=options["id"])
+            r: ReportConfiguration = ReportConfiguration.objects.get(pk=options["id"])
             result = r.execute()
             for entry in result:
                 self.stdout.write(str(entry))

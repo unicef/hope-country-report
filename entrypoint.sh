@@ -2,15 +2,13 @@
 
 set -eou pipefail
 
-export PYTHONPATH="$PYTHONPATH:/code/src" # without this, uwsgi can't load python modules
-
 production() {
-    python3 manage.py upgrade
     uwsgi \
         --http :8000 \
         --master \
         --module=src.hope_country_report.config.wsgi \
-        --processes=2
+        --processes=2 \
+        --buffer-size=8192
 }
 
 if [ $# -eq 0 ]; then
@@ -19,16 +17,23 @@ fi
 
 case "$1" in
     dev)
+        ./wait-for-it.sh db:5432
         python3 manage.py migrate
         python3 manage.py runserver 0.0.0.0:8000
     ;;
     tests)
-        sleep 10 # FIXME: hack to wait for postgis init
-        python3 manage.py migrate
-        python3 -m pytest
+        ./wait-for-it.sh db:5432
+        pytest tests/ --create-db --cov-report term --maxfail 5 --with-selenium
     ;;
     prd)
         production
+    ;;
+    celery_worker)
+        export C_FORCE_ROOT=1
+        celery -A hope_country_report.config.celery worker -l info
+    ;;
+    celery_beat)
+        celery -A hope_country_report.config.celery beat -l info
     ;;
     *)
         exec "$@"

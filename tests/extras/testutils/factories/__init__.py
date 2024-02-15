@@ -1,6 +1,6 @@
-import typing
+from django.db.models.fields import UUIDField
 
-from .base import AutoRegisterModelFactory, factories_registry, TAutoRegisterModelFactory
+from .base import AutoRegisterModelFactory, factories_registry, HopeAutoRegisterModelFactory, TAutoRegisterModelFactory
 
 # isort: split
 from .adv_filters import AdvancedFilterFactory
@@ -12,10 +12,14 @@ from .power_query import *
 from .user import *
 
 
-def get_factory_for_model(_model) -> typing.Type[TAutoRegisterModelFactory]:
+def get_factory_for_model(_model) -> type[TAutoRegisterModelFactory]:
     class Meta:
         model = _model
 
+    bases = (AutoRegisterModelFactory,)
     if _model in factories_registry:
         return factories_registry[_model]
-    return type(f"{_model._meta.model_name}Factory", (AutoRegisterModelFactory,), {"Meta": Meta})
+    if _model._meta.app_label in ["hope"] and isinstance(_model._meta.get_field("id"), UUIDField):
+        bases = (HopeAutoRegisterModelFactory,)
+
+    return type(f"{_model._meta.model_name}Factory", bases, {"Meta": Meta})

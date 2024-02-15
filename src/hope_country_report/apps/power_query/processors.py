@@ -23,13 +23,16 @@ if TYPE_CHECKING:
 
     ProcessorResult = bytes | BytesIO
 
-
 mimetypes.add_type("text/vnd.yaml", ".yaml")
+mimetypes.add_type("application/vnd.ms-excel", ".xls")
+mimetypes.add_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx")
+mimetypes.add_type("text/xml", ".xml")
+mimetypes.add_type("application/x-zip-compressed", ".zip")
 
 mimetype_map = {
     k: v
     for k, v in mimetypes.types_map.items()
-    if k in [".csv", ".html", ".json", ".txt", ".xlsx", ".xml", ".yaml", ".pdf", ".docx", ".png"]
+    if k in [".csv", ".html", ".json", ".txt", ".xlsx", ".xls", ".xml", ".yaml", ".pdf", ".docx", ".png", ".zip"]
 }
 
 TYPE_LIST = 1
@@ -43,6 +46,7 @@ class ProcessorStrategy:
     file_suffix: str = ".txt"
     verbose_name = ""
     format: int
+    needs_file: bool = False
 
     def __init__(self, context: "Formatter"):
         self.formatter = context
@@ -63,13 +67,23 @@ class ProcessorStrategy:
 
 
 class ToXLS(ProcessorStrategy):
-    file_suffix = ".xlsx"
+    file_suffix = ".xls"
     format = TYPE_LIST
     verbose_name = "Dataset to XLS"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "Dict[str, Any]") -> bytes:
         dt = to_dataset(context["dataset"].data)
         return dt.export("xls")
+
+
+class ToXLSX(ProcessorStrategy):
+    file_suffix = ".xlsx"
+    format = TYPE_LIST
+    verbose_name = "Dataset to XLSX"
+
+    def process(self, context: "Dict[str, Any]") -> bytes:
+        dt = to_dataset(context["dataset"].data)
+        return dt.export("xlsx")
 
 
 class ToJSON(ProcessorStrategy):
@@ -79,7 +93,17 @@ class ToJSON(ProcessorStrategy):
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         dt = to_dataset(context["dataset"].data)
-        return dt.export("json")
+        return dt.export("json").encode()
+
+
+class ToCSV(ProcessorStrategy):
+    file_suffix = ".csv"
+    format = TYPE_LIST
+    verbose_name = "Dataset to CSV"
+
+    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+        dt = to_dataset(context["dataset"].data)
+        return dt.export("csv").encode()
 
 
 class ToYAML(ProcessorStrategy):
@@ -90,7 +114,7 @@ class ToYAML(ProcessorStrategy):
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         ds: "Dataset" = context["dataset"]
         dt = to_dataset(ds.data)
-        return dt.export("yaml")
+        return dt.export("yaml").encode()
 
 
 class ToHTML(ProcessorStrategy):
@@ -99,7 +123,12 @@ class ToHTML(ProcessorStrategy):
     verbose_name = "Render CODE"
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
-        tpl = Template(self.formatter.code)
+        if self.formatter.template:
+            with self.formatter.template.doc.open("rb") as f:
+                code = f.read()
+        else:
+            code = self.formatter.code
+        tpl = Template(code)
         return tpl.render(Context(context)).encode()
 
 
@@ -116,6 +145,7 @@ class ToText(ProcessorStrategy):
 class ToWord(ProcessorStrategy):
     file_suffix = ".docx"
     format = TYPE_BOTH
+    needs_file = True
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         from docxtpl import DocxTemplate
@@ -127,7 +157,7 @@ class ToWord(ProcessorStrategy):
         buffer = BytesIO()
         doc.save(buffer)
         buffer.seek(0)
-        return buffer
+        return buffer.getvalue()
 
 
 class ToPDF(ProcessorStrategy):
@@ -144,6 +174,7 @@ class ToPDF(ProcessorStrategy):
 class ToFormPDF(ProcessorStrategy):
     file_suffix = ".pdf"
     format = TYPE_DETAIL
+    needs_file = True
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         tpl = self.formatter.template
@@ -158,7 +189,7 @@ class ToFormPDF(ProcessorStrategy):
         output_stream = io.BytesIO()
         writer.write(output_stream)
         output_stream.seek(0)
-        return output_stream
+        return output_stream.getvalue()
 
 
 class ProcessorRegistry(Registry):
@@ -169,9 +200,7 @@ class ProcessorRegistry(Registry):
 
     def as_choices(self, _filter: Callable[[type], bool] | None = None) -> "List[Tuple[str, str]]":
         if _filter:
-            return sorted(
-                (str(fqn(klass)), self.get_name(klass)) for klass in self if _filter(klass)
-            )  # type: ignore[return-value]
+            return sorted((str(fqn(klass)), self.get_name(klass)) for klass in self if _filter(klass))
         elif not self._choices:
             self._choices = sorted((fqn(klass), self.get_name(klass)) for klass in self)  # type: ignore[return-value]
 
@@ -179,10 +208,13 @@ class ProcessorRegistry(Registry):
 
 
 registry = ProcessorRegistry(ProcessorStrategy, label_attribute="label")
-registry.register(ToWord)
-registry.register(ToJSON)
-registry.register(ToHTML)
-registry.register(ToYAML)
-registry.register(ToXLS)
-registry.register(ToPDF)
+registry.register(ToCSV)
 registry.register(ToFormPDF)
+registry.register(ToHTML)
+registry.register(ToJSON)
+registry.register(ToPDF)
+registry.register(ToWord)
+registry.register(ToXLS)
+registry.register(ToXLSX)
+registry.register(ToYAML)
+registry.register(ToText)

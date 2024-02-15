@@ -5,6 +5,6 @@
 ### Parametrizer
 ### Processor
 ### Query
-### Report
+### Configuration
 ### Scheduling
 ### Template

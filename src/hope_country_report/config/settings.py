@@ -2,11 +2,13 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
+import django_stubs_ext
+
 from . import env
 
-SETTINGS_DIR = Path(__file__).parent
-PACKAGE_DIR = SETTINGS_DIR.parent
-DEVELOPMENT_DIR = PACKAGE_DIR.parent.parent
+SETTINGS_DIR = Path(__file__).parent  # .../src/hope_country_report/config
+PACKAGE_DIR = SETTINGS_DIR.parent  # .../src/hope_country_report/
+SOURCE_DIR = PACKAGE_DIR.parent.parent  # .../src
 
 DEBUG = env.bool("DEBUG")
 
@@ -37,6 +39,12 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": env("STATIC_FILE_STORAGE"),
     },
+    "media": {
+        "BACKEND": env("MEDIA_FILE_STORAGE"),
+    },
+    "hope": {
+        "BACKEND": env("HOPE_FILE_STORAGE"),
+    },
 }
 INSTALLED_APPS = [
     "hope_country_report.web",
@@ -53,9 +61,14 @@ INSTALLED_APPS = [
     "constance",
     "taggit",
     "django_celery_beat",
+    "django_filters",
+    "admin_cursor_paginator",
     "django_celery_results",
     "unicef_security",
+    "django_cleanup.apps.CleanupSelectedConfig",
     "debug_toolbar",
+    "jsoneditor",
+    "leaflet",
     "django.contrib.auth",
     "django.contrib.humanize",
     "django.contrib.messages",
@@ -66,15 +79,19 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "django.contrib.postgres",
     "hope_country_report.apps.admin",
+    "push_notifications",
     # "django.contrib.admin",
     # # "django_extensions",
     # # "django_filters",
     "django_select2",
+    "chartjs",
+    "djgeojson",
     "flags",
     "silk",
     "tailwind",
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_gis",
     "corsheaders",
     "social_django",
     "admin_extra_buttons",
@@ -88,27 +105,27 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "csp.middleware.CSPMiddleware",
     "hope_country_report.middleware.state.StateSetMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "hope_country_report.middleware.user_language.UserLanguageMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "hope_country_report.middleware.silk.SilkMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
-    "csp.middleware.CSPMiddleware",
     "unicef_security.middleware.UNICEFSocialAuthExceptionMiddleware",
     "hope_country_report.middleware.exception.ExceptionMiddleware",
     "hope_country_report.middleware.state.StateClearMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = (
-    "unicef_security.backends.UNICEFAzureADB2COAuth2",
-    "hope_country_report.apps.tenant.backend.TenantBackend",
-    "hope_country_report.apps.power_query.backends.PowerQueryBackend",
-    "django.contrib.auth.backends.ModelBackend",
     *env("AUTHENTICATION_BACKENDS"),
+    "social_core.backends.azuread_tenant.AzureADTenantOAuth2",
+    "hope_country_report.apps.power_query.backends.PowerQueryBackend",
+    "hope_country_report.apps.tenant.backend.TenantBackend",
+    "django.contrib.auth.backends.ModelBackend",
 )
 
 # path
@@ -156,7 +173,8 @@ LANGUAGES = (
     ("es", ugettext("Spanish")),  # type: ignore[no-untyped-call]
     ("fr", ugettext("French")),  # type: ignore[no-untyped-call]
     ("en", ugettext("English")),  # type: ignore[no-untyped-call]
-    # ("ar", ugettext("Arabic")),  # type: ignore[no-untyped-call]
+    ("ar", ugettext("Arabic")),  # type: ignore[no-untyped-call]
+    # ("pt", ugettext("Portuguese")),  # type: ignore[no-untyped-call]
 )
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -165,7 +183,6 @@ INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
 USE_I18N = True
 USE_TZ = True
-USE_L10N = True
 LOCALE_PATHS = [PACKAGE_DIR / "LOCALE"]
 
 CACHE_URL = env("CACHE_URL")
@@ -228,14 +245,19 @@ AUTH_USER_MODEL = "core.User"
 
 HOST = env("HOST", default="http://localhost:8000")
 SIGNING_BACKEND = env("SIGNING_BACKEND")
-DEFAULT_FROM_EMAIL = "hope@unicef.org"
-EMAIL_HOST = env("EMAIL_HOST", default="")
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-EMAIL_PORT = env("EMAIL_PORT", default=25)
-EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False)
-EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=False)
 
+CATCH_ALL_EMAIL = env("CATCH_ALL_EMAIL", default="")
+DEFAULT_FROM_EMAIL = "hope-reporting@unicef.org"
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL")
+
+
+from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
 from .fragments.constance import *  # noqa
@@ -244,7 +266,10 @@ from .fragments.csp import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
 from .fragments.hijack import *  # noqa
+from .fragments.jsoneditor import *  # noqa
+from .fragments.leaflet import *  # noqa
 from .fragments.power_query import *  # noqa
+from .fragments.push_notifications import *  # noqa
 from .fragments.rest_framework import *  # noqa
 from .fragments.select2 import *  # noqa
 from .fragments.sentry import *  # noqa
@@ -254,3 +279,5 @@ from .fragments.social_auth import *  # noqa
 from .fragments.storage import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
+
+django_stubs_ext.monkeypatch()

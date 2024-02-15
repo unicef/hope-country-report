@@ -4,6 +4,28 @@ volumes:
   postgres_data:
   hope_postgres_data:
 
+x-django-env: &django-env
+  - ALLOWED_HOSTS=*
+  - SECRET_KEY=secret-key
+  - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
+  - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
+  - REDIS_URL=redis://redis:6379/0
+  - ALLOWED_HOSTS=backend,localhost
+  - STATIC_ROOT=/
+  - STATIC_URL=/static/
+  - EMAIL_BACKEND=
+  - EMAIL_HOST=
+  - EMAIL_PORT=
+  - EMAIL_USE_TLS=
+  - EMAIL_USE_SSL=
+  - CELERY_BROKER_URL=redis://redis:6379/0
+  - MAILJET_API_KEY=
+  - MAILJET_SECRET_KEY=
+  - WP_PRIVATE_KEY=
+  - SECURE_SSL_REDIRECT=False
+  - AZURE_TENANT_ID=
+  - AZURE_CLIENT_KEY=
+
 services:
   backend:
     build:
@@ -11,14 +33,7 @@ services:
       dockerfile: Dockerfile
       target: dev
     command: dev
-    environment:
-      - SECRET_KEY=secret-key
-      - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
-      - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
-      - REDIS_URL=redis://redis:6379/0
-      - ALLOWED_HOSTS=backend,localhost
-      - STATIC_ROOT=/
-      - STATIC_URL=/static/
+    environment: *django-env
     ports:
       - 8000:8000
     volumes:
@@ -78,3 +93,35 @@ services:
       interval: 5s
       timeout: 4s
       retries: 5
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    command: celery_worker
+    environment: *django-env
+    volumes:
+      - .:/code
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    command: celery_beat
+    environment: *django-env
+    volumes:
+      - .:/code
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

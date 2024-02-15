@@ -1,0 +1,6 @@
+site_name: My Docs
+site_url: https://hope.unicef.org
+
+nav:
+  - Home: index.md
+  - Glossary: glossary.md

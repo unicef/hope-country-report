@@ -5,8 +5,7 @@ import logging
 from django.core.signing import get_cookie_signer
 
 from hope_country_report.apps.tenant.config import conf
-from hope_country_report.apps.tenant.exceptions import InvalidTenantError
-from hope_country_report.state import state
+from hope_country_report.state import state, State
 
 if TYPE_CHECKING:
     from django.http import HttpResponse
@@ -27,16 +26,12 @@ def get_selected_tenant() -> "CountryOffice | None":
 
 def set_selected_tenant(tenant: "CountryOffice") -> None:
     state.tenant = tenant
-    state.add_cookies(conf.COOKIE_NAME, tenant.slug)
+    signer = get_cookie_signer()
+    state.add_cookies(conf.COOKIE_NAME, signer.sign(tenant.slug))
 
 
 def is_tenant_valid() -> bool:
     return bool(get_selected_tenant())
-
-
-def ensure_tenant() -> None:
-    if not get_selected_tenant():
-        raise InvalidTenantError
 
 
 def must_tenant() -> bool:
@@ -54,7 +49,7 @@ def must_tenant() -> bool:
             state.must_tenant = True
         else:
             state.must_tenant = None
-    return state.must_tenant
+    return bool(state.must_tenant)
 
 
 def get_tenant_cookie_from_request(request: "AuthHttpRequest") -> str | None:
@@ -68,11 +63,12 @@ def get_tenant_cookie_from_request(request: "AuthHttpRequest") -> str | None:
 
 
 class RequestHandler:
-    def process_request(self, request: "AuthHttpRequest") -> None:
+    def process_request(self, request: "AuthHttpRequest") -> State:
         state.reset()
         state.request = request
         state.tenant_cookie = get_tenant_cookie_from_request(request)
         state.tenant = get_selected_tenant()
+        return state
 
     def process_response(self, request: "AuthHttpRequest", response: "HttpResponse|None") -> None:
         if response:

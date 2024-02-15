@@ -18,14 +18,14 @@ if TYPE_CHECKING:
 
     from collections.abc import Iterable
 
-
 logger = logging.getLogger(__name__)
 
 
 class Formatter(models.Model):
+    processor: "ProcessorStrategy"
+
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
-    processor: "ProcessorStrategy"
     name = models.CharField(max_length=255, unique=True)
     code = models.TextField(blank=True, null=True)
     template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, blank=True, null=True)
@@ -33,6 +33,8 @@ class Formatter(models.Model):
     file_suffix = models.CharField(max_length=10, choices=MIMETYPES)
     processor = StrategyField(registry=registry, default=fqn(ToHTML))
     type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
+
+    compress = models.BooleanField(default=False, blank=True)
 
     class Tenant:
         tenant_filter_field = "country_office"
@@ -49,31 +51,17 @@ class Formatter(models.Model):
             raise ValidationError("You cannot set both 'template' and 'code'")
         self.processor.validate()
 
-    # def render(self, context: "Dict[str, Any]") -> bytearray:
-    #     f: Storage = default_storage.open("AAAAAAA", "wb")
-    #     if self.type == TYPE_LIST:
-    #         f.write(self.processor.process(context))
-    #         return f
-    #     else:
-    #         ret = bytearray()
-    #         ds = context.pop("dataset")
-    #         for page, entry in enumerate(ds.data, 1):
-    #             context["page"] = page
-    #             context["record"] = entry
-    #             ret.extend(self.processor.process(context))
-    #         return ret
-
     def render(self, context: "Dict[str, Any]") -> bytearray:
+        ret = bytearray()
         if self.type == TYPE_LIST:
-            return self.processor.process(context)
+            ret.extend(self.processor.process(context))
         else:
-            ret = bytearray()
             ds = context.pop("dataset")
             for page, entry in enumerate(ds.data, 1):
                 context["page"] = page
                 context["record"] = entry
                 ret.extend(self.processor.process(context))
-            return ret
+        return ret
 
     def save(
         self,

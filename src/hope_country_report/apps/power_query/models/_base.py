@@ -8,10 +8,10 @@ import pickle
 
 from django.conf import settings
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
-from django.core.files.storage import default_storage
-from django.db import models, transaction
+from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property, classproperty
+from django.utils.translation import gettext_lazy as _
 
 import celery
 from celery import states
@@ -21,7 +21,7 @@ from concurrency.fields import AutoIncVersionField
 
 from hope_country_report.config.celery import app
 
-from ...tenant.db import TenantModel
+from ...core.utils import SmartManager
 from ..manager import PowerQueryManager
 from ..processors import mimetype_map
 
@@ -47,10 +47,11 @@ class CeleryEnabled(models.Model):
     SCHEDULED = frozenset({states.PENDING, states.RECEIVED, states.STARTED, states.RETRY, "QUEUED"})
     QUEUED = "QUEUED"
     CANCELED = "CANCELED"
+    NOT_SCHEDULED = "Not scheduled"
 
     version = AutoIncVersionField()
-    sentry_error_id = models.CharField(max_length=400, blank=True, null=True)
-    error_message = models.CharField(max_length=400, blank=True, null=True)
+    sentry_error_id = models.CharField(max_length=512, blank=True, null=True)
+    error_message = models.TextField(blank=True, null=True)
     last_run = models.DateTimeField(null=True, blank=True)
 
     curr_async_result_id = models.CharField(
@@ -125,7 +126,7 @@ class CeleryEnabled(models.Model):
             if isinstance(result, Exception):
                 error = str(result)
             elif task_status == "REVOKED":
-                error = "Query execution cancelled."
+                error = _("Query execution cancelled.")
             else:
                 error = ""
 
@@ -215,19 +216,20 @@ class CeleryEnabled(models.Model):
         app.control.purge()
 
 
-class PowerQueryModel(TenantModel):
-    class Meta:
-        abstract = True
-
-    objects = PowerQueryManager()
-
-
 class AdminReversable(models.Model):
     class Meta:
         abstract = True
 
     def get_admin_url(self):
         return reverse(admin_urlname(self._meta, "change"), args=[self.pk])
+
+
+class PowerQueryModel(AdminReversable, models.Model):
+    class Meta:
+        abstract = True
+
+    objects = PowerQueryManager()
+    _all = SmartManager()
 
 
 class FileProviderMixin(models.Model):
@@ -254,15 +256,17 @@ class FileProviderMixin(models.Model):
             x = self.unmarshall(f)
         return x
 
-    def delete(self, using: "Any" = None, keep_parents: bool = False) -> tuple[int, dict[str, int]]:
-        fpath = self.file.path
 
-        def _delete_file():
-            try:
-                default_storage.delete(fpath)
-            except ValueError:
-                ...
+class TimeStampMixin(models.Model):
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
 
-        transaction.on_commit(lambda: _delete_file)
-        ret = super().delete(using, keep_parents)
-        return ret
+    class Meta:
+        abstract = True
+
+
+class ManageableObject(models.Model):
+    parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True

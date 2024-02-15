@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 class TenantAutocompleteJsonView(SmartAutocompleteJsonView):
     ...
+
     # def get_queryset(self):
     #     qs = super().get_queryset()
     #     qs = qs.filter(self.model_admin.model.objects.)
@@ -115,58 +116,6 @@ class TenantAdminSite(SmartAdminSite):
 
         return response
 
-    # @property
-    # def urls(self) -> "tuple[list[URLResolver | URLPattern], str, str]":
-    #     if not self._registry:
-    #         from tenant_admin.options import model_admin_registry
-    #
-    #         for m, a in model_admin_registry.items():
-    #             self.register(m, a)
-    #     return self.get_urls(), "admin", "admin"
-
-    # def _build_app_dict(self, request, label=None):
-    #     original = super()._build_app_dict(request, label)
-    #     for app_label, data in original.items():
-    #         original[app_label]["app_url"] = "#"
-    #         for mdata in data["models"]:
-    #             model = mdata["model"]
-    #             info = (app_label, model._meta.model_name)
-    #             if mdata["admin_url"]:
-    #                 tenant_url = reverse("tenant_admin:%s_%s_changelist" % info, current_app="tenant_admin")
-    #                 mdata["admin_url"] = replace_tenant(tenant_url, state.tenant)
-    #             # mdata["name"] += f"  {state.tenant} {mdata['admin_url']}"
-    #     return original
-
-    # @method_decorator(never_cache)
-    # def login(self, request, extra_context=None):
-    #     if request.method == "GET" and self.has_permission(request):
-    #         # Already logged-in, redirect to admin index
-    #         index_path = reverse("tenant_admin:select_tenant", current_app=self.name)
-    #         return HttpResponseRedirect(index_path)
-    #     # Since this module gets imported in the application's root package,
-    #     # it cannot import models from other applications at the module level,
-    #     # and django.contrib.admin.forms eventually imports User.
-    #     from django.contrib.admin.forms import AdminAuthenticationForm
-    #     from django.contrib.auth.views import LoginView
-    #     context = {
-    #         **self.each_context(request),
-    #         "title": "Log in ",
-    #         "subtitle": None,
-    #         "app_path": request.get_full_path(),
-    #         "username": request.user.get_username(),
-    #     }
-    #     if REDIRECT_FIELD_NAME not in request.GET and REDIRECT_FIELD_NAME not in request.POST:
-    #         context[REDIRECT_FIELD_NAME] = reverse("tenant_admin:select_tenant", current_app=self.name)
-    #     context.update(extra_context or {})
-    #
-    #     defaults = {
-    #         "extra_context": context,
-    #         "authentication_form": self.login_form or AdminAuthenticationForm,
-    #         "template_name": self.login_template or "tenant_admin/login.html",
-    #     }
-    #     request.current_app = self.name
-    #     return LoginView.as_view(**defaults)(request)
-
     @method_decorator(never_cache)
     def index(
         self, request: "AuthHttpRequest", extra_context: "Dict[str,Any]|None" = None, **kwargs: "Any"
@@ -178,19 +127,6 @@ class TenantAdminSite(SmartAdminSite):
         if must_tenant() and not is_tenant_valid():
             return redirect(f"{self.name}:select_tenant")
         return super().index(request, extra_context, **kwargs)
-        # app_list = self.get_app_list(request)
-        # context = {
-        #     **self.each_context(request),
-        #     "title": self.index_title,
-        #     "tenant": conf.strategy.get_selected_tenant(request),
-        #     "subtitle": None,
-        #     "app_list": app_list,
-        #     **(extra_context or {}),
-        # }
-        #
-        # request.current_app = self.name
-        #
-        # return TemplateResponse(request, self.index_template, context)
 
     @method_decorator(never_cache)
     def select_tenant(self, request: "AuthHttpRequest") -> "HttpResponse":

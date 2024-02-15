@@ -5,6 +5,7 @@ from django.urls import path
 import debug_toolbar
 
 urlpatterns = [
+    path("api/", include("hope_country_report.api.urls", namespace="api")),
     path("admin/", admin.site.urls),
     path("s2/", include("django_select2.urls")),
     path(r"security/", include("unicef_security.urls", namespace="security")),

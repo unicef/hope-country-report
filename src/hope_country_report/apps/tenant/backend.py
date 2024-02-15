@@ -1,4 +1,4 @@
-from typing import Set, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
@@ -6,16 +6,15 @@ from django.db.models import Q, QuerySet
 
 from dateutil.utils import today
 
+from hope_country_report.apps.core.models import CountryOffice, User
+from hope_country_report.apps.tenant.utils import get_selected_tenant
 from hope_country_report.state import state
 
-from .utils import get_selected_tenant
-
 if TYPE_CHECKING:
-    from typing import Optional, TYPE_CHECKING
+    from typing import Optional, Set
 
     from django.db import Model
 
-    from hope_country_report.apps.core.models import CountryOffice, User
     from hope_country_report.types.django import _R, AnyModel, AnyUser
 
 
@@ -39,7 +38,7 @@ class TenantBackend(BaseBackend):
                     }
                 )
             perms = qs.values_list("content_type__app_label", "codename").order_by()
-            setattr(user, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms})
+            setattr(user, perm_cache_name, {f"{ct}.{name}" for ct, name in perms})
         return getattr(user, perm_cache_name)
 
     def get_available_modules(self, user: "User") -> "Set[str]":

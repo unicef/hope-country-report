@@ -48,7 +48,27 @@ def test_sizeof(value, expected):
 
 def test_to_dataset_qs(user):
     qs = type(user).objects.all()
-    assert to_dataset(qs).width == 16  # number of fields
+    assert to_dataset(qs).width == 18  # number of fields
+    assert sorted(to_dataset(qs).headers) == [
+        "azure_id",
+        "date_format",
+        "date_joined",
+        "display_name",
+        "email",
+        "first_name",
+        "id",
+        "is_active",
+        "is_staff",
+        "is_superuser",
+        "job_title",
+        "language",
+        "last_login",
+        "last_name",
+        "password",
+        "time_format",
+        "timezone",
+        "username",
+    ]
 
 
 def test_to_dataset_values(user):

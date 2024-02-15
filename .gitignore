@@ -4,9 +4,7 @@ node_modules
 *.pyc
 DATA/
 build
-~build
 /dist
-static/
 media/
 *.egg*
 celerybeat-schedule
@@ -17,3 +15,5 @@ coverage.xml
 !.gitignore
 !.mypy.ini
 !.pre-commit-config.yaml
+
+pdm.toml

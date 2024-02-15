@@ -1,50 +1,69 @@
-from typing import Any, Optional, Type, TYPE_CHECKING
+from typing import Callable, List, Tuple, TYPE_CHECKING
 
 import logging
 from collections.abc import Sequence
-
-from unittest.mock import Mock
 
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import connections, models
 from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.forms import Media
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
+from django.utils.module_loading import import_string
 
 import tablib
 from admin_extra_buttons.decorators import button, view
 from admin_extra_buttons.mixins import ExtraButtonsMixin
+from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from constance import config
+from debug_toolbar.panels.sql.utils import reformat_sql
 from django_celery_results.models import TaskResult
-from import_export import resources
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
+from ...utils.mail import send_document_password
+from ...utils.media import download_media
 from ...utils.perf import profile
-from .forms import FormatterTestForm, QueryForm, SelectDatasetForm
-from .models import CeleryEnabled, Dataset, Formatter, Parametrizer, Query, Report, ReportDocument, ReportTemplate
-from .processors import ProcessorStrategy, registry
+from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
+from .models import (
+    CeleryEnabled,
+    ChartPage,
+    Dataset,
+    Formatter,
+    Parametrizer,
+    Query,
+    ReportConfiguration,
+    ReportDocument,
+    ReportTemplate,
+)
+from .models._base import FileProviderMixin
 from .utils import to_dataset
 from .widget import FormatterEditor
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from typing import Any, Dict, Optional, Type
+
     from django.contrib.admin.options import _ListFilterT
 
     from ...types.django import AnyModel
+    from ...types.http import AuthHttpRequest
+    from .processors import ProcessorStrategy
+
+    _ListDisplayT = List[str | Callable[[Any], str | bool]] | Tuple[str | Callable[[Any], str | bool],] | tuple[()]
 
 
 class CeleryEnabledMixin(admin.ModelAdmin):
-    def get_readonly_fields(self, request: HttpRequest, obj: Optional["AnyModel"] = None) -> Sequence[str]:
+    def get_readonly_fields(self, request: HttpRequest, obj: "Optional[AnyModel]" = None) -> Sequence[str]:
         ret = list(super().get_readonly_fields(request, obj))
         ret.append("curr_async_result_id")
         return ret
@@ -66,7 +85,7 @@ class CeleryEnabledMixin(admin.ModelAdmin):
         self.model.purge()
 
     @view()
-    def celery_terminate(self, request: HttpRequest, pk: int) -> "HttpResponse":
+    def celery_terminate(self, request: HttpRequest, pk: str) -> "HttpResponse":
         obj: CeleryEnabled = self.get_object(request, pk)
         obj.terminate()
 
@@ -100,14 +119,14 @@ class CeleryEnabledMixin(admin.ModelAdmin):
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
     @property
-    def media(self):
+    def media(self) -> Media:
         response = super().media
         response._js_lists.append(["admin/celery.js"])
         return response
 
 
 class AutoProjectCol(admin.ModelAdmin):
-    def get_list_display(self, request: "HttpRequest") -> Sequence[str]:
+    def get_list_display(self, request: "HttpRequest") -> "_ListDisplayT":
         base = super().get_list_display(request)
         if state.tenant is None:
             return ("country_office", *base)
@@ -130,7 +149,7 @@ class QueryAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[Query],
 ):
     list_display = ("name", "target", "owner", "active", "success", "last_run", "status")
     search_fields = ("name",)
@@ -141,8 +160,15 @@ class QueryAdmin(
         "last_run",
     )
     linked_objects_template = None
-    autocomplete_fields = ("target", "owner")
-    readonly_fields = ("sentry_error_id", "error_message", "info")
+    autocomplete_fields = ("target", "owner", "target")
+    readonly_fields = (
+        "sentry_error_id",
+        "error_message",
+        "info",
+        "last_run",
+        "last_async_result_id",
+        "curr_async_result_id",
+    )
     change_form_template = None
     ordering = ["-last_run"]
     form = QueryForm
@@ -160,31 +186,42 @@ class QueryAdmin(
     ) -> "HttpResponse":
         return super().change_view(request, object_id, form_url, extra_context)
 
-    # def get_form(
-    #     self, request: "HttpRequest", obj: "_ModelT|None" = None, change: bool = False, **kwargs: Any
-    # ) -> "type[ModelForm[_ModelT]]":
-    #     # kwargs["initial"] = {"project": get_selected_tenant()}
-    #     return super().get_form(request, obj, change, **kwargs)
-    #
-    # def formfield_for_dbfield(self,
-    # db_field: Any, request: HttpRequest, **kwargs: Any) -> Optional[forms.fields.Field]:
-    #     if db_field.name == "code":
-    #         kwargs = {"widget": PythonFormatterEditor}
-    #     elif db_field.name == "description":
-    #         kwargs = {"widget": forms.Textarea(attrs={"rows": 2, "style": "width:80%"})}
-    #     elif db_field.name == "project":
-    #         from hope_country_report.apps.tenant.config import conf
-    #
-    #         db_field.queryset = conf.auth.get_allowed_tenants()
-    #     elif db_field.name == "owner":
-    #         kwargs = {"widget": forms.HiddenInput}
-    #
-    #     return super().formfield_for_dbfield(db_field, request, **kwargs)
-
-    def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
+    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return super().has_change_permission(request, obj)
-        # if isinstance(obj, int):
-        # return request.user.is_superuser or bool(obj and obj.owner == request.user)
+
+    @button()
+    def explain(self, request: HttpRequest, pk: int) -> HttpResponse:
+        context = self.get_common_context(request, pk)
+        if request.method == "POST":
+            form = ExplainQueryForm(request.POST)
+            if form.is_valid():
+                q = form.cleaned_data["query"]
+                ct: ContentType = form.cleaned_data["target"]
+                code = f"""sql={q}.query"""
+                locals_ = {"conn": ct.model_class().objects}
+                exec(code, globals(), locals_)
+                sql = locals_.get("sql", None)
+                if sql:
+                    cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
+                    context["sql"] = reformat_sql(str(locals_.get("sql", "")))
+                    cursor.execute(f"EXPLAIN ANALYZE {sql}")
+                    headers = [d[0] for d in cursor.description]
+                    result = cursor.fetchall()
+                    context.update(
+                        **{
+                            "result": result,
+                            "sql": sql,
+                            "headers": headers,
+                            "alias": settings.POWER_QUERY_DB_ALIAS,
+                        }
+                    )
+                self.message_user(request, code)
+                # context["explain_info"] = json.loads(explain_info)
+        else:
+            form = ExplainQueryForm(initial={"query": "conn.all()", "target": None})
+
+        context["form"] = form
+        return render(request, "admin/power_query/query/explain.html", context)
 
     @button()
     def datasets(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
@@ -204,16 +241,8 @@ class QueryAdmin(
         ctx["results"] = results
         return render(request, "admin/power_query/query/run_result.html", ctx)
 
-    # @button()
-    # def queue(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:  # type: ignore[return]
-    #     try:
-    #         res: AsyncResult = run_background_query.delay(pk)
-    #         self.message_user(request, f"Query scheduled: {res}")
-    #     except Exception as e:
-    #         self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
-
     @button()
-    def preview(self, request: HttpRequest, pk: int) -> HttpResponse:
+    def preview(self, request: HttpRequest, pk: int) -> HttpResponse | HttpResponseRedirect:
         obj: Query = self.get_object(request, str(pk))
         try:
             context = self.get_common_context(request, pk, title="Results")
@@ -243,25 +272,23 @@ class QueryAdmin(
                 )
             return render(request, "admin/power_query/query/preview.html", context)
         except Exception as e:
+            logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
+        return HttpResponseRedirectToReferrer(request)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
+    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
-        return {
-            "code": "result=conn.all()",
-            "name": ct,
-            "target": ct,
-            "owner": request.user,
-        }
+        return {"code": "result=conn.all()", "name": ct, "target": ct, "owner": request.user}
 
 
 class FileProviderAdmin(admin.ModelAdmin):
     actions = ["check_files"]
 
-    def check_files(self, request: HttpRequest, queryset) -> HttpResponse:
+    def check_files(self, request: "HttpRequest", queryset: "QuerySet[Any, Any]") -> None:
+        m: FileProviderMixin
         for m in queryset.all():
             try:
-                if not m.file.exists():
+                if m.file and not m.file.exists():
                     m.file = None
                     m.save()
             except Exception:
@@ -269,7 +296,7 @@ class FileProviderAdmin(admin.ModelAdmin):
 
     @button()
     def _check_files(self, request: HttpRequest) -> HttpResponse:
-        return self.check_files(request, self.model.objects.all())
+        self.check_files(request, self.model.objects.all())
 
 
 @admin.register(Dataset)
@@ -279,7 +306,7 @@ class DatasetAdmin(
     DisplayAllMixin,
     AdminActionPermMixin,
     FileProviderAdmin,
-    ModelAdmin,
+    ModelAdmin[Dataset],
 ):
     search_fields = ("query__name",)
     list_display = (
@@ -300,18 +327,18 @@ class DatasetAdmin(
     date_hierarchy = "last_run"
 
     def get_queryset(self, request: HttpRequest):  # type: ignore[no-untyped-def]
-        return super().get_queryset(request).select_related("query", "query__target").defer("extra")
+        return super().get_queryset(request).select_related("query", "query__target")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
-    def arguments(self, obj: Any) -> str:
+    def arguments(self, obj: "Any") -> str:
         return obj.info.get("arguments")
 
-    def dataset_type(self, obj: Any) -> str:
+    def dataset_type(self, obj: "Any") -> str:
         return obj.info.get("type")
 
-    def target_type(self, obj: Any) -> str:
+    def target_type(self, obj: "Any") -> str:
         return obj.query.target
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
@@ -334,25 +361,18 @@ class DatasetAdmin(
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
 
-class FormatterResource(resources.ModelResource):
-    class Meta:
-        model = Report
-        fields = ("name", "content_type", "code")
-        import_id_fields = ("name",)
-
-
 @admin.register(Formatter)
 class FormatterAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[Formatter],
 ):
     list_display = ("name", "strategy", "content_type")
     search_fields = ("name",)
     list_filter = ("processor",)
-    resource_class = FormatterResource
     change_form_template = None
+    autocomplete_fields = ("country_office", "template")
 
     formfield_overrides = {
         models.TextField: {"widget": FormatterEditor(theme="abcdef")},
@@ -369,18 +389,10 @@ class FormatterAdmin(
             if request.method == "POST":
                 form = FormatterTestForm(request.POST)
                 if form.is_valid():
-                    obj: Formatter = self.object
-                    ctx = {
-                        "dataset": form.cleaned_data["query"].datasets.first(),
-                        "report": "None",
-                    }
-                    if obj.content_type == ".xls":
-                        output = obj.render(ctx)
-                        response = HttpResponse(output, content_type=obj.content_type)
-                        response["Content-Disposition"] = "attachment; filename=Report.xls"
-                        return response
-                    else:
-                        context["results"] = obj.render(ctx).decode()
+                    fmt: Formatter = self.object
+                    dataset: Dataset = form.cleaned_data["dataset"]
+                    results = fmt.render({"dataset": dataset})
+                    return HttpResponse(results, content_type=fmt.content_type)
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
@@ -389,7 +401,7 @@ class FormatterAdmin(
 
 
 @admin.register(ReportTemplate)
-class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin):
+class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin[ReportTemplate]):
     list_display = (
         "name",
         "doc",
@@ -399,38 +411,38 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
     list_filter = ("file_suffix",)
     autocomplete_fields = ("country_office",)
 
-    # readonly_fields = ("suffix", )
-
     @button()
     def preview(self, request: "HttpRequest", pk: int) -> HttpResponse:
         context = self.get_common_context(request, pk)
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
-            form.fields["processor"].choices = registry.as_choices(lambda x: x.content_type == self.object.content_type)
             if form.is_valid():
-                processor: "Type[ProcessorStrategy]" = form.cleaned_data["processor"]
-                fmt = Mock()
-                fmt.doc = self.object
+                processor: "Type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
+                fmt = Formatter(
+                    template=self.object,
+                    processor=processor,
+                    code="",
+                )
                 content = processor(fmt).process({"dataset": form.cleaned_data["dataset"]})
                 return HttpResponse(content, content_type=processor.content_type)
         else:
-            context["form"] = SelectDatasetForm()
+            form = SelectDatasetForm()
+        context["form"] = form
         return render(request, "admin/power_query/reporttemplate/preview.html", context)
 
 
-@admin.register(Report)
-class ReportAdmin(
+@admin.register(ReportConfiguration)
+class ReportConfigurationAdmin(
     AdminFiltersMixin,
     CeleryEnabledMixin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
-    DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[ReportConfiguration],
 ):
-    list_display = ("country_office", "name", "formatters", "last_run", "owner", "schedule")
+    list_display = ("country_office", "name", "formatters", "last_run", "owner", "schedule", "compress", "protect")
     autocomplete_fields = ("query", "owner")
-    filter_horizontal = ["limit_access_to", "formatters"]
+    filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
     readonly_fields = (
         "last_run",
         "sentry_error_id",
@@ -445,14 +457,16 @@ class ReportAdmin(
         "last_run",
     )
     search_fields = ("name",)
-    change_form_template = None
-    linked_objects_hide_empty = False
-    object: "Report"
+    # change_form_template = None
+    change_form_template = "admin/power_query/report/change_form.html"
 
-    def has_change_permission(self, request: HttpRequest, obj: Any | None = None) -> bool:
+    linked_objects_hide_empty = False
+    object: "ReportConfiguration"
+
+    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> dict[str, Any]:
+    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
         kwargs: dict[str, Any] = {"owner": request.user}
         if "q" in request.GET:
             q = Query.objects.get(pk=request.GET["q"])
@@ -467,7 +481,10 @@ class ReportAdmin(
         try:
             results = self.object.execute(run_query=True)
             errors = [r[1] for r in results if isinstance(r[1], Exception)]
-            if len(errors) == 0:
+            if len(results) == 1 and isinstance(results[0][0], BaseException):
+                self.message_user(request, results[0][1], messages.ERROR)
+                results = []
+            elif len(errors) == 0:
                 self.message_user(request, "Documents creation success", messages.SUCCESS)
             elif len(errors) == len(results):
                 self.message_user(request, "All documents failed", messages.ERROR)
@@ -488,7 +505,7 @@ class QueryArgsAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[Parametrizer],
 ):
     list_display = ("name", "code", "system")
     list_filter = ("system",)
@@ -514,26 +531,39 @@ class ReportDocumentAdmin(
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
-    ModelAdmin,
+    ModelAdmin[ReportDocument],
 ):
-    list_display = ("title", "content_type", "report", "file")
-    list_filter = (("report", AutoCompleteFilter),)
+    list_display = ("title", "content_type", "report", "file", "compressed", "protected")
+    list_filter = (("report", AutoCompleteFilter), "report__compress", "report__protect")
     search_fields = ("title",)
     filter_horizontal = ("limit_access_to",)
-    readonly_fields = ("arguments", "report", "dataset", "content_type")
+    readonly_fields = ("arguments", "report", "dataset", "content_type", "formatter", "info", "size")
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[ReportDocument]:
+    def get_queryset(self, request: HttpRequest) -> "QuerySet[ReportDocument]":
         return super().get_queryset(request)
-
-    # def size(self, obj: ReportDocument) -> int:
-    #     return len(obj.output or "")
-    #
-    # @button()
-    # def view(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
-    #     if not (obj := self.get_object(request, str(pk))):
-    #         raise Exception("Report document not found")
-    #     url = reverse("power_query:document", args=[obj.report.pk, pk])
-    #     return HttpResponseRedirect(url)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
+
+    @button()
+    def download(self, request: HttpRequest, pk: str) -> HttpResponse | StreamingHttpResponse:
+        doc = self.get_object(request, pk)
+        return download_media(doc.file.path, response_class=HttpResponse)
+
+    @button()
+    def resend_password(self, request: "AuthHttpRequest", pk: str) -> HttpResponse:
+        obj: ReportDocument = self.get_object(request, pk)
+        s = send_document_password(request.user, obj)
+        self.message_user(request, f"{s}")
+
+
+@admin.register(ChartPage)
+class ChartPageAdmin(
+    AdminFiltersMixin,
+    LinkedObjectsMixin,
+    ExtraButtonsMixin,
+    DisplayAllMixin,
+    AdminActionPermMixin,
+    ModelAdmin[ChartPage],
+):
+    pass
