@@ -9,6 +9,7 @@ import django.contrib.postgres.fields
 from django.contrib.gis.db import models
 
 from hope_country_report.apps.hope.models._base import HopeModel
+from hope_country_report.apps.power_query.storage import HopeStorage
 
 
 class BusinessArea(HopeModel):
@@ -852,7 +853,7 @@ class Document(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     document_number = models.CharField(max_length=255, null=True)
-    photo = models.CharField(max_length=100, null=True)
+    photo = models.ImageField(storage=HopeStorage(), null=True)
     individual = models.ForeignKey(
         "Individual", on_delete=models.DO_NOTHING, related_name="document_individual", null=True
     )
@@ -984,7 +985,7 @@ class Household(HopeModel):
     )
     child_hoh = models.BooleanField(blank=True, null=True)
     consent_sharing = models.CharField(max_length=63, null=True)
-    consent_sign = models.CharField(max_length=100, null=True)
+    consent_sign = models.ImageField(storage=HopeStorage(), null=True)
     deviceid = models.CharField(max_length=250, null=True)
     fchild_hoh = models.BooleanField(blank=True, null=True)
     name_enumerator = models.CharField(max_length=250, null=True)
@@ -1105,7 +1106,7 @@ class Individual(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     individual_id = models.CharField(max_length=255, null=True)
-    photo = models.CharField(max_length=100, null=True)
+    photo = models.ImageField(storage=HopeStorage(), null=True)
     full_name = models.TextField(null=True)  # This field type is a guess.
     given_name = models.TextField(null=True)  # This field type is a guess.
     middle_name = models.TextField(null=True)  # This field type is a guess.
@@ -1168,7 +1169,7 @@ class Individual(HopeModel):
     fchild_hoh = models.BooleanField(null=True)
     kobo_asset_id = models.CharField(max_length=150, null=True)
     row_id = models.IntegerField(blank=True, null=True)
-    disability_certificate_picture = models.CharField(max_length=100, blank=True, null=True)
+    disability_certificate_picture = models.ImageField(storage=HopeStorage(), blank=True, null=True)
     vector_column = models.TextField(blank=True, null=True)  # This field type is a guess.
     phone_no_alternative_valid = models.BooleanField(blank=True, null=True)
     phone_no_valid = models.BooleanField(blank=True, null=True)
@@ -1820,6 +1821,8 @@ class Program(HopeModel):
         null=True,
     )
     is_visible = models.BooleanField(null=True)
+    household_count = models.IntegerField(null=True)
+    individual_count = models.IntegerField(null=True)
 
     class Meta:
         managed = False
