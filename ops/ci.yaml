@@ -78,7 +78,7 @@ stages:
 
 - stage: lint_backend
   displayName: LINT
-  dependsOn: check_format
+  dependsOn: build_and_push_backend_dev
   jobs:
   - job: lint
     pool:
