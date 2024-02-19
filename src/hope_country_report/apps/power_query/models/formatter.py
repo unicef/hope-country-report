@@ -1,7 +1,7 @@
-from itertools import islice
 from typing import TYPE_CHECKING
 
 import logging
+from itertools import islice
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,7 +10,7 @@ from strategy_field.fields import StrategyField
 from strategy_field.utils import fqn
 
 from ...core.models import CountryOffice
-from ..processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_LIST, TYPES, TYPE_DETAIL
+from ..processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_DETAIL, TYPE_LIST, TYPES
 from ._base import MIMETYPES
 from .report_template import ReportTemplate
 
