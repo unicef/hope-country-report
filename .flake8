@@ -1,11 +1,23 @@
 [flake8]
-max-complexity = 20
 max-line-length = 120
-exclude = ~*
-ignore = E401,W391,E128,E261,E731,Q000,W504,W606,W503,E203
-;putty-ignore =
-    ;    tests/test_choice_as_instance.py : E501
+max-complexity = 12
+max-nesting-depth = 12
 
-per-file-ignores =
-    */__init__.py:F401,F403
-    */migrations/*:E501
+ignore =
+    # black formatting related
+    # whitespace before ':'
+    E203,
+    # line too long
+    E501,
+    # line break before binary operator
+    W503,
+    # may be undefined, or defined from star imports
+    F405,
+    # lamda expressions
+    E731,
+    # too complex # TODO: fix this
+    C901,
+    # TODO
+    F401,
+    F403,
+    
