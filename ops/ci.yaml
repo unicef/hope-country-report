@@ -52,7 +52,7 @@ stages:
       displayName: Docker build dev
 
 - stage: check_format
-  displayName: TEST
+  displayName: FORMAT
   dependsOn: build_and_push_backend_dev
   jobs:
   - job: tests
