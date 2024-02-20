@@ -61,6 +61,27 @@ def test_formatter_html_detail(dataset):
     assert content == "<html><body>1</body></html><html><body>2</body></html><html><body>3</body></html>"
 
 
+def test_formatter_html_multiple(dataset):
+    from testutils.factories import FormatterFactory
+
+    fmt: "Formatter" = FormatterFactory(
+        name="f1",
+        code="<html><body><div>{{records.0.id}}</div><div>{{records.1.id}}</div></body></html>",
+        template=None,
+        processor=fqn(processors.ToHTML),
+        type=processors.TYPE_DETAIL,
+        file_suffix=".html",
+        item_per_page=2,
+    )
+    result = fmt.render({"dataset": dataset})
+    content = result.decode()
+    template = (
+        f"<html><body><div>{H1}</div><div>{H2}</div></body></html>"
+        f"<html><body><div>{H3}</div><div></div></body></html>"
+    )
+    assert content == template
+
+
 def test_formatter_html_list(dataset):
     from testutils.factories import FormatterFactory
 

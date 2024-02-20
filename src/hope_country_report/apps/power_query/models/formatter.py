@@ -70,11 +70,9 @@ class Formatter(models.Model):
         elif self.type == TYPE_DETAIL:
             ds = context.pop("dataset")
             if self.item_per_page > 1:
-                datasets = []
                 for dataset in batched(ds.data, self.item_per_page):
-                    datasets.append(dataset)
-                context["records"] = datasets
-                ret.extend(self.processor.process(context))
+                    context["records"] = dataset
+                    ret.extend(self.processor.process(context))
             else:
                 for page, entry in enumerate(ds.data, 1):
                     context["page"] = page
