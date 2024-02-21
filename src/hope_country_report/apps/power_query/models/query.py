@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.db import models, transaction
-from django.db.models import JSONField, Q
+from django.db.models import JSONField
 from django.utils import timezone
 
 from sentry_sdk import capture_exception, configure_scope
@@ -66,15 +66,15 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
         verbose_name_plural = "Queries"
         ordering = ("name",)
 
-        constraints = [
-            models.CheckConstraint(
-                check=Q(
-                    parent__isnull=False, country_office__isnull=False, code__isnull=True, target__isnull=True
-                )  # implementation
-                | Q(parent__isnull=True, code__isnull=False, target__isnull=False),  # standard or abstract with code
-                name="valid_query",
-            )
-        ]
+        # constraints = [
+        #     models.CheckConstraint(
+        #         check=Q(
+        #             parent__isnull=False, country_office__isnull=False, code__isnull=True, target__isnull=True
+        #         )  # implementation
+        #         | Q(parent__isnull=True, code__isnull=False, target__isnull=False),  # standard or abstract with code
+        #         name="valid_query",
+        #     )
+        # ]
 
     class Tenant:
         tenant_filter_field = "country_office"

@@ -4,7 +4,7 @@ ARG PKG_DIR=/code/__pypackages__/$PYTHON_VER/lib
 ARG BUILD_DATE
 ARG CHECKSUM
 
-FROM python:${PYTHON_VER}-slim-bullseye AS python
+FROM python:${PYTHON_VER}-slim-bookworm AS python
 
 FROM python AS base
 ARG PKG_DIR
