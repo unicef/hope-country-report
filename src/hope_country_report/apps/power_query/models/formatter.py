@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import logging
+from itertools import islice
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -9,7 +10,7 @@ from strategy_field.fields import StrategyField
 from strategy_field.utils import fqn
 
 from ...core.models import CountryOffice
-from ..processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_LIST, TYPES
+from ..processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_DETAIL, TYPE_LIST, TYPES
 from ._base import MIMETYPES
 from .report_template import ReportTemplate
 
@@ -19,6 +20,16 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
+
+
+def batched(iterable, n):
+    """Batch data into lists of length n. The last batch may be shorter."""
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    if n < 1:
+        raise ValueError("n must be >= 1")
+    it = iter(iterable)
+    while batch := list(islice(it, n)):
+        yield batch
 
 
 class Formatter(models.Model):
@@ -35,6 +46,7 @@ class Formatter(models.Model):
     type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
 
     compress = models.BooleanField(default=False, blank=True)
+    item_per_page = models.SmallIntegerField(default=0)
 
     class Tenant:
         tenant_filter_field = "country_office"
@@ -55,12 +67,19 @@ class Formatter(models.Model):
         ret = bytearray()
         if self.type == TYPE_LIST:
             ret.extend(self.processor.process(context))
-        else:
+        elif self.type == TYPE_DETAIL:
             ds = context.pop("dataset")
-            for page, entry in enumerate(ds.data, 1):
-                context["page"] = page
-                context["record"] = entry
-                ret.extend(self.processor.process(context))
+            if self.item_per_page > 1:
+                for dataset in batched(ds.data, self.item_per_page):
+                    context["records"] = dataset
+                    ret.extend(self.processor.process(context))
+            else:
+                for page, entry in enumerate(ds.data, 1):
+                    context["page"] = page
+                    context["record"] = entry
+                    ret.extend(self.processor.process(context))
+        else:
+            raise ValueError("Invalid type")
         return ret
 
     def save(
