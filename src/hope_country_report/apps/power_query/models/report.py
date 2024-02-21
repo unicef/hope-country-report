@@ -94,6 +94,32 @@ class ReportConfiguration(
         if not self.name:
             self.name = slugify(self.title)
         super().save(force_insert, force_update, using, update_fields)
+        self.update_or_create_children()
+
+    def update_or_create_children(self):
+        if self.query.abstract:
+            defaults = {
+                field: getattr(self, field)
+                for field in [
+                    "active",
+                    "compress",
+                    "description",
+                    "context",
+                    "owner",
+                    "schedule",
+                    "title",
+                    "protect",
+                    "pwd",
+                    "visible",
+                ]
+            }
+
+            for q in self.query.children:
+                rc, _ = ReportConfiguration.objects.get_or_create(
+                    parent=self, query=q, country_office=q.country_office, defaults=defaults
+                )
+                rc.formatters.set(self.formatters.all())
+                rc.tags.set(self.tags.all())
 
     def clean(self) -> None:
         if self.protect and not self.owner:

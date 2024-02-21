@@ -60,7 +60,7 @@ class QueryForm(forms.ModelForm):
         blank=True,
         limit_choices_to={"app_label": "hope"},
     )
-    code = forms.CharField(widget=PythonFormatterEditor)
+    code = forms.CharField(widget=PythonFormatterEditor, required=False)
     owner = forms.ModelChoiceField(
         queryset=get_user_model().objects, widget=forms.HiddenInput, required=False
     )  # type: ignore
