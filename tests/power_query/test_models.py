@@ -41,34 +41,34 @@ def test_query_valid_query_implementation(query: "Query"):
     assert str(query) == "Query (Query *)"
 
 
-# def test_query_invalid_query_parent_without_code():
-#     with pytest.raises(IntegrityError):
-#         QueryFactory(
-#             target=ContentTypeFactory(app_label="auth", model="permission"),
-#             name="Query",
-#             code=None,
-#             parent=None,
-#             country_office=None,
-#         )
-#
-#
-# def test_query_invalid_query_implementation_with_target(query: "Query"):
-#     with pytest.raises(IntegrityError):
-#         QueryFactory(
-#             target=ContentTypeFactory(app_label="auth", model="permission"),
-#             name="Query",
-#             code=None,
-#             parent=query,
-#             country_office=None,
-#         )
-#
-#
-# def test_query_invalid_query_implementation_with_code(query: "Query"):
-#     with pytest.raises(IntegrityError):
-#         QueryFactory(
-#             target=None,
-#             name="Query",
-#             code="result=conn.all()",
-#             parent=query,
-#             country_office=None,
-#         )
+def test_query_invalid_query_parent_without_code():
+    with pytest.raises(IntegrityError):
+        QueryFactory(
+            target=ContentTypeFactory(app_label="auth", model="permission"),
+            name="Query",
+            code=None,
+            parent=None,
+            country_office=None,
+        )
+
+
+def test_query_invalid_query_implementation_with_target(query: "Query"):
+    with pytest.raises(IntegrityError):
+        QueryFactory(
+            target=ContentTypeFactory(app_label="auth", model="permission"),
+            name="Query",
+            code=None,
+            parent=query,
+            country_office=None,
+        )
+
+
+def test_query_invalid_query_implementation_with_code(query: "Query"):
+    with pytest.raises(IntegrityError):
+        QueryFactory(
+            target=None,
+            name="Query",
+            code="result=conn.all()",
+            parent=query,
+            country_office=None,
+        )
