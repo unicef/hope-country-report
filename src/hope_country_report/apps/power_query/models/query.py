@@ -223,4 +223,9 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
         return self.parent.code if self.parent else self.code
 
     def get_args(self):
-        return self.parametrizer.get_matrix() if self.parametrizer else [{}]
+        args = [{}]
+        if self.parametrizer:
+            args = self.parametrizer.get_matrix()
+        elif self.parent and self.parent.parametrizer:
+            args = self.parent.parametrizer.get_matrix()
+        return args
