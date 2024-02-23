@@ -376,7 +376,6 @@ class FormatterAdmin(
     list_display = ("name", "strategy", "content_type")
     search_fields = ("name",)
     list_filter = ("processor",)
-    ordering = ("-updated_on",)
     change_form_template = None
     autocomplete_fields = ("country_office", "template")
 
