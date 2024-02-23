@@ -376,7 +376,7 @@ class FormatterAdmin(
     list_display = ("name", "strategy", "content_type")
     search_fields = ("name",)
     list_filter = ("processor",)
-    ordering = ('-updated_on',)
+    ordering = ("-updated_on",)
     change_form_template = None
     autocomplete_fields = ("country_office", "template")
 
@@ -463,7 +463,7 @@ class ReportConfigurationAdmin(
         "last_run",
     )
     search_fields = ("name", "query__name")
-    ordering = ('-updated_on',)
+    ordering = ("-updated_on",)
     change_form_template = "admin/power_query/report/change_form.html"
 
     linked_objects_hide_empty = False
