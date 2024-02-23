@@ -93,6 +93,8 @@ class ReportConfiguration(
     ) -> None:
         if not self.name:
             self.name = slugify(self.title)
+        if not self.country_office:
+            self.country_office = CountryOffice.objects.get(slug="global")
         super().save(force_insert, force_update, using, update_fields)
         self.update_or_create_children()
 

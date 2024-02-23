@@ -263,6 +263,7 @@ class TimeStampMixin(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ("updated_on",)
 
 
 class ManageableObject(models.Model):

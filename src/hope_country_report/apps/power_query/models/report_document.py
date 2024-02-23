@@ -63,20 +63,23 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
 
     @cached_property
     def filename(self):
-        return sanitize_filename(f"{self.title}{self.file_suffix}").lower()
+        args_desc = "_".join([str(value) for value in self.arguments.values()])
+        base_filename = sanitize_filename(f"{self.title}_{args_desc}{self.file_suffix}").lower()
+        return base_filename
 
     @classmethod
     def process(
         self, report: "ReportConfiguration", dataset: "Dataset", formatter: "Formatter", notify: bool = True
     ) -> "Tuple[int|None, Exception|str]":
         try:
+            args_desc = "_".join([str(value) for value in dataset.arguments.values()])
             context = {
                 **dataset.arguments,
                 **dataset.extra,
                 **report.context,
             }
             try:
-                title = report.title.format(**context)
+                title = f"{report.title.format(**context)}{args_desc}".title()
             except KeyError:
                 title = report.title
             key = {"report": report, "dataset": dataset, "formatter": formatter}

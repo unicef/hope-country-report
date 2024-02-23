@@ -376,6 +376,7 @@ class FormatterAdmin(
     list_display = ("name", "strategy", "content_type")
     search_fields = ("name",)
     list_filter = ("processor",)
+    ordering = ('-updated_on',)
     change_form_template = None
     autocomplete_fields = ("country_office", "template")
 
@@ -445,7 +446,7 @@ class ReportConfigurationAdmin(
     AdminActionPermMixin,
     ModelAdmin[ReportConfiguration],
 ):
-    list_display = ("country_office", "name", "formatters", "last_run", "owner", "schedule", "compress", "protect")
+    list_display = ("name", "country_office", "updated_on", "last_run", "owner", "schedule", "compress", "protect")
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
     readonly_fields = (
@@ -461,8 +462,8 @@ class ReportConfigurationAdmin(
         ("formatters", AutoCompleteFilter),
         "last_run",
     )
-    search_fields = ("name",)
-    # change_form_template = None
+    search_fields = ("name", "query__name")
+    ordering = ('-updated_on',)
     change_form_template = "admin/power_query/report/change_form.html"
 
     linked_objects_hide_empty = False
