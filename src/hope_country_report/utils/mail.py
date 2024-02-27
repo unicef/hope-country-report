@@ -25,7 +25,7 @@ def send_document_password(user: "User", document: "ReportDocument") -> int:
 
     message = EmailMessage(to=recipient_list, from_email=settings.DEFAULT_FROM_EMAIL)
 
-    message.template_id = config.MAILJET_TEMPLATE_ZIP_PASSWORD  # Mailjet numeric template id
+    message.template_id = config.MAILJET_TEMPLATE_REPORT_READY  # Mailjet numeric template id
     message.subject = f"Your password for {document.title}"
 
     message.merge_global_data = {
