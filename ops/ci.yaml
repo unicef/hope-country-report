@@ -12,14 +12,16 @@ resources:
 
 variables:
   Docker.backend.repository: "hope-country-report"
-  Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
-  Docker.url: "uniappsakshopedev.azurecr.io"
   tag: $(Build.SourceVersion)
   additionalTag: $(Build.SourceBranchName)
+  Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
+  Docker.url: "uniappsakshopedev.azurecr.io"
 
   ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
     pipelineId: 1149
   ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
+    Docker.registryConnection: "ICTD-HOPE-PRD-ACR"
+    Docker.url: "uniappsakshope.azurecr.io"
     pipelineId: 1233
   ${{ else }}:
     pipelineId: null
@@ -51,9 +53,59 @@ stages:
         ./
       displayName: Docker build dev
 
+- stage: check_format
+  displayName: FORMAT
+  dependsOn: build_and_push_backend_dev
+  jobs:
+  - job: tests
+    pool:
+      vmImage: ubuntu-latest
+    displayName: "[DJANGO FORMAT]"
+    steps:
+    - task: Docker@2
+      displayName: "[ACR] Login"
+      inputs:
+        command: login
+        containerRegistry: $(Docker.registryConnection)
+    - task: DockerCompose@0
+      displayName: "Check format"
+      inputs:
+        containerregistrytype: 'Azure Container Registry'
+        azureContainerRegistry: $(Docker.registryConnection)
+        dockerComposeFile: 'ops/compose.test.yml'
+        action: 'Run a Docker Compose command'
+        dockerComposeCommand: 'run --no-deps backend black --check .'
+        dockerComposeFileArgs: |
+          backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
+
+- stage: lint_backend
+  displayName: LINT
+  dependsOn: build_and_push_backend_dev
+  jobs:
+  - job: lint
+    pool:
+      vmImage: ubuntu-latest
+    displayName: "[DJANGO LINT]"
+    steps:
+    - task: Docker@2
+      displayName: "[ACR] Login"
+      inputs:
+        command: login
+        containerRegistry: $(Docker.registryConnection)
+    - task: DockerCompose@0
+      displayName: "Run lint"
+      inputs:
+        containerregistrytype: 'Azure Container Registry'
+        azureContainerRegistry: $(Docker.registryConnection)
+        dockerComposeFile: 'ops/compose.test.yml'
+        action: 'Run a Docker Compose command'
+        dockerComposeCommand: 'run --no-deps backend flake8 .'
+        dockerComposeFileArgs: |
+          backend_image=$(Docker.url)/$(Docker.backend.repository):dev-$(tag)
+
 - stage: test_dev
   displayName: TEST
-  dependsOn: build_and_push_backend_dev
+  dependsOn: [check_format, lint_backend]
   jobs:
   - job: tests
     pool:

@@ -50,30 +50,45 @@ def data(reporters) -> "_DATA":
 
 
 @pytest.fixture()
-def query1(data: "_DATA"):
+def query(data: "_DATA"):
     from testutils.factories import ContentTypeFactory, QueryFactory
 
     return QueryFactory(
         target=ContentTypeFactory(app_label="hope", model="household"),
-        name="Query1",
+        name="Query",
         code="result=conn.all()",
     )
 
 
 @pytest.fixture()
-def query2(query1):
+def query_nested(query):
     from testutils.factories import QueryFactory
 
-    return QueryFactory(name="Query2", code=f"result=invoke({query1.pk}, arguments)")
+    return QueryFactory(name="Nested Query", code=f"result=invoke({query.pk}, arguments)")
 
 
 @pytest.fixture()
-def query3(data: "_DATA"):
+def query_parametrizer(data: "_DATA"):
     from testutils.factories import ParametrizerFactory, QueryFactory
 
     parametrizer: "Parametrizer" = ParametrizerFactory(value={"withdrawn": [True, False]})
     return QueryFactory(
-        name="Query3", code="result=conn.filter(withdrawn=arguments['withdrawn'])", parametrizer=parametrizer
+        name="Query Parametrizer",
+        code="result=conn.filter(withdrawn=arguments['withdrawn'])",
+        parametrizer=parametrizer,
+    )
+
+
+@pytest.fixture()
+def query_impl(data: "_DATA", query):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    return QueryFactory(
+        target=None,
+        name="Query Implement",
+        parent=query,
+        country_office=data["co1"],
+        code=None,
     )
 
 
@@ -83,7 +98,7 @@ def query_log(data: "_DATA"):
 
     parametrizer: "Parametrizer" = ParametrizerFactory(value={"withdrawn": [True, False]})
     return QueryFactory(
-        name="Query3",
+        name="Query Parametrizer",
         code="""debug("start")
 result=conn.all()
 debug("end")
@@ -101,10 +116,10 @@ def formatter() -> "Formatter":
 
 #
 # @pytest.fixture()
-# def report(query1, formatter):
+# def report(query, formatter):
 #     from testutils.factories import ReportFactory
 #
-#     return ReportFactory(formatter=formatter, query=query1)
+#     return ReportFactory(formatter=formatter, query=query)
 
 
 @pytest.fixture()
@@ -128,38 +143,55 @@ def test_filter_query(req, data: "_DATA"):
         assert ds.data.first().pk == UUID(data["hh1"][0].pk)
 
 
-def test_query_execution(query1: "Query"):
+def test_query_execution(query: "Query"):
     from hope_country_report.apps.hope.models import Household
 
     assert Household.objects.count() == 4
-    result = query1.run(persist=True)
-    assert query1.datasets.exists()
+    result = query.run(persist=True)
+    assert query.datasets.exists()
     assert result[0].data[0].pk
 
 
-def test_nested_query(query2: "Query"):
-    result = query2.execute_matrix()
-    assert query2.datasets.exists()
-    assert result["{}"] == query2.datasets.first().pk
+def test_nested_query(query_nested: "Query"):
+    result = query_nested.execute_matrix()
+    assert query_nested.datasets.exists()
+    assert result["{}"] == query_nested.datasets.first().pk
 
 
-def test_query_parametrizer(query3: "Query"):
-    result = query3.execute_matrix()
-    assert query3.datasets.count() == 2
+def test_query_impl(query_impl: "Query", data):
+    from hope_country_report.apps.hope.models import Household
+
+    tenant_slug = data["hh1"][0].business_area.id
+    tenant = data["hh1"][0].business_area.country_office
+
+    with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
+        result = query_impl.run(persist=True)
+
+    assert Household.objects.count() == 4
+    assert query_impl.get_code() == query_impl.parent.code
+    assert query_impl.datasets.exists()
+    assert result[0].data[0].pk
+    assert not query_impl.parent.datasets.exists()
+    assert set(query_impl.datasets.first().data) == set(Household.objects.filter(business_area__id=tenant_slug))
+
+
+def test_query_parametrizer(query_parametrizer: "Query"):
+    result = query_parametrizer.execute_matrix()
+    assert query_parametrizer.datasets.count() == 2
     assert sorted(result.keys()) == ["{'withdrawn': False}", "{'withdrawn': True}"]
-    ds: "Dataset" = query3.datasets.get(info__arguments__withdrawn=False)
+    ds: "Dataset" = query_parametrizer.datasets.get(info__arguments__withdrawn=False)
     assert ds.data.filter(withdrawn=False).count() == ds.data.count() == 2
 
-    ds: "Dataset" = query3.datasets.get(info__arguments__withdrawn=True)
+    ds: "Dataset" = query_parametrizer.datasets.get(info__arguments__withdrawn=True)
     assert ds.data.filter(withdrawn=True).count() == ds.data.count() == 2
 
 
-def test_query_silk(query1: "Query", data):
+def test_query_silk(query: "Query", data):
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
     uid = str(data["hh1"][0].business_area.pk)
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
-        ds, extra = query1.run()
+        ds, extra = query.run()
     assert ds.data.count() == 2
     assert ds.data.first().pk == UUID(data["hh1"][0].pk)
     db_info = ds.info["perfs"]["db"][settings.POWER_QUERY_DB_ALIAS]
@@ -179,10 +211,10 @@ def test_query_log(query_log: "Query", data):
 
 
 @freeze_time("2012-01-14 08:00:00")
-def test_query_marshalling(query1: "Query", data):
+def test_query_marshalling(query: "Query", data):
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
-        ds, extra = query1.run()
+        ds, extra = query.run()
     assert ds.data.count() == 2
     assert ds.data.first().pk == UUID(data["hh1"][0].pk)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Iterable, TYPE_CHECKING
 
 import hashlib
 import logging
@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.db import models, transaction
-from django.db.models import JSONField
+from django.db.models import JSONField, Q
 from django.utils import timezone
 
 from sentry_sdk import capture_exception, configure_scope
@@ -27,7 +27,7 @@ from ._base import AdminReversable, CeleryEnabled, PowerQueryModel
 from .arguments import Parametrizer
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Iterable, Tuple
+    from typing import Any, Dict, Tuple
 
     from django.db.models import QuerySet
 
@@ -47,8 +47,8 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
     description = models.TextField(blank=True, null=True)
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
     owner = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, blank=True, null=True, related_name="queries")
-    target = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    code = models.TextField(default="result=conn.all()", blank=True)
+    target = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    code = models.TextField(default="result=conn.all()", blank=True, null=True)
     info = JSONField(default=dict, blank=True, encoder=PQJSONEncoder)
     parametrizer = models.ForeignKey(Parametrizer, on_delete=models.CASCADE, blank=True, null=True)
     active = models.BooleanField(default=True)
@@ -56,25 +56,43 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
     celery_task_name = "run_background_query"
 
     def __str__(self) -> str:
-        return self.name or ""
+        if self.abstract:
+            return f"[ABSTRACT] {self.name}"
+        elif self.parent:
+            return f"{self.name} ({self.parent.name})"
+        return self.name
 
     class Meta:
         verbose_name_plural = "Queries"
         ordering = ("name",)
 
+        constraints = [
+            models.CheckConstraint(
+                check=Q(
+                    parent__isnull=False, country_office__isnull=False, code__isnull=True, target__isnull=True
+                )  # implementation
+                | Q(parent__isnull=True, code__isnull=False, target__isnull=False),  # standard or abstract with code
+                name="valid_query",
+            )
+        ]
+
     class Tenant:
         tenant_filter_field = "country_office"
 
-    def save(
-        self,
-        force_insert: bool = False,
-        force_update: bool = False,
-        using: str | None = None,
-        update_fields: "Iterable[str] | None" = None,
+    @property
+    def abstract(self):
+        return bool(not self.parent and self.code)
+
+    @property
+    def children(self):
+        return Query.objects.filter(parent=self)
+
+    def full_clean(
+        self, exclude: Iterable[str] | None = ..., validate_unique: bool = ..., validate_constraints: bool = ...
     ) -> None:
-        if not self.code:
-            self.code = "result=conn.all().order_by('pk')"
-        super().save(force_insert, force_update, using, update_fields)
+        if self.code == "":
+            self.code = None
+        super().full_clean(exclude, validate_unique, validate_constraints)
 
     def _invoke(self, query_id: int, arguments: "Dict[str, Any]") -> "Tuple[Any, Any]":
         query = Query.objects.get(id=query_id)
@@ -89,10 +107,7 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
         self.save()
 
     def execute_matrix(self, persist: bool = True, running_task: "PowerQueryTask|None" = None) -> "QueryMatrixResult":
-        if self.parametrizer:
-            args = self.parametrizer.get_matrix()
-        else:
-            args = [{}]
+        args = self.get_args()
         self.error_message = None
         self.sentry_error_id = None
         self.last_run = None
@@ -130,7 +145,7 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
     ) -> "Tuple[Dataset, Dict[str,Any]]":
         from .dataset import Dataset
 
-        model = self.target.model_class()
+        model = self.parent.target.model_class() if self.parent else self.target.model_class()
         connections: "dict[str, QuerySet[AnyModel]]" = {}
         return_value: "tuple[Dataset, dict[str, Any]]"
         if state.tenant:
@@ -166,7 +181,8 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
                 else:
                     with state.set(preview=preview, tenant=self.country_office):
                         try:
-                            exec(self.code, globals(), locals_)
+                            code = self.get_code()
+                            exec(code, globals(), locals_)
                             result = locals_.get("result", None)
                             extra = locals_.get("extra", None)
                         except Exception:
@@ -202,3 +218,14 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
         except Exception:
             raise
         return return_value
+
+    def get_code(self):
+        return self.parent.code if self.parent else self.code
+
+    def get_args(self):
+        args = [{}]
+        if self.parametrizer:
+            args = self.parametrizer.get_matrix()
+        elif self.parent and self.parent.parametrizer:
+            args = self.parent.parametrizer.get_matrix()
+        return args

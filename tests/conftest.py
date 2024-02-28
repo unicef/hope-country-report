@@ -81,6 +81,7 @@ def pytest_configure(config):
         ALLOWED_HOSTS="*",
         AUTHENTICATION_BACKENDS="",
         DEFAULT_FILE_STORAGE="hope_country_report.apps.power_query.storage.DataSetStorage",
+        STATIC_FILE_STORAGE="hope_country_report.apps.power_query.storage.DataSetStorage",
         DJANGO_SETTINGS_MODULE="hope_country_report.config.settings",
         CATCH_ALL_EMAIL="",
         CELERY_TASK_ALWAYS_EAGER="1",

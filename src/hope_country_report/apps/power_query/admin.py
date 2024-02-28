@@ -151,7 +151,7 @@ class QueryAdmin(
     AdminActionPermMixin,
     ModelAdmin[Query],
 ):
-    list_display = ("name", "target", "owner", "active", "success", "last_run", "status")
+    list_display = ("name", "parent", "target", "owner", "active", "success", "last_run", "status")
     search_fields = ("name",)
     list_filter = (
         ("target", AutoCompleteFilter),
@@ -275,6 +275,11 @@ class QueryAdmin(
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
         return HttpResponseRedirectToReferrer(request)
+
+    @button()
+    def see_children(self, request: HttpRequest, pk: int) -> "HttpResponse":
+        url = reverse("admin:power_query_query_changelist")
+        return redirect(f"{url}?parent__id={pk}")
 
     def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
