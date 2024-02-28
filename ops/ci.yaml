@@ -12,16 +12,20 @@ resources:
 
 variables:
   Docker.backend.repository: "hope-country-report"
-  Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
-  Docker.url: "uniappsakshopedev.azurecr.io"
   tag: $(Build.SourceVersion)
   additionalTag: $(Build.SourceBranchName)
 
   ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+    Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
+    Docker.url: "uniappsakshopedev.azurecr.io"
     pipelineId: 1149
   ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
+    Docker.registryConnection: "ICTD-HOPE-PRD-ACR"
+    Docker.url: "uniappsakshope.azurecr.io"
     pipelineId: 1233
   ${{ else }}:
+    Docker.registryConnection: null
+    Docker.url: null
     pipelineId: null
 
 stages:
