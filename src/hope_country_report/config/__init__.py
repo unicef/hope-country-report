@@ -117,7 +117,7 @@ CONFIG = {
     ),
     "STATIC_FILE_STORAGE": (
         str,
-        "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "hope_country_report.apps.power_query.storage.StaticStorage",
         setting("storages"),
     ),
     "STATIC_ROOT": (str, "/tmp/static/", setting("static-root")),
