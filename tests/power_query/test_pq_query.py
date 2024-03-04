@@ -81,7 +81,7 @@ def query_parametrizer(data: "_DATA"):
 
 @pytest.fixture()
 def query_impl(data: "_DATA", query):
-    from testutils.factories import ContentTypeFactory, QueryFactory
+    from testutils.factories import QueryFactory
 
     return QueryFactory(
         target=None,

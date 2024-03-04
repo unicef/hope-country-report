@@ -55,6 +55,7 @@ class Parametrizer(NaturalKeyModel, AdminReversable, models.Model):
     class Meta:
         verbose_name_plural = "Arguments"
         verbose_name = "Arguments"
+        ordering = ["name"]
 
     class Tenant:
         tenant_filter_field = "country_office"
