@@ -14,8 +14,6 @@ variables:
   Docker.backend.repository: "hope-country-report"
   tag: $(Build.SourceVersion)
   additionalTag: $(Build.SourceBranchName)
-  Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
-  Docker.url: "uniappsakshopedev.azurecr.io"
 
   ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
     Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
