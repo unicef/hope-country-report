@@ -92,7 +92,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_gis",
-    "corsheaders",
+    # "corsheaders",
     "social_django",
     "admin_extra_buttons",
     "adminactions",
@@ -105,7 +105,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
+    # "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "csp.middleware.CSPMiddleware",
     "hope_country_report.middleware.state.StateSetMiddleware",
@@ -261,7 +261,8 @@ from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
 from .fragments.constance import *  # noqa
-from .fragments.cors import *  # noqa
+
+# from .fragments.cors import *  # noqa
 from .fragments.csp import *  # noqa
 from .fragments.debug_toolbar import *  # noqa
 from .fragments.flags import *  # noqa
