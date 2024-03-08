@@ -7,6 +7,7 @@
 # DO NOT rename the models, AND don't rename db_table values or field names.
 import django.contrib.postgres.fields
 from django.contrib.gis.db import models
+
 from hope_country_report.apps.hope.models._base import HopeModel
 from hope_country_report.apps.power_query.storage import HopeStorage
 
@@ -46,7 +47,6 @@ class BusinessArea(HopeModel):
     is_accountability_applicable = models.BooleanField(null=True)
     rapid_pro_messages_token = models.CharField(max_length=40, blank=True, null=True)
     rapid_pro_survey_token = models.CharField(max_length=40, blank=True, null=True)
-    enable_email_notification = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -1408,6 +1408,7 @@ class Deliverymechanismperpaymentplan(HopeModel):
         blank=True,
         null=True,
     )
+    sent_to_payment_gateway = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -1427,6 +1428,7 @@ class Financialserviceprovider(HopeModel):
     distribution_limit = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     communication_channel = models.CharField(max_length=6, null=True)
     data_transfer_configuration = models.JSONField(blank=True, null=True)
+    payment_gateway_id = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1629,7 +1631,7 @@ class PaymentPlan(HopeModel):
     exclusion_reason = models.TextField(null=True)
     exclude_household_error = models.TextField(null=True)
     version = models.BigIntegerField(null=True)
-    name = models.CharField(max_length=255, blank=True, null=True)
+    name = models.CharField(max_length=25, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1640,48 +1642,6 @@ class PaymentPlan(HopeModel):
 
     def __str__(self) -> str:
         return str(self.name)
-
-
-class Paymentplansplit(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    split_type = models.CharField(max_length=24, null=True)
-    chunks_no = models.IntegerField(blank=True, null=True)
-    sent_to_payment_gateway = models.BooleanField(null=True)
-    payment_plan = models.ForeignKey(
-        PaymentPlan, on_delete=models.DO_NOTHING, related_name="paymentplansplit_payment_plan", null=True
-    )
-    order = models.IntegerField(null=True)
-
-    class Meta:
-        managed = False
-        db_table = "payment_paymentplansplit"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Paymentplansplitpayments(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    payment = models.ForeignKey(
-        Payment, on_delete=models.DO_NOTHING, related_name="paymentplansplitpayments_payment", null=True
-    )
-    payment_plan_split = models.ForeignKey(
-        Paymentplansplit,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplansplitpayments_payment_plan_split",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "payment_paymentplansplitpayments"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
 
 
 class PaymentRecord(HopeModel):
