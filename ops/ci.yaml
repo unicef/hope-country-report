@@ -3,9 +3,11 @@ trigger:
   branches:
     include:
     - develop
+    - staging
     - master
 pr:
 - develop
+- staging
 - master
 resources:
 - repo: self
@@ -19,6 +21,10 @@ variables:
     Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
     Docker.url: "uniappsakshopedev.azurecr.io"
     pipelineId: 1149
+  ${{ elseif eq(variables['Build.SourceBranchName'], 'staging') }}:
+    Docker.registryConnection: "ICTD-HOPE-DEV-ACR"
+    Docker.url: "uniappsakshopedev.azurecr.io"
+    pipelineId: 1286
   ${{ elseif eq(variables['Build.SourceBranchName'], 'master') }}:
     Docker.registryConnection: "ICTD-HOPE-PRD-ACR"
     Docker.url: "uniappsakshope.azurecr.io"
