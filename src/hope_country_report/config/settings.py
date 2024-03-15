@@ -204,7 +204,7 @@ WSGI_APPLICATION = "hope_country_report.config.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [str(PACKAGE_DIR / "templates")],
+        "DIRS": [str(PACKAGE_DIR / "templates"), str(SOURCE_DIR / "src/hope_country_report/web/templates")],
         "APP_DIRS": False,
         "OPTIONS": {
             "loaders": [

@@ -1,7 +1,8 @@
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING, Union
 
 import base64
 import binascii
+import datetime
 import hashlib
 import json
 import logging
@@ -15,6 +16,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
+import pytz
 import tablib
 from constance import config
 from sentry_sdk import configure_scope
@@ -36,42 +38,73 @@ def is_valid_template(filename: Path) -> bool:
     return True
 
 
-def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str,Any]") -> tablib.Dataset:
+def make_naive(dt: datetime) -> datetime:
+    """
+    Convert a timezone-aware datetime object to a naive datetime in UTC.
+
+    :param dt: The timezone-aware datetime object to convert.
+    :return: A naive datetime object in UTC.
+    """
+    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
+        # Convert to UTC and make naive
+        return dt.astimezone(pytz.utc).replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def to_dataset(result: Union[QuerySet, Iterable[Dict[str, Any]], tablib.Dataset, Dict[str, Any]]) -> tablib.Dataset:
+    data = tablib.Dataset()
+
     if isinstance(result, QuerySet):
-        data = tablib.Dataset()
-        fields = result.__dict__["_fields"]
-        if not fields:
-            fields = [field.name for field in result.model._meta.concrete_fields]
-        data.headers = fields
-        try:
-            for obj in result.using(settings.POWER_QUERY_DB_ALIAS).all()[: config.PQ_SAMPLE_PAGE_SIZE]:
+        queryset = result.using(settings.POWER_QUERY_DB_ALIAS).all()[: config.PQ_SAMPLE_PAGE_SIZE]
+        if hasattr(queryset, "query") and hasattr(queryset.query, "values_select") and queryset.query.values_select:
+            selected_fields = queryset.query.values_select
+            data.headers = list(selected_fields)
+        else:
+            fields_names = [field.name for field in queryset.model._meta.concrete_fields]
+            data.headers = fields_names
+
+        for obj in queryset:
+            # Check if obj is not a model instance but a value (indicative of flat=True usage)
+            if not hasattr(obj, "__dict__") and not isinstance(obj, tuple):
+                # This assumes flat=True was used, and obj is a direct value
+                if isinstance(obj, datetime.datetime):
+                    obj = make_naive(obj)
+                data.append([str(obj)])
+            elif isinstance(obj, tuple):
+                # Handling values_list without flat=True
+                row = [(make_naive(value) if isinstance(value, datetime.datetime) else str(value)) for value in obj]
+                data.append(row)
+            else:
+                # Handling model instances or values_list with flat=False
                 line = []
-                for f in fields:
-                    # if isinstance(obj, dict):
-                    #     line.append(obj[f])
-                    if isinstance(obj, tuple):
-                        line.append(str(obj))
-                    else:
-                        line.append(str(getattr(obj, f)))
+                for f in data.headers:
+                    attr = getattr(obj, f, None)
+                    if isinstance(attr, datetime.datetime):
+                        attr = make_naive(attr)
+                    line.append(str(attr))
                 data.append(line)
-                # data.append([obj[f] if isinstance(obj, dict) else str(getattr(obj, f)) for f in fields])
-        except Exception as e:
-            logger.exception(e)
-            raise
-            # raise ValueError(f"Results can't be rendered as a tablib Dataset: {e}")
     elif isinstance(result, (list, tuple)):
-        data = tablib.Dataset()
-        fields = set().union(*(d.keys() for d in list(result)))
-        data.headers = fields
-        try:
+        # Assuming the iterable contains dictionaries
+        if result and isinstance(result[0], dict):
+            fields = set().union(*(d.keys() for d in result))
+            data.headers = list(fields)
             for obj in result:
-                data.append([obj[f] for f in fields])
-        except Exception:
-            raise ValueError("Results can't be rendered as a tablib Dataset")
-    elif isinstance(result, (tablib.Dataset, dict)):
+                line = [(make_naive(obj[f]) if isinstance(obj[f], datetime.datetime) else str(obj[f])) for f in fields]
+                data.append(line)
+        else:
+            # Handling list of simple values or tuples (e.g., values_list(flat=True))
+            for value in result:
+                if isinstance(value, datetime.datetime):
+                    value = make_naive(value)
+                data.append([str(value)])
+    elif isinstance(result, tablib.Dataset):
         data = result
+    elif isinstance(result, dict):
+        data.headers = result.keys()
+        data.append(list(result.values()))
     else:
-        raise ValueError(f"{result} ({type(result)}")
+        raise ValueError("Unsupported type: {}".format(type(result)))
+    print("Final dataset:", data)
     return data
 
 
