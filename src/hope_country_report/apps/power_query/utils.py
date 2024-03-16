@@ -38,17 +38,10 @@ def is_valid_template(filename: Path) -> bool:
     return True
 
 
-def make_naive(dt: datetime) -> datetime:
-    """
-    Convert a timezone-aware datetime object to a naive datetime in UTC.
-
-    :param dt: The timezone-aware datetime object to convert.
-    :return: A naive datetime object in UTC.
-    """
-    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
-        # Convert to UTC and make naive
-        return dt.astimezone(pytz.utc).replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+def make_naive(value: datetime.datetime) -> datetime.datetime:
+    if isinstance(value, datetime.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
+        return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return value
 
 
 def to_dataset(result: Union[QuerySet, Iterable[Dict[str, Any]], tablib.Dataset, Dict[str, Any]]) -> tablib.Dataset:
@@ -56,35 +49,38 @@ def to_dataset(result: Union[QuerySet, Iterable[Dict[str, Any]], tablib.Dataset,
 
     if isinstance(result, QuerySet):
         queryset = result.using(settings.POWER_QUERY_DB_ALIAS).all()[: config.PQ_SAMPLE_PAGE_SIZE]
+
         if hasattr(queryset, "query") and hasattr(queryset.query, "values_select") and queryset.query.values_select:
-            selected_fields = queryset.query.values_select
-            data.headers = list(selected_fields)
+            data.headers = list(queryset.query.values_select)
         else:
-            fields_names = [field.name for field in queryset.model._meta.concrete_fields]
-            data.headers = fields_names
+            data.headers = [field.name for field in queryset.model._meta.fields]
 
         for obj in queryset:
-            # Check if obj is not a model instance but a value (indicative of flat=True usage)
-            if not hasattr(obj, "__dict__") and not isinstance(obj, tuple):
-                # This assumes flat=True was used, and obj is a direct value
-                if isinstance(obj, datetime.datetime):
-                    obj = make_naive(obj)
-                data.append([str(obj)])
-            elif isinstance(obj, tuple):
-                # Handling values_list without flat=True
-                row = [(make_naive(value) if isinstance(value, datetime.datetime) else str(value)) for value in obj]
+            if isinstance(obj, tuple):
+                row = [make_naive(val) if isinstance(val, datetime.datetime) else val for val in obj]
                 data.append(row)
-            else:
-                # Handling model instances or values_list with flat=False
-                line = []
-                for f in data.headers:
-                    attr = getattr(obj, f, None)
-                    if isinstance(attr, datetime.datetime):
-                        attr = make_naive(attr)
-                    line.append(str(attr))
-                data.append(line)
+            elif isinstance(obj, dict):
+                row = [
+                    make_naive(obj[field]) if isinstance(obj[field], datetime.datetime) else obj[field]
+                    for field in data.headers
+                ]
+                data.append(row)
+            else:  # Handle direct values from 'values_list(flat=True)'
+                if len(data.headers) == 1 and isinstance(obj, datetime.datetime):
+                    value = make_naive(obj)
+                    data.append([value])
+                else:
+                    data.append(
+                        row=[
+                            (
+                                make_naive(getattr(obj, field))
+                                if isinstance(getattr(obj, field), datetime.datetime)
+                                else getattr(obj, field)
+                            )
+                            for field in data.headers
+                        ]
+                    )
     elif isinstance(result, (list, tuple)):
-        # Assuming the iterable contains dictionaries
         if result and isinstance(result[0], dict):
             fields = set().union(*(d.keys() for d in result))
             data.headers = list(fields)
@@ -92,7 +88,6 @@ def to_dataset(result: Union[QuerySet, Iterable[Dict[str, Any]], tablib.Dataset,
                 line = [(make_naive(obj[f]) if isinstance(obj[f], datetime.datetime) else str(obj[f])) for f in fields]
                 data.append(line)
         else:
-            # Handling list of simple values or tuples (e.g., values_list(flat=True))
             for value in result:
                 if isinstance(value, datetime.datetime):
                     value = make_naive(value)
@@ -104,7 +99,6 @@ def to_dataset(result: Union[QuerySet, Iterable[Dict[str, Any]], tablib.Dataset,
         data.append(list(result.values()))
     else:
         raise ValueError("Unsupported type: {}".format(type(result)))
-    print("Final dataset:", data)
     return data
 
 
