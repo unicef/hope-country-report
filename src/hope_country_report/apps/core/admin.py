@@ -58,6 +58,8 @@ class UserAdmin(_UserAdminPlus):  # type: ignore
     )
 
     def get_fieldsets(self, request: HttpRequest, obj: Optional[Any] = None) -> Any:
+        if not obj:
+            return self.add_fieldsets
         if not request.user.is_superuser:
             return super().get_fieldsets(request, obj)
         return _UserAdminPlus.fieldsets
