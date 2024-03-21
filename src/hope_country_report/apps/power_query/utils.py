@@ -5,12 +5,14 @@ import binascii
 import hashlib
 import json
 import logging
+import time
 from collections.abc import Callable, Iterable
 from functools import wraps
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.core.cache import cache
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
@@ -18,6 +20,8 @@ from django.utils.safestring import mark_safe
 import tablib
 from constance import config
 from sentry_sdk import configure_scope
+
+from hope_country_report.apps.power_query.storage import HopeStorage
 
 if TYPE_CHECKING:
     from hope_country_report.types.django import AnyModel
@@ -135,7 +139,22 @@ def sentry_tags(func: Callable[..., Any]) -> Callable[..., Any]:
         with configure_scope() as scope:
             scope.set_tag("celery", True)
             scope.set_tag("celery_task", func.__name__)
-
             return func(*args, **kwargs)
 
     return wrapper
+
+
+def get_image_url(image_path: str) -> str:
+    # Generate a current timestamp for freshness comparison
+    current_timestamp = int(time.time())
+    redis_key = f"image_url:{image_path}"
+    cached_data = cache.get(redis_key)
+
+    # Check if cached data is still fresh based on 2 hours TTL logic
+    if cached_data and current_timestamp - cached_data["timestamp"] < 7200:
+        return cached_data["url"]
+
+    storage = HopeStorage()
+    image_url = storage.url(image_path)
+    cache.set(redis_key, {"url": image_url, "timestamp": current_timestamp}, timeout=7200)
+    return image_url

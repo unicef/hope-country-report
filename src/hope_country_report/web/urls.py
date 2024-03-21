@@ -5,6 +5,7 @@ from django.views.generic import TemplateView
 
 from .views import (
     download,
+    image_proxy_view,
     index,
     OfficeConfigurationDetailView,
     OfficeConfigurationListView,
@@ -47,4 +48,5 @@ urlpatterns = [
     path("errors/404/", TemplateView.as_view(template_name="404.html")),
     path("errors/403/", TemplateView.as_view(template_name="403.html")),
     path("health/", lambda request: HttpResponse("OK")),
+    path("images/<path:image_path>/", image_proxy_view, name="image_proxy"),
 ]

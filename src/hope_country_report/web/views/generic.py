@@ -1,15 +1,18 @@
 from typing import Any, TYPE_CHECKING, TypeVar
 
 import datetime
+import requests
 from urllib.parse import urlparse
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Model
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
+from django.utils.module_loading import import_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -19,6 +22,8 @@ from djgeojson.templatetags.geojson_tags import geojsonfeature
 
 from hope_country_report.apps.core.forms import CountryOfficeForm
 from hope_country_report.apps.core.models import CountryOffice, User
+from hope_country_report.apps.power_query.storage import HopeStorage
+from hope_country_report.apps.power_query.utils import get_image_url
 from hope_country_report.apps.tenant.forms import SelectTenantForm
 from hope_country_report.apps.tenant.utils import set_selected_tenant
 from hope_country_report.utils.media import download_media
@@ -168,3 +173,25 @@ def select_tenant(request: "HttpRequest") -> "HttpResponse":
             return HttpResponseRedirect(reverse("office-index", args=[office.slug]))
     else:
         return render(request, "select_tenant.html", {"tenant_form": SelectTenantForm(request=request)})
+
+
+def get_hope_storage() -> Any:
+    """Dynamically load the HopeStorage class from settings."""
+    storage_class_path = settings.STORAGES["hope"]["BACKEND"]
+    StorageClass = import_string(storage_class_path)
+    return StorageClass()
+
+
+@login_required
+def image_proxy_view(request: HttpRequest, image_path: str) -> HttpResponse:
+    image_url = get_image_url(image_path)
+
+    try:
+        response = requests.get(image_url, stream=True)
+        if response.status_code == 200:
+            content_type = response.headers.get("Content-Type", "application/octet-stream")
+            return HttpResponse(response.content, content_type=content_type)
+        else:
+            raise Http404("Image not found")
+    except requests.RequestException:
+        raise Http404("Image not found")

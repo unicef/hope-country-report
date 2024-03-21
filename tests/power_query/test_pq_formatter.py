@@ -3,10 +3,14 @@ from typing import TYPE_CHECKING
 import uuid
 
 import pytest
+from unittest.mock import patch
+
+from django.urls import reverse
 
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query import processors
+from hope_country_report.apps.power_query.utils import get_image_url
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -110,3 +114,23 @@ def test_formatter_htmlpdf_list(dataset):
     result = fmt.render({"dataset": dataset})
     content = result.decode()
     assert content == f"<html><body><div>{H1}</div><div>{H2}</div><div>{H3}</div></body></html>"
+
+
+@pytest.fixture()
+def dataset_with_images(dataset):
+    for i, record in enumerate(dataset.data, start=1):
+        record["image_url"] = get_image_url(record.id)
+    return dataset
+
+
+@pytest.mark.django_db
+def test_image_proxy_integration(client, dataset_with_images):
+    # Mock any external calls within `image_proxy_view`
+    with (
+        patch("hope_country_report.apps.power_query.storage.HopeStorage", return_value="https://example.com/image.jpg"),
+        patch("django.core.cache.cache.get", return_value=None),
+        patch("django.core.cache.cache.set", return_value=None),
+    ):
+        image_path = dataset_with_images.data[0].image_path
+        response = client.get(reverse("image_proxy", args=[image_path]))
+        assert response.status_code == 200

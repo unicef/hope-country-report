@@ -8,6 +8,7 @@ from .document import (
 )
 from .generic import (
     download,
+    image_proxy_view,
     index,
     OfficeHomeView,
     OfficeMapView,
