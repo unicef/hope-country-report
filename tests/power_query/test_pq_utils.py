@@ -75,7 +75,7 @@ def test_to_dataset_qs(user):
 
 def test_to_dataset_values(user):
     qs = type(user).objects.values_list("username")
-    assert str(to_dataset(qs)) == "username        \n----------------\nuser@example.com"
+    assert str(to_dataset(qs)) == "username             \n---------------------\n('user@example.com',)"
 
 
 def test_to_dataset_iterable(user):
