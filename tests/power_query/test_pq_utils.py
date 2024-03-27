@@ -1,3 +1,4 @@
+import datetime
 from base64 import b64encode
 from pathlib import Path
 
@@ -6,6 +7,7 @@ from unittest.mock import MagicMock
 
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
+from django.utils import timezone
 
 import tablib
 
@@ -89,6 +91,29 @@ def test_to_dataset_dataset():
 def test_to_dataset_error():
     with pytest.raises(ValueError):
         assert to_dataset("")
+
+
+test_data = [
+    ("queryset_values_list", "date_joined", "%Y-%m-%d %H:%M:%S"),
+    ("iterable", "event_time", "%Y-%m-%d %H:%M:%S"),
+]
+
+
+@pytest.mark.parametrize("test_type, field_name, expected_format", test_data)
+def test_to_dataset_tzinfo(test_type, field_name, expected_format, user):
+    tz_aware_datetime = timezone.make_aware(datetime.datetime(2023, 3, 15, 12, 0))
+    if test_type == "queryset_values_list":
+        user.date_joined = tz_aware_datetime
+        user.save()
+        data = type(user).objects.filter(id=user.pk).values_list(field_name, flat=True)
+    else:  # iterable
+        data = [{field_name: tz_aware_datetime}]
+    dataset = to_dataset(data)
+    expected_naive_datetime_str = (
+        tz_aware_datetime.astimezone(timezone.utc).replace(tzinfo=None).strftime(expected_format)
+    )
+    found = any(expected_naive_datetime_str in ",".join(map(str, row)) for row in dataset)
+    assert found, f"Expected datetime string '{expected_naive_datetime_str}' not found in dataset."
 
 
 def test_basicauth(rf):
