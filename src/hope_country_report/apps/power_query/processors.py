@@ -1,10 +1,13 @@
-from typing import TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING, Union
 
 import io
 import mimetypes
-from collections.abc import Callable
+import re
+from collections.abc import Callable, Iterable
 from io import BytesIO
 
+from django.db.models.query import QuerySet
+from django.forms.models import model_to_dict
 from django.template import Context, Template
 from django.utils.functional import classproperty
 
@@ -14,14 +17,18 @@ from pypdf.constants import FieldFlag
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
+from hope_country_report.apps.power_query.storage import DataSetStorage
+
 from .utils import to_dataset
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple
+    from typing import Tuple
 
     from .models import Dataset, Formatter, ReportTemplate
 
     ProcessorResult = bytes | BytesIO
+
+image_pattern = re.compile(r"\.(jpg|jpeg|png|JPG|JPEG|PNG)$", re.IGNORECASE)
 
 mimetypes.add_type("text/vnd.yaml", ".yaml")
 mimetypes.add_type("application/vnd.ms-excel", ".xls")
@@ -176,12 +183,38 @@ class ToFormPDF(ProcessorStrategy):
     format = TYPE_DETAIL
     needs_file = True
 
+    def normalize_dataset(
+        self, dataset: Union[QuerySet, List[Dict[str, Any]], Dict[str, Any], Any]
+    ) -> List[Dict[str, Any]]:
+        if isinstance(dataset, QuerySet):
+            return [model_to_dict(obj) for obj in dataset]
+        elif isinstance(dataset, Iterable) and not isinstance(dataset, dict):
+            return [model_to_dict(obj) for obj in dataset]
+        elif isinstance(dataset, dict):
+            return [dataset]
+        elif hasattr(dataset, "dict") and callable(getattr(dataset, "dict", None)):
+            return [row for row in dataset.dict()]
+        else:
+            raise ValueError("Unsupported dataset type")
+
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         tpl = self.formatter.template
-
+        new_values: List[Dict[str, Any]] = []
+        for entry in self.normalize_dataset(context["dataset"].data):
+            new_entry = entry.copy()
+            for key, value in entry.items():
+                if isinstance(value, str) and image_pattern.search(value):
+                    bitmap_key = f"{key}_bitmap"
+                    new_entry[bitmap_key] = self.load_image_from_blob_storage(value)
+            new_values.append(new_entry)
+        # Ensure each dictionary has all keys, adding missing ones with None
+        all_keys = set().union(*(d.keys() for d in new_values))
+        for entry in new_values:
+            for key in all_keys:
+                entry.setdefault(key, None)
         reader = PdfReader(tpl.doc)
         writer = PdfWriter()
-        ds = to_dataset(context["dataset"].data).dict
+        ds = to_dataset(new_values).dict
         for entry in ds:
             writer.append(reader)
             writer.update_page_form_field_values(writer.pages[-1], entry, flags=FieldFlag.READ_ONLY)
@@ -190,6 +223,20 @@ class ToFormPDF(ProcessorStrategy):
         writer.write(output_stream)
         output_stream.seek(0)
         return output_stream.getvalue()
+
+    def load_image_from_blob_storage(self, image_path):
+        """
+        Load an image from blob storage.
+
+        Args:
+        - image_path (str): Path to the image within blob storage.
+
+        Returns:
+        - Image data in a format that can be directly used (e.g., file-like object).
+        """
+        with DataSetStorage().open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+        return image_data
 
 
 class ProcessorRegistry(Registry):
