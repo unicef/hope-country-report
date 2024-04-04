@@ -5,7 +5,7 @@ import mimetypes
 import re
 from collections.abc import Callable, Iterable
 from io import BytesIO
-
+from PIL import Image
 from django.db.models.query import QuerySet
 from django.forms.models import model_to_dict
 from django.template import Context, Template
@@ -183,19 +183,23 @@ class ToFormPDF(ProcessorStrategy):
     format = TYPE_DETAIL
     needs_file = True
 
-    def normalize_dataset(
-        self, dataset: Union[QuerySet, List[Dict[str, Any]], Dict[str, Any], Any]
-    ) -> List[Dict[str, Any]]:
+    def normalize_dataset(self, dataset: Union[QuerySet, Iterable, Dict[str, Any], Any]) -> List[Dict[str, Any]]:
+        normalized_data = []
         if isinstance(dataset, QuerySet):
-            return [model_to_dict(obj) for obj in dataset]
-        elif isinstance(dataset, Iterable) and not isinstance(dataset, dict):
-            return [model_to_dict(obj) for obj in dataset]
+            dataset = dataset.values()
+        if isinstance(dataset, Iterable) and not isinstance(dataset, dict):
+            for obj in dataset:
+                if hasattr(obj, "_meta"):  # It's a model instance
+                    normalized_data.append(model_to_dict(obj))
+                elif isinstance(obj, dict):  # Already a dict, likely due to .values() or .values_list()
+                    normalized_data.append(obj)
+                else:
+                    raise ValueError(f"Unsupported dataset item type: {type(obj)}")
         elif isinstance(dataset, dict):
-            return [dataset]
-        elif hasattr(dataset, "dict") and callable(getattr(dataset, "dict", None)):
-            return [row for row in dataset.dict()]
+            normalized_data.append(dataset)  # Single dictionary, wrap in a list
         else:
             raise ValueError("Unsupported dataset type")
+        return normalized_data
 
     def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
         tpl = self.formatter.template
@@ -224,19 +228,19 @@ class ToFormPDF(ProcessorStrategy):
         output_stream.seek(0)
         return output_stream.getvalue()
 
-    def load_image_from_blob_storage(self, image_path):
+    def load_image_from_blob_storage(self, image_path: str) -> Image.Image:
         """
-        Load an image from blob storage.
+        Load an image from blob storage and return it as a PIL Image object.
 
         Args:
         - image_path (str): Path to the image within blob storage.
 
         Returns:
-        - Image data in a format that can be directly used (e.g., file-like object).
+        - Image.Image: The loaded image as a PIL Image object.
         """
         with DataSetStorage().open(image_path, "rb") as image_file:
             image_data = image_file.read()
-        return image_data
+        return BytesIO(image_data)
 
 
 class ProcessorRegistry(Registry):
