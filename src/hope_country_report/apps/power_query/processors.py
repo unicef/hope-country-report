@@ -221,9 +221,7 @@ class ToFormPDF(ProcessorStrategy):
             page = document[page_num]
             for widget in page.widgets():
                 if widget.field_name == field_name:
-                    print("Found widget:", widget.field_name, "Rect:", widget.rect)
                     return widget.rect
-        print("Widget not found for field name:", field_name)
         return None
 
     def load_image_from_blob_storage(self, image_path):
