@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from django.core.exceptions import ValidationError
-from testutils.factories import ContentTypeFactory, QueryFactory, ParametrizerFactory, CountryOfficeFactory
+
+from testutils.factories import ContentTypeFactory, CountryOfficeFactory, ParametrizerFactory, QueryFactory
 
 if TYPE_CHECKING:
     from hope_country_report.apps.power_query.models import Parametrizer

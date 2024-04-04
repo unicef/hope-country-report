@@ -1,7 +1,8 @@
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING, Union
 
 import base64
 import binascii
+import datetime
 import hashlib
 import json
 import logging
@@ -15,6 +16,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
+import pytz
 import tablib
 from constance import config
 from sentry_sdk import configure_scope
@@ -36,6 +38,12 @@ def is_valid_template(filename: Path) -> bool:
     return True
 
 
+def make_naive(value: datetime.datetime) -> datetime.datetime:
+    if isinstance(value, datetime.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
+        return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return value
+
+
 def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str,Any]") -> tablib.Dataset:
     if isinstance(result, QuerySet):
         data = tablib.Dataset()
@@ -47,14 +55,13 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
             for obj in result.using(settings.POWER_QUERY_DB_ALIAS).all()[: config.PQ_SAMPLE_PAGE_SIZE]:
                 line = []
                 for f in fields:
-                    # if isinstance(obj, dict):
-                    #     line.append(obj[f])
                     if isinstance(obj, tuple):
                         line.append(str(obj))
+                    elif isinstance(obj, datetime.datetime):
+                        line.append(make_naive(obj))
                     else:
                         line.append(str(getattr(obj, f)))
                 data.append(line)
-                # data.append([obj[f] if isinstance(obj, dict) else str(getattr(obj, f)) for f in fields])
         except Exception as e:
             logger.exception(e)
             raise
@@ -65,7 +72,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
         data.headers = fields
         try:
             for obj in result:
-                data.append([obj[f] for f in fields])
+                data.append([make_naive(obj[f]) if isinstance(obj[f], datetime.datetime) else obj[f] for f in fields])
         except Exception:
             raise ValueError("Results can't be rendered as a tablib Dataset")
     elif isinstance(result, (tablib.Dataset, dict)):
