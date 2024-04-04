@@ -1,18 +1,21 @@
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import io
 import mimetypes
 import re
 from collections.abc import Callable
 from io import BytesIO
+
 from django.template import Context, Template
 from django.utils.functional import classproperty
+
 import fitz
 import pdfkit
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import FieldFlag
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
+
 from hope_country_report.apps.power_query.storage import DataSetStorage, HopeStorage
 
 from .utils import to_dataset
@@ -213,10 +216,10 @@ class ToFormPDF(ProcessorStrategy):
 
         return final_pdf_stream.getvalue()
 
-    def is_image_field(self, value):
+    def is_image_field(self, value: str) -> bool:
         return isinstance(value, str) and image_pattern.search(value)
 
-    def get_image_rect(self, document, field_name):
+    def get_image_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
         for page_num in range(len(document)):
             page = document[page_num]
             for widget in page.widgets():
@@ -224,11 +227,9 @@ class ToFormPDF(ProcessorStrategy):
                     return widget.rect
         return None
 
-    def load_image_from_blob_storage(self, image_path):
-        # Implement logic to retrieve the image from blob storage and return as a bytes stream
-        # This example uses a file path, replace it with actual blob storage access
-        with DataSetStorage().open(image_path, "rb") as img_file:
-            return img_file.read()
+    def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
+        with HopeStorage().open(image_path, "rb") as img_file:
+            return BytesIO(img_file.read())
 
 
 class ProcessorRegistry(Registry):
