@@ -1,23 +1,19 @@
-from typing import Any, Dict, List, TYPE_CHECKING, Union
+from typing import Any, Dict, List, TYPE_CHECKING
 
 import io
 import mimetypes
 import re
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from io import BytesIO
-from PIL import Image
-from django.db.models.query import QuerySet
-from django.forms.models import model_to_dict
 from django.template import Context, Template
 from django.utils.functional import classproperty
-
+import fitz
 import pdfkit
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import FieldFlag
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
-
-from hope_country_report.apps.power_query.storage import DataSetStorage
+from hope_country_report.apps.power_query.storage import DataSetStorage, HopeStorage
 
 from .utils import to_dataset
 
@@ -183,64 +179,58 @@ class ToFormPDF(ProcessorStrategy):
     format = TYPE_DETAIL
     needs_file = True
 
-    def normalize_dataset(self, dataset: Union[QuerySet, Iterable, Dict[str, Any], Any]) -> List[Dict[str, Any]]:
-        normalized_data = []
-        if isinstance(dataset, QuerySet):
-            dataset = dataset.values()
-        if isinstance(dataset, Iterable) and not isinstance(dataset, dict):
-            for obj in dataset:
-                if hasattr(obj, "_meta"):  # It's a model instance
-                    normalized_data.append(model_to_dict(obj))
-                elif isinstance(obj, dict):  # Already a dict, likely due to .values() or .values_list()
-                    normalized_data.append(obj)
-                else:
-                    raise ValueError(f"Unsupported dataset item type: {type(obj)}")
-        elif isinstance(dataset, dict):
-            normalized_data.append(dataset)  # Single dictionary, wrap in a list
-        else:
-            raise ValueError("Unsupported dataset type")
-        return normalized_data
-
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "Dict[str, Any]") -> bytes:
         tpl = self.formatter.template
-        new_values: List[Dict[str, Any]] = []
-        for entry in self.normalize_dataset(context["dataset"].data):
-            new_entry = entry.copy()
-            for key, value in entry.items():
-                if isinstance(value, str) and image_pattern.search(value):
-                    bitmap_key = f"{key}_bitmap"
-                    new_entry[bitmap_key] = self.load_image_from_blob_storage(value)
-            new_values.append(new_entry)
-        # Ensure each dictionary has all keys, adding missing ones with None
-        all_keys = set().union(*(d.keys() for d in new_values))
-        for entry in new_values:
-            for key in all_keys:
-                entry.setdefault(key, None)
         reader = PdfReader(tpl.doc)
         writer = PdfWriter()
-        ds = to_dataset(new_values).dict
+
+        ds = to_dataset(context["dataset"].data).dict
+
         for entry in ds:
             writer.append(reader)
-            writer.update_page_form_field_values(writer.pages[-1], entry, flags=FieldFlag.READ_ONLY)
+            text_values = {k: v for k, v in entry.items() if not self.is_image_field(k)}
+            writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
 
-        output_stream = io.BytesIO()
-        writer.write(output_stream)
-        output_stream.seek(0)
-        return output_stream.getvalue()
+        temp_pdf_stream = io.BytesIO()
+        writer.write(temp_pdf_stream)
+        temp_pdf_stream.seek(0)
 
-    def load_image_from_blob_storage(self, image_path: str) -> Image.Image:
-        """
-        Load an image from blob storage and return it as a PIL Image object.
+        document = fitz.open(stream=temp_pdf_stream, filetype="pdf")
 
-        Args:
-        - image_path (str): Path to the image within blob storage.
+        for entry in ds:
+            for field, value in entry.items():
+                if self.is_image_field(value):
+                    page = document[0]
+                    rect = self.get_image_rect(document, field)
+                    if rect:
+                        image_stream = self.load_image_from_blob_storage(value)
+                        page.insert_image(rect, stream=image_stream)
 
-        Returns:
-        - Image.Image: The loaded image as a PIL Image object.
-        """
-        with DataSetStorage().open(image_path, "rb") as image_file:
-            image_data = image_file.read()
-        return BytesIO(image_data)
+        final_pdf_stream = io.BytesIO()
+        document.save(final_pdf_stream)
+        final_pdf_stream.seek(0)
+        document.close()
+
+        return final_pdf_stream.getvalue()
+
+    def is_image_field(self, value):
+        return isinstance(value, str) and image_pattern.search(value)
+
+    def get_image_rect(self, document, field_name):
+        for page_num in range(len(document)):
+            page = document[page_num]
+            for widget in page.widgets():
+                if widget.field_name == field_name:
+                    print("Found widget:", widget.field_name, "Rect:", widget.rect)
+                    return widget.rect
+        print("Widget not found for field name:", field_name)
+        return None
+
+    def load_image_from_blob_storage(self, image_path):
+        # Implement logic to retrieve the image from blob storage and return as a bytes stream
+        # This example uses a file path, replace it with actual blob storage access
+        with DataSetStorage().open(image_path, "rb") as img_file:
+            return img_file.read()
 
 
 class ProcessorRegistry(Registry):

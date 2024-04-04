@@ -85,6 +85,7 @@ dependencies = [
     "pathvalidate",
     "django-stubs-ext",
     "uwsgi",
+    "PyMuPDF>=1.24.1",
 ]
 
 [tool.pdm.dev-dependencies]
