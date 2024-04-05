@@ -247,3 +247,10 @@ def state_context(db):
     set_flag("LOCAL_LOGIN", True).start()
     with state.configure():
         yield
+
+
+@pytest.fixture
+def households():
+    from hope_country_report.apps.hope.models import Household
+
+    return Household.objects.all()

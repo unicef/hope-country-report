@@ -7,6 +7,7 @@ import pytest
 from unittest.mock import Mock
 
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 from docxtpl import DocxTemplate
 from pypdf import PdfReader
@@ -66,10 +67,26 @@ def report(query1, formatter):
 
 
 @pytest.fixture
-def dataset(data, report):
-    from hope_country_report.apps.hope.models import Household
+def dataset(data, report, tmp_path, households):
 
-    return DatasetFactory(value=pickle.dumps(Household.objects.all()))
+    return DatasetFactory(value=pickle.dumps(households))
+
+
+@pytest.fixture
+def updated_dataset(households, report, tmp_path):
+    household = households.first()
+    if not household or not household.head_of_household:
+        raise ValueError("No Household objects found with a related HeadOfHousehold in the database.")
+    test_image_path = tmp_path / "test_image.jpg"
+    test_image_path.write_bytes(b"This is a test image")
+    image_name = "test_images/test_image.jpg"
+    with open(str(test_image_path), "rb") as test_image:
+        image_file = ContentFile(test_image.read(), name=image_name)
+        saved_image_name = default_storage.save(image_name, image_file)
+    head_of_household = household.head_of_household
+    head_of_household.photo = saved_image_name
+    head_of_household.save()
+    return DatasetFactory(value=pickle.dumps(households.values("unicef_id", "head_of_household__photo")))
 
 
 def test_processor_process(dataset, tmp_path, pp: "Type[ProcessorStrategy]"):
@@ -152,6 +169,25 @@ def test_processor_pdfform(dataset, tmp_path):
     output.write_bytes(result)
     PdfReader(output)
     assert result
+
+
+def test_processor_pdf_with_image(updated_dataset, tmp_path):
+    from testutils.factories import ReportTemplateFactory
+
+    tpl = ReportTemplateFactory(name="program_receipt.pdf")
+
+    fmt = Mock()
+    fmt.template = tpl
+    result = processors.ToFormPDF(fmt).process({"dataset": updated_dataset, "business_area": "Afghanistan"})
+    output = tmp_path / "WithImage.pdf"
+    assert result, "The PDF content is empty."
+    output.write_bytes(result)
+    assert output.exists(), "PDF file was not created."
+    assert output.stat().st_size > 0, "PDF file is empty."
+
+    # Now it's safe to attempt reading the PDF
+    pdf = PdfReader(output)
+    assert pdf, "Failed to read the generated PDF file."
 
 
 def test_registry():
