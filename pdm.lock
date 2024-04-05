@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:54fe9900d9bce46f47e192eb1e7cca2c2fa9a92b785cc71290387cc8f60b30ca"
+content_hash = "sha256:cd4016c06aa6a4654695f74bd1af66c10f34358f6ef36f8b3a765aaaf53b6820"
 
 [[package]]
 name = "amqp"

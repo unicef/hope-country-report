@@ -67,17 +67,14 @@ def report(query1, formatter):
 
 
 @pytest.fixture
-def dataset(data, report, tmp_path):
-    from hope_country_report.apps.hope.models import Household
+def dataset(data, report, tmp_path, households):
 
-    return DatasetFactory(value=pickle.dumps(Household.objects.all()))
+    return DatasetFactory(value=pickle.dumps(households))
 
 
 @pytest.fixture
-def updated_dataset(data, report, tmp_path):
-    from hope_country_report.apps.hope.models import Household
-
-    household = Household.objects.first()
+def updated_dataset(households, report, tmp_path):
+    household = households.first()
     if not household or not household.head_of_household:
         raise ValueError("No Household objects found with a related HeadOfHousehold in the database.")
     test_image_path = tmp_path / "test_image.jpg"
@@ -89,7 +86,7 @@ def updated_dataset(data, report, tmp_path):
     head_of_household = household.head_of_household
     head_of_household.photo = saved_image_name
     head_of_household.save()
-    return DatasetFactory(value=pickle.dumps(Household.objects.all().values("unicef_id", "head_of_household__photo")))
+    return DatasetFactory(value=pickle.dumps(households.values("unicef_id", "head_of_household__photo")))
 
 
 def test_processor_process(dataset, tmp_path, pp: "Type[ProcessorStrategy]"):

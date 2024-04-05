@@ -68,6 +68,7 @@ dependencies = [
     "py-vapid",
     "pyhtml2pdf",
     "pyminizip",
+    "PyMuPDF",
     "pypdf",
     "python-pptx",
     "pytopojson",
@@ -85,7 +86,6 @@ dependencies = [
     "pathvalidate",
     "django-stubs-ext",
     "uwsgi",
-    "PyMuPDF>=1.24.1",
 ]
 
 [tool.pdm.dev-dependencies]
