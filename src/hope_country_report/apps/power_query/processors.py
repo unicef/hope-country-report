@@ -1,18 +1,25 @@
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import io
+import logging
 import mimetypes
 import re
 from collections.abc import Callable
 from io import BytesIO
+from pathlib import Path
 
+from django.conf import settings
+from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
 from django.utils.functional import classproperty
 
 import fitz
 import pdfkit
+from PIL import Image, ImageDraw, ImageFont
 from pypdf import PdfReader, PdfWriter
-from pypdf.constants import FieldFlag
+from pypdf.constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes, FieldFlag
+from pypdf.generic import ArrayObject
+from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
@@ -20,6 +27,7 @@ from hope_country_report.apps.power_query.storage import DataSetStorage, HopeSto
 
 from .utils import to_dataset
 
+logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from typing import Tuple
 
@@ -182,54 +190,148 @@ class ToFormPDF(ProcessorStrategy):
     format = TYPE_DETAIL
     needs_file = True
 
-    def process(self, context: "Dict[str, Any]") -> bytes:
+    def process(self, context: Dict[str, Any]) -> bytes:
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
-        writer = PdfWriter()
 
         ds = to_dataset(context["dataset"].data).dict
+        output_pdf = PdfWriter()
+        for index, entry in enumerate(ds, start=1):
+            with NamedTemporaryFile(suffix=".pdf", delete=True) as temp_pdf_file:
+                writer = PdfWriter()
+                text_values = {}
+                arabic_values = {}
+                images = {}
+                try:  # Load, insert, and save
+                    for page in reader.pages:
+                        for annot in page.annotations:
+                            annot = annot.get_object()
+                            field_name = annot[FieldDictionaryAttributes.T]
+                            if field_name in entry:
+                                value = entry[field_name]
+                                if self.is_image_field(annot):
+                                    rect = annot[AnnotationDictionaryAttributes.Rect]
+                                    text_values[field_name] = None
+                                    images[field_name] = [rect, value]
+                                elif self.is_arabic_field(value):
+                                    arabic_values[field_name] = value
+                                else:
+                                    text_values[field_name] = value
+                except IndexError as exc:
+                    capture_exception(exc)
+                    logger.exception(exc)
+                    raise
+                writer.append(reader)
+                writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
+                output_stream = io.BytesIO()
+                writer.write(output_stream)
+                output_stream.seek(0)
+                temp_pdf_file.write(output_stream.read())
 
-        for entry in ds:
-            writer.append(reader)
-            text_values = {k: v for k, v in entry.items() if not self.is_image_field(k)}
-            writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
+                document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
+                for field_name, text in arabic_values.items():
+                    self.insert_arabic_image(document, field_name, text)
+                for field_name, (rect, image_path) in images.items():
+                    if image_path:
+                        self.insert_external_image(document, field_name, image_path)
+                    else:
+                        logger.warning(f"Image not found for field: {field_name}")
+                document.ez_save(temp_pdf_file.name, deflate_fonts=1, deflate_images=1, deflate=1)
+                output_stream.seek(0)
+                output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
+        output_stream = io.BytesIO()
+        output_pdf.write(output_stream)
+        output_stream.seek(0)
+        return output_stream.getvalue()
 
-        temp_pdf_stream = io.BytesIO()
-        writer.write(temp_pdf_stream)
-        temp_pdf_stream.seek(0)
+    def insert_arabic_image(self, document: fitz.Document, field_name: str, text: str):
+        """
+        Generates and inserts an image containing the given Arabic text into
+        the specified field.
+        """
+        rect, page_index = self.get_field_rect(document, field_name)
+        if rect:
+            image_stream = self.generate_arabic_image(text, rect)
+            img_rect = fitz.Rect(*rect)
+            page = document[page_index]  # Assuming rect includes page info
+            page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
 
-        document = fitz.open(stream=temp_pdf_stream, filetype="pdf")
+    def insert_external_image(self, document: fitz.Document, field_name: str, image_path: str):
+        """
+        Loads, resizes, and inserts an external image into the specified field.
+        """
+        rect, page_index = self.get_field_rect(document, field_name)
+        if rect:
+            image_stream = self.load_image_from_blob_storage(image_path)
+            image = Image.open(image_stream)
+            output_stream = io.BytesIO()
+            image.save(output_stream, format="JPEG", quality=85)
+            output_stream.seek(0)
+            page = document[page_index]
+            rotate = 0
+            if image.height < image.width:
+                rotate = 270
+            page.insert_image(rect, stream=output_stream, keep_proportion=True, rotate=rotate)
 
-        for entry in ds:
-            for field, value in entry.items():
-                if self.is_image_field(value):
-                    page = document[0]
-                    rect = self.get_image_rect(document, field)
-                    if rect:
-                        image_stream = self.load_image_from_blob_storage(value)
-                        page.insert_image(rect, stream=image_stream)
+    def is_image_field(self, annot: ArrayObject) -> bool:
+        """
+        Checks if a given PDF annotation represents an image field.
+        """
+        return (
+            annot.get(FieldDictionaryAttributes.FT) == "/Btn"
+            and AnnotationDictionaryAttributes.P in annot
+            and AnnotationDictionaryAttributes.AP in annot
+        )
 
-        final_pdf_stream = io.BytesIO()
-        document.save(final_pdf_stream)
-        final_pdf_stream.seek(0)
-        document.close()
+    def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
+        with DataSetStorage().open(image_path, "rb") as img_file:
+            return BytesIO(img_file.read())
 
-        return final_pdf_stream.getvalue()
-
-    def is_image_field(self, value: str) -> bool:
-        return isinstance(value, str) and image_pattern.search(value)
-
-    def get_image_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
+    def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[tuple[fitz.Rect, int]]:
+        """
+        Returns the Rect and page index of the specified field.
+        """
         for page_num in range(len(document)):
             page = document[page_num]
             for widget in page.widgets():
                 if widget.field_name == field_name:
-                    return widget.rect
-        return None
+                    if widget.field_type == 7:
+                        widget.field_flags |= fitz.PDF_FIELD_IS_READ_ONLY
+                        widget.update()
+                    return widget.rect, page_num  # Return both Rect and page_num
+        return None, None
 
-    def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with HopeStorage().open(image_path, "rb") as img_file:
-            return BytesIO(img_file.read())
+    def is_arabic_field(self, value: str) -> bool:
+        arabic_pattern = re.compile("[\u0600-\u06FF]")
+        return isinstance(value, str) and arabic_pattern.search(value)
+
+    def generate_arabic_image(self, text: str, rect: fitz.Rect, dpi: int = 300) -> BytesIO:
+        font_size = 10
+        rect_width_in_inches = (rect.x1 - rect.x0) / 72
+        rect_height_in_inches = (rect.y1 - rect.y0) / 72
+        # Generate the image
+        width = int(rect_width_in_inches * dpi)
+        height = int(rect_height_in_inches * dpi)
+        image = Image.new("RGBA", (width, height), (28, 171, 231, 0))
+        draw = ImageDraw.Draw(image)
+        font_size_scaled = int(font_size * dpi / 72)
+        font_file_path = Path(settings.PACKAGE_DIR / "web" / "static" / "fonts" / "NotoNaskhArabic-Bold.ttf")
+        font = ImageFont.truetype(font_file_path, font_size_scaled)
+
+        # Calculate text size and position it in the center
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        x = (width - text_width) / 2
+        y = (height - text_height) / 2
+        draw.text((x, y), text, font=font, fill="black", direction="rtl", align="right")
+
+        # Save the image to a bytes buffer
+        img_byte_arr = io.BytesIO()
+        image.save(img_byte_arr, format="PNG", optimize=True)
+        img_byte_arr.seek(0)
+
+        return img_byte_arr.getvalue()
 
 
 class ProcessorRegistry(Registry):
