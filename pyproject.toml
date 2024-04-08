@@ -68,6 +68,7 @@ dependencies = [
     "py-vapid",
     "pyhtml2pdf",
     "pyminizip",
+    "PyMuPDF",
     "pypdf",
     "python-pptx",
     "pytopojson",

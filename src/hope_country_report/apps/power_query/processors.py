@@ -1,27 +1,33 @@
-from typing import TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import io
 import mimetypes
+import re
 from collections.abc import Callable
 from io import BytesIO
 
 from django.template import Context, Template
 from django.utils.functional import classproperty
 
+import fitz
 import pdfkit
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import FieldFlag
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
+from hope_country_report.apps.power_query.storage import DataSetStorage, HopeStorage
+
 from .utils import to_dataset
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple
+    from typing import Tuple
 
     from .models import Dataset, Formatter, ReportTemplate
 
     ProcessorResult = bytes | BytesIO
+
+image_pattern = re.compile(r"\.(jpg|jpeg|png|JPG|JPEG|PNG)$", re.IGNORECASE)
 
 mimetypes.add_type("text/vnd.yaml", ".yaml")
 mimetypes.add_type("application/vnd.ms-excel", ".xls")
@@ -176,20 +182,54 @@ class ToFormPDF(ProcessorStrategy):
     format = TYPE_DETAIL
     needs_file = True
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "Dict[str, Any]") -> bytes:
         tpl = self.formatter.template
-
         reader = PdfReader(tpl.doc)
         writer = PdfWriter()
+
         ds = to_dataset(context["dataset"].data).dict
+
         for entry in ds:
             writer.append(reader)
-            writer.update_page_form_field_values(writer.pages[-1], entry, flags=FieldFlag.READ_ONLY)
+            text_values = {k: v for k, v in entry.items() if not self.is_image_field(k)}
+            writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
 
-        output_stream = io.BytesIO()
-        writer.write(output_stream)
-        output_stream.seek(0)
-        return output_stream.getvalue()
+        temp_pdf_stream = io.BytesIO()
+        writer.write(temp_pdf_stream)
+        temp_pdf_stream.seek(0)
+
+        document = fitz.open(stream=temp_pdf_stream, filetype="pdf")
+
+        for entry in ds:
+            for field, value in entry.items():
+                if self.is_image_field(value):
+                    page = document[0]
+                    rect = self.get_image_rect(document, field)
+                    if rect:
+                        image_stream = self.load_image_from_blob_storage(value)
+                        page.insert_image(rect, stream=image_stream)
+
+        final_pdf_stream = io.BytesIO()
+        document.save(final_pdf_stream)
+        final_pdf_stream.seek(0)
+        document.close()
+
+        return final_pdf_stream.getvalue()
+
+    def is_image_field(self, value: str) -> bool:
+        return isinstance(value, str) and image_pattern.search(value)
+
+    def get_image_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
+        for page_num in range(len(document)):
+            page = document[page_num]
+            for widget in page.widgets():
+                if widget.field_name == field_name:
+                    return widget.rect
+        return None
+
+    def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
+        with HopeStorage().open(image_path, "rb") as img_file:
+            return BytesIO(img_file.read())
 
 
 class ProcessorRegistry(Registry):
