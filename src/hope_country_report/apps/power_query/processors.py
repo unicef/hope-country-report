@@ -232,7 +232,7 @@ class ToFormPDF(ProcessorStrategy):
                 for field_name, (rect, image_path) in images.items():
                     img_rect = fitz.Rect(*rect)
                     page.insert_image(
-                        img_rect, stream=self.load_image_from_blob_storage(image_path), keep_proportion=False
+                        img_rect, stream=self.load_image_from_blob_storage(image_path), keep_proportion=True
                     )
                 document.save(temp_pdf_file.name)
                 output_stream.seek(0)
