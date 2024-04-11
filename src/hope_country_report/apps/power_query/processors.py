@@ -187,7 +187,7 @@ class ToFormPDF(ProcessorStrategy):
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
 
-        ds = to_dataset(context["dataset"].data).dict  # Assuming this creates a list-like structure
+        ds = to_dataset(context["dataset"].data).dict
         output_pdf = PdfWriter()
         for index, entry in enumerate(ds, start=1):
             with NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf_file:
@@ -207,7 +207,6 @@ class ToFormPDF(ProcessorStrategy):
                         if field_name in entry:
                             value = entry[field_name]
                             if self.is_image_field(value) and value:
-                                # Handle image field
                                 rect = annot[AnnotationDictionaryAttributes.Rect]
                                 images[field_name] = [rect, value]
                             else:
@@ -225,15 +224,11 @@ class ToFormPDF(ProcessorStrategy):
 
                 document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
                 page = document[0]
-                print(entry)
                 for field_name, (rect, image_path) in images.items():
-                    if DataSetStorage().exists(image_path):
-                        img_rect = fitz.Rect(*rect)
-                        page.insert_image(
-                            img_rect, stream=self.load_image_from_blob_storage(image_path), keep_proportion=False
-                        )
-                    else:
-                        print(f"Image not found at path: {image_path}")
+                    img_rect = fitz.Rect(*rect)
+                    page.insert_image(
+                        img_rect, stream=self.load_image_from_blob_storage(image_path), keep_proportion=False
+                    )
             output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
         output_stream = io.BytesIO()
         output_pdf.write(output_stream)
@@ -243,16 +238,8 @@ class ToFormPDF(ProcessorStrategy):
     def is_image_field(self, value: str) -> bool:
         return isinstance(value, str) and image_pattern.search(value)
 
-    def get_image_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
-        for page_num in range(len(document)):
-            page = document[page_num]
-            for widget in page.widgets():
-                if widget.field_name == field_name:
-                    return widget.rect
-        return None
-
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with DataSetStorage().open(image_path, "rb") as img_file:
+        with HopeStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
 
