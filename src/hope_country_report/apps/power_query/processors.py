@@ -1,19 +1,22 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 
 import io
+import logging
 import mimetypes
 import re
 from collections.abc import Callable
+from datetime import datetime
 from io import BytesIO
 
+from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
 from django.utils.functional import classproperty
-from datetime import datetime
+
 import fitz
 import pdfkit
 from pypdf import PdfReader, PdfWriter
-from django.core.files.temp import NamedTemporaryFile
 from pypdf.constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes, FieldFlag
+from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
@@ -21,6 +24,7 @@ from hope_country_report.apps.power_query.storage import DataSetStorage, HopeSto
 
 from .utils import to_dataset
 
+logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from typing import Tuple
 
@@ -218,8 +222,9 @@ class ToFormPDF(ProcessorStrategy):
                     writer.write(output_stream)
                     output_stream.seek(0)
                     temp_pdf_file.write(output_stream.read())
-                except IndexError as e:
-                    print(e)
+                except IndexError as exc:
+                    capture_exception(exc)
+                    logger.exception(exc)
                     raise
 
                 document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
@@ -229,7 +234,9 @@ class ToFormPDF(ProcessorStrategy):
                     page.insert_image(
                         img_rect, stream=self.load_image_from_blob_storage(image_path), keep_proportion=False
                     )
-            output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
+                document.save(temp_pdf_file.name)
+                output_stream.seek(0)
+                output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
         output_stream = io.BytesIO()
         output_pdf.write(output_stream)
         output_stream.seek(0)
