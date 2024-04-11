@@ -11,7 +11,7 @@ from io import BytesIO
 from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
 from django.utils.functional import classproperty
-
+from PIL import Image
 import fitz
 import pdfkit
 from pypdf import PdfReader, PdfWriter
@@ -231,9 +231,12 @@ class ToFormPDF(ProcessorStrategy):
                 page = document[0]
                 for field_name, (rect, image_path) in images.items():
                     img_rect = fitz.Rect(*rect)
-                    page.insert_image(
-                        img_rect, stream=self.load_image_from_blob_storage(image_path), keep_proportion=True
-                    )
+                    image_stream = self.load_image_from_blob_storage(image_path)
+                    image = Image.open(image_stream).rotate(270, expand=True)
+                    output_stream = io.BytesIO()
+                    image.save(output_stream, format="png")
+                    output_stream.seek(0)
+                    page.insert_image(img_rect, stream=output_stream, keep_proportion=False)
                 document.save(temp_pdf_file.name)
                 output_stream.seek(0)
                 output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
@@ -246,7 +249,7 @@ class ToFormPDF(ProcessorStrategy):
         return isinstance(value, str) and image_pattern.search(value)
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with HopeStorage().open(image_path, "rb") as img_file:
+        with DataSetStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
 
