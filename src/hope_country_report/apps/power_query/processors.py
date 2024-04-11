@@ -1,18 +1,22 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 
 import io
+import logging
 import mimetypes
 import re
 from collections.abc import Callable
+from datetime import datetime
 from io import BytesIO
 
+from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
 from django.utils.functional import classproperty
 
 import fitz
 import pdfkit
 from pypdf import PdfReader, PdfWriter
-from pypdf.constants import FieldFlag
+from pypdf.constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes, FieldFlag
+from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
@@ -20,6 +24,7 @@ from hope_country_report.apps.power_query.storage import DataSetStorage, HopeSto
 
 from .utils import to_dataset
 
+logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from typing import Tuple
 
@@ -185,47 +190,60 @@ class ToFormPDF(ProcessorStrategy):
     def process(self, context: "Dict[str, Any]") -> bytes:
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
-        writer = PdfWriter()
 
         ds = to_dataset(context["dataset"].data).dict
+        output_pdf = PdfWriter()
+        for index, entry in enumerate(ds, start=1):
+            with NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf_file:
+                writer = PdfWriter()
+                writer.append(reader)
+                for field_name, value in entry.items():
+                    if not value:  # Check for empty values
+                        entry[field_name] = " "  # Insert a space
+                writer.update_page_form_field_values(writer.pages[-1], entry, flags=FieldFlag.READ_ONLY)
 
-        for entry in ds:
-            writer.append(reader)
-            text_values = {k: v for k, v in entry.items() if not self.is_image_field(k)}
-            writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
+                values = {}
+                images = {}
+                for page in reader.pages:
+                    for annot in page.annotations:
+                        annot = annot.get_object()
+                        field_name = annot[FieldDictionaryAttributes.T]
+                        if field_name in entry:
+                            value = entry[field_name]
+                            if self.is_image_field(value) and value:
+                                rect = annot[AnnotationDictionaryAttributes.Rect]
+                                images[field_name] = [rect, value]
+                            else:
+                                if isinstance(value, datetime):
+                                    value = value.strftime("%Y-%m-%d")
+                                values[field_name] = str(value)
+                try:  # Load, insert, and save
+                    output_stream = io.BytesIO()
+                    writer.write(output_stream)
+                    output_stream.seek(0)
+                    temp_pdf_file.write(output_stream.read())
+                except IndexError as exc:
+                    capture_exception(exc)
+                    logger.exception(exc)
+                    raise
 
-        temp_pdf_stream = io.BytesIO()
-        writer.write(temp_pdf_stream)
-        temp_pdf_stream.seek(0)
-
-        document = fitz.open(stream=temp_pdf_stream, filetype="pdf")
-
-        for entry in ds:
-            for field, value in entry.items():
-                if self.is_image_field(value):
-                    page = document[0]
-                    rect = self.get_image_rect(document, field)
-                    if rect:
-                        image_stream = self.load_image_from_blob_storage(value)
-                        page.insert_image(rect, stream=image_stream)
-
-        final_pdf_stream = io.BytesIO()
-        document.save(final_pdf_stream)
-        final_pdf_stream.seek(0)
-        document.close()
-
-        return final_pdf_stream.getvalue()
+                document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
+                page = document[0]
+                for field_name, (rect, image_path) in images.items():
+                    img_rect = fitz.Rect(*rect)
+                    page.insert_image(
+                        img_rect, stream=self.load_image_from_blob_storage(image_path), keep_proportion=False
+                    )
+                document.save(temp_pdf_file.name)
+                output_stream.seek(0)
+                output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
+        output_stream = io.BytesIO()
+        output_pdf.write(output_stream)
+        output_stream.seek(0)
+        return output_stream.getvalue()
 
     def is_image_field(self, value: str) -> bool:
         return isinstance(value, str) and image_pattern.search(value)
-
-    def get_image_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
-        for page_num in range(len(document)):
-            page = document[page_num]
-            for widget in page.widgets():
-                if widget.field_name == field_name:
-                    return widget.rect
-        return None
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
         with HopeStorage().open(image_path, "rb") as img_file:
