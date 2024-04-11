@@ -232,7 +232,7 @@ class ToFormPDF(ProcessorStrategy):
                 for field_name, (rect, image_path) in images.items():
                     img_rect = fitz.Rect(*rect)
                     image_stream = self.load_image_from_blob_storage(image_path)
-                    image = Image.open(image_stream).rotate(270, expand=True)
+                    image = Image.open(image_stream).rotate(-90, expand=True)
                     output_stream = io.BytesIO()
                     image.save(output_stream, format="png")
                     output_stream.seek(0)
@@ -249,7 +249,7 @@ class ToFormPDF(ProcessorStrategy):
         return isinstance(value, str) and image_pattern.search(value)
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with DataSetStorage().open(image_path, "rb") as img_file:
+        with HopeStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
 
