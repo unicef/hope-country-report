@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import io
 import logging
@@ -7,13 +7,16 @@ import re
 from collections.abc import Callable
 from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 
+from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
 from django.utils.functional import classproperty
-from PIL import Image
+
 import fitz
 import pdfkit
+from PIL import Image, ImageDraw, ImageFont
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes, FieldFlag
 from sentry_sdk import capture_exception
@@ -187,7 +190,7 @@ class ToFormPDF(ProcessorStrategy):
     format = TYPE_DETAIL
     needs_file = True
 
-    def process(self, context: "Dict[str, Any]") -> bytes:
+    def process(self, context: Dict[str, Any]) -> bytes:
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
 
@@ -200,7 +203,8 @@ class ToFormPDF(ProcessorStrategy):
                 for field_name, value in entry.items():
                     if not value:  # Check for empty values
                         entry[field_name] = " "  # Insert a space
-                writer.update_page_form_field_values(writer.pages[-1], entry, flags=FieldFlag.READ_ONLY)
+                text_values = {k: v for k, v in entry.items() if not self.is_arabic_field(v)}
+                writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
 
                 values = {}
                 images = {}
@@ -229,6 +233,13 @@ class ToFormPDF(ProcessorStrategy):
 
                 document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
                 page = document[0]
+                for field_name, text in entry.items():
+                    if self.is_arabic_field(text):
+                        rect = self.get_field_rect(document, field_name)
+                        if rect:
+                            image_stream = self.generate_arabic_image(text, rect)
+                            img_rect = fitz.Rect(*rect)
+                            page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
                 for field_name, (rect, image_path) in images.items():
                     img_rect = fitz.Rect(*rect)
                     image_stream = self.load_image_from_blob_storage(image_path)
@@ -251,6 +262,46 @@ class ToFormPDF(ProcessorStrategy):
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
         with HopeStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
+
+    def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
+        for page_num in range(len(document)):
+            page = document[page_num]
+            for widget in page.widgets():
+                if widget.field_name == field_name:
+                    return widget.rect
+        return None
+
+    def is_arabic_field(self, value: str) -> bool:
+        arabic_pattern = re.compile("[\u0600-\u06FF]")
+        return isinstance(value, str) and arabic_pattern.search(value)
+
+    def generate_arabic_image(self, text: str, rect: fitz.Rect, dpi: int = 300) -> BytesIO:
+        font_size = 10
+        rect_width_in_inches = (rect.x1 - rect.x0) / 72
+        rect_height_in_inches = (rect.y1 - rect.y0) / 72
+        # Generate the image
+        width = int(rect_width_in_inches * dpi)
+        height = int(rect_height_in_inches * dpi)
+        image = Image.new("RGBA", (width, height), (255, 255, 255, 0))
+        draw = ImageDraw.Draw(image)
+        font_size_scaled = int(font_size * dpi / 72)
+        font_file_path = Path(settings.PACKAGE_DIR / "web" / "static" / "fonts" / "NotoNaskhArabic-Bold.ttf")
+        font = ImageFont.truetype(font_file_path, font_size_scaled)
+
+        # Calculate text size and position it in the center
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        x = (width - text_width) / 2
+        y = (height - text_height) / 2
+        draw.text((x, y), text, font=font, fill="black", direction="rtl", align="right")
+
+        # Save the image to a bytes buffer
+        img_byte_arr = io.BytesIO()
+        image.save(img_byte_arr, format="PNG")
+        img_byte_arr.seek(0)
+
+        return img_byte_arr.getvalue()
 
 
 class ProcessorRegistry(Registry):
