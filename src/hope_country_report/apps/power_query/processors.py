@@ -197,7 +197,7 @@ class ToFormPDF(ProcessorStrategy):
         ds = to_dataset(context["dataset"].data).dict
         output_pdf = PdfWriter()
         for index, entry in enumerate(ds, start=1):
-            with NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf_file:
+            with NamedTemporaryFile(suffix=".pdf", delete=True) as temp_pdf_file:
                 writer = PdfWriter()
                 writer.append(reader)
                 for field_name, value in entry.items():
@@ -245,10 +245,10 @@ class ToFormPDF(ProcessorStrategy):
                     image_stream = self.load_image_from_blob_storage(image_path)
                     image = Image.open(image_stream).rotate(-90, expand=True)
                     output_stream = io.BytesIO()
-                    image.save(output_stream, format="png")
+                    image.save(output_stream, format="png", optimize=True)
                     output_stream.seek(0)
                     page.insert_image(img_rect, stream=output_stream, keep_proportion=False)
-                document.save(temp_pdf_file.name)
+                document.ez_save(temp_pdf_file.name, deflate_fonts=1, deflate_images=1, deflate=1)
                 output_stream.seek(0)
                 output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
         output_stream = io.BytesIO()
@@ -260,7 +260,7 @@ class ToFormPDF(ProcessorStrategy):
         return isinstance(value, str) and image_pattern.search(value)
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with HopeStorage().open(image_path, "rb") as img_file:
+        with DataSetStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
     def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
@@ -282,7 +282,7 @@ class ToFormPDF(ProcessorStrategy):
         # Generate the image
         width = int(rect_width_in_inches * dpi)
         height = int(rect_height_in_inches * dpi)
-        image = Image.new("RGBA", (width, height), (255, 255, 255, 0))
+        image = Image.new("RGBA", (width, height), (28, 171, 231, 0))
         draw = ImageDraw.Draw(image)
         font_size_scaled = int(font_size * dpi / 72)
         font_file_path = Path(settings.PACKAGE_DIR / "web" / "static" / "fonts" / "NotoNaskhArabic-Bold.ttf")
@@ -298,7 +298,7 @@ class ToFormPDF(ProcessorStrategy):
 
         # Save the image to a bytes buffer
         img_byte_arr = io.BytesIO()
-        image.save(img_byte_arr, format="PNG")
+        image.save(img_byte_arr, format="PNG", optimize=True)
         img_byte_arr.seek(0)
 
         return img_byte_arr.getvalue()
