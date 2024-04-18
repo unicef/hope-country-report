@@ -260,7 +260,7 @@ class ToFormPDF(ProcessorStrategy):
         return isinstance(value, str) and image_pattern.search(value)
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with DataSetStorage().open(image_path, "rb") as img_file:
+        with HopeStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
     def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
