@@ -206,26 +206,21 @@ class ToFormPDF(ProcessorStrategy):
                 text_values = {k: v for k, v in entry.items() if not self.is_arabic_field(v)}
                 writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
 
-                values = {}
                 images = {}
-                for page in reader.pages:
-                    for annot in page.annotations:
-                        annot = annot.get_object()
-                        field_name = annot[FieldDictionaryAttributes.T]
-                        if field_name in entry:
-                            value = entry[field_name]
-                            if self.is_image_field(value) and value:
-                                rect = annot[AnnotationDictionaryAttributes.Rect]
-                                images[field_name] = [rect, value]
-                            else:
-                                if isinstance(value, datetime):
-                                    value = value.strftime("%Y-%m-%d")
-                                values[field_name] = str(value)
                 try:  # Load, insert, and save
-                    output_stream = io.BytesIO()
-                    writer.write(output_stream)
-                    output_stream.seek(0)
-                    temp_pdf_file.write(output_stream.read())
+                    for page in reader.pages:
+                        for annot in page.annotations:
+                            annot = annot.get_object()
+                            field_name = annot[FieldDictionaryAttributes.T]
+                            if field_name in entry:
+                                value = entry[field_name]
+                                if self.is_image_field(value) and value:
+                                    rect = annot[AnnotationDictionaryAttributes.Rect]
+                                    images[field_name] = [rect, value]
+                        output_stream = io.BytesIO()
+                        writer.write(output_stream)
+                        output_stream.seek(0)
+                        temp_pdf_file.write(output_stream.read())
                 except IndexError as exc:
                     capture_exception(exc)
                     logger.exception(exc)
@@ -241,7 +236,7 @@ class ToFormPDF(ProcessorStrategy):
                             img_rect = fitz.Rect(*rect)
                             page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
                 for field_name, (rect, image_path) in images.items():
-                    img_rect = fitz.Rect(*rect)
+                    img_rect = self.get_field_rect(document, field_name)
                     image_stream = self.load_image_from_blob_storage(image_path)
                     image = Image.open(image_stream).rotate(-90, expand=True)
                     output_stream = io.BytesIO()
