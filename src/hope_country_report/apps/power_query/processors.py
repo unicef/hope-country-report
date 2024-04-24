@@ -5,7 +5,6 @@ import logging
 import mimetypes
 import re
 from collections.abc import Callable
-from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -19,6 +18,7 @@ import pdfkit
 from PIL import Image, ImageDraw, ImageFont
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes, FieldFlag
+from pypdf.generic import ArrayObject
 from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
@@ -199,13 +199,7 @@ class ToFormPDF(ProcessorStrategy):
         for index, entry in enumerate(ds, start=1):
             with NamedTemporaryFile(suffix=".pdf", delete=True) as temp_pdf_file:
                 writer = PdfWriter()
-                writer.append(reader)
-                for field_name, value in entry.items():
-                    if not value:  # Check for empty values
-                        entry[field_name] = " "  # Insert a space
-                text_values = {k: v for k, v in entry.items() if not self.is_arabic_field(v)}
-                writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
-
+                values = {}
                 images = {}
                 try:  # Load, insert, and save
                     for page in reader.pages:
@@ -214,36 +208,32 @@ class ToFormPDF(ProcessorStrategy):
                             field_name = annot[FieldDictionaryAttributes.T]
                             if field_name in entry:
                                 value = entry[field_name]
-                                if self.is_image_field(value) and value:
+                                if self.is_image_field(annot):
                                     rect = annot[AnnotationDictionaryAttributes.Rect]
+                                    values[field_name] = None
                                     images[field_name] = [rect, value]
-                        output_stream = io.BytesIO()
-                        writer.write(output_stream)
-                        output_stream.seek(0)
-                        temp_pdf_file.write(output_stream.read())
+                                else:
+                                    values[field_name] = value
                 except IndexError as exc:
                     capture_exception(exc)
                     logger.exception(exc)
                     raise
+                writer.append(reader)
+                writer.update_page_form_field_values(writer.pages[-1], values, flags=FieldFlag.READ_ONLY)
+                output_stream = io.BytesIO()
+                writer.write(output_stream)
+                output_stream.seek(0)
+                temp_pdf_file.write(output_stream.read())
 
                 document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
-                page = document[0]
                 for field_name, text in entry.items():
                     if self.is_arabic_field(text):
-                        rect = self.get_field_rect(document, field_name)
-                        if rect:
-                            image_stream = self.generate_arabic_image(text, rect)
-                            img_rect = fitz.Rect(*rect)
-                            page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
+                        self.insert_arabic_image(document, field_name, text)
                 for field_name, (rect, image_path) in images.items():
-                    img_rect = self.get_field_rect(document, field_name)
-                    image_stream = self.load_image_from_blob_storage(image_path)
-                    image = Image.open(image_stream).rotate(-90, expand=True)
-                    image.thumbnail((800, 600), Image.LANCZOS)
-                    output_stream = io.BytesIO()
-                    image.save(output_stream, format="JPEG", quality=85)
-                    output_stream.seek(0)
-                    page.insert_image(img_rect, stream=output_stream, keep_proportion=False)
+                    if image_path:
+                        self.insert_external_image(document, field_name, image_path)
+                    else:
+                        logger.warning(f"Image not found for field: {field_name}")
                 document.ez_save(temp_pdf_file.name, deflate_fonts=1, deflate_images=1, deflate=1)
                 output_stream.seek(0)
                 output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
@@ -252,19 +242,69 @@ class ToFormPDF(ProcessorStrategy):
         output_stream.seek(0)
         return output_stream.getvalue()
 
-    def is_image_field(self, value: str) -> bool:
-        return isinstance(value, str) and image_pattern.search(value)
+    def prepare_dataset_values(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Prepares a dictionary of values suitable for text field updates
+        and image generation, excluding Arabic text fields.
+        """
+        text_values = {k: v for k, v in entry.items() if not self.is_arabic_field(v)}
+
+        for field_name, value in text_values.items():
+            if not value:
+                text_values[field_name] = " "
+
+        return text_values
+
+    def insert_arabic_image(self, document: fitz.Document, field_name: str, text: str):
+        """
+        Generates and inserts an image containing the given Arabic text into
+        the specified field.
+        """
+        rect, page_index = self.get_field_rect(document, field_name)
+        if rect:
+            image_stream = self.generate_arabic_image(text, rect)
+            img_rect = fitz.Rect(*rect)
+            page = document[page_index]  # Assuming rect includes page info
+            page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
+
+    def insert_external_image(self, document: fitz.Document, field_name: str, image_path: str):
+        """
+        Loads, resizes, and inserts an external image into the specified field.
+        """
+        rect, page_index = self.get_field_rect(document, field_name)
+        if rect:
+            image_stream = self.load_image_from_blob_storage(image_path)
+            image = Image.open(image_stream).rotate(-90, expand=True)
+            image.thumbnail((800, 600), Image.LANCZOS)
+            output_stream = io.BytesIO()
+            image.save(output_stream, format="JPEG", quality=85)
+            output_stream.seek(0)
+            page = document[page_index]
+            page.insert_image(rect, stream=output_stream, keep_proportion=False)
+
+    def is_image_field(self, annot: ArrayObject) -> bool:
+        """
+        Checks if a given PDF annotation represents an image field.
+        """
+        return (
+            annot.get(FieldDictionaryAttributes.FT) == "/Btn"
+            and AnnotationDictionaryAttributes.P in annot
+            and AnnotationDictionaryAttributes.AP in annot
+        )
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
         with HopeStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
-    def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[fitz.Rect]:
+    def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[tuple[fitz.Rect, int]]:
+        """
+        Returns the Rect and page index of the specified field.
+        """
         for page_num in range(len(document)):
             page = document[page_num]
             for widget in page.widgets():
                 if widget.field_name == field_name:
-                    return widget.rect
+                    return widget.rect, page_num  # Return both Rect and page_num
         return None
 
     def is_arabic_field(self, value: str) -> bool:
