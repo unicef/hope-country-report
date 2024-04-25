@@ -261,17 +261,21 @@ class ToFormPDF(ProcessorStrategy):
         Loads, resizes, and inserts an external image into the specified field.
         """
         rect, page_index = self.get_field_rect(document, field_name)
-        if rect:
+        if rect and page_index is not None:
             image_stream = self.load_image_from_blob_storage(image_path)
             image = Image.open(image_stream)
             output_stream = io.BytesIO()
-            image.save(output_stream, format="JPEG", quality=85)
+            image.save(output_stream, format="JPEG", quality=75)
             output_stream.seek(0)
             page = document[page_index]
+            for widget in page.widgets():
+                if widget.field_name == field_name:
+                    page.delete_widget(widget)
+                    break  # Stop the loop once we find and remove the widget
             rotate = 0
             if image.height < image.width:
                 rotate = 270
-            page.insert_image(rect, stream=output_stream, keep_proportion=True, rotate=rotate)
+            page.insert_image(rect, stream=output_stream, keep_proportion=False, rotate=rotate)
 
     def is_image_field(self, annot: ArrayObject) -> bool:
         """
@@ -284,7 +288,7 @@ class ToFormPDF(ProcessorStrategy):
         )
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with DataSetStorage().open(image_path, "rb") as img_file:
+        with HopeStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
     def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[tuple[fitz.Rect, int]]:
@@ -298,7 +302,7 @@ class ToFormPDF(ProcessorStrategy):
                     if widget.field_type == 7:
                         widget.field_flags |= fitz.PDF_FIELD_IS_READ_ONLY
                         widget.update()
-                    return widget.rect, page_num  # Return both Rect and page_num
+                    return widget.rect, page_num
         return None, None
 
     def is_arabic_field(self, value: str) -> bool:
