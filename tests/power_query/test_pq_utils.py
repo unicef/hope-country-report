@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 
 import tablib
+from pytz import utc
 
 from hope_country_report.apps.power_query.utils import (
     basicauth,
@@ -109,9 +110,7 @@ def test_to_dataset_tzinfo(test_type, field_name, expected_format, user):
     else:  # iterable
         data = [{field_name: tz_aware_datetime}]
     dataset = to_dataset(data)
-    expected_naive_datetime_str = (
-        tz_aware_datetime.astimezone(timezone.utc).replace(tzinfo=None).strftime(expected_format)
-    )
+    expected_naive_datetime_str = tz_aware_datetime.astimezone(utc).replace(tzinfo=None).strftime(expected_format)
     found = any(expected_naive_datetime_str in ",".join(map(str, row)) for row in dataset)
     assert found, f"Expected datetime string '{expected_naive_datetime_str}' not found in dataset."
 
