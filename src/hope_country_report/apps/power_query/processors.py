@@ -282,13 +282,16 @@ class ToFormPDF(ProcessorStrategy):
         Loads, resizes, and inserts an external image into the specified field.
         """
         rect, page_index = self.get_field_rect(document, field_name)
-        if rect and page_index is not None:
+        if rect is None or page_index is None:
+            logger.error(f"No valid rectangle or page index found for field {field_name}. Cannot insert image.")
+            return
+        page = document[page_index]
+        try:
             image_stream = self.load_image_from_blob_storage(image_path)
             image = Image.open(image_stream)
             output_stream = io.BytesIO()
             image.save(output_stream, format="JPEG", quality=75)
             output_stream.seek(0)
-            page = document[page_index]
             for widget in page.widgets():
                 if widget.field_name == field_name:
                     page.delete_widget(widget)
@@ -297,6 +300,12 @@ class ToFormPDF(ProcessorStrategy):
             if image.height < image.width:
                 rotate = 270
             page.insert_image(rect, stream=output_stream, keep_proportion=False, rotate=rotate)
+        except Exception as e:
+            logger.exception(e)
+            capture_exception(e)
+            page.insert_text(
+                rect, "Image unreadable", color=(1, 0, 0), fontsize=11, fontname="helv", align=fitz.TEXT_ALIGN_CENTER
+            )
 
     def is_image_field(self, annot: ArrayObject) -> bool:
         """
