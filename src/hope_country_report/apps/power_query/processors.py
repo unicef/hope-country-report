@@ -303,7 +303,7 @@ class ToFormPDF(ProcessorStrategy):
         except Exception as e:
             logger.exception(e)
             capture_exception(e)
-            page.insert_text(
+            page.insert_textbox(
                 rect, "Image unreadable", color=(1, 0, 0), fontsize=11, fontname="helv", align=fitz.TEXT_ALIGN_CENTER
             )
 
