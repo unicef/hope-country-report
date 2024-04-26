@@ -242,7 +242,28 @@ class ToFormPDF(ProcessorStrategy):
         output_stream = io.BytesIO()
         output_pdf.write(output_stream)
         output_stream.seek(0)
-        return output_stream.getvalue()
+        fitz_pdf_document = fitz.open(stream=output_stream, filetype="pdf")
+
+        # Convert the PDF to an image-based PDF
+        image_pdf_bytes = self.convert_pdf_to_image_pdf(fitz_pdf_document, dpi=300)
+
+        return image_pdf_bytes
+
+    def convert_pdf_to_image_pdf(self, pdf_document: fitz.Document, dpi: int = 300) -> bytes:
+        """
+        Converts each page of a PDF document to an image and then creates a new PDF
+        with these images as its pages.
+        """
+        new_pdf_document = fitz.open()
+
+        for page_num in range(len(pdf_document)):
+            pix = pdf_document[page_num].get_pixmap(dpi=dpi)
+            new_pdf_document.new_page(width=pix.width, height=pix.height)
+            new_pdf_document[page_num].insert_image(fitz.Rect(0, 0, pix.width, pix.height), pixmap=pix)
+        new_pdf_bytes = io.BytesIO()
+        new_pdf_document.save(new_pdf_bytes, deflate_fonts=1, deflate_images=1, deflate=1)
+        new_pdf_bytes.seek(0)
+        return new_pdf_bytes.getvalue()
 
     def insert_arabic_image(self, document: fitz.Document, field_name: str, text: str):
         """
@@ -253,7 +274,7 @@ class ToFormPDF(ProcessorStrategy):
         if rect:
             image_stream = self.generate_arabic_image(text, rect)
             img_rect = fitz.Rect(*rect)
-            page = document[page_index]  # Assuming rect includes page info
+            page = document[page_index]
             page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
 
     def insert_external_image(self, document: fitz.Document, field_name: str, image_path: str):
@@ -281,15 +302,11 @@ class ToFormPDF(ProcessorStrategy):
         """
         Checks if a given PDF annotation represents an image field.
         """
-        return (
-            annot.get(FieldDictionaryAttributes.FT) == "/Btn"
-            and AnnotationDictionaryAttributes.P in annot
-            and AnnotationDictionaryAttributes.AP in annot
-        )
+        return annot.get(FieldDictionaryAttributes.FT) == "/Btn" and AnnotationDictionaryAttributes.AP in annot
 
-    def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with HopeStorage().open(image_path, "rb") as img_file:
-            return BytesIO(img_file.read())
+    def is_arabic_field(self, value: str) -> bool:
+        arabic_pattern = re.compile("[\u0600-\u06FF]")
+        return isinstance(value, str) and arabic_pattern.search(value)
 
     def get_field_rect(self, document: fitz.Document, field_name: str) -> Optional[tuple[fitz.Rect, int]]:
         """
@@ -304,10 +321,6 @@ class ToFormPDF(ProcessorStrategy):
                         widget.update()
                     return widget.rect, page_num
         return None, None
-
-    def is_arabic_field(self, value: str) -> bool:
-        arabic_pattern = re.compile("[\u0600-\u06FF]")
-        return isinstance(value, str) and arabic_pattern.search(value)
 
     def generate_arabic_image(self, text: str, rect: fitz.Rect, dpi: int = 300) -> BytesIO:
         font_size = 10
@@ -336,6 +349,10 @@ class ToFormPDF(ProcessorStrategy):
         img_byte_arr.seek(0)
 
         return img_byte_arr.getvalue()
+
+    def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
+        with HopeStorage().open(image_path, "rb") as img_file:
+            return BytesIO(img_file.read())
 
 
 class ProcessorRegistry(Registry):
