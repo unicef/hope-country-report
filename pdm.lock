@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:cd4016c06aa6a4654695f74bd1af66c10f34358f6ef36f8b3a765aaaf53b6820"
+content_hash = "sha256:33665906566c6f1306d1331efc5d9c15ce262fb79dfc76df2fb5e3b4a33f4fb0"
 
 [[package]]
 name = "amqp"
@@ -611,10 +611,10 @@ files = [
 
 [[package]]
 name = "django-admin-extra-buttons"
-version = "1.5.7"
+version = "1.5.8"
 summary = "Django mixin to easily add buttons to any ModelAdmin"
 files = [
-    {file = "django-admin-extra-buttons-1.5.7.tar.gz", hash = "sha256:08dd070cbd46dfe1cb46d7676495a943860e68f99bac85ab5b164cbeb5e73dae"},
+    {file = "django_admin_extra_buttons-1.5.8.tar.gz", hash = "sha256:48dc9d470ade3f5f29c80753af4d367c08947d02c9a5757aa7a9223eda6812c5"},
 ]
 
 [[package]]
@@ -1075,31 +1075,31 @@ files = [
 
 [[package]]
 name = "django-storages"
-version = "1.14.2"
+version = "1.14.3"
 requires_python = ">=3.7"
 summary = "Support for many storage backends in Django"
 dependencies = [
     "Django>=3.2",
 ]
 files = [
-    {file = "django-storages-1.14.2.tar.gz", hash = "sha256:51b36af28cc5813b98d5f3dfe7459af638d84428c8df4a03990c7d74d1bea4e5"},
-    {file = "django_storages-1.14.2-py3-none-any.whl", hash = "sha256:1db759346b52ada6c2efd9f23d8241ecf518813eb31db9e2589207174f58f6ad"},
+    {file = "django-storages-1.14.3.tar.gz", hash = "sha256:95a12836cd998d4c7a4512347322331c662d9114c4344f932f5e9c0fce000608"},
+    {file = "django_storages-1.14.3-py3-none-any.whl", hash = "sha256:31f263389e95ce3a1b902fb5f739a7ed32895f7d8b80179fe7453ecc0dfe102e"},
 ]
 
 [[package]]
 name = "django-storages"
-version = "1.14.2"
+version = "1.14.3"
 extras = ["azure"]
 requires_python = ">=3.7"
 summary = "Support for many storage backends in Django"
 dependencies = [
     "azure-core>=1.13",
     "azure-storage-blob>=12",
-    "django-storages==1.14.2",
+    "django-storages==1.14.3",
 ]
 files = [
-    {file = "django-storages-1.14.2.tar.gz", hash = "sha256:51b36af28cc5813b98d5f3dfe7459af638d84428c8df4a03990c7d74d1bea4e5"},
-    {file = "django_storages-1.14.2-py3-none-any.whl", hash = "sha256:1db759346b52ada6c2efd9f23d8241ecf518813eb31db9e2589207174f58f6ad"},
+    {file = "django-storages-1.14.3.tar.gz", hash = "sha256:95a12836cd998d4c7a4512347322331c662d9114c4344f932f5e9c0fce000608"},
+    {file = "django_storages-1.14.3-py3-none-any.whl", hash = "sha256:31f263389e95ce3a1b902fb5f739a7ed32895f7d8b80179fe7453ecc0dfe102e"},
 ]
 
 [[package]]
@@ -1356,6 +1356,16 @@ dependencies = [
 files = [
     {file = "drf-extensions-0.7.1.tar.gz", hash = "sha256:90abfc11a2221e8daf4cd54457e41ed38cd71134678de9622e806193db027db1"},
     {file = "drf_extensions-0.7.1-py2.py3-none-any.whl", hash = "sha256:007910437e64aa1d5ad6fc47266a4ac4280e31761e6458eb30fcac7494ac7d4e"},
+]
+
+[[package]]
+name = "et-xmlfile"
+version = "1.1.0"
+requires_python = ">=3.6"
+summary = "An implementation of lxml.xmlfile for the standard library"
+files = [
+    {file = "et_xmlfile-1.1.0-py3-none-any.whl", hash = "sha256:a2ba85d1d6a74ef63837eed693bcb89c3f752169b0e3e7ae5b16ca5e1b3deada"},
+    {file = "et_xmlfile-1.1.0.tar.gz", hash = "sha256:8eb9e2bc2f8c97e37a2dc85a09ecdcdec9d8a396530a6d5a33b30b9a92da0c5c"},
 ]
 
 [[package]]
@@ -1901,6 +1911,19 @@ summary = "A generic, spec-compliant, thorough implementation of the OAuth reque
 files = [
     {file = "oauthlib-3.2.2-py3-none-any.whl", hash = "sha256:8139f29aac13e25d502680e9e19963e83f16838d48a0d71c287fe40e7067fbca"},
     {file = "oauthlib-3.2.2.tar.gz", hash = "sha256:9859c40929662bec5d64f34d01c99e093149682a3f38915dc0655d5a633dd918"},
+]
+
+[[package]]
+name = "openpyxl"
+version = "3.1.2"
+requires_python = ">=3.6"
+summary = "A Python library to read/write Excel 2010 xlsx/xlsm files"
+dependencies = [
+    "et-xmlfile",
+]
+files = [
+    {file = "openpyxl-3.1.2-py2.py3-none-any.whl", hash = "sha256:f91456ead12ab3c6c2e9491cf33ba6d08357d802192379bb482f1033ade496f5"},
+    {file = "openpyxl-3.1.2.tar.gz", hash = "sha256:a6f5977418eff3b2d5500d54d9db50c8277a368436f4e4f8ddb1be3422870184"},
 ]
 
 [[package]]
@@ -2930,6 +2953,21 @@ name = "tablib"
 version = "3.5.0"
 requires_python = ">=3.8"
 summary = "Format agnostic tabular data library (XLS, JSON, YAML, CSV, etc.)"
+files = [
+    {file = "tablib-3.5.0-py3-none-any.whl", hash = "sha256:9821caa9eca6062ff7299fa645e737aecff982e6b2b42046928a6413c8dabfd9"},
+    {file = "tablib-3.5.0.tar.gz", hash = "sha256:f6661dfc45e1d4f51fa8a6239f9c8349380859a5bfaa73280645f046d6c96e33"},
+]
+
+[[package]]
+name = "tablib"
+version = "3.5.0"
+extras = ["xlsx"]
+requires_python = ">=3.8"
+summary = "Format agnostic tabular data library (XLS, JSON, YAML, CSV, etc.)"
+dependencies = [
+    "openpyxl>=2.6.0",
+    "tablib==3.5.0",
+]
 files = [
     {file = "tablib-3.5.0-py3-none-any.whl", hash = "sha256:9821caa9eca6062ff7299fa645e737aecff982e6b2b42046928a6413c8dabfd9"},
     {file = "tablib-3.5.0.tar.gz", hash = "sha256:f6661dfc45e1d4f51fa8a6239f9c8349380859a5bfaa73280645f046d6c96e33"},
