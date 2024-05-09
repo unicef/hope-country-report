@@ -22,7 +22,7 @@ def register_all_app_models() -> None:
 
 
 if not state.inspecting:  # pragma: no branch
-    from .generic import *
-    from .utils import modeladmin_factory
+    from .generic import *  # noqa
+    from .utils import modeladmin_factory  # noqa
 
     register_all_app_models()
