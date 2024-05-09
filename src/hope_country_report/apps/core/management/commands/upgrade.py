@@ -107,7 +107,7 @@ class Command(BaseCommand):
 
         sys.exit(1)
 
-    def handle(self, *args: Any, **options: Any) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:  # noqa
         from hope_country_report.apps.core.models import CountryOffice, User
 
         self.get_options(options)

@@ -348,7 +348,7 @@ class Command(BaseCommand):
                         yield f"        return str(self.{attr})"
                         break
 
-    def normalize_col_name(self, col_name: str, used_column_names: List[str], is_relation: bool):
+    def normalize_col_name(self, col_name: str, used_column_names: List[str], is_relation: bool):  # noqa
         """
         Modify the column name to make it Python-compatible as a field name
         """

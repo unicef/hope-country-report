@@ -1,12 +1,12 @@
-from .charts import ChartDetailView, ChartListView
-from .document import (
+from .charts import ChartDetailView, ChartListView  # noqa
+from .document import (  # noqa
     OfficeDocumentDisplayView,
     OfficeDocumentDownloadView,
     OfficeReportDocumentDetailView,
     OfficeReportDocumentListView,
     RequestAccessView,
 )
-from .generic import (
+from .generic import (  # noqa
     download,
     index,
     OfficeHomeView,
@@ -15,5 +15,5 @@ from .generic import (
     OfficePreferencesView,
     select_tenant,
 )
-from .report import OfficeConfigurationDetailView, OfficeConfigurationListView
-from .user import UserProfileView
+from .report import OfficeConfigurationDetailView, OfficeConfigurationListView  # noqa
+from .user import UserProfileView  # noqa

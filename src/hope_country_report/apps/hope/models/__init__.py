@@ -1,1 +1,1 @@
-from ._inspect import *
+from ._inspect import *  # noqa

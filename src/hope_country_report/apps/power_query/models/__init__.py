@@ -1,9 +1,9 @@
-from ._base import CeleryEnabled
-from .arguments import Parametrizer
-from .chart import ChartPage
-from .dataset import Dataset
-from .formatter import Formatter
-from .query import Query
-from .report import ReportConfiguration
-from .report_document import ReportDocument
-from .report_template import ReportTemplate
+from ._base import CeleryEnabled  # noqa
+from .arguments import Parametrizer  # noqa
+from .chart import ChartPage  # noqa
+from .dataset import Dataset  # noqa
+from .formatter import Formatter  # noqa
+from .query import Query  # noqa
+from .report import ReportConfiguration  # noqa
+from .report_document import ReportDocument  # noqa
+from .report_template import ReportTemplate  # noqa
