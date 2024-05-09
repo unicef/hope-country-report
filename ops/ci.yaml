@@ -58,6 +58,7 @@ stages:
         -t $(Docker.url)/$(Docker.backend.repository):dev-$(tag) \
         --target dev \
         --push \
+        -f docker/Dockerfile \
         ./
       displayName: Docker build dev
 
@@ -80,7 +81,7 @@ stages:
       inputs:
         containerregistrytype: 'Azure Container Registry'
         azureContainerRegistry: $(Docker.registryConnection)
-        dockerComposeFile: 'ops/compose.test.yml'
+        dockerComposeFile: 'ops/compose.ci-test.yml'
         action: 'Run a Docker Compose command'
         dockerComposeCommand: 'run --no-deps backend black --check .'
         dockerComposeFileArgs: |
@@ -105,7 +106,7 @@ stages:
       inputs:
         containerregistrytype: 'Azure Container Registry'
         azureContainerRegistry: $(Docker.registryConnection)
-        dockerComposeFile: 'ops/compose.test.yml'
+        dockerComposeFile: 'ops/compose.ci-test.yml'
         action: 'Run a Docker Compose command'
         dockerComposeCommand: 'run --no-deps backend flake8 .'
         dockerComposeFileArgs: |
@@ -130,7 +131,7 @@ stages:
       inputs:
         containerregistrytype: 'Azure Container Registry'
         azureContainerRegistry: $(Docker.registryConnection)
-        dockerComposeFile: 'ops/compose.test.yml'
+        dockerComposeFile: 'ops/compose.ci-test.yml'
         action: 'Run a Docker Compose command'
         dockerComposeCommand: 'up --exit-code-from backend'
         dockerComposeFileArgs: |
@@ -161,6 +162,7 @@ stages:
         -t $(Docker.url)/$(Docker.backend.repository):prd-$(tag) \
         --target prd \
         --push \
+        -f docker/Dockerfile \
         ./
       displayName: Docker build prd
 
