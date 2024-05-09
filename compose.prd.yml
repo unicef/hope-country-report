@@ -35,9 +35,9 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       target: prd
-    command: sh -c "entrypoint.sh ./wait-for-it.sh db:5432 && entrypoint.sh ./wait-for-it.sh hopedb:5432 && entrypoint.sh prd"
+    command: sh -c "entrypoint.sh ./docker/wait-for-it.sh db:5432 && entrypoint.sh ./docker/wait-for-it.sh hopedb:5432 && entrypoint.sh prd"
     environment: *django-env
     ports:
       - 8000:8000
@@ -102,7 +102,7 @@ services:
   celery_worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       target: prd
     command: celery_worker
     environment: *django-env
@@ -119,7 +119,7 @@ services:
   celery_beat:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       target: prd
     command: celery_beat
     environment: *django-env
