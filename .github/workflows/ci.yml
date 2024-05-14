@@ -37,7 +37,7 @@ jobs:
                 -f ./docker/Dockerfile \
                 --target dev \
                 --push \
-                ./docker
+                ./
                 
     black:
       runs-on: ubuntu-latest
