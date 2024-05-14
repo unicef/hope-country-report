@@ -1,4 +1,5 @@
 .vscode
+.pdm_python
 ~*
 node_modules
 *.pyc
