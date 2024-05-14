@@ -157,7 +157,7 @@ jobs:
 
     deploy:
       runs-on: ubuntu-latest
-      needs: [unit_tests, black, flake8]
+      needs: [unit_tests, black, flake8, build_and_push_prd]
       if: |
         github.event_name == 'push' &&
         (
