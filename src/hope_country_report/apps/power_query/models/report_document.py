@@ -70,7 +70,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
     @classmethod
     def process(
         self, report: "ReportConfiguration", dataset: "Dataset", formatter: "Formatter", notify: bool = True
-    ) -> "Tuple[int|None, Exception|str]":
+    ) -> "Tuple[int|None, Exception|str]":  # noqa
         try:
             args_desc = "_".join([str(value) for value in dataset.arguments.values()])
             context = {

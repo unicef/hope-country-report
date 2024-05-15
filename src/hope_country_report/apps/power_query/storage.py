@@ -12,6 +12,22 @@ class DataSetStorage(FileSystemStorage):
         return name
 
 
+class ReadOnlyStorageMixin:
+    def delete(self, name):
+        raise RuntimeError("This storage cannot delete files")
+
+    def save(self, name, content, max_length=None):
+        raise RuntimeError("This storage cannot save files")
+
+    def open(self, name, mode="rb"):
+        if "w" in mode:
+            raise RuntimeError("This storage cannot open files in write mode")
+        return super().open(name, mode="rb")
+
+    def listdir(self, path=""):
+        return []
+
+
 class HCRAzureStorage(AzureStorage):
     prefix = ""
 
@@ -23,7 +39,7 @@ class HCRAzureStorage(AzureStorage):
         return base
 
 
-class HopeStorage(HCRAzureStorage):
+class HopeStorage(ReadOnlyStorageMixin, HCRAzureStorage):
     prefix = "HOPE"
 
 

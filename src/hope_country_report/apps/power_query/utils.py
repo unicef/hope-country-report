@@ -1,4 +1,4 @@
-from typing import Any, Dict, TYPE_CHECKING, Union
+from typing import Any, Dict, TYPE_CHECKING
 
 import base64
 import binascii
@@ -16,7 +16,6 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
-import pytz
 import tablib
 from constance import config
 from sentry_sdk import configure_scope
@@ -44,7 +43,7 @@ def make_naive(value: datetime.datetime) -> datetime.datetime:
     return value
 
 
-def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str,Any]") -> tablib.Dataset:
+def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str,Any]") -> tablib.Dataset:  # noqa
     if isinstance(result, QuerySet):
         data = tablib.Dataset()
         fields = result.__dict__["_fields"]

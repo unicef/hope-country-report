@@ -30,7 +30,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       target: dev
     command: dev
     environment: *django-env
@@ -97,7 +97,7 @@ services:
   celery_worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       target: dev
     command: celery_worker
     environment: *django-env
@@ -113,7 +113,7 @@ services:
   celery_beat:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       target: dev
     command: celery_beat
     environment: *django-env

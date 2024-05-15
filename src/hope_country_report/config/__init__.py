@@ -1,11 +1,8 @@
-from typing import Any, Dict, reveal_type, Tuple
-
-from collections.abc import Mapping
 from enum import Enum
 
 from environ import Env
 
-DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/4.2/ref/settings"
+DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/5.0/ref/settings"
 
 
 def setting(anchor):
