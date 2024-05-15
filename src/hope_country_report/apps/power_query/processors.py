@@ -23,7 +23,7 @@ from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
-from hope_country_report.apps.power_query.storage import DataSetStorage, HopeStorage
+from hope_country_report.apps.power_query.storage import HopeStorage
 
 from .utils import to_dataset
 

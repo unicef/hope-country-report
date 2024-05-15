@@ -1,85 +1,53 @@
-# syntax=docker/dockerfile:1.3
-ARG PYTHON_VER=3.11
-ARG PKG_DIR=/code/__pypackages__/$PYTHON_VER/lib
-ARG BUILD_DATE
-ARG CHECKSUM
+FROM python:3.11-slim-bookworm as base
 
-FROM python:${PYTHON_VER}-slim-bookworm AS python
+RUN apt update \
+    && apt install --no-install-recommends -y \
+        gcc curl libgdal-dev wkhtmltopdf chromium-driver chromium \
+    && apt clean && rm -rf /var/lib/apt/lists/* \
+    && addgroup --system --gid 82 hcr \
+    && adduser \
+        --system --uid 82 \
+        --disabled-password --home /home/hcr \
+        --shell /sbin.nologin --group hcr --gecos hcr \
+    && mkdir -p /code /tmp /data /static \
+    && chown -R hcr:hcr /code /tmp /data /static
 
-FROM python AS base
-ARG PKG_DIR
-ENV ADMINS="" \
-    UWSGI_PROCESSES=4 \
-    VERSION=${VERSION}
+ENV PACKAGES_DIR=/packages
+ENV PYPACKAGES=$PACKAGES_DIR/__pypackages__/3.11
+ENV LIB_DIR=$PYPACKAGES/lib
+ENV PYTHONPATH=$PYTHONPATH:$LIB_DIR:/code/src
+ENV PATH=$PATH:$PYPACKAGES/bin
 
-ENV PYTHONPATH=$PKG_DIR:/code/src/ \
-    PATH=${PATH}:$PKG_DIR/../bin/
+WORKDIR /code
 
-RUN groupadd --gid 1024 hcr \
-    && adduser --system  --disabled-login --disabled-password --no-create-home --group hcr -q --gecos www
+FROM base as builder
 
+WORKDIR $PACKAGES_DIR
+RUN pip install pdm
+COPY ../pyproject.toml ./
+COPY ../pdm.lock ./
+RUN pdm config python.use_venv false
+RUN pdm config venv.in_project true
+RUN pdm sync --prod --no-editable --no-self
 
-FROM python AS cache
-ARG PKG_DIR
-ENV BUILD_DATE=$BUILD_DATE \
-    VERSION=$VERSION \
-    PYTHONDONTWRITEBYTECODE=1
-ENV buildDeps="build-essential gcc libjpeg-dev zlib1g-dev libffi-dev libssl-dev libpq-dev "
-ENV runtimeDeps="postgresql-client gettext wkhtmltopdf"
-RUN rm -f /etc/apt/apt.conf.d/docker-clean \
-    && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-
-RUN apt-get update
-
-RUN apt-get install -y --no-install-recommends $buildDeps
-
-RUN apt-get install -y --no-install-recommends $runtimeDeps
-
-RUN rm -rf /var/lib/apt/lists/*
-RUN pip install -U pip setuptools && pip install pdm
-
-FROM cache AS builder
-ARG PKG_DIR
-ARG CHECKSUM
-WORKDIR /code/
-COPY pyproject.toml pdm.lock README.md /code/
-RUN mkdir __pypackages__ \
-    && pdm sync --prod --no-editable --no-self
-
-RUN echo $CHECKSUM > /CHECKSUM
-
-
-FROM builder AS builder-test
-ARG PKG_DIR
-WORKDIR /code/
-ENV PYTHONPATH=$PKG_DIR:/code/src/ \
-    PATH=${PATH}:$PKG_DIR/../bin/
+FROM builder AS dev
 
 RUN pdm sync --no-editable --no-self
 
+WORKDIR /code
+COPY .. ./
 
-FROM base AS dist
-ARG PKG_DIR
-COPY docker/bin/* /usr/local/bin/
-COPY docker/conf/* /conf/
-WORKDIR /code/
-COPY --from=cache /usr/bin/envsubst /usr/bin/
-COPY --from=builder /code/__pypackages__ /code/__pypackages__
-COPY --from=builder /CHECKSUM /CHECKSUM
-COPY ./src /code/src
-
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["run"]
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
 
 
-FROM base AS test
-ARG PKG_DIR
-COPY docker/bin/* /usr/local/bin/
-COPY docker/conf/* /conf/
-WORKDIR /code/
-COPY --from=builder-test /code/__pypackages__ /code/__pypackages__
-COPY --from=builder /CHECKSUM /CHECKSUM
-COPY . /code/
+FROM base AS prd
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["run"]
+ENV PATH=$PATH:/code/.venv/bin/
+
+COPY --chown=hcr:hcr .. ./
+COPY --chown=hcr:hcr --from=builder $PACKAGES_DIR $PACKAGES_DIR
+USER hcr
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]

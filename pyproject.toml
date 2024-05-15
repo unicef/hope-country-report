@@ -80,7 +80,7 @@ dependencies = [
     "social-auth-app-django",
     "sqlparse",
     "swapper",
-    "tablib",
+    "tablib[xlsx]",
     "tzdata",
     "unicef-security",
     "pathvalidate",
