@@ -236,8 +236,8 @@ def insert_special_image(
     rect, page_index = get_field_rect(document, field_name)
     if rect:
         image_stream = insert_special_language_image(text, rect, language, font_size=font_size, font_color=font_color)
-        img_rect = fitz.Rect(rect.x0, rect.y0, rect.x1, rect.y1)
+        img_rect = fitz.Rect(*rect)
         page = document[page_index]
-        page.add_image_annot(img_rect, stream=image_stream)
+        page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
     else:
-        print(f"Field {field_name} not found")  # Debugging line
+        logger.info(f"Field {field_name} not found")
