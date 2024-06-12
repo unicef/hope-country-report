@@ -9,9 +9,9 @@ from hope_country_report.apps.power_query.processors import ToHTML
 
 @pytest.fixture()
 def report_template():
-    from testutils.factories import ReportTemplate
+    from testutils.factories import ReportTemplateFactory
 
-    return ReportTemplate.objects.first()
+    return ReportTemplateFactory()
 
 
 @pytest.fixture()
