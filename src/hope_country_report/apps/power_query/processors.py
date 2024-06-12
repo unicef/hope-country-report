@@ -6,6 +6,7 @@ import mimetypes
 import re
 from collections.abc import Callable
 from io import BytesIO
+from pathlib import Path
 
 from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
@@ -21,7 +22,7 @@ from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
-from hope_country_report.apps.power_query.storage import DataSetStorage, HopeStorage
+from hope_country_report.apps.power_query.storage import HopeStorage
 
 from hope_country_report.apps.power_query.utils import (
     get_field_rect,
@@ -196,6 +197,7 @@ class ToFormPDF(ProcessorStrategy):
     def process(self, context: Dict[str, Any]) -> bytes:
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
+
         font_size = context.get("context", {}).get("font_size", 10)
         font_color = context.get("context", {}).get("font_color", "black")
         ds = to_dataset(context["dataset"].data).dict

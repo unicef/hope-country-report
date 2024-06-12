@@ -6,7 +6,6 @@ from functools import partial, partialmethod
 from django.apps import AppConfig, apps
 from django.db import models
 from django.db.models import Model
-from django.utils.functional import cached_property
 
 from hope_country_report.apps.hope import models as hope_models
 from hope_country_report.apps.hope.models import HopeModel

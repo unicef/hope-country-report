@@ -1,0 +1,204 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - develop
+    - staging
+    - master
+  pull_request:
+    branches:
+    - develop
+    - staging
+    - master
+
+jobs:
+    build_and_push_dev:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Set up Docker Buildx
+            uses: docker/setup-buildx-action@v1
+          - name: Checkout code
+            uses: actions/checkout@v2
+          - name: DockerHub login
+            uses: docker/login-action@v1
+            with:
+              username: ${{ secrets.DOCKERHUB_USERNAME }}
+              password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+          - name: Push dev
+            run: |
+              docker buildx create --use
+              docker buildx build \
+                --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-${{ github.sha }}-dev \
+                --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-latest-dev \
+                --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-${{ github.sha }}-dev \
+                --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-latest-dev \
+                -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }}-dev \
+                -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-latest-dev \
+                -f ./docker/Dockerfile \
+                --target dev \
+                --push \
+                ./
+                
+    black:
+      runs-on: ubuntu-latest
+      needs: [build_and_push_dev]
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: DockerHub login
+          uses: docker/login-action@v1
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+        - name: Check
+          run: |
+            docker run --rm -i \
+              ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }}-dev \
+              black . --check
+
+    flake8:
+      runs-on: ubuntu-latest
+      needs: [build_and_push_dev]
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: DockerHub login
+          uses: docker/login-action@v1
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+        - name: Check
+          run: |
+            docker run --rm -i \
+              ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }}-dev \
+              flake8 .
+
+    unit_tests:
+      runs-on: ubuntu-latest
+      needs: [build_and_push_dev]
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: DockerHub login
+          uses: docker/login-action@v1
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+        - name: Unit tests
+          run: |
+            backend_image=${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }}-dev docker compose \
+              -f ./ops/compose.ci-test.yml \
+              up --exit-code-from backend
+
+    build_and_push_prd:
+      needs: [build_and_push_dev]
+      runs-on: ubuntu-latest
+      steps:
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v1
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: DockerHub login
+          uses: docker/login-action@v1
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+        - name: Push prd
+          run: |
+            docker buildx create --use
+
+            # Base part of the command
+            build_command="docker buildx build \
+              --progress=plain \
+              --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-${{ github.sha }}-dev \
+              --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-latest-dev \
+              --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-${{ github.sha }}-prd \
+              --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-latest-prd \
+              --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-${{ github.sha }}-prd \
+              --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:cache-country-report-latest-prd \
+              -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }}-prd \
+              -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }} \
+              -f ./docker/Dockerfile \
+              --target prd \
+              --push ./"
+            
+            if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+              version=$(python3 -c "import sys; version=None; [version:=line.split('=')[1].strip().strip('\"') for line in open('pyproject.toml', 'r') if line.strip().startswith('version =')]; print(version if version else sys.exit(1))")
+              tagged_image=${{ vars.DOCKERHUB_ORGANIZATION }}/hope:country-report-$version
+              build_command="$build_command -t $tagged_image"
+            fi
+            
+            eval $build_command
+
+    trivy:
+      runs-on: ubuntu-latest
+      needs: [build_and_push_prd]
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: DockerHub login
+          uses: docker/login-action@v1
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+        - name: Run Trivy vulnerability scanner
+          uses: aquasecurity/trivy-action@master
+          with:
+            image-ref: '${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }}'
+            format: 'table'
+            exit-code: '0'
+            ignore-unfixed: true
+            vuln-type: 'os,library'
+            severity: 'CRITICAL,HIGH'
+
+    deploy:
+      runs-on: ubuntu-latest
+      needs: [unit_tests, black, flake8, build_and_push_prd]
+      if: |
+        github.event_name == 'push' &&
+        (
+          github.ref == 'refs/heads/develop' ||
+          github.ref == 'refs/heads/staging' ||
+          github.ref == 'refs/heads/master'
+        )
+      steps:
+        - name: Trigger deploy
+          run: |
+            if [ ${{ github.ref }} == 'refs/heads/develop' ]; then
+              pipelineId=1149
+            elif [ ${{ github.ref }} == 'refs/heads/staging' ]; then
+              pipelineId=1286
+            elif [ ${{ github.ref }} == 'refs/heads/master' ]; then
+              pipelineId=1233
+            else
+              echo "No pipeline to trigger for ref ${{ github.ref }}"
+              exit 0
+            fi
+
+            IFS=',' read -ra pipelines <<< "$pipelineId"
+            for pipeline in "${pipelines[@]}"; do
+              jsonBody='{"variables": {"sha": {"isSecret": false, "value": "${{ github.sha }}"}, "tag": {"isSecret": false, "value": "country-report-${{ github.sha }}"}}}'
+              contentLength=$(echo -n $jsonBody | wc -c)
+              project=ICTD-HCT-MIS
+              organization=unicef
+  
+              echo Triggering deploy for pipeline $pipeline
+              echo JSON body: $jsonBody
+  
+              curl -f -v -L \
+                -u ":${{ secrets.AZURE_PAT }}" \
+                -H "Content-Type: application/json" \
+                -H "Content-Length: $contentLength" \
+                -d "$jsonBody" \
+                https://dev.azure.com/$organization/$project/_apis/pipelines/$pipeline/runs?api-version=7.1-preview.1
+              if [ $? -ne 0 ]; then
+                echo "Failed to trigger deploy for pipeline $pipeline"
+                exit 1
+              fi
+            done
