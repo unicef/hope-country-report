@@ -1,5 +1,7 @@
-from typing import Any, Dict, TYPE_CHECKING
-
+from typing import Any, Dict, Optional, TYPE_CHECKING, Union
+from pathlib import Path
+from io import BytesIO
+from django.conf import settings
 import base64
 import binascii
 import datetime
@@ -8,14 +10,13 @@ import json
 import logging
 from collections.abc import Callable, Iterable
 from functools import wraps
-from pathlib import Path
-
-from django.conf import settings
+from PIL import Image, ImageDraw, ImageFont
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
+import fitz
 import tablib
 from constance import config
 from sentry_sdk import configure_scope
@@ -145,3 +146,98 @@ def sentry_tags(func: Callable[..., Any]) -> Callable[..., Any]:
             return func(*args, **kwargs)
 
     return wrapper
+
+
+def load_font_for_language(language: str, font_size: int = 12):
+    """Returns the appropriate font for the given language."""
+    # Base directory for fonts
+    base_font_path = Path(settings.PACKAGE_DIR) / "web" / "static" / "fonts"
+    font_files = {
+        "arabic": base_font_path / "NotoNaskhArabic-Bold.ttf",
+        "cyrillic": base_font_path / "FreeSansBold.ttf",
+        "bengali": base_font_path / "NotoSansBengali-Bold.ttf",
+        "burmese": base_font_path / "NotoSerifMyanmar-Bold.ttf",
+    }
+
+    default_font = base_font_path / "FreeSansBold.ttf"
+    font_path = font_files.get(language, default_font)
+    return ImageFont.truetype(str(font_path), size=font_size)
+
+
+def get_field_rect(document: fitz.Document, field_name: str) -> Optional[tuple[fitz.Rect, int]]:
+    """
+    Returns the Rect and page index of the specified field.
+    """
+    for page_num in range(len(document)):
+        page = document[page_num]
+        for widget in page.widgets():
+            if widget.field_name == field_name:
+                if widget.field_type == 7:
+                    widget.field_flags |= fitz.PDF_FIELD_IS_READ_ONLY
+                    widget.update()
+                return widget.rect, page_num
+    return None, None
+
+
+def insert_special_language_image(
+    text: str, rect: fitz.Rect, language: str, dpi: int = 300, font_size: int = 10, font_color: str = "black"
+) -> BytesIO:
+    """Generate an image with text properly handled for special languages."""
+    rect_width_in_inches = (rect.x1 - rect.x0) / 72
+    rect_height_in_inches = (rect.y1 - rect.y0) / 72
+    width = int(rect_width_in_inches * dpi)
+    height = int(rect_height_in_inches * dpi)
+    image = Image.new("RGBA", (width, height), (28, 171, 231, 0))
+    draw = ImageDraw.Draw(image)
+    font_size_scaled = int(font_size * dpi / 72)
+    font = load_font_for_language(language, font_size_scaled)
+
+    text_bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+    x = (width - text_width) / 2
+    y = (height - text_height) / 2
+    draw.text((x, y), text, font=font, fill=font_color)
+
+    # Save the image to a bytes buffer
+    img_byte_arr = BytesIO()
+    image.save(img_byte_arr, format="PNG", optimize=True)
+    img_byte_arr.seek(0)
+
+    return img_byte_arr.getvalue()
+
+
+def convert_pdf_to_image_pdf(pdf_document: fitz.Document, dpi: int = 300) -> bytes:
+    """
+    Converts each page of a PDF document to an image and then creates a new PDF
+    with these images as its pages.
+    """
+    new_pdf_document = fitz.open()
+
+    for page_num in range(len(pdf_document)):
+        pix = pdf_document[page_num].get_pixmap(dpi=dpi)
+        new_pdf_document.new_page(width=pix.width, height=pix.height)
+        new_pdf_document[page_num].insert_image(fitz.Rect(0, 0, pix.width, pix.height), pixmap=pix)
+    new_pdf_bytes = BytesIO()
+    new_pdf_document.save(new_pdf_bytes, deflate_fonts=1, deflate_images=1, deflate=1)
+    new_pdf_bytes.seek(0)
+    return new_pdf_bytes.getvalue()
+
+
+def insert_special_image(
+    document: fitz.Document, field_name: str, text_info: dict, font_size: int = 10, font_color: str = "black"
+):
+    """
+    Generates and inserts an image containing the given special non-Latin text into
+    the specified field as an annotation.
+    """
+    text = text_info["value"]
+    language = text_info["language"]
+    rect, page_index = get_field_rect(document, field_name)
+    if rect:
+        image_stream = insert_special_language_image(text, rect, language, font_size=font_size, font_color=font_color)
+        img_rect = fitz.Rect(*rect)
+        page = document[page_index]
+        page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
+    else:
+        logger.info(f"Field {field_name} not found")

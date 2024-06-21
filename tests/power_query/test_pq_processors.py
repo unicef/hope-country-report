@@ -164,7 +164,6 @@ def test_processor_pdfform(dataset, tmp_path):
     fmt = Mock()
     fmt.template = tpl
     result = processors.ToFormPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
-    # try ti save and open
     output = tmp_path / "AAAA.pdf"
     output.write_bytes(result)
     PdfReader(output)
@@ -175,7 +174,6 @@ def test_processor_pdf_with_image(updated_dataset, tmp_path):
     from testutils.factories import ReportTemplateFactory
 
     tpl = ReportTemplateFactory(name="program_receipt.pdf")
-
     fmt = Mock()
     fmt.template = tpl
     result = processors.ToFormPDF(fmt).process({"dataset": updated_dataset, "business_area": "Afghanistan"})
@@ -185,7 +183,6 @@ def test_processor_pdf_with_image(updated_dataset, tmp_path):
     assert output.exists(), "PDF file was not created."
     assert output.stat().st_size > 0, "PDF file is empty."
 
-    # Now it's safe to attempt reading the PDF
     pdf = PdfReader(output)
     assert pdf, "Failed to read the generated PDF file."
 
