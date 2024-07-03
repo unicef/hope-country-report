@@ -308,7 +308,7 @@ class ToFormPDF(ProcessorStrategy):
         return None
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with DataSetStorage().open(image_path, "rb") as img_file:
+        with HopeStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
 
