@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional, TYPE_CHECKING, Union
 from pathlib import Path
+import qrcode
 from io import BytesIO
 from django.conf import settings
 import base64
@@ -15,7 +16,7 @@ from django.contrib.auth import authenticate
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
-
+import io
 import fitz
 import tablib
 from constance import config
@@ -214,10 +215,11 @@ def convert_pdf_to_image_pdf(pdf_document: fitz.Document, dpi: int = 300) -> byt
     """
     new_pdf_document = fitz.open()
 
-    for page_num in range(len(pdf_document)):
+    for page_num in range(pdf_document.page_count):  # Use .page_count here
         pix = pdf_document[page_num].get_pixmap(dpi=dpi)
-        new_pdf_document.new_page(width=pix.width, height=pix.height)
-        new_pdf_document[page_num].insert_image(fitz.Rect(0, 0, pix.width, pix.height), pixmap=pix)
+        new_page = new_pdf_document.new_page(width=pix.width, height=pix.height)
+        new_page.insert_image(fitz.Rect(0, 0, pix.width, pix.height), pixmap=pix)
+
     new_pdf_bytes = BytesIO()
     new_pdf_document.save(new_pdf_bytes, deflate_fonts=1, deflate_images=1, deflate=1)
     new_pdf_bytes.seek(0)
@@ -241,3 +243,31 @@ def insert_special_image(
         page.insert_image(img_rect, stream=image_stream, keep_proportion=False)
     else:
         logger.info(f"Field {field_name} not found")
+
+
+def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fitz.Rect, page_index: int):
+    """
+    Generates a QR code and inserts it into the specified field.
+    """
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=2,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    qr_image = qr.make_image(fill_color="black", back_color="white")
+    image_stream = io.BytesIO()
+    qr_image.save(image_stream, format="PNG")
+    image_stream.seek(0)
+
+    page = document[page_index]
+
+    for widget in page.widgets():
+        if widget.field_name == field_name:
+            page.delete_widget(widget)
+            break
+
+    page.insert_image(rect, stream=image_stream, keep_proportion=False)

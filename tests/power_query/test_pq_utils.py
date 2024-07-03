@@ -25,6 +25,7 @@ from hope_country_report.apps.power_query.utils import (
     insert_special_language_image,
     convert_pdf_to_image_pdf,
     get_field_rect,
+    insert_qr_code,
 )
 
 TEST_PDF = resource_path("apps/power_query/doc_templates/program_receipt.pdf")
@@ -222,3 +223,18 @@ def test_insert_special_image(sample_pdf: fitz.Document) -> None:
 
     annotations = [annot for annot in page.annots()]
     assert len(annotations) == 0, "No annotations found after insertion"
+
+
+def test_insert_qr_code(sample_pdf):
+    field_name = "code_qr"
+    data = "https://example.com"
+    page = sample_pdf[0]
+    rect, page_index = get_field_rect(sample_pdf, field_name)
+
+    if rect is not None and page_index is not None:
+        insert_qr_code(sample_pdf, field_name, data, rect, page_index)
+        page = sample_pdf[page_index]
+        images = page.get_images(full=True)
+        assert len(images) > 0, "No images found on the page, QR code insertion failed"
+    else:
+        pytest.fail("No valid rectangle or page index found for the field.")
