@@ -6,7 +6,6 @@ import mimetypes
 import re
 from collections.abc import Callable
 from io import BytesIO
-from pathlib import Path
 
 from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template

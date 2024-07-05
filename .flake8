@@ -18,6 +18,8 @@ ignore =
     # too complex # TODO: fix this
     C901,
     # TODO
-    F401,
+    # F401,
     F403,
     
+per-file-ignores =
+    tests/extras/testutils/factories/__init__.py: F401

@@ -1,7 +1,6 @@
 import datetime
 from base64 import b64encode
 from pathlib import Path
-from typing import Optional, Generator, Tuple
 import pytest
 from unittest.mock import MagicMock
 from hope_country_report.utils.media import resource_path
