@@ -2,7 +2,6 @@ import datetime
 from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
-
 import pytest
 from unittest.mock import MagicMock
 

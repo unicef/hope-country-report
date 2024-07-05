@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
+from io import BytesIO
 import base64
 import binascii
 import datetime
@@ -9,7 +10,6 @@ import json
 import logging
 from collections.abc import Callable, Iterable
 from functools import wraps
-from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
