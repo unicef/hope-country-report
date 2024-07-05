@@ -1,25 +1,28 @@
-from typing import Any, Dict, Optional, TYPE_CHECKING, Union
-from pathlib import Path
-import qrcode
-from io import BytesIO
-from django.conf import settings
+from typing import Any, Dict, Optional, TYPE_CHECKING
+
 import base64
 import binascii
 import datetime
 import hashlib
+import io
 import json
 import logging
 from collections.abc import Callable, Iterable
 from functools import wraps
-from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
-import io
+
 import fitz
+import qrcode
 import tablib
 from constance import config
+from PIL import Image, ImageDraw, ImageFont
 from sentry_sdk import configure_scope
 
 if TYPE_CHECKING:
