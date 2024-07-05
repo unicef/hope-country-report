@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, TYPE_CHECKING, Union
+from typing import Any, Dict, Optional, TYPE_CHECKING
 from pathlib import Path
 from io import BytesIO
 from django.conf import settings
