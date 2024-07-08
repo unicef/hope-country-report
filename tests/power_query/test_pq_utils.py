@@ -1,30 +1,33 @@
 import datetime
 from base64 import b64encode
+from io import BytesIO
 from pathlib import Path
 import pytest
 from unittest.mock import MagicMock
-from hope_country_report.utils.media import resource_path
+
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.utils import timezone
+
 import fitz
-from PIL import Image
-from io import BytesIO
 import tablib
+from PIL import Image
 from pytz import utc
 
 from hope_country_report.apps.power_query.utils import (
     basicauth,
+    convert_pdf_to_image_pdf,
+    get_field_rect,
     get_sentry_url,
+    insert_qr_code,
+    insert_special_image,
+    insert_special_language_image,
     is_valid_template,
     sentry_tags,
     sizeof,
     to_dataset,
-    insert_special_image,
-    insert_special_language_image,
-    convert_pdf_to_image_pdf,
-    get_field_rect,
 )
+from hope_country_report.utils.media import resource_path
 
 TEST_PDF = resource_path("apps/power_query/doc_templates/program_receipt.pdf")
 
@@ -221,3 +224,18 @@ def test_insert_special_image(sample_pdf: fitz.Document) -> None:
 
     annotations = [annot for annot in page.annots()]
     assert len(annotations) == 0, "No annotations found after insertion"
+
+
+def test_insert_qr_code(sample_pdf):
+    field_name = "code_qr"
+    data = "https://example.com"
+    page = sample_pdf[0]
+    rect, page_index = get_field_rect(sample_pdf, field_name)
+
+    if rect is not None and page_index is not None:
+        insert_qr_code(sample_pdf, field_name, data, rect, page_index)
+        page = sample_pdf[page_index]
+        images = page.get_images(full=True)
+        assert len(images) > 0, "No images found on the page, QR code insertion failed"
+    else:
+        pytest.fail("No valid rectangle or page index found for the field.")

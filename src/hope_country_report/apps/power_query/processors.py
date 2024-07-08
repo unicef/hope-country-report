@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import io
 import logging
@@ -22,18 +22,16 @@ from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query.storage import HopeStorage
-
 from hope_country_report.apps.power_query.utils import (
-    get_field_rect,
-    to_dataset,
     convert_pdf_to_image_pdf,
+    get_field_rect,
+    insert_qr_code,
     insert_special_image,
+    to_dataset,
 )
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
-    from typing import Tuple
-
     from .models import Dataset, Formatter, ReportTemplate
 
     ProcessorResult = bytes | BytesIO
@@ -189,6 +187,11 @@ class ToPDF(ProcessorStrategy):
 
 
 class ToFormPDF(ProcessorStrategy):
+    """
+    Produce reports in PDF form or cards.
+    This class handles PDF generation with special attention to QR code fields.
+    """
+
     file_suffix = ".pdf"
     format = TYPE_DETAIL
     needs_file = True
@@ -196,37 +199,36 @@ class ToFormPDF(ProcessorStrategy):
     def process(self, context: Dict[str, Any]) -> bytes:
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
-
         font_size = context.get("context", {}).get("font_size", 10)
         font_color = context.get("context", {}).get("font_color", "black")
         ds = to_dataset(context["dataset"].data).dict
         output_pdf = PdfWriter()
+
         for index, entry in enumerate(ds, start=1):
             with NamedTemporaryFile(suffix=".pdf", delete=True) as temp_pdf_file:
                 writer = PdfWriter()
                 text_values = {}
                 special_values = {}
                 images = {}
-                try:
-                    for page in reader.pages:
-                        for annot in page.annotations:
-                            annot = annot.get_object()
-                            field_name = annot[FieldDictionaryAttributes.T]
-                            if field_name in entry:
-                                value = entry[field_name]
-                                language = self.is_special_language_field(field_name)
-                                if self.is_image_field(annot):
-                                    rect = annot[AnnotationDictionaryAttributes.Rect]
-                                    text_values[field_name] = None
-                                    images[field_name] = [rect, value]
-                                elif language:
-                                    special_values[field_name] = {"value": value, "language": language}
-                                else:
-                                    text_values[field_name] = value
-                except IndexError as exc:
-                    capture_exception(exc)
-                    logger.exception(exc)
-                    raise
+                qr_codes = {}
+
+                for page in reader.pages:
+                    for annot in page.annotations:
+                        annot = annot.get_object()
+                        field_name = annot[FieldDictionaryAttributes.T]
+                        if field_name in entry:
+                            value = entry[field_name]
+                            language = self.is_special_language_field(field_name)
+                            if field_name.endswith("_qr"):
+                                qr_codes[field_name] = value
+                            elif self.is_image_field(annot):
+                                rect = annot[AnnotationDictionaryAttributes.Rect]
+                                images[field_name] = (rect, value)
+                            elif language:
+                                special_values[field_name] = {"value": value, "language": language}
+                            else:
+                                text_values[field_name] = value
+
                 writer.append(reader)
                 writer.update_page_form_field_values(writer.pages[-1], text_values, flags=FieldFlag.READ_ONLY)
                 output_stream = io.BytesIO()
@@ -234,26 +236,36 @@ class ToFormPDF(ProcessorStrategy):
                 output_stream.seek(0)
                 temp_pdf_file.write(output_stream.read())
 
+                # Open processed document for image and QR code insertion
                 document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
-                for field_name, text in special_values.items():
-                    insert_special_image(document, field_name, text, font_size, font_color)
-                for field_name, (rect, image_path) in images.items():
-                    if image_path:
-                        self.insert_external_image(document, field_name, image_path)
-                    else:
-                        logger.warning(f"Image not found for field: {field_name}")
-                document.ez_save(temp_pdf_file.name, deflate_fonts=True, deflate_images=1, deflate=1)
+                self.insert_images_and_qr_codes(document, images, qr_codes, special_values, font_size, font_color)
+                document.save(temp_pdf_file.name)
                 output_stream.seek(0)
                 output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
+
         output_stream = io.BytesIO()
         output_pdf.write(output_stream)
         output_stream.seek(0)
-        fitz_pdf_document = fitz.open(stream=output_stream, filetype="pdf")
 
-        # Convert the PDF to an image-based PDF
-        image_pdf_bytes = convert_pdf_to_image_pdf(fitz_pdf_document, dpi=300)
+        fitz_pdf_document = fitz.open("pdf", output_stream.read())
+        return convert_pdf_to_image_pdf(fitz_pdf_document, dpi=300)
 
-        return image_pdf_bytes
+    def insert_images_and_qr_codes(
+        self,
+        document: fitz.Document,
+        images: Dict[str, Tuple[fitz.Rect, str]],
+        qr_codes: Dict[str, str],
+        special_values: Dict[str, Dict[str, str]],
+        font_size: int,
+        font_color: str,
+    ):
+        for field_name, text in special_values.items():
+            insert_special_image(document, field_name, text, int(font_size), font_color)
+        for field_name, (rect, image_path) in images.items():
+            self.insert_external_image(document, field_name, image_path, rect)
+        for field_name, data in qr_codes.items():
+            rect, page_index = get_field_rect(document, field_name)
+            insert_qr_code(document, field_name, data, rect, page_index)
 
     def insert_external_image(self, document: fitz.Document, field_name: str, image_path: str, font_size: int = 10):
         """
@@ -295,11 +307,7 @@ class ToFormPDF(ProcessorStrategy):
         """
         Checks if a given PDF annotation represents an image field.
         """
-        return (
-            annot.get(FieldDictionaryAttributes.FT) == "/Btn"
-            and AnnotationDictionaryAttributes.P in annot
-            and AnnotationDictionaryAttributes.AP in annot
-        )
+        return annot.get(FieldDictionaryAttributes.FT) == "/Btn" and AnnotationDictionaryAttributes.AP in annot
 
     def is_special_language_field(self, field_name: str) -> Optional[str]:
         """Extract language code from the field name if it exists."""
