@@ -27,7 +27,6 @@ class SelectedOfficeSerializer(serializers.ModelSerializer):
     def selected_office(self) -> CountryOffice:
         co_slug: str = self.context["view"].kwargs.get(self.co_key)
         if not co_slug:
-            print(f"Key '{self.co_key}' not found in view kwargs: {self.context['view'].kwargs}")
             raise serializers.ValidationError("Country office slug is required.")
         return CountryOffice.objects.get(slug=co_slug)
 
@@ -61,7 +60,7 @@ class QuerySerializer(SelectedOfficeSerializer):
 class DatasetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dataset
-        fields = ["hash", "last_run", "size"]
+        fields = ["hash", "last_run"]
 
 
 class ReportConfigurationSerializer(SelectedOfficeSerializer):
