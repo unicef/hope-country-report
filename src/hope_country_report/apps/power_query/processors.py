@@ -21,7 +21,7 @@ from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
-from hope_country_report.apps.power_query.storage import HopeStorage
+from hope_country_report.apps.power_query.storage import DataSetStorage
 from hope_country_report.apps.power_query.utils import (
     convert_pdf_to_image_pdf,
     get_field_rect,
@@ -259,6 +259,7 @@ class ToFormPDF(ProcessorStrategy):
         font_size: int,
         font_color: str,
     ):
+
         for field_name, text in special_values.items():
             insert_special_image(document, field_name, text, int(font_size), font_color)
         for field_name, (rect, image_path) in images.items():
@@ -276,6 +277,7 @@ class ToFormPDF(ProcessorStrategy):
             logger.error(f"No valid rectangle or page index found for field {field_name}. Cannot insert image.")
             return
         page = document[page_index]
+        logger.info(f"Inserting image {image_path} into field {field_name} on page {page_index}")
         try:
             image_stream = self.load_image_from_blob_storage(image_path)
             image = Image.open(image_stream).rotate(-90, expand=True)
@@ -318,7 +320,7 @@ class ToFormPDF(ProcessorStrategy):
         return None
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with HopeStorage().open(image_path, "rb") as img_file:
+        with DataSetStorage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
 

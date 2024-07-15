@@ -25,6 +25,8 @@ class ExceptionMiddleware:
         self.get_response = get_response
 
     def process_exception(self, request: "AuthHttpRequest", exception: BaseException) -> HttpResponse:
+        # import ipdb
+        # ipdb.set_trace()
         if isinstance(exception, (PermissionDenied,)):
             return HttpResponseForbidden()
         if isinstance(exception, (RequestablePermissionDenied,)):
