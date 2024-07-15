@@ -26,6 +26,8 @@ class SelectedOfficeSerializer(serializers.ModelSerializer):
     @cached_property
     def selected_office(self) -> CountryOffice:
         co_slug: str = self.context["view"].kwargs[self.co_key]
+        if not co_slug:
+            raise serializers.ValidationError("Country office slug is required.")
         return CountryOffice.objects.get(slug=co_slug)
 
     def get_office(self, obj: "Model"):
