@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from django.apps import apps
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 import factory
 from strategy_field.utils import fqn
@@ -48,6 +49,13 @@ class ReportTemplateFactory(AutoRegisterModelFactory):
     class Meta:
         model = ReportTemplate
         django_get_or_create = ("name",)
+
+    country_office = factory.SubFactory(CountryOfficeFactory)
+    name = factory.Faker("word")
+    file_suffix = ".pdf"
+    doc = factory.LazyAttribute(
+        lambda _: SimpleUploadedFile("test_template.pdf", b"Test file content", content_type="application/pdf")
+    )
 
 
 class FormatterFactory(AutoRegisterModelFactory):

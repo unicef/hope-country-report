@@ -46,8 +46,9 @@
             </span>
             <ul class="nav navbar-nav pull-right">
               {% block userlinks %}
+                {% csrf_token %}
                 {% if user.is_authenticated %}
-                  {% optional_logout request user %}
+                {% optional_logout request user csrf_token %}
                 {% else %}
                   {% optional_login request %}
                 {% endif %}

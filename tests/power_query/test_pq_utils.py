@@ -1,7 +1,7 @@
 import datetime
 from base64 import b64encode
+from io import BytesIO
 from pathlib import Path
-
 import pytest
 from unittest.mock import MagicMock
 
@@ -9,17 +9,32 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.utils import timezone
 
+import fitz
 import tablib
+from PIL import Image
 from pytz import utc
 
 from hope_country_report.apps.power_query.utils import (
     basicauth,
+    convert_pdf_to_image_pdf,
+    get_field_rect,
     get_sentry_url,
+    insert_qr_code,
+    insert_special_image,
+    insert_special_language_image,
     is_valid_template,
     sentry_tags,
     sizeof,
     to_dataset,
 )
+from hope_country_report.utils.media import resource_path
+
+TEST_PDF = resource_path("apps/power_query/doc_templates/program_receipt.pdf")
+
+
+@pytest.fixture
+def sample_pdf() -> fitz.Document:
+    return fitz.open(TEST_PDF)
 
 
 @pytest.mark.parametrize(
@@ -176,3 +191,51 @@ def test_sentry_tags():
         func.__name__ = "func"
         sentry_tags(func)()
         assert func.call_count == 1
+
+
+def test_get_field_rect(sample_pdf: fitz.Document) -> None:
+    rect, page_index = get_field_rect(sample_pdf, "Programma")
+    assert rect is not None
+    assert page_index == 0
+
+
+def test_insert_special_language_image():
+    text = "الافترايفكتس و البريمير و الافد ميدا كومبوزر"
+    rect = fitz.Rect(0, 0, 200, 200)
+    language = "arabic"
+    dpi = 300
+    image_data = insert_special_language_image(text, rect, language, dpi)
+    image = Image.open(BytesIO(image_data))
+    assert image.size == (rect.width * dpi // 72, rect.height * dpi // 72)
+
+
+def test_convert_pdf_to_image_pdf(sample_pdf):
+    pdf_bytes = convert_pdf_to_image_pdf(sample_pdf)
+    new_pdf = fitz.open("pdf", pdf_bytes)
+    assert len(new_pdf) == 1
+
+
+def test_insert_special_image(sample_pdf: fitz.Document) -> None:
+    text_info = {"value": "الافترايفكتس و البريمير و الافد ميدا كومبوزر", "language": "arabic"}
+    field_name = "Cognome_ar"
+    page = sample_pdf[0]
+
+    insert_special_image(sample_pdf, field_name, text_info)
+
+    annotations = [annot for annot in page.annots()]
+    assert len(annotations) == 0, "No annotations found after insertion"
+
+
+def test_insert_qr_code(sample_pdf):
+    field_name = "code_qr"
+    data = "https://example.com"
+    page = sample_pdf[0]
+    rect, page_index = get_field_rect(sample_pdf, field_name)
+
+    if rect is not None and page_index is not None:
+        insert_qr_code(sample_pdf, field_name, data, rect, page_index)
+        page = sample_pdf[page_index]
+        images = page.get_images(full=True)
+        assert len(images) > 0, "No images found on the page, QR code insertion failed"
+    else:
+        pytest.fail("No valid rectangle or page index found for the field.")

@@ -18,3 +18,8 @@ coverage.xml
 !.pre-commit-config.yaml
 
 pdm.toml
+.coverage
+.env
+.envrc
+.pdm-python
+.tox/
