@@ -7,7 +7,6 @@
 # DO NOT rename the models, AND don't rename db_table values or field names.
 import django.contrib.postgres.fields
 from django.contrib.gis.db import models
-
 from hope_country_report.apps.hope.models._base import HopeModel
 from hope_country_report.apps.power_query.storage import HopeStorage
 
@@ -23,9 +22,9 @@ class BusinessArea(HopeModel):
     region_name = models.CharField(max_length=8, null=True)
     kobo_username = models.CharField(max_length=255, blank=True, null=True)
     slug = models.CharField(unique=True, max_length=250, null=True)
-    rapid_pro_payment_verification_token = models.CharField(max_length=40, blank=True, null=True)
     rapid_pro_host = models.CharField(max_length=200, blank=True, null=True)
     has_data_sharing_agreement = models.BooleanField(null=True)
+    rapid_pro_payment_verification_token = models.CharField(max_length=40, blank=True, null=True)
     is_split = models.BooleanField(null=True)
     parent = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="businessarea_parent", blank=True, null=True
@@ -61,6 +60,7 @@ class BusinessArea(HopeModel):
 
 
 class BusinessareaCountries(HopeModel):
+    id = models.BigAutoField(primary_key=True)
     businessarea = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareacountries_businessarea", null=True
     )
@@ -706,7 +706,6 @@ class Ticketpaymentverificationdetails(HopeModel):
     )
     approve_status = models.BooleanField(null=True)
     new_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    new_status = models.CharField(max_length=50, blank=True, null=True)
     payment_verification = models.ForeignKey(
         "Paymentverification",
         on_delete=models.DO_NOTHING,
@@ -714,6 +713,7 @@ class Ticketpaymentverificationdetails(HopeModel):
         blank=True,
         null=True,
     )
+    new_status = models.CharField(max_length=50, blank=True, null=True)
     old_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
 
     class Meta:
@@ -725,6 +725,7 @@ class Ticketpaymentverificationdetails(HopeModel):
 
 
 class TicketpaymentverificationdetailsPaymentVerificaf7C9(HopeModel):
+    id = models.BigAutoField(primary_key=True)
     ticketpaymentverificationdetails = models.ForeignKey(
         Ticketpaymentverificationdetails,
         on_delete=models.DO_NOTHING,
@@ -873,7 +874,6 @@ class BankaccountInfo(HopeModel):
     is_original = models.BooleanField(null=True)
     account_holder_name = models.CharField(max_length=255, null=True)
     bank_branch_name = models.CharField(max_length=255, null=True)
-    rdi_merge_status = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -911,7 +911,6 @@ class Document(HopeModel):
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="document_program", blank=True, null=True
     )
-    rdi_merge_status = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -1003,7 +1002,7 @@ class Household(HopeModel):
     returnee = models.BooleanField(blank=True, null=True)
     flex_fields = models.JSONField(null=True)
     head_of_household = models.OneToOneField(
-        "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", blank=True, null=True
+        "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", null=True
     )
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
@@ -1079,7 +1078,7 @@ class Household(HopeModel):
         Area, on_delete=models.DO_NOTHING, related_name="household_admin4", blank=True, null=True
     )
     zip_code = models.CharField(max_length=12, blank=True, null=True)
-    registration_id = models.TextField(unique=True, blank=True, null=True)  # This field type is a guess.
+    registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="household_copied_from", blank=True, null=True
     )
@@ -1101,12 +1100,6 @@ class Household(HopeModel):
     detail_id = models.CharField(max_length=150, blank=True, null=True)
     collect_type = models.CharField(max_length=8, null=True)
     program_registration_id = models.TextField(unique=True, blank=True, null=True)  # This field type is a guess.
-    enumerator_rec_id = models.IntegerField(blank=True, null=True)
-    flex_registrations_record_id = models.IntegerField(blank=True, null=True)
-    kobo_submission_time = models.DateTimeField(blank=True, null=True)
-    kobo_submission_uuid = models.UUIDField(blank=True, null=True)
-    mis_unicef_id = models.CharField(max_length=255, blank=True, null=True)
-    rdi_merge_status = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -1117,6 +1110,7 @@ class Household(HopeModel):
 
 
 class HouseholdPrograms(HopeModel):
+    id = models.BigAutoField(primary_key=True)
     household = models.ForeignKey(
         Household, on_delete=models.DO_NOTHING, related_name="householdprograms_household", null=True
     )
@@ -1180,10 +1174,10 @@ class Individual(HopeModel):
     first_registration_date = models.DateField(null=True)
     last_registration_date = models.DateField(null=True)
     unicef_id = models.CharField(max_length=255, blank=True, null=True)
-    deduplication_golden_record_status = models.CharField(max_length=50, null=True)
-    deduplication_golden_record_results = models.JSONField(null=True)
     sanction_list_possible_match = models.BooleanField(null=True)
     pregnant = models.BooleanField(blank=True, null=True)
+    deduplication_golden_record_results = models.JSONField(null=True)
+    deduplication_golden_record_status = models.CharField(max_length=50, null=True)
     deduplication_batch_results = models.JSONField(null=True)
     deduplication_batch_status = models.CharField(max_length=50, null=True)
     imported_individual_id = models.UUIDField(blank=True, null=True)
@@ -1242,8 +1236,6 @@ class Individual(HopeModel):
     wallet_address = models.CharField(max_length=128, null=True)
     wallet_name = models.CharField(max_length=64, null=True)
     program_registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
-    mis_unicef_id = models.CharField(max_length=255, blank=True, null=True)
-    rdi_merge_status = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -1282,7 +1274,6 @@ class Individualidentity(HopeModel):
     is_original = models.BooleanField(null=True)
     is_removed = models.BooleanField(null=True)
     modified = models.DateTimeField(null=True)
-    rdi_merge_status = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -1311,7 +1302,6 @@ class Individualroleinhousehold(HopeModel):
     is_original = models.BooleanField(null=True)
     is_removed = models.BooleanField(null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
-    rdi_merge_status = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -1455,7 +1445,6 @@ class Deliverymechanismdata(HopeModel):
         blank=True,
         null=True,
     )
-    rdi_merge_status = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -1971,6 +1960,7 @@ class Program(HopeModel):
 
 
 class ProgramAdminAreas(HopeModel):
+    id = models.BigAutoField(primary_key=True)
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="programadminareas_program", null=True
     )
@@ -2046,74 +2036,6 @@ class ProgrampartnerthroughAreas(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class DataImportdata(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    status = models.CharField(max_length=40, null=True)
-    business_area_slug = models.CharField(max_length=200, null=True)
-    file = models.CharField(max_length=100, blank=True, null=True)
-    data_type = models.CharField(max_length=4, null=True)
-    number_of_households = models.IntegerField(blank=True, null=True)
-    number_of_individuals = models.IntegerField(blank=True, null=True)
-    error = models.TextField(null=True)
-    validation_errors = models.TextField(null=True)
-    created_by_id = models.UUIDField(blank=True, null=True)
-    delivery_mechanisms_validation_errors = models.TextField(null=True)
-
-    class Meta:
-        managed = False
-        db_table = "registration_data_importdata"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class DataKoboimportdata(HopeModel):
-    importdata_ptr = models.OneToOneField(
-        DataImportdata, on_delete=models.DO_NOTHING, related_name="datakoboimportdata_importdata_ptr", null=True
-    )
-    kobo_asset_id = models.CharField(max_length=100, null=True)
-    only_active_submissions = models.BooleanField(null=True)
-
-    class Meta:
-        managed = False
-        db_table = "registration_data_koboimportdata"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class DataKoboimportedsubmission(HopeModel):
-    id = models.BigAutoField(primary_key=True)
-    created_at = models.DateTimeField(blank=True, null=True)
-    kobo_submission_uuid = models.UUIDField(null=True)
-    kobo_asset_id = models.CharField(max_length=150, null=True)
-    kobo_submission_time = models.DateTimeField(null=True)
-    amended = models.BooleanField(null=True)
-    imported_household = models.ForeignKey(
-        Household,
-        on_delete=models.DO_NOTHING,
-        related_name="datakoboimportedsubmission_imported_household",
-        blank=True,
-        null=True,
-    )
-    registration_data_import = models.ForeignKey(
-        "DataRegistrationdataimport",
-        on_delete=models.DO_NOTHING,
-        related_name="datakoboimportedsubmission_registration_data_import",
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "registration_data_koboimportedsubmission"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
 class DataRegistrationdataimport(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -2150,45 +2072,10 @@ class DataRegistrationdataimport(HopeModel):
     golden_record_possible_duplicates = models.IntegerField(null=True)
     golden_record_unique = models.IntegerField(null=True)
     allow_delivery_mechanisms_validation_errors = models.BooleanField(null=True)
-    import_data = models.OneToOneField(
-        DataImportdata,
-        on_delete=models.DO_NOTHING,
-        related_name="dataregistrationdataimport_import_data",
-        blank=True,
-        null=True,
-    )
 
     class Meta:
         managed = False
         db_table = "registration_data_registrationdataimport"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class DataRegistrationdataimportdatahub(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    name = models.CharField(max_length=255, null=True)
-    import_date = models.DateTimeField(null=True)
-    hct_id = models.UUIDField(blank=True, null=True)
-    import_done = models.CharField(max_length=15, null=True)
-    business_area_slug = models.CharField(max_length=250, null=True)
-    import_data = models.OneToOneField(
-        DataImportdata,
-        on_delete=models.DO_NOTHING,
-        related_name="dataregistrationdataimportdatahub_import_data",
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "registration_data_registrationdataimportdatahub"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
