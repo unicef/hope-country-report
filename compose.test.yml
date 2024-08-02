@@ -28,6 +28,7 @@ services:
       - CACHE_URL=redis://redis:6379/1
       - AZURE_TENANT_ID=
       - AZURE_CLIENT_KEY=
+      - FLOWER_URL=http://flower:5555
     depends_on:
       db:
         condition: service_healthy
@@ -58,3 +59,13 @@ services:
       interval: 5s
       timeout: 4s
       retries: 5
+
+  flower:
+    image: mher/flower
+    command: ["flower", "--broker=redis://redis:6379/0"]
+    ports:
+      - 5555:5555
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
