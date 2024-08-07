@@ -128,11 +128,13 @@ services:
         condition: service_healthy
 
   flower:
-    image: mher/flower
-    command: ["flower", "--broker=redis://redis:6379/0"]
-    ports:
-      - 5555:5555
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    command: celery_flower
+    environment: *django-env
+    restart: unless-stopped
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
