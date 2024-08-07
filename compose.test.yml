@@ -28,6 +28,7 @@ services:
       - CACHE_URL=redis://redis:6379/1
       - AZURE_TENANT_ID=
       - AZURE_CLIENT_KEY=
+      - FLOWER_URL=http://flower:5555
     depends_on:
       db:
         condition: service_healthy

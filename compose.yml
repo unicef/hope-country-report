@@ -25,6 +25,7 @@ x-django-env: &django-env
   - SECURE_SSL_REDIRECT=False
   - AZURE_TENANT_ID=
   - AZURE_CLIENT_KEY=
+  - FLOWER_URL=http://flower:5555
 
 services:
   backend:
@@ -123,5 +124,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  flower:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    command: celery_flower
+    environment: *django-env
+    restart: unless-stopped
+    depends_on:
       redis:
         condition: service_healthy
