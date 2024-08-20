@@ -138,6 +138,8 @@ services:
     command: celery_flower
     environment: *django-env
     restart: unless-stopped
+    ports:
+      - 5555:5555
     depends_on:
       redis:
         condition: service_healthy
