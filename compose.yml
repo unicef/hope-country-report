@@ -12,12 +12,14 @@ x-django-env: &django-env
   - REDIS_URL=redis://redis:6379/0
   - ALLOWED_HOSTS=backend,localhost
   - STATIC_ROOT=/
+  - CACHE_URL=redis://redis:6379/1
   - STATIC_URL=/static/
   - EMAIL_BACKEND=
   - EMAIL_HOST=
   - EMAIL_PORT=
   - EMAIL_USE_TLS=
   - EMAIL_USE_SSL=
+  - SENTRY_ENVIRONMENT=local
   - CELERY_BROKER_URL=redis://redis:6379/0
   - MAILJET_API_KEY=
   - MAILJET_SECRET_KEY=
@@ -26,6 +28,7 @@ x-django-env: &django-env
   - AZURE_TENANT_ID=
   - AZURE_CLIENT_KEY=
   - FLOWER_URL=http://flower:5555
+  - STATIC_FILE_STORAGE=hope_country_report.apps.power_query.storage.DataSetStorage
 
 services:
   backend:
@@ -138,3 +141,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://backend:5555/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
