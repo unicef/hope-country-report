@@ -56,7 +56,7 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
         tenant_filter_field = "report__country_office"
 
     def __str__(self) -> str:
-        return self.title
+        return f"{self.title}-{self.formatter.file_suffix}"
 
     def formats(self):
         return ReportDocument.objects.filter(report=self.report, dataset=self.dataset)

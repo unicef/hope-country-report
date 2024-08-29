@@ -8,7 +8,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework_gis.fields import GeometrySerializerMethodField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-
+from hope_country_report.apps.power_query.utils import to_dataset
 from hope_country_report.apps.core.models import CountryOffice, CountryShape
 from hope_country_report.apps.power_query.models import Dataset, Query, ReportConfiguration, ReportDocument
 
@@ -58,9 +58,14 @@ class QuerySerializer(SelectedOfficeSerializer):
 
 
 class DatasetSerializer(serializers.ModelSerializer):
+    data = serializers.SerializerMethodField()
+
     class Meta:
         model = Dataset
-        fields = ["hash", "last_run"]
+        fields: list[str] = ["hash", "last_run", "data"]
+
+    def get_data(self, obj: Dataset) -> str:
+        return to_dataset(obj.data).export("json")
 
 
 class ReportConfigurationSerializer(SelectedOfficeSerializer):

@@ -1,4 +1,4 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters %}
+{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters humanize %}
 
 {% block content %}
     {% if request.GET %}
@@ -35,7 +35,7 @@
             <tr class="my-4 h-16">
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "Query" %}</th>
-{#                <th>{% trans "Refreshed On" %}</th>#}
+                <th>{% trans "Refreshed" %}</th>
 {#                <th>{% trans "Configuration" %}</th>#}
 {#                <th>{% trans "Owner" %}</th>#}
 {#                <th>{% trans "Tags" %}</th>#}
@@ -45,7 +45,8 @@
             {% for chart in chartpage_list %}
                 <tr class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100 ">
                     <td><a class="underline" href="{{ chart.get_absolute_url }}">{{ chart.title }}</a></td>
-                    <td>{{ chart.query }}</td>
+                    <td>{{ chart.query.name }}</td>
+                    <td>{{ chart.query.last_run|naturaltime}}</td>
                 </tr>
             {% endfor %}
             </tbody>
