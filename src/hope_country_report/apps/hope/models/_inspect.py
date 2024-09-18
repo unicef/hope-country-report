@@ -7,6 +7,7 @@
 # DO NOT rename the models, AND don't rename db_table values or field names.
 import django.contrib.postgres.fields
 from django.contrib.gis.db import models
+
 from hope_country_report.apps.hope.models._base import HopeModel
 from hope_country_report.apps.power_query.storage import HopeStorage
 
