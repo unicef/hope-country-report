@@ -12,9 +12,10 @@ from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from ..apps.core.models import CountryOffice, CountryShape
-from ..apps.power_query.models import Dataset, Query, ReportConfiguration, ReportDocument
+from ..apps.power_query.models import ChartPage, Dataset, Query, ReportConfiguration, ReportDocument
 from .serializers import (
     BoundarySerializer,
+    ChartPageSerializer,
     CountryOfficeSerializer,
     DatasetSerializer,
     LocationSerializer,
@@ -101,6 +102,12 @@ class CountryOfficeViewSet(viewsets.ReadOnlyModelViewSet):
 class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Query.objects.all().order_by("-pk")
     serializer_class = QuerySerializer
+    permission_classes = [permissions.DjangoObjectPermissions]
+
+
+class ChartViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = ChartPage.objects.all().order_by("-pk")
+    serializer_class = ChartPageSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
 

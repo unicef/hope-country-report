@@ -1,4 +1,5 @@
 from typing import Any, Callable
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponseBase
 from django.views.generic import DetailView, ListView
@@ -31,6 +32,7 @@ class ChartDetailView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[C
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         chart_page = self.object
+        context["title"] = chart_page.title
         if chart_page.query:
             all_data = []
             for dataset in chart_page.query.datasets.all():

@@ -8,9 +8,10 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework_gis.fields import GeometrySerializerMethodField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from hope_country_report.apps.power_query.utils import to_dataset
+
 from hope_country_report.apps.core.models import CountryOffice, CountryShape
-from hope_country_report.apps.power_query.models import Dataset, Query, ReportConfiguration, ReportDocument
+from hope_country_report.apps.power_query.models import ChartPage, Dataset, Query, ReportConfiguration, ReportDocument
+from hope_country_report.apps.power_query.utils import to_dataset
 
 
 class SelectedOfficeSerializer(serializers.ModelSerializer):
@@ -139,3 +140,16 @@ class BoundarySerializer(GeoFeatureModelSerializer):
         model = CountryShape
         geo_field = "mpoly"
         fields = ("name", "mpoly", "iso2", "iso3", "un")
+
+
+class ChartPageSerializer(serializers.ModelSerializer):
+    detail_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ChartPage
+        fields = ["id", "country_office", "title", "params", "detail_url"]
+
+    def get_detail_url(self, obj: ChartPage) -> str:
+        return self.context["request"].build_absolute_uri(
+            reverse("office-chart", args=[obj.country_office.slug, obj.pk])
+        )
