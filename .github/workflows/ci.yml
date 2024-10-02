@@ -175,7 +175,7 @@ jobs:
             elif [ ${{ github.ref }} == 'refs/heads/staging' ]; then
               pipelineId=1286
             elif [ ${{ github.ref }} == 'refs/heads/master' ]; then
-              pipelineId=1233
+              pipelineId=1483,1233
             else
               echo "No pipeline to trigger for ref ${{ github.ref }}"
               exit 0
