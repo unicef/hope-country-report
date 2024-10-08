@@ -30,6 +30,7 @@ report.register(
 
 
 router.register(r"queries", views.QueryViewSet)
+router.register(r"charts", views.ChartViewSet)
 #
 # office_router = routers.ExtendedSimpleRouter()
 #

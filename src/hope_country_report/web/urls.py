@@ -4,6 +4,8 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from .views import (
+    ChartDetailView,
+    ChartListView,
     download,
     index,
     OfficeConfigurationDetailView,
@@ -21,7 +23,6 @@ from .views import (
     UserProfileView,
 )
 from .views.base import OfficeTemplateView
-from .views.charts import ChartDetailView, ChartListView
 
 urlpatterns = [
     path("", index, name="index"),
