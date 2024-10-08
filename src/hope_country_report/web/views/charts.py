@@ -2,6 +2,7 @@ from typing import Any, Callable
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponseBase
+from django.db.models.query import QuerySet
 from django.views.generic import DetailView, ListView
 
 from hope_country_report.apps.power_query.utils import to_dataset
@@ -14,6 +15,13 @@ class ChartListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[Chart
     template_name = "web/office/chart_list.html"
     permission_required = ["power_query.view_chartpage"]
     model = ChartPage
+
+    def get_queryset(self) -> QuerySet[ChartPage]:
+        """
+        Filter the queryset to return only ChartPages related to the selected CountryOffice.
+        """
+        queryset = super().get_queryset()
+        return queryset.filter(country_office=self.selected_office)
 
     @classmethod
     def as_view(cls: Any, **initkwargs: Any) -> Callable[..., HttpResponseBase]:
