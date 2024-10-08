@@ -15,6 +15,13 @@ class ChartListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[Chart
     permission_required = ["power_query.view_chartpage"]
     model = ChartPage
 
+    def get_queryset(self):
+        """
+        Filter the queryset to return only ChartPages related to the selected CountryOffice.
+        """
+        queryset = super().get_queryset()
+        return queryset.filter(country_office=self.selected_office)
+
     @classmethod
     def as_view(cls: Any, **initkwargs: Any) -> Callable[..., HttpResponseBase]:
         return super().as_view(**initkwargs)
