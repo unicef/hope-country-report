@@ -1,4 +1,5 @@
 from enum import Enum
+
 from smart_env import SmartEnv
 
 DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/5.0/ref/settings"

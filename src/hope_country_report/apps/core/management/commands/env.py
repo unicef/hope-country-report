@@ -1,5 +1,7 @@
 from typing import Any, Dict
+
 from django.core.management import BaseCommand, CommandError, CommandParser
+
 from hope_country_report.config import env
 
 

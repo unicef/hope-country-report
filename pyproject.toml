@@ -87,7 +87,8 @@ dependencies = [
     "django-stubs-ext",
     "uwsgi",
     "django-smart-env",
-    "django-webtest"
+    "django-webtest",
+    "setuptools>=75.1.0",
 ]
 
 [tool.pdm.dev-dependencies]
