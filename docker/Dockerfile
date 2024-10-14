@@ -2,7 +2,7 @@ FROM python:3.12-slim-bookworm as base
 
 RUN apt update \
     && apt install --no-install-recommends -y \
-        gcc curl libgdal-dev wkhtmltopdf chromium-driver chromium \
+        gcc curl libgdal-dev wkhtmltopdf chromium-driver chromium setuptools \
     && apt clean && rm -rf /var/lib/apt/lists/* \
     && addgroup --system --gid 82 hcr \
     && adduser \
