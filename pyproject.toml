@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 license = {text = "Private"}
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 dependencies = [
     "django",
@@ -80,12 +80,13 @@ dependencies = [
     "social-auth-app-django",
     "sqlparse",
     "swapper",
-    "tablib[xlsx]",
+    "tablib[yaml]>=3.5.0",
     "tzdata",
     "unicef-security",
     "pathvalidate",
     "django-stubs-ext",
     "uwsgi",
+    "django-smart-env>=0.1.0",
 ]
 
 [tool.pdm.dev-dependencies]

@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm as base
+FROM python:3.12-slim-bookworm as base
 
 RUN apt update \
     && apt install --no-install-recommends -y \
@@ -13,7 +13,7 @@ RUN apt update \
     && chown -R hcr:hcr /code /tmp /data /static
 
 ENV PACKAGES_DIR=/packages
-ENV PYPACKAGES=$PACKAGES_DIR/__pypackages__/3.11
+ENV PYPACKAGES=$PACKAGES_DIR/__pypackages__/3.12
 ENV LIB_DIR=$PYPACKAGES/lib
 ENV PYTHONPATH=$PYTHONPATH:$LIB_DIR:/code/src
 ENV PATH=$PATH:$PYPACKAGES/bin
