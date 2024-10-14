@@ -88,7 +88,6 @@ dependencies = [
     "uwsgi",
     "django-smart-env",
     "django-webtest",
-    "setuptools>=75.1.0",
 ]
 
 [tool.pdm.dev-dependencies]

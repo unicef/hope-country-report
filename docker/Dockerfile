@@ -2,7 +2,7 @@ FROM python:3.12-slim-bookworm as base
 
 RUN apt update \
     && apt install --no-install-recommends -y \
-        gcc curl libgdal-dev wkhtmltopdf chromium-driver chromium setuptools \
+        gcc curl libgdal-dev wkhtmltopdf chromium-driver chromium \
     && apt clean && rm -rf /var/lib/apt/lists/* \
     && addgroup --system --gid 82 hcr \
     && adduser \
@@ -23,7 +23,7 @@ WORKDIR /code
 FROM base as builder
 
 WORKDIR $PACKAGES_DIR
-RUN pip install pdm
+RUN pip install pdm setuptools
 COPY ../pyproject.toml ./
 COPY ../pdm.lock ./
 RUN pdm config python.use_venv false
