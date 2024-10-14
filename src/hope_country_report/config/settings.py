@@ -33,18 +33,10 @@ DATABASE_APPS_MAPPING: dict[str, str] = {
 MIGRATION_MODULES = {"hope": None}
 
 STORAGES = {
-    "default": {
-        "BACKEND": env("DEFAULT_FILE_STORAGE"),
-    },
-    "staticfiles": {
-        "BACKEND": env("STATIC_FILE_STORAGE"),
-    },
-    "media": {
-        "BACKEND": env("MEDIA_FILE_STORAGE"),
-    },
-    "hope": {
-        "BACKEND": env("HOPE_FILE_STORAGE"),
-    },
+    "default": env.storage("DEFAULT_FILE_STORAGE"),
+    "staticfiles": env.storage("STATIC_FILE_STORAGE"),
+    "media": env.storage("MEDIA_FILE_STORAGE"),
+    "hope": env.storage("HOPE_FILE_STORAGE"),
 }
 INSTALLED_APPS = [
     "hope_country_report.web",

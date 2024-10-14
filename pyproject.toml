@@ -10,9 +10,9 @@ license = {text = "Private"}
 requires-python = ">=3.12"
 
 dependencies = [
-    "django",
     "azure-devops",
     "celery",
+    "django",
     "django-admin-cursor-paginator",
     "django-admin-extra-buttons",
     "django-adminactions",
@@ -86,7 +86,8 @@ dependencies = [
     "pathvalidate",
     "django-stubs-ext",
     "uwsgi",
-    "django-smart-env>=0.1.0",
+    "django-smart-env",
+    "django-webtest"
 ]
 
 [tool.pdm.dev-dependencies]

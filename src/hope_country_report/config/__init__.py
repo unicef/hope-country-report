@@ -1,5 +1,4 @@
 from enum import Enum
-
 from smart_env import SmartEnv
 
 DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/5.0/ref/settings"
@@ -119,7 +118,7 @@ CONFIG = {
     ),
     "STATIC_FILE_STORAGE": (
         str,
-        "hope_country_report.apps.power_query.storage.StaticStorage",
+        "django.core.files.storage.FileSystemStorage",
         setting("storages"),
     ),
     "STATIC_ROOT": (str, "/tmp/static/", setting("static-root")),
