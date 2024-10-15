@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.hope",
     "hope_country_report.apps.tenant",
     "hope_country_report.apps.power_query",
+    "hope_country_report.apps.core",
     "django.contrib.contenttypes",
     # "smart_admin.apps.SmartTemplateConfig",  # templates
     # "smart_admin",  # use this instead of 'django.contrib.admin'
@@ -90,7 +91,7 @@ INSTALLED_APPS = [
     "adminactions",
     "adminfilters",
     "adminfilters.depot",
-    "hope_country_report.apps.core",
+    "smart_env",
 ]
 
 MIDDLEWARE = [
