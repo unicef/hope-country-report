@@ -1,8 +1,8 @@
 from typing import Any, Callable
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.http import HttpResponseBase
 from django.db.models.query import QuerySet
+from django.http import HttpResponseBase
 from django.views.generic import DetailView, ListView
 
 from hope_country_report.apps.power_query.utils import to_dataset

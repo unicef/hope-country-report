@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from django.test import override_settings
 from django.urls import reverse
 
 from hope_country_report.state import state
@@ -15,6 +16,7 @@ pytestmark = pytest.mark.django_db()
 # pytestmark = pytest.mark.django_db(databases=["default", "hope_ro"])
 
 
+@override_settings(LOGIN_ENABLED=True)
 def test_login_admnin(django_app, admin_user):
     url = reverse("admin:login")
     res = django_app.get(url)
@@ -25,6 +27,7 @@ def test_login_admnin(django_app, admin_user):
     assert res.location == "/admin/"
 
 
+@override_settings(LOGIN_ENABLED=True)
 def test_login_tenant_user(django_app, tenant_user):
     tenant: "CountryOffice" = tenant_user.roles.first().country_office
     select_tenant_url = reverse("admin:select_tenant")
@@ -41,6 +44,7 @@ def test_login_tenant_user(django_app, tenant_user):
     assert state.tenant is None
 
 
+@override_settings(LOGIN_ENABLED=True)
 def test_login_pending_user(django_app, pending_user):
     select_tenant_url = reverse("admin:select_tenant")
     res = django_app.get(reverse("admin:login"))

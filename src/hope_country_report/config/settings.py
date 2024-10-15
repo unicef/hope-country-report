@@ -33,18 +33,10 @@ DATABASE_APPS_MAPPING: dict[str, str] = {
 MIGRATION_MODULES = {"hope": None}
 
 STORAGES = {
-    "default": {
-        "BACKEND": env("DEFAULT_FILE_STORAGE"),
-    },
-    "staticfiles": {
-        "BACKEND": env("STATIC_FILE_STORAGE"),
-    },
-    "media": {
-        "BACKEND": env("MEDIA_FILE_STORAGE"),
-    },
-    "hope": {
-        "BACKEND": env("HOPE_FILE_STORAGE"),
-    },
+    "default": env.storage("DEFAULT_FILE_STORAGE"),
+    "staticfiles": env.storage("STATIC_FILE_STORAGE"),
+    "media": env.storage("MEDIA_FILE_STORAGE"),
+    "hope": env.storage("HOPE_FILE_STORAGE"),
 }
 INSTALLED_APPS = [
     "hope_country_report.web",
@@ -52,6 +44,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.hope",
     "hope_country_report.apps.tenant",
     "hope_country_report.apps.power_query",
+    "hope_country_report.apps.core",
     "django.contrib.contenttypes",
     # "smart_admin.apps.SmartTemplateConfig",  # templates
     # "smart_admin",  # use this instead of 'django.contrib.admin'
@@ -98,7 +91,7 @@ INSTALLED_APPS = [
     "adminactions",
     "adminfilters",
     "adminfilters.depot",
-    "hope_country_report.apps.core",
+    "smart_env",
 ]
 
 MIDDLEWARE = [
