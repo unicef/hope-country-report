@@ -44,8 +44,10 @@ dependencies = [
     "django-silk",
     "django-slick-reporting",
     "django-smart-admin",
+    "django-smart-env",
     "django-storages[azure]",
     "django-strategy-field",
+    "django-stubs-ext",
     "django-taggit",
     "django-tailwind",
     "django-timezone-field",
@@ -80,14 +82,11 @@ dependencies = [
     "social-auth-app-django",
     "sqlparse",
     "swapper",
-    "tablib[yaml]>=3.5.0",
+    "tablib[yaml]",
     "tzdata",
     "unicef-security",
     "pathvalidate",
-    "django-stubs-ext",
     "uwsgi",
-    "django-smart-env",
-    "django-webtest",
 ]
 
 [tool.pdm.dev-dependencies]
