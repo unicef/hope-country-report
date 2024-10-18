@@ -199,7 +199,7 @@ class Command(BaseCommand):
             yield "from django.contrib.gis.db import models"
 
             yield "from hope_country_report.apps.hope.models._base import HopeModel"
-            yield "from hope_country_report.apps.power_query.storage import HopeStorage"
+            yield "from hope_country_report.apps.core.storage import get_hope_storage"
             basemodel = "HopeModel"
 
             known_models = []
@@ -326,7 +326,7 @@ class Command(BaseCommand):
                         field_desc += f", related_name='{_related_name}'"
 
                     if field_type.startswith("ImageField("):
-                        field_desc += "storage=HopeStorage()"
+                        field_desc += "storage=get_hope_storage()"
 
                     if extra_params:
                         if not field_desc.endswith("("):
