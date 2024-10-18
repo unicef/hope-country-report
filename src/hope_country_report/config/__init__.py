@@ -61,9 +61,24 @@ CONFIG = {
         "https://django-environ.readthedocs.io/en/latest/types.html#environ-env-db-url",
     ),
     "DEBUG": (bool, False, setting("debug")),
-    "DEFAULT_FILE_STORAGE": (
+    "FILE_STORAGE_DEFAULT": (
         str,
-        "hope_country_report.apps.power_query.storage.MediaStorage",
+        "django.core.files.storage.FileSystemStorage",
+        setting("storages"),
+    ),
+    "FILE_STORAGE_MEDIA": (
+        str,
+        "django.core.files.storage.FileSystemStorage",
+        setting("storages"),
+    ),
+    "FILE_STORAGE_STATIC": (
+        str,
+        "django.contrib.staticfiles.storage.StaticFilesStorage",
+        setting("storages"),
+    ),
+    "FILE_STORAGE_HOPE": (
+        str,
+        "storages.backends.azure_storage.AzureStorage",
         setting("storages"),
     ),
     "EMAIL_BACKEND": (str, "anymail.backends.mailjet.EmailBackend", "Do not change in prod"),
@@ -77,11 +92,6 @@ CONFIG = {
     "HOPE_AZURE_ACCOUNT_KEY": (str, ""),
     "HOPE_AZURE_AZURE_CONTAINER": (str, ""),
     "HOPE_AZURE_SAS_TOKEN": (str, ""),
-    "HOPE_FILE_STORAGE": (
-        str,
-        "hope_country_report.apps.power_query.storage.HopeStorage",
-        setting("storages"),
-    ),
     "HOST": (str, "http://localhost:8000"),
     "MAILJET_API_KEY": (str, NOT_SET),
     "MAILJET_SECRET_KEY": (str, NOT_SET),
@@ -91,11 +101,6 @@ CONFIG = {
     "MEDIA_AZURE_ACCOUNT_KEY": (str, ""),
     "MEDIA_AZURE_AZURE_CONTAINER": (str, ""),
     "MEDIA_AZURE_SAS_TOKEN": (str, ""),
-    "MEDIA_FILE_STORAGE": (
-        str,
-        "hope_country_report.apps.power_query.storage.MediaStorage",
-        setting("storages"),
-    ),
     "MEDIA_ROOT": (str, "/tmp/media/", setting("media-root")),
     "MEDIA_URL": (str, "/media/", setting("media-url")),
     "POWER_QUERY_FLOWER_ADDRESS": (str, "http://localhost:5555", "Flower address"),
@@ -116,11 +121,6 @@ CONFIG = {
         bool,
         True,
         "https://python-social-auth.readthedocs.io/en/latest/configuration/settings.html",
-    ),
-    "STATIC_FILE_STORAGE": (
-        str,
-        "django.core.files.storage.FileSystemStorage",
-        setting("storages"),
     ),
     "STATIC_ROOT": (str, "/tmp/static/", setting("static-root")),
     "STATIC_URL": (str, "/static/", setting("static-url")),
