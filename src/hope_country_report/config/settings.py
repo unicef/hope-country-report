@@ -33,10 +33,10 @@ DATABASE_APPS_MAPPING: dict[str, str] = {
 MIGRATION_MODULES = {"hope": None}
 
 STORAGES = {
-    "default": env.storage("DEFAULT_FILE_STORAGE"),
-    "staticfiles": env.storage("STATIC_FILE_STORAGE"),
-    "media": env.storage("MEDIA_FILE_STORAGE"),
-    "hope": env.storage("HOPE_FILE_STORAGE"),
+    "default": env.storage("FILE_STORAGE_DEFAULT"),
+    "staticfiles": env.storage("FILE_STORAGE_DEFAULT"),
+    "media": env.storage("FILE_STORAGE_MEDIA"),
+    "hope": env.storage("FILE_STORAGE_HOPE"),
 }
 INSTALLED_APPS = [
     "hope_country_report.web",
@@ -269,7 +269,6 @@ from .fragments.sentry import *  # noqa
 from .fragments.silk import *  # noqa
 from .fragments.smart_admin import *  # noqa
 from .fragments.social_auth import *  # noqa
-from .fragments.storage import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
 
