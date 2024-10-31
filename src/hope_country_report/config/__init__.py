@@ -1,6 +1,6 @@
 from enum import Enum
 
-from environ import Env
+from smart_env import SmartEnv
 
 DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/5.0/ref/settings"
 
@@ -25,8 +25,10 @@ CONFIG = {
     "AZURE_ACCOUNT_KEY": (str, ""),
     "AZURE_ACCOUNT_NAME": (str, ""),
     "AZURE_CLIENT_ID": (str, "", "Azure Client ID"),
+    "AZURE_CLIENT_KEY": (str, ""),
     "AZURE_CLIENT_SECRET": (str, ""),
     "AZURE_CONTAINER": (str, ""),
+    "AZURE_TENANT_ID": (str, ""),
     "AZURE_TENANT_KEY": (str, ""),
     "CACHE_URL": (str, "redis://localhost:6379/0"),
     "CATCH_ALL_EMAIL": (str, ""),
@@ -50,6 +52,7 @@ CONFIG = {
         1800,
         "https://docs.celeryq.dev/en/stable/userguide/configuration.html#broker-transport-options",
     ),
+    "CORS_ORIGIN_ALLOW_ALL": (bool, False),
     "CSRF_COOKIE_SECURE": (bool, True, setting("csrf-cookie-secure")),
     "DATABASE_HOPE_URL": (str, "sqlite://", "HOPE database connection url (forced to be readonly)"),
     "DATABASE_URL": (
@@ -58,9 +61,24 @@ CONFIG = {
         "https://django-environ.readthedocs.io/en/latest/types.html#environ-env-db-url",
     ),
     "DEBUG": (bool, False, setting("debug")),
-    "DEFAULT_FILE_STORAGE": (
+    "FILE_STORAGE_DEFAULT": (
         str,
-        "hope_country_report.apps.power_query.storage.MediaStorage",
+        "django.core.files.storage.FileSystemStorage",
+        setting("storages"),
+    ),
+    "FILE_STORAGE_MEDIA": (
+        str,
+        "django.core.files.storage.FileSystemStorage",
+        setting("storages"),
+    ),
+    "FILE_STORAGE_STATIC": (
+        str,
+        "django.contrib.staticfiles.storage.StaticFilesStorage",
+        setting("storages"),
+    ),
+    "FILE_STORAGE_HOPE": (
+        str,
+        "storages.backends.azure_storage.AzureStorage",
         setting("storages"),
     ),
     "EMAIL_BACKEND": (str, "anymail.backends.mailjet.EmailBackend", "Do not change in prod"),
@@ -74,11 +92,7 @@ CONFIG = {
     "HOPE_AZURE_ACCOUNT_KEY": (str, ""),
     "HOPE_AZURE_AZURE_CONTAINER": (str, ""),
     "HOPE_AZURE_SAS_TOKEN": (str, ""),
-    "HOPE_FILE_STORAGE": (
-        str,
-        "hope_country_report.apps.power_query.storage.HopeStorage",
-        setting("storages"),
-    ),
+    "HOST": (str, "http://localhost:8000"),
     "MAILJET_API_KEY": (str, NOT_SET),
     "MAILJET_SECRET_KEY": (str, NOT_SET),
     "MAILJET_TEMPLATE_REPORT_READY": (str, NOT_SET),
@@ -87,13 +101,9 @@ CONFIG = {
     "MEDIA_AZURE_ACCOUNT_KEY": (str, ""),
     "MEDIA_AZURE_AZURE_CONTAINER": (str, ""),
     "MEDIA_AZURE_SAS_TOKEN": (str, ""),
-    "MEDIA_FILE_STORAGE": (
-        str,
-        "hope_country_report.apps.power_query.storage.MediaStorage",
-        setting("storages"),
-    ),
     "MEDIA_ROOT": (str, "/tmp/media/", setting("media-root")),
     "MEDIA_URL": (str, "/media/", setting("media-url")),
+    "POWER_QUERY_FLOWER_ADDRESS": (str, "http://localhost:5555", "Flower address"),
     "SECRET_KEY": (str, NOT_SET, setting("secret-key")),
     "SECURE_HSTS_PRELOAD": (bool, True, setting("secure-hsts-preload")),
     "SECURE_HSTS_SECONDS": (int, 60, setting("secure-hsts-seconds")),
@@ -112,11 +122,6 @@ CONFIG = {
         True,
         "https://python-social-auth.readthedocs.io/en/latest/configuration/settings.html",
     ),
-    "STATIC_FILE_STORAGE": (
-        str,
-        "hope_country_report.apps.power_query.storage.StaticStorage",
-        setting("storages"),
-    ),
     "STATIC_ROOT": (str, "/tmp/static/", setting("static-root")),
     "STATIC_URL": (str, "/static/", setting("static-url")),
     "TIME_ZONE": (str, "UTC", setting("std-setting-TIME_ZONE")),
@@ -124,41 +129,6 @@ CONFIG = {
     "WP_CLAIMS": (str, '{"sub": "mailto: hope@unicef.org","aud": "https://android.googleapis.com"}'),
     "WP_PRIVATE_KEY": (str, ""),
 }
-
-
-class SmartEnv(Env):
-    def __init__(self, **scheme):  # type: ignore[no-untyped-def]
-        self.raw = scheme
-        values = {k: v[:2] for k, v in scheme.items()}
-        super().__init__(**values)
-
-    def get_help(self, key):
-        entry = self.raw.get(key, "")
-        if len(entry) > 2:
-            return entry[2]
-
-    def get_default(self, var):
-        var_name = f"{self.prefix}{var}"
-        if var_name in self.scheme:
-            var_info = self.scheme[var_name]
-
-            if len(var_info) > 1:
-                value = var_info[1]
-                cast = var_info[0]
-            else:
-                cast = var_info
-                value = ""
-
-            prefix = b"$" if isinstance(value, bytes) else "$"
-            escape = rb"\$" if isinstance(value, bytes) else r"\$"
-            if hasattr(value, "startswith") and value.startswith(prefix):
-                value = value.lstrip(prefix)
-                value = self.get_value(value, cast=cast)
-
-            if self.escape_proxy and hasattr(value, "replace"):
-                value = value.replace(escape, prefix)
-
-        return value
 
 
 env = SmartEnv(**CONFIG)  # type: ignore[no-untyped-call]

@@ -7,8 +7,9 @@
 # DO NOT rename the models, AND don't rename db_table values or field names.
 import django.contrib.postgres.fields
 from django.contrib.gis.db import models
+
+from hope_country_report.apps.core.storage import get_hope_storage
 from hope_country_report.apps.hope.models._base import HopeModel
-from hope_country_report.apps.power_query.storage import HopeStorage
 
 
 class BusinessArea(HopeModel):
@@ -22,9 +23,9 @@ class BusinessArea(HopeModel):
     region_name = models.CharField(max_length=8, null=True)
     kobo_username = models.CharField(max_length=255, blank=True, null=True)
     slug = models.CharField(unique=True, max_length=250, null=True)
+    rapid_pro_payment_verification_token = models.CharField(max_length=40, blank=True, null=True)
     rapid_pro_host = models.CharField(max_length=200, blank=True, null=True)
     has_data_sharing_agreement = models.BooleanField(null=True)
-    rapid_pro_payment_verification_token = models.CharField(max_length=40, blank=True, null=True)
     is_split = models.BooleanField(null=True)
     parent = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="businessarea_parent", blank=True, null=True
@@ -61,7 +62,6 @@ class BusinessArea(HopeModel):
 
 
 class BusinessareaCountries(HopeModel):
-    id = models.BigAutoField(primary_key=True)
     businessarea = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareacountries_businessarea", null=True
     )
@@ -744,6 +744,7 @@ class Ticketpaymentverificationdetails(HopeModel):
     )
     approve_status = models.BooleanField(null=True)
     new_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    new_status = models.CharField(max_length=50, blank=True, null=True)
     payment_verification = models.ForeignKey(
         "Paymentverification",
         on_delete=models.DO_NOTHING,
@@ -751,7 +752,6 @@ class Ticketpaymentverificationdetails(HopeModel):
         blank=True,
         null=True,
     )
-    new_status = models.CharField(max_length=50, blank=True, null=True)
     old_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
 
     class Meta:
@@ -763,7 +763,6 @@ class Ticketpaymentverificationdetails(HopeModel):
 
 
 class TicketpaymentverificationdetailsPaymentVerificaf7C9(HopeModel):
-    id = models.BigAutoField(primary_key=True)
     ticketpaymentverificationdetails = models.ForeignKey(
         Ticketpaymentverificationdetails,
         on_delete=models.DO_NOTHING,
@@ -927,7 +926,7 @@ class Document(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     document_number = models.CharField(max_length=255, null=True)
-    photo = models.ImageField(storage=HopeStorage(), null=True)
+    photo = models.ImageField(storage=get_hope_storage(), null=True)
     individual = models.ForeignKey(
         "Individual", on_delete=models.DO_NOTHING, related_name="document_individual", null=True
     )
@@ -1060,7 +1059,7 @@ class Household(HopeModel):
     )
     child_hoh = models.BooleanField(blank=True, null=True)
     consent_sharing = models.CharField(max_length=63, null=True)
-    consent_sign = models.ImageField(storage=HopeStorage(), null=True)
+    consent_sign = models.ImageField(storage=get_hope_storage(), null=True)
     deviceid = models.CharField(max_length=250, null=True)
     fchild_hoh = models.BooleanField(blank=True, null=True)
     name_enumerator = models.CharField(max_length=250, null=True)
@@ -1070,6 +1069,7 @@ class Household(HopeModel):
     village = models.CharField(max_length=250, null=True)
     consent = models.BooleanField(blank=True, null=True)
     is_removed = models.BooleanField(null=True)
+    collect_individual_data = models.CharField(max_length=250, null=True)
     currency = models.CharField(max_length=250, null=True)
     female_age_group_18_59_count = models.IntegerField(blank=True, null=True)
     female_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
@@ -1080,12 +1080,11 @@ class Household(HopeModel):
     male_age_group_60_count = models.IntegerField(blank=True, null=True)
     male_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
     registration_method = models.CharField(max_length=250, null=True)
-    collect_individual_data = models.CharField(max_length=250, null=True)
     unhcr_id = models.CharField(max_length=250, null=True)
     version = models.BigIntegerField(null=True)
-    removed_date = models.DateTimeField(blank=True, null=True)
     withdrawn = models.BooleanField(null=True)
     withdrawn_date = models.DateTimeField(blank=True, null=True)
+    removed_date = models.DateTimeField(blank=True, null=True)
     user_fields = models.JSONField(null=True)
     country = models.ForeignKey(
         Country, on_delete=models.DO_NOTHING, related_name="household_country", blank=True, null=True
@@ -1118,7 +1117,7 @@ class Household(HopeModel):
         Area, on_delete=models.DO_NOTHING, related_name="household_admin4", blank=True, null=True
     )
     zip_code = models.CharField(max_length=12, blank=True, null=True)
-    registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
+    registration_id = models.TextField(unique=True, blank=True, null=True)  # This field type is a guess.
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="household_copied_from", blank=True, null=True
     )
@@ -1156,7 +1155,6 @@ class Household(HopeModel):
 
 
 class HouseholdPrograms(HopeModel):
-    id = models.BigAutoField(primary_key=True)
     household = models.ForeignKey(
         Household, on_delete=models.DO_NOTHING, related_name="householdprograms_household", null=True
     )
@@ -1189,7 +1187,7 @@ class Individual(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     individual_id = models.CharField(max_length=255, null=True)
-    photo = models.ImageField(storage=HopeStorage(), null=True)
+    photo = models.ImageField(storage=get_hope_storage(), null=True)
     full_name = models.TextField(null=True)  # This field type is a guess.
     given_name = models.TextField(null=True)  # This field type is a guess.
     middle_name = models.TextField(null=True)  # This field type is a guess.
@@ -1220,10 +1218,10 @@ class Individual(HopeModel):
     first_registration_date = models.DateField(null=True)
     last_registration_date = models.DateField(null=True)
     unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    deduplication_golden_record_status = models.CharField(max_length=50, null=True)
+    deduplication_golden_record_results = models.JSONField(null=True)
     sanction_list_possible_match = models.BooleanField(null=True)
     pregnant = models.BooleanField(blank=True, null=True)
-    deduplication_golden_record_results = models.JSONField(null=True)
-    deduplication_golden_record_status = models.CharField(max_length=50, null=True)
     deduplication_batch_results = models.JSONField(null=True)
     deduplication_batch_status = models.CharField(max_length=50, null=True)
     imported_individual_id = models.UUIDField(blank=True, null=True)
@@ -1241,16 +1239,16 @@ class Individual(HopeModel):
     )
     is_removed = models.BooleanField(null=True)
     version = models.BigIntegerField(null=True)
-    duplicate_date = models.DateTimeField(blank=True, null=True)
-    removed_date = models.DateTimeField(blank=True, null=True)
-    withdrawn_date = models.DateTimeField(blank=True, null=True)
     duplicate = models.BooleanField(null=True)
+    duplicate_date = models.DateTimeField(blank=True, null=True)
     withdrawn = models.BooleanField(null=True)
+    withdrawn_date = models.DateTimeField(blank=True, null=True)
+    removed_date = models.DateTimeField(blank=True, null=True)
     sanction_list_confirmed_match = models.BooleanField(null=True)
     user_fields = models.JSONField(null=True)
     child_hoh = models.BooleanField(null=True)
     fchild_hoh = models.BooleanField(null=True)
-    disability_certificate_picture = models.ImageField(storage=HopeStorage(), blank=True, null=True)
+    disability_certificate_picture = models.ImageField(storage=get_hope_storage(), blank=True, null=True)
     vector_column = models.TextField(blank=True, null=True)  # This field type is a guess.
     phone_no_alternative_valid = models.BooleanField(blank=True, null=True)
     phone_no_valid = models.BooleanField(blank=True, null=True)
@@ -2064,7 +2062,7 @@ class Program(HopeModel):
     name = models.TextField(null=True)  # This field type is a guess.
     status = models.CharField(max_length=10, null=True)
     start_date = models.DateField(null=True)
-    end_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(null=True)
     description = models.CharField(max_length=255, null=True)
     budget = models.DecimalField(max_digits=11, decimal_places=2, null=True)
     frequency_of_payments = models.CharField(max_length=50, null=True)
@@ -2104,7 +2102,6 @@ class Program(HopeModel):
 
 
 class ProgramAdminAreas(HopeModel):
-    id = models.BigAutoField(primary_key=True)
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="programadminareas_program", null=True
     )
@@ -2119,6 +2116,7 @@ class ProgramAdminAreas(HopeModel):
 
 
 class ProgramCycle(HopeModel):
+    is_removed = models.BooleanField(null=True)
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
@@ -2499,9 +2497,7 @@ class TargetPoulation(HopeModel):
         blank=True,
         null=True,
     )
-    program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="targetpoulation_program", blank=True, null=True
-    )
+    program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, related_name="targetpoulation_program", null=True)
     change_date = models.DateTimeField(blank=True, null=True)
     finalized_at = models.DateTimeField(blank=True, null=True)
     business_area = models.ForeignKey(

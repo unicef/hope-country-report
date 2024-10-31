@@ -21,7 +21,6 @@ from sentry_sdk import capture_exception
 from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
-from hope_country_report.apps.power_query.storage import HopeStorage
 from hope_country_report.apps.power_query.utils import (
     convert_pdf_to_image_pdf,
     get_field_rect,
@@ -29,6 +28,8 @@ from hope_country_report.apps.power_query.utils import (
     insert_special_image,
     to_dataset,
 )
+
+from ..core.storage import get_hope_storage
 
 logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
@@ -318,7 +319,7 @@ class ToFormPDF(ProcessorStrategy):
         return None
 
     def load_image_from_blob_storage(self, image_path: str) -> BytesIO:
-        with HopeStorage().open(image_path, "rb") as img_file:
+        with get_hope_storage().open(image_path, "rb") as img_file:
             return BytesIO(img_file.read())
 
 

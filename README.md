@@ -6,7 +6,7 @@ ABOUT HOPE Country Report
 
 ### System Requirements
 
-- python 3.11
+- python 3.12
 - [direnv](https://direnv.net/) - not mandatory but strongly recommended
 - [pdm](https://pdm.fming.dev/2.9/)
 
@@ -23,7 +23,7 @@ ABOUT HOPE Country Report
 
 ### 1. Clone repo and install requirements
     git clone https://github.com/unicef/hope-country-report 
-    pdm venv create 3.11
+    pdm venv create 3.12
     pdm install
     pdm venv activate in-project
     pre-commit install

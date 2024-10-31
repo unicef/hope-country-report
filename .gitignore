@@ -23,3 +23,4 @@ pdm.toml
 .envrc
 .pdm-python
 .tox/
+.idea/

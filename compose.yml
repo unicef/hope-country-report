@@ -28,7 +28,7 @@ x-django-env: &django-env
   - AZURE_TENANT_ID=
   - AZURE_CLIENT_KEY=
   - FLOWER_URL=http://flower:5555
-  - STATIC_FILE_STORAGE=hope_country_report.apps.power_query.storage.DataSetStorage
+  - FILE_STORAGE_DEFAULT=django.core.files.storage.FileSystemStorage
 
 services:
   backend:
