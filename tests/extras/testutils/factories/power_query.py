@@ -145,6 +145,7 @@ class ParametrizerFactory(AutoRegisterModelFactory):
 class ChartPageFactory(AutoRegisterModelFactory):
     country_office = factory.SubFactory(CountryOfficeFactory)
     title = factory.Sequence(lambda n: "ChartPage %s" % n)
+    query = factory.SubFactory(QueryFactory, country_office=factory.SelfAttribute("..country_office"))
 
     class Meta:
         model = ChartPage

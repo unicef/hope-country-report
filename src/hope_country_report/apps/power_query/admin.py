@@ -571,4 +571,4 @@ class ChartPageAdmin(
     AdminActionPermMixin,
     ModelAdmin[ChartPage],
 ):
-    pass
+    list_display = ("title", "query", "country_office", "template")

@@ -7,12 +7,12 @@ authors = [
 ]
 readme = "README.md"
 license = {text = "Private"}
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 dependencies = [
-    "django",
     "azure-devops",
     "celery",
+    "django",
     "django-admin-cursor-paginator",
     "django-admin-extra-buttons",
     "django-adminactions",
@@ -44,8 +44,10 @@ dependencies = [
     "django-silk",
     "django-slick-reporting",
     "django-smart-admin",
+    "django-smart-env",
     "django-storages[azure]",
     "django-strategy-field",
+    "django-stubs-ext",
     "django-taggit",
     "django-tailwind",
     "django-timezone-field",
@@ -80,11 +82,10 @@ dependencies = [
     "social-auth-app-django",
     "sqlparse",
     "swapper",
-    "tablib[xlsx]",
+    "tablib[yaml]",
     "tzdata",
     "unicef-security",
     "pathvalidate",
-    "django-stubs-ext",
     "uwsgi",
 ]
 

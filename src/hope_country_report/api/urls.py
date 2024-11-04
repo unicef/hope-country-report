@@ -1,6 +1,8 @@
 from django.http import HttpRequest, HttpResponse
 from django.urls import include, path
 
+import setuptools.dist  # noqa: F401
+
 from .router import router
 
 app_name = "api"

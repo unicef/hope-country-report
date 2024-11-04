@@ -35,6 +35,9 @@ case "$1" in
     celery_beat)
         celery -A hope_country_report.config.celery beat -l info
     ;;
+    celery_flower)
+        celery -A hope_country_report.config.celery flower
+    ;;
     *)
         exec "$@"
     ;;

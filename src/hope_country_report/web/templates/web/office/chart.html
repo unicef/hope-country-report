@@ -1,25 +1,36 @@
-{% load static %}
-<html>
-    <head>
-        <title>django-chartjs line chart demo</title>
-        <!--[if lte IE 8]>
-            <script src="{% static 'js/excanvas.js' %}"></script>
-        <![endif]-->
-    </head>
-    <body>
-        <h1>Some Line Charts loaded in Ajax!</h1>
+{% extends "web/office/_base.html" %}
+{% load static i18n user_tz colors browser filters %}
 
-        <canvas id="myChart" width="500" height="400"></canvas>
+{% block content %}
+<div id="output" style="margin: 30px;"></div>
+<script src="{% static "jquery-ui.min.js" %}"></script>
+<script src="{% static "charts/pivot.min.js" %}"></script>
+<link rel="stylesheet" href="{% static "fonts/jquery-ui.min.css" %}">
+<link rel="stylesheet" href="{% static "fonts/c3.min.css" %}">
+<link rel="stylesheet" href="{% static "fonts/pivot.min.css" %}">
+<script src="{% static "charts/d3.min.js" %}"></script>
+<script src="{% static "charts/c3.min.js" %}"></script>
+<script src="{% static "charts/c3_renderers.min.js" %}"></script>
 
-        <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
-        <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
-        <script type="text/javascript">
-            $.get('{% url "line_chart_json" %}', function(data) {
-                var ctx = $("#myChart").get(0).getContext("2d");
-                new Chart(ctx, {
-                    type: 'line', data: data
-                });
-            });
-        </script>
-    </body>
-</html>
+<script>
+    $(function(){
+        {% if chart_content %}
+        {{ chart_content|safe }} 
+        {% else %}
+            var data = JSON.parse("{{ json_data|escapejs }}");
+            $("#output").pivotUI(
+                data,
+                {
+                    renderers: $.extend(
+                        $.pivotUtilities.renderers,
+                        $.pivotUtilities.c3_renderers
+                    ),
+                    rendererOptions: {
+                        c3: { size: { width: 600, height: 400 } }
+                    }
+                }
+            );
+        });
+        {% endif %}
+</script>
+{% endblock %}
