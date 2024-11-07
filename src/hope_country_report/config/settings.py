@@ -240,7 +240,7 @@ HOST = env("HOST", default="http://localhost:8000")
 SIGNING_BACKEND = env("SIGNING_BACKEND")
 
 CATCH_ALL_EMAIL = env("CATCH_ALL_EMAIL", default="")
-DEFAULT_FROM_EMAIL = "hope-reporting@mail.unicef.org"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")

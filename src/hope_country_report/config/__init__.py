@@ -61,6 +61,7 @@ CONFIG = {
         "https://django-environ.readthedocs.io/en/latest/types.html#environ-env-db-url",
     ),
     "DEBUG": (bool, False, setting("debug")),
+    "DEFAULT_FROM_EMAIL": (str, ""),
     "FILE_STORAGE_DEFAULT": (
         str,
         "django.core.files.storage.FileSystemStorage",
