@@ -68,7 +68,7 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
 
         constraints = [
             models.CheckConstraint(
-                check=Q(
+                condition=Q(
                     parent__isnull=False, country_office__isnull=False, code__isnull=True, target__isnull=True
                 )  # implementation
                 | Q(parent__isnull=True, code__isnull=False, target__isnull=False),  # standard or abstract with code
