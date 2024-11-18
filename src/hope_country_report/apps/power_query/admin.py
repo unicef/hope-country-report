@@ -172,6 +172,7 @@ class QueryAdmin(
     change_form_template = None
     ordering = ["-last_run"]
     form = QueryForm
+    date_hierarchy = "datasets__last_run"
 
     def get_queryset(self, request: HttpRequest) -> "QuerySet[AnyModel]":
         return super().get_queryset(request).select_related("target", "owner")
@@ -464,7 +465,7 @@ class ReportConfigurationAdmin(
     search_fields = ("name", "query__name")
     ordering = ("-updated_on",)
     change_form_template = "admin/power_query/report/change_form.html"
-
+    date_hierarchy = "last_run"
     linked_objects_hide_empty = False
     object: "ReportConfiguration"
 
@@ -542,6 +543,7 @@ class ReportDocumentAdmin(
     list_filter = (("report", AutoCompleteFilter), "report__compress", "report__protect")
     search_fields = ("title",)
     filter_horizontal = ("limit_access_to",)
+    date_hierarchy = "dataset__last_run"
     readonly_fields = ("arguments", "report", "dataset", "content_type", "formatter", "info", "size")
 
     def get_queryset(self, request: HttpRequest) -> "QuerySet[ReportDocument]":

@@ -14,7 +14,7 @@ from django_celery_beat.models import PeriodicTask
 from taggit.managers import TaggableManager
 
 from ....utils.mail import notify_report_completion
-from ...core.models import CountryOffice, User
+from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
 from ._base import AdminReversable, CeleryEnabled, ManageableObject, PowerQueryModel, TimeStampMixin
@@ -127,7 +127,10 @@ class ReportConfiguration(
 
     def execute(self, run_query: bool = False, notify: bool = True) -> "ReportResult":
         from .report_document import ReportDocument
+        import string
+        import secrets
 
+        alphabet = string.ascii_letters + string.digits + string.punctuation
         query: Query = self.query
         dataset: "Dataset"
         result: "ReportResult" = []
@@ -141,7 +144,7 @@ class ReportConfiguration(
             result = [(None, _("No Dataset available"))]
         else:
             if self.protect:
-                self.pwd = User.objects.make_random_password()
+                self.pwd = "".join(secrets.choice(alphabet) for i in range(12))
                 self.save()
             for dataset in query.datasets.all():
                 for formatter in self.formatters.all():
