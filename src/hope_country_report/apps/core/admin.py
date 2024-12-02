@@ -60,9 +60,20 @@ class UserAdmin(_UserAdminPlus):  # type: ignore
     def get_fieldsets(self, request: HttpRequest, obj: Optional[Any] = None) -> Any:
         if not obj:
             return self.add_fieldsets
-        if not request.user.is_superuser:
-            return super().get_fieldsets(request, obj)
-        return _UserAdminPlus.fieldsets
+        fieldsets = list(_UserAdminPlus.fieldsets)
+        if request.user.is_superuser:
+            fieldsets.append(
+                (
+                    _("Admin"),
+                    {
+                        "fields": (
+                            "is_staff",
+                            "groups",
+                        )
+                    },
+                )
+            )
+        return fieldsets
 
 
 class UserRoleForm(forms.ModelForm):  # type: ignore
