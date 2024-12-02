@@ -22,8 +22,8 @@ import fitz
 import qrcode
 import tablib
 from constance import config
-from PIL import Image, ImageDraw, ImageFont
-from sentry_sdk import configure_scope
+from PIL import ExifTags, Image, ImageDraw, ImageFont
+from sentry_sdk import capture_exception, configure_scope
 
 if TYPE_CHECKING:
     from hope_country_report.types.django import AnyModel
@@ -274,3 +274,25 @@ def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fi
             break
 
     page.insert_image(rect, stream=image_stream, keep_proportion=False)
+
+
+def apply_exif_orientation(image: Image.Image) -> Image.Image:
+    """
+    Adjusts the image based on EXIF orientation metadata.
+    """
+    try:
+        exif = image._getexif()
+        if exif is not None:
+            for tag, value in exif.items():
+                if ExifTags.TAGS.get(tag) == "Orientation":
+                    if value == 3:  # Upside down
+                        image = image.rotate(180, expand=True)
+                    elif value == 6:  # Rotated 90° counterclockwise
+                        image = image.rotate(270, expand=True)
+                    elif value == 8:  # Rotated 90° clockwise
+                        image = image.rotate(90, expand=True)
+                    break
+    except Exception as e:
+        logger.warning(f"Failed to apply EXIF orientation: {e}")
+        capture_exception(e)
+    return image
