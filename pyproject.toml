@@ -66,7 +66,7 @@ dependencies = [
     "natural-keys",
     "pdfkit",
     "pillow",
-    "psycopg2-binary",
+    "psycopg2-binary<=2.9.9",
     "py-vapid",
     "pyhtml2pdf",
     "pyminizip",
@@ -82,7 +82,7 @@ dependencies = [
     "social-auth-app-django",
     "sqlparse",
     "swapper",
-    "tablib[yaml]",
+    "tablib[xlsx]",
     "tzdata",
     "unicef-security",
     "pathvalidate",
@@ -160,3 +160,42 @@ line_length = 120
 balanced_wrapping = true
 order_by_type = false
 skip_glob = ["**/migrations/**"]
+
+[dependency-groups]
+types-decorator = [
+    "types-six>=1.16.21.20241105",
+]
+dev = [
+    "black",
+    "django-stubs",
+    "django-stubs-ext",
+    "django-webtest",
+    "drf-api-checker",
+    "factory-boy",
+    "flake8",
+    "freezegun",
+    "fs",
+    "isort",
+    "mkdocs",
+    "mypy",
+    "pdbpp",
+    "pre-commit",
+    "py",
+    "pyquery",
+    "pytest-celery",
+    "pytest-cov",
+    "pytest-django",
+    "pytest-echo",
+    "pytest-selenium",
+    "pytest",
+    "pyupgrade",
+    "responses",
+    "selenium<4.10",
+    "tox",
+    "types-freezegun",
+    "types-python-dateutil",
+    "types-pytz",
+    "types-redis",
+    "types-requests",
+    "types-setuptools"
+]

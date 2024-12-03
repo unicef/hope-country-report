@@ -22,6 +22,7 @@ from strategy_field.registry import Registry
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query.utils import (
+    apply_exif_orientation,
     convert_pdf_to_image_pdf,
     get_field_rect,
     insert_qr_code,
@@ -268,33 +269,45 @@ class ToFormPDF(ProcessorStrategy):
             rect, page_index = get_field_rect(document, field_name)
             insert_qr_code(document, field_name, data, rect, page_index)
 
-    def insert_external_image(self, document: fitz.Document, field_name: str, image_path: str, font_size: int = 10):
+    def insert_external_image(
+        self, document: fitz.Document, field_name: str, image_path: str, font_size: int = 10
+    ) -> None:
         """
-        Loads, resizes, and inserts an external image into the specified field.
+        Loads, resizes, adjusts DPI, and inserts an external image into the specified field.
+        Automatically detects orientation using EXIF metadata and adjusts rotation.
         """
+        rect: Optional[fitz.Rect]
+        page_index: Optional[int]
+
         rect, page_index = get_field_rect(document, field_name)
         if rect is None or page_index is None:
             logger.error(f"No valid rectangle or page index found for field {field_name}. Cannot insert image.")
             return
+
         page = document[page_index]
+
         try:
             image_stream = self.load_image_from_blob_storage(image_path)
-            image = Image.open(image_stream).rotate(-90, expand=True)
-            image.thumbnail((800, 600), Image.LANCZOS)
+            image = Image.open(image_stream)
+            image = apply_exif_orientation(image)
+            pdf_width_in_inches = rect.width / 72.0
+            pdf_height_in_inches = rect.height / 72.0
+            target_dpi = 300
+            image = image.resize(
+                (int(pdf_width_in_inches * target_dpi), int(pdf_height_in_inches * target_dpi)),
+                Image.LANCZOS,
+            )
             output_stream = io.BytesIO()
-            image.save(output_stream, format="PNG")
+            image.save(output_stream, format="PNG", dpi=(target_dpi, target_dpi))
             output_stream.seek(0)
             for widget in page.widgets():
                 if widget.field_name == field_name:
                     page.delete_widget(widget)
-                    break  # Stop the loop once we find and remove the widget
-            rotate = 0
-            if image.height < image.width:
-                rotate = 270
-            page.insert_image(rect, stream=output_stream, keep_proportion=False, rotate=rotate)
+                    break
+            page.insert_image(rect, stream=output_stream, keep_proportion=True)
+
         except Exception as e:
-            logger.exception(e)
-            capture_exception(e)
+            capture_exception(f"Failed to insert image: {e}")
             page.insert_textbox(
                 rect,
                 "Image unreadable",
