@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://hope.unicef.org/tutorials/simple/">
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Creating reports - My Docs</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">My Docs</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../glossary/" class="nav-link">Glossary</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#creating-reports" class="nav-link">Creating reports</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="creating-reports">Creating reports</h1>
+<p>1. Navigate to <a href="https://reporting-hope-dev.unitst.org/admin/">https://reporting-hope-dev.unitst.org/admin/</a></p>
+<p>2. Scroll down and click "Queries"</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot9.jpeg" /></p>
+<p>3. Click "ADD QUERY"</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot1.jpeg" /></p>
+<p>4. Click here.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot.jpeg" /></p>
+<p>5. Right-click "Afghanistan"</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot2.jpeg" /></p>
+<p>6. Click the "Name:" field.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot3.jpeg" /></p>
+<p>7. Type the name of the query e.g "Afghan query for all households"</p>
+<p>8. Click the "<strong>Target</strong>" drop-down menu. It designate which table you are going to be using to query the database. For our case we will use the <strong>Household</strong> table.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot4.jpeg" /></p>
+<p>Alert: The list of tables available in the Hope project can be viewed on this <a href="https://github.com/unicef/hope-country-report/blob/develop/src/hope_country_report/apps/hope/models/%5C_inspect.py">link</a>. The link between different tables and how to retrieve information from one table to another is part of the <a href="https://www.djangoproject.com/">Django documentation</a>.</p>
+<p><img alt="Image" src="../../_screenshots/Pasted_image1.png" /></p>
+<p>9. Start typing the code for the query. Remember, here <strong>conn</strong> represent <strong><em>conn=Household.objects</em></strong>. Please refer to <a href="https://www.djangoproject.com/">Django</a>.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot5.jpeg" /></p>
+<p>10. </p>
+<pre><code class="language-python">result = list(conn.filter(withdrawn=False, first_registration_date__year__gte=2024).values(&quot;unicef_id&quot;, &quot;admin1__name&quot;))
+</code></pre>
+<p>Here we will query the list of households which are not withdrawn and were registered in 2024 or above. We will only retrieve their <strong>unicef_id</strong> and <strong>Admin1</strong> area name. The query must return data that we must assign to the <strong>result</strong> environment variable.</p>
+<p>11. We then save and continue editing</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot6.jpeg" /></p>
+<p>12. Click "Queue" to launch the retrieval of the data.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot7.jpeg" /></p>
+<p>13. If you want to preview the result, click "DATASETS" button.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot8.jpeg" /></p>
+<p>14. Click  on the query "[ABSTRACT] Afghan query for all households"</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot10.jpeg" /></p>
+<p>15. And preview "PREVIEW". You should see that your report is OK.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot11.jpeg" /></p>
+<p>16. Click  on the navigation link "Power Query" so that we can produce the actual report in its format.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot12.jpeg" /></p>
+<p>17. Click "Add" on the Report Configuration</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot13.jpeg" /></p>
+<p>18. Click this drop-down and chose which country office the report will bellong to.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot14.jpeg" /></p>
+<p>19. Fill in the "Report Title:" field. "Repport on Afghan households in 2024"</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot15.jpeg" /></p>
+<p>20. Click here.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot16.jpeg" /></p>
+<p>21. Search for the query you previously created by typing "afgh".</p>
+<p>22. Click "[ABSTRACT] Afghan query for all households"</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot17.jpeg" /></p>
+<p>23. Add "Queryset To HTML" if you want to see the report as an html page and file.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot18.jpeg" /></p>
+<p>24. Add "Dataset to XLSX" if you want to see the report as an Excel file.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot19.jpeg" /></p>
+<p>25. Click "Choose" and move them on the other side.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot10.jpeg" /></p>
+<p>26. Save and continue editing.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot21.jpeg" /></p>
+<p>27. Click "Queue" to generate the actual reports.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot22.jpeg" /></p>
+<p>28. Click "VIEW ON SITE" in order to view the resulting reports.</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot23.jpeg" /></p>
+<p>29. Click "view"</p>
+<p><img alt="Image" src="../../_screenshots/ascreenshot24.jpeg" /></p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+        <script src="../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
