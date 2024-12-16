@@ -261,6 +261,9 @@ class ToFormPDF(ProcessorStrategy):
         font_size: int,
         font_color: str,
     ):
+        """
+        Inserts images and QR codes into the specified fields.
+        """
         for field_name, text in special_values.items():
             insert_special_image(document, field_name, text, int(font_size), font_color)
         for field_name, (rect, image_path) in images.items():
@@ -307,7 +310,7 @@ class ToFormPDF(ProcessorStrategy):
             page.insert_image(rect, stream=output_stream, keep_proportion=True)
 
         except Exception as e:
-            capture_exception(f"Failed to insert image: {e}")
+            capture_exception(e)
             page.insert_textbox(
                 rect,
                 "Image unreadable",
