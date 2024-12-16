@@ -16,7 +16,7 @@ coverage.xml
 !.gitignore
 !.mypy.ini
 !.pre-commit-config.yaml
-
+.cache
 pdm.toml
 .coverage
 .env
