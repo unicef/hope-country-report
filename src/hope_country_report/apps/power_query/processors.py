@@ -311,14 +311,26 @@ class ToFormPDF(ProcessorStrategy):
 
         except Exception as e:
             capture_exception(e)
-            page.insert_textbox(
-                rect,
-                "Image unreadable",
-                color=(1, 0, 0),
-                fontsize=font_size,
-                fontname="helv",
-                align=fitz.TEXT_ALIGN_CENTER,
-            )
+            logger.warning(f"Image for field '{field_name}' is missing or invalid. Generating placeholder.")
+            try:
+                placeholder_width = int(rect.width)
+                placeholder_height = int(rect.height)
+                placeholder_image = Image.new("RGB", (placeholder_width, placeholder_height), color="cyan")
+                placeholder_stream = io.BytesIO()
+                placeholder_image.save(placeholder_stream, format="PNG")
+                placeholder_stream.seek(0)
+                page.insert_image(rect, stream=placeholder_stream, keep_proportion=True)
+            except Exception as placeholder_error:
+                capture_exception(placeholder_error)
+                logger.error(f"Failed to insert placeholder image: {placeholder_error}")
+                page.insert_textbox(
+                    rect,
+                    "Image not available",
+                    color=(1.0, 0.0, 0.0),  # Red text
+                    fontsize=font_size,
+                    fontname="helv",
+                    align=fitz.TEXT_ALIGN_CENTER,
+                )
 
     def is_image_field(self, annot: ArrayObject) -> bool:
         """
