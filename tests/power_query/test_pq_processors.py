@@ -2,7 +2,7 @@ from typing import Type, TYPE_CHECKING
 
 import pickle
 from pathlib import Path
-
+import fitz
 import pytest
 from unittest.mock import Mock
 
@@ -185,6 +185,30 @@ def test_processor_pdf_with_image(updated_dataset, tmp_path):
 
     pdf = PdfReader(output)
     assert pdf, "Failed to read the generated PDF file."
+
+
+def test_processor_pdf_with_missing_image(dataset, tmp_path):
+    from testutils.factories import ReportTemplateFactory
+
+    tpl = ReportTemplateFactory(name="program_receipt.pdf")
+    fmt = Mock()
+    fmt.template = tpl
+    dataset.data[0]["primary_image"] = "non_existent_image.jpg"
+    result = processors.ToFormPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
+    output = tmp_path / "WithMissingImage.pdf"
+    assert result, "The PDF content is empty."
+    output.write_bytes(result)
+    assert output.exists(), "PDF file was not created."
+    assert output.stat().st_size > 0, "PDF file is empty."
+
+    pdf = PdfReader(output)
+    assert pdf, "Failed to read the generated PDF file."
+    assert pdf.pages, "No pages found in the generated PDF."
+    with fitz.open(output) as document:
+        for page in document:
+            assert page, "No pages found in the generated PDF."
+            text = page.get_text()
+            assert "Image not available" in text or "cyan" in text, "Placeholder image or message not found in the PDF."
 
 
 def test_registry():

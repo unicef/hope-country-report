@@ -261,6 +261,9 @@ class ToFormPDF(ProcessorStrategy):
         font_size: int,
         font_color: str,
     ):
+        """
+        Inserts images and QR codes into the specified fields.
+        """
         for field_name, text in special_values.items():
             insert_special_image(document, field_name, text, int(font_size), font_color)
         for field_name, (rect, image_path) in images.items():
@@ -307,15 +310,27 @@ class ToFormPDF(ProcessorStrategy):
             page.insert_image(rect, stream=output_stream, keep_proportion=True)
 
         except Exception as e:
-            capture_exception(f"Failed to insert image: {e}")
-            page.insert_textbox(
-                rect,
-                "Image unreadable",
-                color=(1, 0, 0),
-                fontsize=font_size,
-                fontname="helv",
-                align=fitz.TEXT_ALIGN_CENTER,
-            )
+            capture_exception(e)
+            logger.warning(f"Image for field '{field_name}' is missing or invalid. Generating placeholder.")
+            try:
+                placeholder_width = int(rect.width)
+                placeholder_height = int(rect.height)
+                placeholder_image = Image.new("RGB", (placeholder_width, placeholder_height), color="cyan")
+                placeholder_stream = io.BytesIO()
+                placeholder_image.save(placeholder_stream, format="PNG")
+                placeholder_stream.seek(0)
+                page.insert_image(rect, stream=placeholder_stream, keep_proportion=True)
+            except Exception as placeholder_error:
+                capture_exception(placeholder_error)
+                logger.error(f"Failed to insert placeholder image: {placeholder_error}")
+                page.insert_textbox(
+                    rect,
+                    "Image not available",
+                    color=(1.0, 0.0, 0.0),  # Red text
+                    fontsize=font_size,
+                    fontname="helv",
+                    align=fitz.TEXT_ALIGN_CENTER,
+                )
 
     def is_image_field(self, annot: ArrayObject) -> bool:
         """

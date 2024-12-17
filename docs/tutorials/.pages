@@ -1,0 +1,6 @@
+nav:
+  - index.md
+  - Creating a simple report: simple.md
+  - Creating a Template Report for a bank: banks.md
+  - Generate a report from a list of HH: hh.md
+  - Payment report using a template: payment_r.md
