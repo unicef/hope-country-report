@@ -201,11 +201,10 @@ class ToFormPDF(ProcessorStrategy):
     def process(self, context: Dict[str, Any]) -> bytes:
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
-        font_size = context.get("context", {}).get("font_size", 10)
+        font_size = int(context.get("context", {}).get("font_size", 10))
         font_color = context.get("context", {}).get("font_color", "black")
         ds = to_dataset(context["dataset"].data).dict
         output_pdf = PdfWriter()
-
         for index, entry in enumerate(ds, start=1):
             with NamedTemporaryFile(suffix=".pdf", delete=True) as temp_pdf_file:
                 writer = PdfWriter()
@@ -240,7 +239,8 @@ class ToFormPDF(ProcessorStrategy):
 
                 # Open processed document for image and QR code insertion
                 document = fitz.open(stream=output_stream.getvalue(), filetype="pdf")
-                self.insert_images_and_qr_codes(document, images, qr_codes, special_values, font_size, font_color)
+                if images or special_values or qr_codes:
+                    self.insert_images_and_qr_codes(document, images, qr_codes, special_values, font_size, font_color)
                 document.save(temp_pdf_file.name)
                 output_stream.seek(0)
                 output_pdf.append_pages_from_reader(PdfReader(temp_pdf_file.name))
@@ -288,7 +288,6 @@ class ToFormPDF(ProcessorStrategy):
             return
 
         page = document[page_index]
-
         try:
             image_stream = self.load_image_from_blob_storage(image_path)
             image = Image.open(image_stream)
@@ -311,14 +310,24 @@ class ToFormPDF(ProcessorStrategy):
 
         except Exception as e:
             capture_exception(e)
-            page.insert_textbox(
-                rect,
-                "Image unreadable",
-                color=(1, 0, 0),
-                fontsize=font_size,
-                fontname="helv",
-                align=fitz.TEXT_ALIGN_CENTER,
-            )
+            try:
+                placeholder_width = int(rect.width)
+                placeholder_height = int(rect.height)
+                placeholder_image = Image.new("RGB", (placeholder_width, placeholder_height), color="cyan")
+                placeholder_stream = io.BytesIO()
+                placeholder_image.save(placeholder_stream, format="PNG")
+                placeholder_stream.seek(0)
+                page.insert_image(rect, stream=placeholder_stream, keep_proportion=True)
+            except Exception as placeholder_error:
+                capture_exception(placeholder_error)
+                page.insert_textbox(
+                    rect,
+                    "Image not available",
+                    color=(1.0, 0.0, 0.0),  # Red text
+                    fontsize=font_size,
+                    fontname="helv",
+                    align=fitz.TEXT_ALIGN_CENTER,
+                )
 
     def is_image_field(self, annot: ArrayObject) -> bool:
         """
