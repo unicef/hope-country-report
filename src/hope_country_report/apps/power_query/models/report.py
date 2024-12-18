@@ -126,9 +126,10 @@ class ReportConfiguration(
             raise ValidationError("Cannot protect document without owner")
 
     def execute(self, run_query: bool = False, notify: bool = True) -> "ReportResult":
-        from .report_document import ReportDocument
-        import string
         import secrets
+        import string
+
+        from .report_document import ReportDocument
 
         alphabet = string.ascii_letters + string.digits + string.punctuation
         query: Query = self.query
