@@ -42,7 +42,6 @@ class BusinessArea(HopeModel):
     screen_beneficiary = models.BooleanField(null=True)
     deduplication_ignore_withdraw = models.BooleanField(null=True)
     biometric_deduplication_threshold = models.FloatField(null=True)
-    is_payment_plan_applicable = models.BooleanField(null=True)
     is_accountability_applicable = models.BooleanField(null=True)
     active = models.BooleanField(null=True)
     enable_email_notification = models.BooleanField(null=True)
@@ -445,7 +444,6 @@ class Ticketcomplaintdetails(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    payment_object_id = models.UUIDField(blank=True, null=True)
     household = models.ForeignKey(
         "Household", on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_household", blank=True, null=True
     )
@@ -459,7 +457,7 @@ class Ticketcomplaintdetails(HopeModel):
     ticket = models.OneToOneField(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_ticket", null=True
     )
-    payment = models.OneToOneField(
+    payment = models.ForeignKey(
         "Payment", on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_payment", blank=True, null=True
     )
 
@@ -849,7 +847,6 @@ class Ticketsensitivedetails(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    payment_object_id = models.UUIDField(blank=True, null=True)
     household = models.ForeignKey(
         "Household", on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_household", blank=True, null=True
     )
@@ -863,7 +860,7 @@ class Ticketsensitivedetails(HopeModel):
     ticket = models.OneToOneField(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_ticket", null=True
     )
-    payment = models.OneToOneField(
+    payment = models.ForeignKey(
         "Payment", on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_payment", blank=True, null=True
     )
 
@@ -1289,6 +1286,10 @@ class Individual(HopeModel):
         related_name="individual_registration_data_import",
         null=True,
     )
+    biometric_deduplication_batch_results = models.JSONField(null=True)
+    biometric_deduplication_batch_status = models.CharField(max_length=50, null=True)
+    biometric_deduplication_golden_record_results = models.JSONField(null=True)
+    biometric_deduplication_golden_record_status = models.CharField(max_length=50, null=True)
 
     class Meta:
         managed = False
@@ -1424,61 +1425,6 @@ class Approvalprocess(HopeModel):
 
     class Tenant:
         tenant_filter_field: str = "__all__"
-
-
-class Cashplan(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    status_date = models.DateTimeField(null=True)
-    start_date = models.DateTimeField(blank=True, null=True)
-    end_date = models.DateTimeField(blank=True, null=True)
-    exchange_rate = models.DecimalField(max_digits=14, decimal_places=8, blank=True, null=True)
-    total_entitled_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_entitled_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_entitled_quantity_revised = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_entitled_quantity_revised_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_delivered_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_delivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_undelivered_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_undelivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    name = models.CharField(max_length=255, null=True)
-    ca_id = models.CharField(max_length=255, blank=True, null=True)
-    ca_hash_id = models.UUIDField(unique=True, blank=True, null=True)
-    status = models.CharField(max_length=255, null=True)
-    distribution_level = models.CharField(max_length=255, null=True)
-    dispersion_date = models.DateTimeField(null=True)
-    coverage_duration = models.IntegerField(null=True)
-    coverage_unit = models.CharField(max_length=255, null=True)
-    comments = models.CharField(max_length=255, blank=True, null=True)
-    delivery_type = models.CharField(max_length=32, blank=True, null=True)
-    assistance_measurement = models.CharField(max_length=255, null=True)
-    assistance_through = models.CharField(max_length=255, null=True)
-    vision_id = models.CharField(max_length=255, blank=True, null=True)
-    funds_commitment = models.CharField(max_length=255, blank=True, null=True)
-    down_payment = models.CharField(max_length=255, blank=True, null=True)
-    validation_alerts_count = models.IntegerField(null=True)
-    total_persons_covered = models.IntegerField(null=True)
-    total_persons_covered_revised = models.IntegerField(null=True)
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="cashplan_business_area", null=True
-    )
-    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="cashplan_program", null=True)
-    service_provider = models.ForeignKey(
-        "ServiceProvider", on_delete=models.DO_NOTHING, related_name="cashplan_service_provider", blank=True, null=True
-    )
-    is_migrated_to_payment_plan = models.BooleanField(null=True)
-
-    class Meta:
-        managed = False
-        db_table = "payment_cashplan"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-    def __str__(self) -> str:
-        return str(self.name)
 
 
 class Deliverymechanism(HopeModel):
@@ -1709,7 +1655,7 @@ class Payment(HopeModel):
     signature_hash = models.CharField(max_length=40, null=True)
     status = models.CharField(max_length=255, null=True)
     status_date = models.DateTimeField(null=True)
-    currency = models.CharField(max_length=4, null=True)
+    currency = models.CharField(max_length=4, blank=True, null=True)
     entitlement_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     entitlement_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     delivered_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
@@ -1755,6 +1701,7 @@ class Payment(HopeModel):
     )
     is_cash_assist = models.BooleanField(null=True)
     internal_data = models.JSONField(null=True)
+    vulnerability_score = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1803,9 +1750,9 @@ class PaymentPlan(HopeModel):
     total_undelivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=50, null=True)
     background_action_status = models.CharField(max_length=50, blank=True, null=True)
-    currency = models.CharField(max_length=4, null=True)
-    dispersion_start_date = models.DateField(null=True)
-    dispersion_end_date = models.DateField(null=True)
+    currency = models.CharField(max_length=4, blank=True, null=True)
+    dispersion_start_date = models.DateField(blank=True, null=True)
+    dispersion_end_date = models.DateField(blank=True, null=True)
     female_children_count = models.IntegerField(null=True)
     male_children_count = models.IntegerField(null=True)
     female_adults_count = models.IntegerField(null=True)
@@ -1828,10 +1775,27 @@ class PaymentPlan(HopeModel):
         "self", on_delete=models.DO_NOTHING, related_name="paymentplan_source_payment_plan", blank=True, null=True
     )
     target_population = models.ForeignKey(
-        "TargetPoulation", on_delete=models.DO_NOTHING, related_name="paymentplan_target_population", null=True
+        "TargetPopulation",
+        on_delete=models.DO_NOTHING,
+        related_name="paymentplan_target_population",
+        blank=True,
+        null=True,
     )
     internal_data = models.JSONField(null=True)
     is_cash_assist = models.BooleanField(null=True)
+    build_status = models.CharField(max_length=50, blank=True, null=True)
+    built_at = models.DateTimeField(blank=True, null=True)
+    excluded_ids = models.TextField(null=True)
+    steficon_targeting_applied_date = models.DateTimeField(blank=True, null=True)
+    targeting_criteria = models.OneToOneField(
+        "Targetingcriteria",
+        on_delete=models.DO_NOTHING,
+        related_name="paymentplan_targeting_criteria",
+        blank=True,
+        null=True,
+    )
+    vulnerability_score_max = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
+    vulnerability_score_min = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1903,72 +1867,11 @@ class Paymentplansupportingdocument(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class PaymentRecord(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    status = models.CharField(max_length=255, null=True)
-    status_date = models.DateTimeField(null=True)
-    currency = models.CharField(max_length=4, null=True)
-    entitlement_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    entitlement_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    delivered_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    delivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    delivery_date = models.DateTimeField(blank=True, null=True)
-    transaction_reference_id = models.CharField(max_length=255, blank=True, null=True)
-    transaction_status_blockchain_link = models.CharField(max_length=255, blank=True, null=True)
-    ca_id = models.CharField(max_length=255, blank=True, null=True)
-    ca_hash_id = models.UUIDField(unique=True, blank=True, null=True)
-    full_name = models.CharField(max_length=255, null=True)
-    total_persons_covered = models.IntegerField(null=True)
-    distribution_modality = models.CharField(max_length=255, null=True)
-    target_population_cash_assist_id = models.CharField(max_length=255, null=True)
-    entitlement_card_number = models.CharField(max_length=255, blank=True, null=True)
-    entitlement_card_status = models.CharField(max_length=20, blank=True, null=True)
-    entitlement_card_issue_date = models.DateField(blank=True, null=True)
-    vision_id = models.CharField(max_length=255, blank=True, null=True)
-    registration_ca_id = models.CharField(max_length=255, blank=True, null=True)
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="paymentrecord_business_area", null=True
-    )
-    delivery_type = models.ForeignKey(
-        Deliverymechanism,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentrecord_delivery_type",
-        blank=True,
-        null=True,
-    )
-    head_of_household = models.ForeignKey(
-        Individual, on_delete=models.DO_NOTHING, related_name="paymentrecord_head_of_household", blank=True, null=True
-    )
-    household = models.ForeignKey(
-        Household, on_delete=models.DO_NOTHING, related_name="paymentrecord_household", null=True
-    )
-    parent = models.ForeignKey(
-        Cashplan, on_delete=models.DO_NOTHING, related_name="paymentrecord_parent", blank=True, null=True
-    )
-    service_provider = models.ForeignKey(
-        "ServiceProvider", on_delete=models.DO_NOTHING, related_name="paymentrecord_service_provider", null=True
-    )
-    target_population = models.ForeignKey(
-        "TargetPoulation", on_delete=models.DO_NOTHING, related_name="paymentrecord_target_population", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "payment_paymentrecord"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
 class Paymentverification(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     version = models.BigIntegerField(null=True)
-    payment_object_id = models.UUIDField(blank=True, null=True)
     status = models.CharField(max_length=50, null=True)
     status_date = models.DateTimeField(blank=True, null=True)
     received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
@@ -1979,8 +1882,8 @@ class Paymentverification(HopeModel):
         related_name="paymentverification_payment_verification_plan",
         null=True,
     )
-    payment = models.OneToOneField(
-        Payment, on_delete=models.DO_NOTHING, related_name="paymentverification_payment", blank=True, null=True
+    payment = models.ForeignKey(
+        Payment, on_delete=models.DO_NOTHING, related_name="paymentverification_payment", null=True
     )
 
     class Meta:
@@ -1998,7 +1901,6 @@ class Paymentverificationplan(HopeModel):
     version = models.BigIntegerField(null=True)
     unicef_id = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=50, null=True)
-    payment_plan_object_id = models.UUIDField(blank=True, null=True)
     sampling = models.CharField(max_length=50, null=True)
     verification_channel = models.CharField(max_length=50, null=True)
     sample_size = models.IntegerField(blank=True, null=True)
@@ -2041,7 +1943,6 @@ class Paymentverificationsummary(HopeModel):
     status = models.CharField(max_length=50, null=True)
     activation_date = models.DateTimeField(blank=True, null=True)
     completion_date = models.DateTimeField(blank=True, null=True)
-    payment_plan_object_id = models.UUIDField(blank=True, null=True)
     payment_plan = models.OneToOneField(
         PaymentPlan,
         on_delete=models.DO_NOTHING,
@@ -2058,26 +1959,26 @@ class Paymentverificationsummary(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class ServiceProvider(HopeModel):
+class Beneficiarygroup(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    ca_id = models.CharField(unique=True, max_length=255, null=True)
-    full_name = models.CharField(max_length=255, blank=True, null=True)
-    short_name = models.CharField(max_length=100, blank=True, null=True)
-    country = models.CharField(max_length=3, null=True)
-    vision_id = models.CharField(max_length=255, blank=True, null=True)
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="serviceprovider_business_area", null=True
-    )
-    is_migrated_to_payment_plan = models.BooleanField(null=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
+    group_label = models.CharField(max_length=255, null=True)
+    group_label_plural = models.CharField(max_length=255, null=True)
+    member_label = models.CharField(max_length=255, null=True)
+    member_label_plural = models.CharField(max_length=255, null=True)
+    master_detail = models.BooleanField(null=True)
 
     class Meta:
         managed = False
-        db_table = "payment_serviceprovider"
+        db_table = "program_beneficiarygroup"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
 
 
 class Program(HopeModel):
@@ -2113,6 +2014,9 @@ class Program(HopeModel):
     )
     data_collecting_type = models.ForeignKey(
         DataCollectingType, on_delete=models.DO_NOTHING, related_name="program_data_collecting_type", null=True
+    )
+    beneficiary_group = models.ForeignKey(
+        Beneficiarygroup, on_delete=models.DO_NOTHING, related_name="program_beneficiary_group", null=True
     )
 
     class Meta:
@@ -2340,6 +2244,7 @@ class DataRegistrationdataimport(HopeModel):
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", blank=True, null=True
     )
+    import_from_ids = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2391,7 +2296,7 @@ class Householdselection(HopeModel):
         Household, on_delete=models.DO_NOTHING, related_name="householdselection_household", null=True
     )
     target_population = models.ForeignKey(
-        "TargetPoulation", on_delete=models.DO_NOTHING, related_name="householdselection_target_population", null=True
+        "TargetPopulation", on_delete=models.DO_NOTHING, related_name="householdselection_target_population", null=True
     )
 
     class Meta:
@@ -2550,7 +2455,7 @@ class Targetingindividualrulefilterblock(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class TargetPoulation(HopeModel):
+class TargetPopulation(HopeModel):
     is_removed = models.BooleanField(null=True)
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -2577,16 +2482,18 @@ class TargetPoulation(HopeModel):
     adult_male_count = models.IntegerField(blank=True, null=True)
     adult_female_count = models.IntegerField(blank=True, null=True)
     business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="targetpoulation_business_area", blank=True, null=True
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="targetpopulation_business_area", blank=True, null=True
     )
-    program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, related_name="targetpoulation_program", null=True)
+    program = models.ForeignKey(
+        Program, on_delete=models.DO_NOTHING, related_name="targetpopulation_program", null=True
+    )
     program_cycle = models.ForeignKey(
-        ProgramCycle, on_delete=models.DO_NOTHING, related_name="targetpoulation_program_cycle", null=True
+        ProgramCycle, on_delete=models.DO_NOTHING, related_name="targetpopulation_program_cycle", null=True
     )
     targeting_criteria = models.OneToOneField(
         Targetingcriteria,
         on_delete=models.DO_NOTHING,
-        related_name="targetpoulation_targeting_criteria",
+        related_name="targetpopulation_targeting_criteria",
         blank=True,
         null=True,
     )
