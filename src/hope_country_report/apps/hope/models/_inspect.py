@@ -1775,7 +1775,7 @@ class PaymentPlan(HopeModel):
         "self", on_delete=models.DO_NOTHING, related_name="paymentplan_source_payment_plan", blank=True, null=True
     )
     target_population = models.ForeignKey(
-        "TargetPoulation",
+        "TargetPopulation",
         on_delete=models.DO_NOTHING,
         related_name="paymentplan_target_population",
         blank=True,
@@ -2296,7 +2296,7 @@ class Householdselection(HopeModel):
         Household, on_delete=models.DO_NOTHING, related_name="householdselection_household", null=True
     )
     target_population = models.ForeignKey(
-        "TargetPoulation", on_delete=models.DO_NOTHING, related_name="householdselection_target_population", null=True
+        "TargetPopulation", on_delete=models.DO_NOTHING, related_name="householdselection_target_population", null=True
     )
 
     class Meta:
@@ -2455,7 +2455,7 @@ class Targetingindividualrulefilterblock(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class TargetPoulation(HopeModel):
+class TargetPopulation(HopeModel):
     is_removed = models.BooleanField(null=True)
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -2482,16 +2482,18 @@ class TargetPoulation(HopeModel):
     adult_male_count = models.IntegerField(blank=True, null=True)
     adult_female_count = models.IntegerField(blank=True, null=True)
     business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="targetpoulation_business_area", blank=True, null=True
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="targetpopulation_business_area", blank=True, null=True
     )
-    program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, related_name="targetpoulation_program", null=True)
+    program = models.ForeignKey(
+        Program, on_delete=models.DO_NOTHING, related_name="targetpopulation_program", null=True
+    )
     program_cycle = models.ForeignKey(
-        ProgramCycle, on_delete=models.DO_NOTHING, related_name="targetpoulation_program_cycle", null=True
+        ProgramCycle, on_delete=models.DO_NOTHING, related_name="targetpopulation_program_cycle", null=True
     )
     targeting_criteria = models.OneToOneField(
         Targetingcriteria,
         on_delete=models.DO_NOTHING,
-        related_name="targetpoulation_targeting_criteria",
+        related_name="targetpopulation_targeting_criteria",
         blank=True,
         null=True,
     )
