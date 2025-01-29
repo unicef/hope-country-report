@@ -79,7 +79,7 @@ CodeMirror.defineMode("xml", function(editorConf, config_) {
           if (stream.match("CDATA[")) return chain(inBlock("atom", "]]>", "]]>"));
           else return null;
         } else if (stream.match("--")) {
-          return chain(inBlock("comment", /-->/, /--!>/));
+          return chain(inBlock("comment", /-->/, /--!?[>]/));
         } else if (stream.match("DOCTYPE", true, true)) {
           stream.eatWhile(/[\w\._\-]/);
           return chain(doctype(1));
