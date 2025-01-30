@@ -133,18 +133,3 @@ class AreaAdmin(HopeModelAdmin):
 @admin.register(models.PaymentPlan)
 class PaymentPaymentplanAdmin(HopeModelAdmin):
     search_fields = ("name",)
-
-
-@admin.register(models.PaymentRecord)
-class PaymentPaymentrecordAdmin(HopeModelAdmin):
-    search_fields = ("name",)
-
-
-#
-# @admin.register(models.IndividualRoleInHousehold)
-# class IndividualRoleInHouseholdAdmin(HopeModelAdmin):
-#     ...
-#
-# @admin.register(models.Document)
-# class DocumentsAdmin(HopeModelAdmin):
-#     ...
