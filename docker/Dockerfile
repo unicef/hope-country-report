@@ -44,6 +44,7 @@ ENTRYPOINT ["entrypoint.sh"]
 FROM base AS prd
 
 ENV PATH=$PATH:/code/.venv/bin/
+ENV DJANGO_SETTINGS_MODULE="hope_country_report.config.settings"
 
 COPY --chown=hcr:hcr .. ./
 COPY --chown=hcr:hcr --from=builder $PACKAGES_DIR $PACKAGES_DIR
