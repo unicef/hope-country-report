@@ -2900,13 +2900,6 @@ files = [
     {file = "pymdown_extensions-10.12.tar.gz", hash = "sha256:b0ee1e0b2bef1071a47891ab17003bfe5bf824a398e13f49f8ed653b699369a7"},
 ]
 
-[[package]]
-name = "pyminizip"
-version = "0.2.6"
-summary = "A minizip wrapper - To create a password encrypted zip file in python."
-files = [
-    {file = "pyminizip-0.2.6.tar.gz", hash = "sha256:0a954dd2a65fd72c8b827b83fb806fb4f301075a6ec43e207d3345ab15843a7a"},
-]
 
 [[package]]
 name = "pymupdf"

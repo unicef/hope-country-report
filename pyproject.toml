@@ -69,7 +69,6 @@ dependencies = [
     "psycopg2-binary<=2.9.9",
     "py-vapid",
     "pyhtml2pdf",
-    "pyminizip",
     "PyMuPDF",
     "pypdf",
     "python-pptx",
@@ -87,45 +86,9 @@ dependencies = [
     "unicef-security",
     "pathvalidate",
     "uwsgi",
+    "pytest-xdist>=3.6.1",
 ]
 
-[tool.pdm.dev-dependencies]
-dev = [
-    "black",
-    "django-stubs",
-    "django-stubs-ext",
-    "django-webtest",
-    "drf-api-checker",
-    "factory-boy",
-    "flake8",
-    "freezegun",
-    "fs",
-    "isort",
-    "markupsafe",
-    "mdx-gh-links",
-    "mike",
-    "mypy",
-    "pdbpp",
-    "pre-commit",
-    "py",
-    "pyquery",
-    "pytest-celery",
-    "pytest-cov",
-    "pytest-django",
-    "pytest-echo",
-    "pytest-selenium",
-    "pytest",
-    "pyupgrade",
-    "responses",
-    "selenium<4.10",
-    "tox",
-    "types-freezegun",
-    "types-python-dateutil",
-    "types-pytz",
-    "types-redis",
-    "types-requests",
-    "types-setuptools"
-]
 
 
 [tool.black]
@@ -212,7 +175,7 @@ dev = [
     "pytest",
     "pyupgrade",
     "responses",
-    "selenium<4.10",
+    "selenium",
     "tox",
     "types-freezegun",
     "types-python-dateutil",

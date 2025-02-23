@@ -12,7 +12,6 @@ from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.functional import cached_property
 
-import pyminizip
 from pathvalidate import sanitize_filename
 from sentry_sdk import capture_exception
 
@@ -96,9 +95,6 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                                         "context": context,
                                     }
                                 )
-                # content = ContentFile(
-                #     output, name=f"r{report.pk}_ds{dataset.pk}_fmt{formatter.pk}{formatter.file_suffix}"
-                # )
                 filename = f"r{report.pk}_ds{dataset.pk}_fmt{formatter.pk}{formatter.file_suffix}"
                 email_password = False
                 values = {
@@ -122,14 +118,9 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
 
                                 destinationFile = Path(f"{sourceFile}.zip")
                                 password = report.pwd
-                                compression_level = 0
-                                pyminizip.compress(
-                                    str(sourceFile.absolute()),
-                                    None,
-                                    str(destinationFile.absolute()),
-                                    password,
-                                    compression_level,
-                                )
+                                with ZipFile(destinationFile, "w", ZIP_DEFLATED) as zf:
+                                    zf.setpassword(password.encode())
+                                    zf.writestr(filename, output)
                                 content = ContentFile(Path(destinationFile).read_bytes(), destinationFile.name)
 
                     else:
