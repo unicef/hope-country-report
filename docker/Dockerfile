@@ -12,27 +12,22 @@ RUN apt update \
     && mkdir -p /code /tmp /data /static \
     && chown -R hcr:hcr /code /tmp /data /static
 
-ENV PACKAGES_DIR=/packages
-ENV PYPACKAGES=$PACKAGES_DIR/__pypackages__/3.12
-ENV LIB_DIR=$PYPACKAGES/lib
-ENV PYTHONPATH=$PYTHONPATH:$LIB_DIR:/code/src
-ENV PATH=$PATH:$PYPACKAGES/bin
+ENV PATH=$PATH:/code/.venv/bin/ \
+    PACKAGES_DIR=/code/.venv/lib/python3.12/site-packages
 
 WORKDIR /code
 
+RUN curl -sSf https://raw.githubusercontent.com/astral-sh/uv/master/install.sh | sh
+
 FROM base as builder
 
-WORKDIR $PACKAGES_DIR
-RUN pip install pdm setuptools
 COPY ../pyproject.toml ./
-COPY ../pdm.lock ./
-RUN pdm config python.use_venv false
-RUN pdm config venv.in_project true
-RUN pdm sync --prod --no-editable --no-self
+RUN uv install
+RUN uv sync --prod --no-editable
 
 FROM builder AS dev
 
-RUN pdm sync --no-editable --no-self
+RUN uv sync --dev --no-editable
 
 WORKDIR /code
 COPY .. ./
@@ -42,8 +37,6 @@ ENTRYPOINT ["entrypoint.sh"]
 
 
 FROM base AS prd
-
-ENV PATH=$PATH:/code/.venv/bin/
 
 COPY --chown=hcr:hcr .. ./
 COPY --chown=hcr:hcr --from=builder $PACKAGES_DIR $PACKAGES_DIR
