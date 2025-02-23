@@ -2,6 +2,18 @@
 max-line-length = 120
 max-complexity = 12
 max-nesting-depth = 12
+cache = true
+cache-dir = .flake8-cache
+
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    migrations,
+    node_modules,
+    build,
+    dist
 
 ignore =
     # black formatting related
