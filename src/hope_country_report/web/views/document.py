@@ -75,6 +75,7 @@ class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixi
         return get_object_or_404(
             ReportDocument.objects.select_related("report"),
             report__country_office=self.selected_office,
+            report__visible=True,
             id=self.kwargs["pk"],
         )
 
@@ -83,7 +84,9 @@ class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, De
     permission_required = ["power_query.view_reportconfiguration"]
 
     def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
-        return ReportDocument.objects.get(report__country_office=self.selected_office, id=self.kwargs["pk"])
+        return ReportDocument.objects.get(
+            report__country_office=self.selected_office, id=self.kwargs["pk"], report__visible=True
+        )
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> "RedirectOrResponse":  # type: ignore[override]
         try:
