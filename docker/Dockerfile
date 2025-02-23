@@ -13,21 +13,23 @@ RUN apt update \
     && chown -R hcr:hcr /code /tmp /data /static
 
 ENV PATH=$PATH:/code/.venv/bin/ \
-    PACKAGES_DIR=/code/.venv/lib/python3.12/site-packages
+    PACKAGES_DIR=/code/.venv/lib/python3.12/site-packages \
+    PYTHONPATH=$PYTHONPATH:/code/src
 
 WORKDIR /code
-
-RUN curl -sSf https://raw.githubusercontent.com/astral-sh/uv/master/install.sh | sh
 
 FROM base as builder
 
 COPY ../pyproject.toml ./
-RUN uv install
-RUN uv sync --prod --no-editable
+COPY ../uv.lock ./
+
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
+
+RUN uv sync
 
 FROM builder AS dev
-
-RUN uv sync --dev --no-editable
 
 WORKDIR /code
 COPY .. ./
@@ -38,6 +40,7 @@ ENTRYPOINT ["entrypoint.sh"]
 
 FROM base AS prd
 
+ENV PATH=$PATH:/code/.venv/bin/
 ENV DJANGO_SETTINGS_MODULE="hope_country_report.config.settings"
 
 COPY --chown=hcr:hcr .. ./
