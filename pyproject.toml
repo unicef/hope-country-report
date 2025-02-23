@@ -87,6 +87,7 @@ dependencies = [
     "pathvalidate",
     "uwsgi",
     "pytest-xdist>=3.6.1",
+    "pyzipper>=0.3.6",
 ]
 
 

@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 
 import logging
-import tempfile
 from functools import partial
 from io import BytesIO
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from django.core.files.base import ContentFile
 from django.db import models, transaction
@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.functional import cached_property
 
+import pyzipper
 from pathvalidate import sanitize_filename
 from sentry_sdk import capture_exception
 
@@ -103,29 +104,33 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                     "arguments": dataset.arguments,
                 }
                 if report.compress:
-                    from zipfile import ZIP_DEFLATED, ZipFile
-
                     values["info"]["zip"] = {
                         "content_type": formatter.content_type,
                         "file_suffix": formatter.file_suffix,
                     }
                     if report.protect:
                         email_password = True
-                        with tempfile.TemporaryDirectory(prefix="___") as tdir:
+                        with TemporaryDirectory(prefix="___") as tdir:
                             with pushd(tdir):
-                                sourceFile = Path(filename)
-                                sourceFile.write_bytes(output)
+                                source_file = Path(filename)
+                                source_file.write_bytes(output)
 
-                                destinationFile = Path(f"{sourceFile}.zip")
+                                destination_file = Path(f"{source_file}.zip")
                                 password = report.pwd
-                                with ZipFile(destinationFile, "w", ZIP_DEFLATED) as zf:
-                                    zf.setpassword(password.encode())
-                                    zf.writestr(filename, output)
-                                content = ContentFile(Path(destinationFile).read_bytes(), destinationFile.name)
 
+                                with pyzipper.AESZipFile(
+                                    destination_file,
+                                    "w",
+                                    compression=pyzipper.ZIP_DEFLATED,
+                                    encryption=pyzipper.WZ_AES,
+                                ) as zf:
+                                    zf.setpassword(password.encode("utf-8"))
+                                    zf.writestr(filename, output)
+
+                                content = ContentFile(destination_file.read_bytes(), destination_file.name)
                     else:
                         mf = BytesIO()
-                        with ZipFile(mf, mode="w", compression=ZIP_DEFLATED) as zf:
+                        with pyzipper.AESZipFile(mf, mode="w", compression=pyzipper.ZIP_DEFLATED) as zf:
                             zf.writestr(filename, output)
                         content = ContentFile(mf.getvalue(), name=f"{filename}.zip")
                 else:
