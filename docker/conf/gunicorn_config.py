@@ -54,7 +54,7 @@ def worker_int(worker):
         for filename, lineno, name, line in traceback.extract_stack(stack):
             code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
             if line:
-                code.append("  %s" % (line.strip()))
+                code.append(f"  {line.strip()}")
     worker.log.debug("\n".join(code))
 
 

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 class QueryFactory(AutoRegisterModelFactory):
-    name = factory.Sequence(lambda n: "Query %s" % n)
+    name = factory.Sequence(lambda n: f"Query {n}")
     owner = factory.SubFactory(UserFactory)
     country_office = factory.SubFactory(CountryOfficeFactory)
     target = factory.SubFactory(ContentTypeFactory, app_label="hope", model="household")
@@ -44,7 +44,7 @@ class QueryFactory(AutoRegisterModelFactory):
 
 
 class ReportTemplateFactory(AutoRegisterModelFactory):
-    name = factory.Sequence(lambda n: "ReportTemplate %s" % n)
+    name = factory.Sequence(lambda n: f"ReportTemplate {n}")
 
     class Meta:
         model = ReportTemplate
@@ -87,8 +87,8 @@ class DatasetFactory(AutoRegisterModelFactory):
 
 
 class ReportConfigurationFactory(AutoRegisterModelFactory):
-    name = factory.Sequence(lambda n: "Report %s" % n)
-    title = factory.Sequence(lambda n: "Report %s" % n)
+    name = factory.Sequence(lambda n: f"Report {n}")
+    title = factory.Sequence(lambda n: f"Report {n}")
     query = factory.SubFactory(QueryFactory)
     owner = factory.SubFactory(UserFactory)
     country_office = factory.SubFactory(CountryOfficeFactory)
@@ -134,7 +134,7 @@ class ReportDocumentFactory(AutoRegisterModelFactory):
 
 
 class ParametrizerFactory(AutoRegisterModelFactory):
-    code = factory.Sequence(lambda n: "params-%s" % n)
+    code = factory.Sequence(lambda n: f"params-{n}")
     source = None
 
     class Meta:
@@ -144,7 +144,7 @@ class ParametrizerFactory(AutoRegisterModelFactory):
 
 class ChartPageFactory(AutoRegisterModelFactory):
     country_office = factory.SubFactory(CountryOfficeFactory)
-    title = factory.Sequence(lambda n: "ChartPage %s" % n)
+    title = factory.Sequence(lambda n: f"ChartPage {n}")
     query = factory.SubFactory(QueryFactory, country_office=factory.SelfAttribute("..country_office"))
 
     class Meta:
