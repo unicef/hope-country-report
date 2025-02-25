@@ -40,7 +40,7 @@ def test_login_tenant_user(django_app, tenant_user):
     res = res.follow()
     res.forms["select-tenant"]["tenant"] = tenant.pk
     res = res.forms["select-tenant"].submit().follow()
-    assert res.pyquery("#site-name a").text() == "HOPE Reporting %s" % tenant.name
+    assert res.pyquery("#site-name a").text() == f"HOPE Reporting {tenant.name}"
     assert state.tenant is None
 
 

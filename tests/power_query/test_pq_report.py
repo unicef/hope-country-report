@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING
 
-import tempfile
-from pathlib import PurePath
-from zipfile import ZipFile
+from pathlib import Path, PurePath
+from tempfile import TemporaryDirectory
 
 import pytest
 from unittest import mock
@@ -10,6 +9,7 @@ from unittest.mock import Mock
 
 from django.conf import settings
 
+import pyzipper
 from constance.test import override_config
 from extras.testutils.factories import ReportConfigurationFactory
 
@@ -134,10 +134,11 @@ def test_report_zip(db, settings, report: "ReportConfiguration", mailoutbox) -> 
     assert doc.file
     assert doc.content_type == "application/x-zip-compressed"
 
-    archive = ZipFile(doc.file.path, "r")
-    assert len(archive.namelist()) == 1
-    page_document = archive.open(archive.namelist()[0])
-    assert PurePath(page_document.name).suffix == doc.formatter.file_suffix
+    # Use pyzipper to read the AES-encrypted ZIP file
+    with pyzipper.AESZipFile(doc.file.path, "r") as archive:
+        assert len(archive.namelist()) == 1
+        page_document = archive.open(archive.namelist()[0])
+        assert PurePath(page_document.name).suffix == doc.formatter.file_suffix
 
 
 @override_config(CATCH_ALL_EMAIL="")
@@ -158,6 +159,7 @@ def test_report_zip_protected_notify_email(
     assert mailoutbox[0].subject == f"Your password for {report.title}"
 
 
+@override_config(CATCH_ALL_EMAIL="")
 def test_report_zip_protected(transactional_db, rf, settings, report: "ReportConfiguration", mailoutbox) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     report.compress = True
@@ -174,17 +176,50 @@ def test_report_zip_protected(transactional_db, rf, settings, report: "ReportCon
     assert doc.file
     assert doc.content_type == "application/x-zip-compressed"
 
-    with pytest.raises(RuntimeError):
-        archive = ZipFile(doc.file.path, "r")
-        archive.open(archive.namelist()[0])
+    with pyzipper.AESZipFile(doc.file.path, "r") as archive:
+        with pytest.raises(RuntimeError):
+            archive.open(archive.namelist()[0])
 
-    archive = ZipFile(doc.file.path, "r")
-    archive.setpassword(report.pwd.encode())
-    assert len(archive.namelist()) == 1
-    filename = archive.namelist()[0]
-    tdir = tempfile.TemporaryDirectory(prefix="~")
-    with pushd(tdir.name):
-        archive.extract(filename, filename)
+        archive.setpassword(report.pwd.encode("utf-8"))
+        assert len(archive.namelist()) == 1
+        filename = archive.namelist()[0]
+
+        assert not filename.endswith("/")
+
+        with TemporaryDirectory(prefix="~") as tdir:
+            with pushd(tdir):
+                archive.extract(filename, tdir)
+                extracted_file = Path(tdir) / filename
+
+                assert extracted_file.exists()
+                assert extracted_file.is_file()
+                extracted_content = extracted_file.read_bytes()
+                dataset = doc.dataset
+                formatter = doc.formatter
+                context = {
+                    **dataset.arguments,
+                    **dataset.extra,
+                    **report.context,
+                }
+                args_desc = "_".join([str(value) for value in dataset.arguments.values()])
+                try:
+                    title = f"{report.title.format(**context)}{args_desc}".title()
+                except KeyError:
+                    title = report.title
+                rendered_content = formatter.render(
+                    {
+                        "dataset": dataset,
+                        "report": report,
+                        "title": title,
+                        "context": context,
+                    }
+                )
+                if isinstance(rendered_content, bytearray):
+                    expected_content = bytes(rendered_content)
+                else:
+                    expected_content = rendered_content.encode("utf-8")
+
+                assert extracted_content == expected_content
 
 
 def test_report_abstract(db, query_impl: "Query") -> None:

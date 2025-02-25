@@ -153,7 +153,7 @@ class Command(BaseCommand):
             buffer = io.StringIO()
 
             for line in self.handle_inspection(options):
-                buffer.write("%s\n" % line)
+                buffer.write(f"{line}\n")
 
             output_filepath = resource_path(f"apps/hope/models/{output_file}")
             Path(output_filepath).write_text(buffer.getvalue())
@@ -224,13 +224,13 @@ class Command(BaseCommand):
                     ]
                     table_description = connection.introspection.get_table_description(cursor, table_name)
                 except BaseException as e:
-                    yield "# Unable to inspect table '%s'" % table_name
-                    yield "# The error was: %s" % e
+                    yield f"# Unable to inspect table '{table_name}'"
+                    yield f"# The error was: {e}"
                     continue
 
                 yield ""
                 yield ""
-                yield "class %s(%s):" % (model_name, basemodel)
+                yield f"class {model_name}({basemodel}):"
 
                 known_models.append(model_name)
                 used_column_names = []  # Holds column names used in the table so far
@@ -330,11 +330,11 @@ class Command(BaseCommand):
                     if extra_params:
                         if not field_desc.endswith("("):
                             field_desc += ", "
-                        field_desc += ", ".join("%s=%s" % (k, strip_prefix(repr(v))) for k, v in extra_params.items())
+                        field_desc += ", ".join(f"{k}={strip_prefix(repr(v))}" for k, v in extra_params.items())
                     field_desc += ")"
                     if comment_notes:
                         field_desc += "  # " + " ".join(comment_notes)
-                    yield "    %s" % field_desc
+                    yield f"    {field_desc}"
                 for meta_line in self.get_meta(table_name, constraints, column_to_field_name):
                     yield meta_line
 
@@ -376,11 +376,11 @@ class Command(BaseCommand):
                 field_notes.append("Field renamed because it contained more than one '_' in a row.")
 
         if new_name.startswith("_"):
-            new_name = "field%s" % new_name
+            new_name = f"field{new_name}"
             field_notes.append("Field renamed because it started with '_'.")
 
         if new_name.endswith("_"):
-            new_name = "%sfield" % new_name
+            new_name = f"{new_name}field"
             field_notes.append("Field renamed because it ended with '_'.")
 
         if keyword.iskeyword(new_name):
@@ -388,7 +388,7 @@ class Command(BaseCommand):
             field_notes.append("Field renamed because it was a Python reserved word.")
 
         if new_name[0].isdigit():
-            new_name = "number_%s" % new_name
+            new_name = f"number_{new_name}"
             field_notes.append("Field renamed because it wasn't a valid Python identifier.")
 
         if new_name in used_column_names:
@@ -473,11 +473,11 @@ class Command(BaseCommand):
                     if fields:
                         tup = (
                             "("
-                            + ", ".join(sorted(["'%s'" % column_to_field_name[c] for c in cols if len(cols) > 1]))
+                            + ", ".join(sorted([f"'{column_to_field_name[c]}'" for c in cols if len(cols) > 1]))
                             + ")"
                         )
                         unique_together.add(tup)
-        meta = ["", "    class Meta:", "        managed = False", "        db_table = '%s'" % table_name]
+        meta = ["", "    class Meta:", "        managed = False", f"        db_table = '{table_name}'"]
 
         # if unique_together:
         #     tup = "(" + ", ".join(sorted(unique_together)) + ",)"
