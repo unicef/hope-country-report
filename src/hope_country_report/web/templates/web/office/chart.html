@@ -15,7 +15,7 @@
 <script>
     $(function(){
         {% if chart_content %}
-        {{ chart_content|safe }} 
+        {{ chart_content|safe }}
         {% else %}
             var data = JSON.parse("{{ json_data|escapejs }}");
             $("#output").pivotUI(

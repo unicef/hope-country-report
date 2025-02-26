@@ -76,8 +76,7 @@ def test_formatter_html_multiple(dataset):
     result = fmt.render({"dataset": dataset})
     content = result.decode()
     template = (
-        f"<html><body><div>{H1}</div><div>{H2}</div></body></html>"
-        f"<html><body><div>{H3}</div><div></div></body></html>"
+        f"<html><body><div>{H1}</div><div>{H2}</div></body></html><html><body><div>{H3}</div><div></div></body></html>"
     )
     assert content == template
 

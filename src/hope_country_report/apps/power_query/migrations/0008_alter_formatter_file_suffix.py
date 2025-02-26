@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("power_query", "0007_alter_parametrizer_options_and_more"),
     ]

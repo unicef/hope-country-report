@@ -431,8 +431,7 @@ class Command(BaseCommand):
         if field_type == "DecimalField":
             if row[4] is None or row[5] is None:
                 field_notes.append(
-                    "max_digits and decimal_places have been guessed, as this "
-                    "database handles decimal fields as float"
+                    "max_digits and decimal_places have been guessed, as this database handles decimal fields as float"
                 )
                 field_params["max_digits"] = row[4] if row[4] is not None else 10
                 field_params["decimal_places"] = row[5] if row[5] is not None else 5
