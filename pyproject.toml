@@ -64,6 +64,7 @@ dependencies = [
     "geojson",
     "htmlmin",
     "natural-keys",
+    "pathvalidate",
     "pdfkit",
     "pillow",
     "psycopg2-binary<=2.9.9",
@@ -71,11 +72,14 @@ dependencies = [
     "pyhtml2pdf",
     "PyMuPDF",
     "pypdf",
+    "pytest-xdist>=3.6.1",
     "python-pptx",
     "pytopojson",
     "pytz",
+    "pyzipper>=0.3.6",
     "qrcode",
     "redis",
+    "ruff>=0.9.7",
     "sentry-sdk==1.40.4",
     "shapely",
     "social-auth-app-django",
@@ -84,10 +88,7 @@ dependencies = [
     "tablib[xlsx]",
     "tzdata",
     "unicef-security",
-    "pathvalidate",
     "uwsgi",
-    "pytest-xdist>=3.6.1",
-    "pyzipper>=0.3.6",
 ]
 
 
