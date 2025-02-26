@@ -61,7 +61,7 @@ jobs:
         run: |
           docker run --rm -i \
             ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-support-images:country-report-${{ github.sha }}-dev \
-            ruff format . --check --output-format=github
+            ruff format . --check
 
   unit_tests:
     runs-on: ubuntu-latest
