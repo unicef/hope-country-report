@@ -1,6 +1,7 @@
 def should_profile_power_query(request):
     return request.path.startswith("/power_query/")
 
+
 SILKY_PYTHON_PROFILER_FUNC = should_profile_power_query
 SILKY_INTERCEPT_FUNC = should_profile_power_query
 

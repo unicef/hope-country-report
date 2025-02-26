@@ -114,6 +114,7 @@ class Command(BaseCommand):
         if self.verbosity >= 1:
             echo = self.stdout.write
         else:
+
             def echo(*a, **kw):
                 pass
 

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("power_query", "0008_alter_formatter_file_suffix"),
     ]
