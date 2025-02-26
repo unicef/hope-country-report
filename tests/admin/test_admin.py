@@ -77,7 +77,7 @@ def pytest_generate_tests(metafunc):
                 buttons = admin.extra_button_handlers.values()
                 full_name = f"{model._meta.app_label}.{name}"
                 admin_name = f"{model._meta.app_label}.{admin.__class__.__name__}"
-                if not (full_name in excluded_models):
+                if full_name not in excluded_models:
                     for btn in buttons:
                         tid = f"{admin_name}:{btn.name}"
                         if tid not in excluded_buttons:
@@ -90,7 +90,7 @@ def pytest_generate_tests(metafunc):
         for model, admin in site._registry.items():
             name = model._meta.object_name
             full_name = f"{model._meta.app_label}.{name}"
-            if not (full_name in excluded_models):
+            if full_name not in excluded_models:
                 m.append(admin)
                 ids.append(f"{admin.__class__.__name__}:{full_name}")
         metafunc.parametrize("modeladmin", m, ids=ids)

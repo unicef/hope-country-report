@@ -3,7 +3,7 @@ from django.db.models.fields import UUIDField
 from .base import AutoRegisterModelFactory, factories_registry, HopeAutoRegisterModelFactory, TAutoRegisterModelFactory
 
 # isort: split
-from .adv_filters import AdvancedFilterFactory
+from .adv_filters import AdvancedFilterFactory as AdvancedFilterFactory
 from .contenttypes import *
 from .django_auth import *
 from .django_celery_beat import *

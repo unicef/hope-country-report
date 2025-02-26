@@ -40,7 +40,7 @@ jobs:
                 --target dev \
                 --push \
                 ./
-                
+
     black:
       runs-on: ubuntu-latest
       needs: [build_and_push_dev]
@@ -127,13 +127,13 @@ jobs:
               -f ./docker/Dockerfile \
               --target prd \
               --push ./"
-            
+
             if [ "${{ github.ref }}" = "refs/heads/master" ]; then
               version=$(python3 -c "import sys; version=None; [version:=line.split('=')[1].strip().strip('\"') for line in open('pyproject.toml', 'r') if line.strip().startswith('version =')]; print(version if version else sys.exit(1))")
               tagged_image=${{ vars.DOCKERHUB_ORGANIZATION }}/hope:country-report-$version
               build_command="$build_command -t $tagged_image"
             fi
-            
+
             eval $build_command
 
     trivy:
@@ -188,10 +188,10 @@ jobs:
               contentLength=$(echo -n $jsonBody | wc -c)
               project=ICTD-HCT-MIS
               organization=unicef
-  
+
               echo Triggering deploy for pipeline $pipeline
               echo JSON body: $jsonBody
-  
+
               curl -f -v -L \
                 -u ":${{ secrets.AZURE_PAT }}" \
                 -H "Content-Type: application/json" \
