@@ -8,7 +8,7 @@ ABOUT HOPE Country Report
 
 - python 3.12
 - [direnv](https://direnv.net/) - not mandatory but strongly recommended
-- [pdm](https://pdm.fming.dev/2.9/)
+- [uv](https://docs.astral.sh/uv/)
 
 ## Configure development environment
 
@@ -23,10 +23,8 @@ ABOUT HOPE Country Report
 
 ### 1. Clone repo and install requirements
     git clone https://github.com/unicef/hope-country-report
-    pdm venv create 3.12
-    pdm install
-    pdm venv activate in-project
-    pre-commit install
+    cd hope-country-report
+    uv sync
 
 ### 2. configure your environment
 
