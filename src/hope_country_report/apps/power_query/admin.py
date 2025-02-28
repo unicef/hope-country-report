@@ -174,8 +174,13 @@ class QueryAdmin(
     form = QueryForm
     date_hierarchy = "datasets__last_run"
 
-    def get_queryset(self, request: HttpRequest) -> "QuerySet[AnyModel]":
-        return super().get_queryset(request).select_related("target", "owner")
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("target", "owner")
+        if request.user.is_superuser:
+            return qs
+        if state.must_tenant:
+            return qs.filter(country_office=state.tenant)
+        return qs
 
     def success(self, obj: Query) -> bool:
         return not bool(obj.error_message)
@@ -332,8 +337,13 @@ class DatasetAdmin(
     readonly_fields = ("last_run", "query", "info")
     date_hierarchy = "last_run"
 
-    def get_queryset(self, request: HttpRequest):  # type: ignore[no-untyped-def]
-        return super().get_queryset(request).select_related("query", "query__target")
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("query", "query__target")
+        if request.user.is_superuser:
+            return qs
+        if state.must_tenant:
+            return qs.filter(query__country_office=state.tenant)
+        return qs
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
@@ -469,6 +479,14 @@ class ReportConfigurationAdmin(
     linked_objects_hide_empty = False
     object: "ReportConfiguration"
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("query", "country_office", "owner")
+        if request.user.is_superuser:
+            return qs
+        if state.must_tenant:
+            return qs.filter(query__country_office=state.tenant)
+        return qs
+
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
@@ -546,8 +564,13 @@ class ReportDocumentAdmin(
     date_hierarchy = "dataset__last_run"
     readonly_fields = ("arguments", "report", "dataset", "content_type", "formatter", "info", "size")
 
-    def get_queryset(self, request: HttpRequest) -> "QuerySet[ReportDocument]":
-        return super().get_queryset(request)
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("report__query", "dataset")
+        if request.user.is_superuser:
+            return qs
+        if state.must_tenant:
+            return qs.filter(report__query__country_office=state.tenant)
+        return qs
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
