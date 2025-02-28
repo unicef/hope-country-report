@@ -18,7 +18,7 @@ def build_filter_url(context: dict[str, Any], field: str | None = None, value: s
             params[field] = value
         elif field in params:
             del params[field]
-    return "?%s" % urlencode(sorted(params.items()))
+    return f"?{urlencode(sorted(params.items()))}"
 
 
 @register.filter("parse_bool")

@@ -20,7 +20,7 @@
 5\. Switch to tab "Add query | HOPE Reporting site admin"
 
 
-6\. 
+6\.
 ```python
 hh_list= [
     "HH-23-0271.6128",

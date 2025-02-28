@@ -27,7 +27,7 @@ def enable_flag(name: str) -> "Iterator[Any]":
 
 
 def validate_bool(value: str) -> None:
-    if not value.lower() in ["true", "1", "yes", "t", "y", "false", "0", "no", "f", "n"]:
+    if value.lower() not in ["true", "1", "yes", "t", "y", "false", "0", "no", "f", "n"]:
         raise ValidationError("Enter a valid bool")
 
 

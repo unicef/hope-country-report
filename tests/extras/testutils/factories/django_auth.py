@@ -14,7 +14,7 @@ class PermissionFactory(AutoRegisterModelFactory):
 
 
 class GroupFactory(AutoRegisterModelFactory):
-    name = factory.Sequence(lambda n: "group %s" % n)
+    name = factory.Sequence(lambda n: f"group {n}")
 
     class Meta:
         model = Group

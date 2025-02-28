@@ -92,7 +92,7 @@ class user_grant_role(ContextDecorator):  # noqa
             if hasattr(self.user, cache):
                 delattr(self.user, cache)
         if self.country_office:
-            cache_name = "_power_query_%s_perm_cache" % self.country_office.pk
+            cache_name = f"_power_query_{self.country_office.pk}_perm_cache"
             if hasattr(self.user, cache_name):
                 delattr(self.user, cache_name)
         __, self.is_added = UserRole.objects.get_or_create(
@@ -141,7 +141,7 @@ class user_grant_permissions(ContextDecorator):  # noqa
             if hasattr(self.user, cache):
                 delattr(self.user, cache)
         if self.country_office:
-            cache_name = "_power_query_%s_perm_cache" % self.country_office.pk
+            cache_name = f"_power_query_{self.country_office.pk}_perm_cache"
             if hasattr(self.user, cache_name):
                 delattr(self.user, cache_name)
 

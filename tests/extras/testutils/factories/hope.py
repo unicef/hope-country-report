@@ -104,7 +104,7 @@ class AreaTypeFactory(AutoRegisterModelFactory):
 
 class AreaFactory(AutoRegisterModelFactory):
     id = factory.LazyFunction(lambda: str(uuid.uuid4()))
-    name = factory.Sequence(lambda x: "Area #%s" % x)
+    name = factory.Sequence(lambda x: f"Area #{x}")
     area_type = factory.SubFactory(AreaTypeFactory, parent=None)
     parent = None
 

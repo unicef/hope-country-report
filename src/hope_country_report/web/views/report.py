@@ -26,7 +26,7 @@ class OfficeConfigurationListView(SelectedOfficeMixin, PermissionRequiredMixin, 
         return super().get_context_data(title=_("Configured Reports"), **kwargs)
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        qs = ReportConfiguration.objects.filter(country_office=self.selected_office)
+        qs = ReportConfiguration.objects.filter(country_office=self.selected_office, visible=True)
         if tag := self.request.GET.get("tag", None):
             qs = qs.filter(tags__name=tag)
         if active := self.request.GET.get("active", None):

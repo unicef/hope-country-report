@@ -27,7 +27,7 @@ class TenantBackend(BaseBackend):
             return set()
         if user.is_anonymous:
             return set()
-        perm_cache_name = "_tenant_%s_perm_cache" % str(tenant.pk)
+        perm_cache_name = f"_tenant_{str(tenant.pk)}_perm_cache"
         if not hasattr(user, perm_cache_name):
             qs = Permission.objects.all()
             if not user.is_superuser:

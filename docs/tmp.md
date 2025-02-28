@@ -31,7 +31,7 @@ daily refreshed
 
 code:
 result variable contains the result
-extra variable contains extra context 
+extra variable contains extra context
 
 Formatter
 template to display or export reports
