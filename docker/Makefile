@@ -1,5 +1,5 @@
 BASE_IMAGE?=hope-contry-report
-CHECKSUM?=$(shell sha1sum ../pdm.lock | awk '{print $$1}')
+CHECKSUM?=$(shell sha1sum ../uv.lock | awk '{print $$1}')
 LOCK_SHA?=$(shell echo ${CHECKSUM} | cut -c 1-8)
 COMMIT_SHA?=$(shell git rev-parse --short HEAD)
 VERSION?=dev
