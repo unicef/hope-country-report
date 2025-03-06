@@ -13,7 +13,7 @@
 ![Image](../_screenshots/ascreenshot56.jpeg)
 
 
-4\. Delete anything in the code field  `result=conn.all()`  
+4\. Delete anything in the code field  `result=conn.all()`
 
 ![Image](../_screenshots/ascreenshot57.jpeg)
 

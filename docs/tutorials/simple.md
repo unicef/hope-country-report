@@ -48,7 +48,7 @@ Alert: The list of tables available in the Hope project can be viewed on this [l
 ![Image](../_screenshots/ascreenshot5.jpeg)
 
 
-10\. 
+10\.
 ```python
 result = list(conn.filter(withdrawn=False, first_registration_date__year__gte=2024).values("unicef_id", "admin1__name"))
 ```

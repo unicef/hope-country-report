@@ -1,91 +1,30 @@
+# .pre-commit-config.yaml
+default_language_version:
+  python: python3.12
+
 repos:
-  - repo: local
-    hooks:
-      # Configuration for black exists in pyproject.toml,
-      # but we let pre-commit take care of the file filtering.
-      - id: black
-        name: black
-        args: [ '--check' ]
-        entry: black
-        language: python
-        types: [ python ]
-        require_serial: true
-        additional_dependencies: [black]
-
-      # Configuration for isort exists in pyproject.toml,
-      # but we let pre-commit take care of the file filtering.
-      - id: isort
-        name: isort
-        args: [ '--version']
-#        args: [ '--src', 'src/','--check-only' ]
-        entry: isort
-        language: python
-        types: [ python ]
-        additional_dependencies: [isort]
-      # Configuration for black exists in .flake8,
-      # but we let pre-commit take care of the file filtering.
-      - id: flake8
-        name: flake8
-        args: ["--config", ".flake8"]
-        entry: flake8
-        language: python
-        types: [ python ]
-        additional_dependencies: [flake8]
-      - id: mypy
-        exclude: (^~.*|)
-        args: [ "--config-file", ".mypy.ini" ]
-        name: mypy
-        entry: mypy
-        language: python
-        types: [ python ]
-        stages: [ pre-commit ]
-        additional_dependencies: [mypy]
-
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        args: [ '--baseline', '.secrets.baseline' ]
-        exclude: (tests/.*|.*/tenant\.sql|Pipfile\.lock|.*\.js|.gitlab-ci.yml|poetry.lock)
-        stages: [ pre-push ]
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      #      - id: double-quote-string-fixer
-      #        stages: [commit]
-
-      - id: debug-statements
-        stages: [ pre-commit ]
-
-      - id: end-of-file-fixer
-        exclude: .bumpversion.cfg
-        stages: [ pre-commit ]
-
-      - id: check-merge-conflict
-        stages: [ pre-commit ]
-
-      - id: check-case-conflict
-        stages: [ pre-commit ]
-
-  - repo: https://github.com/saxix/pch
-    rev: '0.1'
-    hooks:
-      - id: check-missed-migrations
-        args:
-          - src
-        stages: [ pre-commit ]
-
-      - id: check-untracked
-        args:
-          - src
-          - tests
-        stages: [ pre-push ]
-
-      # - id: check-forbidden
-      #   args:
-      #     - -p
-      #     - /\.showbrowser\(/
-      #     - -p
-      #     - /print\(111/
-      #   stages: [ pre-commit ]
-#
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+    - id: trailing-whitespace
+    - id: end-of-file-fixer
+    - id: check-merge-conflict
+    - id: check-toml
+    - id: check-yaml
+      args: [--unsafe]
+    - id: check-added-large-files
+      args: ["--maxkb=2000"]
+- repo: https://github.com/pycqa/isort
+  rev: 6.0.0
+  hooks:
+    - id: isort
+- repo: https://github.com/twisted/towncrier
+  rev: 24.8.0
+  hooks:
+    - id: towncrier-check
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.9.7
+  hooks:
+    - id: ruff
+      alias: autoformat
+      args: [--fix]

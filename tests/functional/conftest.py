@@ -13,7 +13,7 @@ def pytest_configure(config):
 
 @pytest.fixture
 def capabilities(capabilities):
-    capabilities["loggingPrefs"] = {"browser": "ALL"}
+    capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
     capabilities["acceptInsecureCerts"] = True
     return capabilities
 

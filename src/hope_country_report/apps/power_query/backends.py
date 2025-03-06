@@ -18,7 +18,7 @@ class PowerQueryBackend(ModelBackend):
             return set()
         if obj._meta.app_label == "power_query" and getattr(obj, "country_office", None):
             co = obj.country_office
-            perm_cache_name = "_power_query_%s_perm_cache" % co.pk
+            perm_cache_name = f"_power_query_{co.pk}_perm_cache"
             if not hasattr(user_obj, perm_cache_name):
                 perms = Permission.objects.filter(
                     group__userrole__user=user_obj, group__userrole__country_office=obj.country_office

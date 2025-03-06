@@ -44,7 +44,7 @@ def must_tenant() -> bool:
         elif state.request.user.is_superuser:
             state.must_tenant = False
         elif state.request.user.is_staff:
-            state.must_tenant = False
+            state.must_tenant = True
         elif state.request.user.roles.exists():
             state.must_tenant = True
         else:

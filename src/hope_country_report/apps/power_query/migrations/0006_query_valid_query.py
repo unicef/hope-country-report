@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("power_query", "0005_alter_query_code_alter_query_target_and_more"),
     ]
