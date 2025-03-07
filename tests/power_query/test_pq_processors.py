@@ -74,7 +74,6 @@ def report(query1: NoReturn, formatter: NoReturn):
 
 @pytest.fixture
 def dataset(data: None, report: NoReturn, tmp_path: Path, households: BaseManager[Household]):
-
     return DatasetFactory(value=pickle.dumps(households))
 
 

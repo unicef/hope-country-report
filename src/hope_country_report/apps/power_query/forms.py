@@ -61,9 +61,7 @@ class QueryForm(forms.ModelForm):
         limit_choices_to={"app_label": "hope"},
     )
     code = forms.CharField(widget=PythonFormatterEditor, required=False)
-    owner = forms.ModelChoiceField(
-        queryset=get_user_model().objects, widget=forms.HiddenInput, required=False
-    )  # type: ignore
+    owner = forms.ModelChoiceField(queryset=get_user_model().objects, widget=forms.HiddenInput, required=False)  # type: ignore
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2, "style": "width:80%"}))
 
     class Meta:

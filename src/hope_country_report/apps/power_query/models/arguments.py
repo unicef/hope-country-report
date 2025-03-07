@@ -38,7 +38,7 @@ def validate_queryargs(value: "Any") -> bool:
         raise
     except Exception as e:
         raise ValidationError(
-            "%(exc)s: " "%(value)s is not a valid QueryArgs",
+            "%(exc)s: %(value)s is not a valid QueryArgs",
             params={"value": value, "exc": e},
         )
 

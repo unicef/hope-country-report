@@ -62,8 +62,8 @@ def test_tenant_backend_get_all_permissions(request, afghanistan, req, u, django
 
     req.user = request.getfixturevalue(u)
     b: TenantBackend = TenantBackend()
-    if hasattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk):
-        delattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk)
+    if hasattr(req.user, f"_tenant_{afghanistan.pk}_perm_cache"):
+        delattr(req.user, f"_tenant_{afghanistan.pk}_perm_cache")
 
     with state.set(tenant=afghanistan):
         with django_assert_max_num_queries(2):
@@ -84,8 +84,8 @@ def test_tenant_backend_get_all_permissions_no_tenant(
 
     req.user = tenant_user
     b: TenantBackend = TenantBackend()
-    if hasattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk):
-        delattr(req.user, "_tenant_%s_perm_cache" % afghanistan.pk)
+    if hasattr(req.user, f"_tenant_{afghanistan.pk}_perm_cache"):
+        delattr(req.user, f"_tenant_{afghanistan.pk}_perm_cache")
 
     with django_assert_max_num_queries(1):
         assert not b.get_all_permissions(req.user)

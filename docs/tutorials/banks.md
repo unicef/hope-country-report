@@ -22,7 +22,7 @@
 5\. Fill in the name of the query "Template for a bank"
 
 
-6\. Paste this code in order to get the required information. 
+6\. Paste this code in order to get the required information.
 
 ```python
 from django.db.models import ExpressionWrapper, F, DecimalField

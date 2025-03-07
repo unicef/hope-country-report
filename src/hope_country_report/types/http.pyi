@@ -1,6 +1,5 @@
 from typing import TypeVar, Union
 
-from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, HttpResponseBase, HttpResponseRedirect, StreamingHttpResponse
 
 from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
