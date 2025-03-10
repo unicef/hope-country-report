@@ -9,9 +9,11 @@ RUN apt update && apt install --no-install-recommends -y \
         --disabled-password --home /home/hcr \
         --shell /sbin.nologin --group hcr --gecos hcr \
     && mkdir -p /code /tmp /data /static \
-    && chown -R hcr:hcr /code /tmp /data /static
+    && chown -R hcr:hcr /code /tmp /data /static \
+    && curl -o /data/waitforit -sSL https://github.com/maxclaus/waitforit/releases/download/v2.4.1/waitforit-linux_amd64 \
+    && chmod +x /data/waitforit
 
-ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
+ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin:/data \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -29,7 +31,6 @@ RUN apt update \
         build-essential cmake git libfontconfig1 libgconf-2-4 libglib2.0-0 libnss3 libssl-dev libxml2-dev python3-dev zlib1g-dev \
     && apt clean && rm -rf /var/lib/apt/lists/*
 
-
 COPY pyproject.toml uv.lock /code/
 COPY src /app/src/
 
@@ -42,12 +43,13 @@ RUN --mount=type=cache,target=/root/.uv-cache \
 
 FROM builder AS dev
 
-ENV PYTHONPATH=$PYTHONPATH:/code/src:/code/test \
+ENV PYTHONPATH=/code/src:/code/test:$PYTHONPATH \
     PATH="/venv/bin:$PATH"
 
 WORKDIR /code
 COPY uv.lock README.md MANIFEST.in pyproject.toml /code/
 COPY src /code/src/
+COPY --from=base /data/waitforit /usr/local/bin/waitforit
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
