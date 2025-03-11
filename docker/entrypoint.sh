@@ -24,7 +24,7 @@ case "$1" in
     ;;
     tests)
         waitforit -address=tcp://db:5432
-        pytest tests/ --create-db --cov-report term --maxfail 5
+        pytest tests/ --create-db --cov-report term --maxfail 1
     ;;
     prd)
         production

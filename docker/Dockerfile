@@ -19,10 +19,11 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin:/data \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
-    UWSGI_PROCESSES=4
+    UWSGI_PROCESSES=4 \
+    PACKAGES_DIR=/code
 
 RUN pip install uv uwsgi
-WORKDIR /code
+WORKDIR $PACKAGES_DIR
 
 FROM base AS builder
 
@@ -33,6 +34,7 @@ RUN apt update \
 
 COPY pyproject.toml uv.lock /code/
 COPY src /app/src/
+COPY ./tests ./code/tests
 
 RUN --mount=type=cache,target=/root/.uv-cache \
     uv sync --cache-dir=/root/.uv-cache \
@@ -43,13 +45,15 @@ RUN --mount=type=cache,target=/root/.uv-cache \
 
 FROM builder AS dev
 
-ENV PYTHONPATH=/code/src:/code/test:$PYTHONPATH \
+ENV PYTHONPATH=/code/src:/code/tests:$PYTHONPATH \
     PATH="/venv/bin:$PATH"
 
-WORKDIR /code
+
+WORKDIR $PACKAGES_DIR
 COPY uv.lock README.md MANIFEST.in pyproject.toml /code/
 COPY src /code/src/
 COPY --from=base /data/waitforit /usr/local/bin/waitforit
+COPY tests /code/tests
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
@@ -57,12 +61,12 @@ ENTRYPOINT ["entrypoint.sh"]
 FROM builder AS prd
 
 ENV PATH="/code/.venv/bin:$PATH" \
-    DJANGO_SETTINGS_MODULE="hope_country_report.config.settings" \
+    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UWSGI_PROCESSES=4
 
-COPY --chown=hcr:hcr --from=builder $PACKAGES_DIR $PACKAGES_DIR
+COPY --chown=hcr:hcr --from=builder . $PACKAGES_DIR
 COPY --chown=hcr:hcr .. ./
 
 USER hcr
@@ -73,7 +77,7 @@ ENTRYPOINT ["entrypoint.sh"]
 FROM base AS dist
 
 ENV PATH="/code/.venv/bin:$PATH" \
-    DJANGO_SETTINGS_MODULE="hope_country_report.config.settings" \
+    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     STATIC_URL="/static/" \

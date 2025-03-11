@@ -22,7 +22,7 @@ def _setup_models():
     database_name = "_test_hcr"
     settings.POWER_QUERY_DB_ALIAS = "default"
     settings.DATABASES["default"]["NAME"] = database_name
-    settings.DATABASES["default"]["TEST"] = {"NAME": database_name}
+    settings.DATABASES["default"]["TEST"] = {"NAME": database_name, "MIRROR": False}
     settings.DATABASE_ROUTERS = ()
     del settings.DATABASES["hope_ro"]
     django.setup()
