@@ -22,7 +22,13 @@ def _setup_models():
     database_name = "_test_hcr"
     settings.POWER_QUERY_DB_ALIAS = "default"
     settings.DATABASES["default"]["NAME"] = database_name
-    settings.DATABASES["default"]["TEST"] = {"NAME": database_name, "MIRROR": False}
+    settings.DATABASES["default"]["TEST"] = {
+        "NAME": database_name,
+        "MIRROR": False,
+        "CHARSET": "utf8",
+        "MIGRATE": True,
+    }
+
     settings.DATABASE_ROUTERS = ()
     del settings.DATABASES["hope_ro"]
     django.setup()
@@ -35,7 +41,6 @@ def _setup_models():
         if opts.app_label not in ("contenttypes", "sites"):
             db_table = ("_hope_ro__{0.app_label}_{0.model_name}".format(opts)).lower()
             m._meta.db_table = truncate_name(db_table, connection.ops.max_name_length())
-            # m._meta.db_tablespace = ""
             m._meta.managed = True
             m.save = Model.save
 

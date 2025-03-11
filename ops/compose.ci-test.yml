@@ -13,6 +13,7 @@ services:
       - ALLOWED_HOSTS=backend,localhost
       - STATIC_ROOT=/
       - STATIC_URL=/static/
+      - SECURE_SSL_REDIRECT=False
       - EMAIL_BACKEND=
       - EMAIL_HOST=
       - EMAIL_PORT=
@@ -37,6 +38,20 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      start_period: 5s
+      interval: 5s
+      timeout: 4s
+      retries: 5
+
+  hopedb:
+    image: postgis/postgis:15-3.4
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hopedb
     restart: always
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]

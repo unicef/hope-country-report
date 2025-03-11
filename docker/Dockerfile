@@ -74,7 +74,7 @@ USER hcr
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 
-FROM base AS dist
+FROM dev AS dist
 
 ENV PATH="/code/.venv/bin:$PATH" \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
