@@ -23,7 +23,7 @@ def test_login_admnin(django_app, admin_user):
     res.form["username"] = admin_user.username
     res.form["password"] = "password"
     res = res.form.submit()
-    assert res.status_code == 200
+    assert res.status_code == 302
     assert res.location == "/admin/"
 
 

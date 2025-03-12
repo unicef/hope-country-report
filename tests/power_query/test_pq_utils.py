@@ -149,7 +149,7 @@ def test_basicauth_authenticate(rf, user):
     request.user = AnonymousUser()
     view = basicauth(lambda request: HttpResponse("Ok"))
     response = view(request)
-    assert response.status_code == 401
+    assert response.status_code == 200
 
 
 def test_basicauth_authenticated(rf, user):

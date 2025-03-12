@@ -86,7 +86,6 @@ def pytest_configure(config):
 
     settings.ADMINS = ""
     settings.ALLOWED_HOSTS = ["*"]
-    settings.AUTHENTICATION_BACKENDS = ["hope_country_report.utils.tests.backends.AnyUserAuthBackend"]
     settings.DJANGO_SETTINGS_MODULE = "hope_country_report.config.settings"
     settings.FILE_STORAGE_DEFAULT = "django.core.files.storage.FileSystemStorage"
     settings.FILE_STORAGE_MEDIA = "django.core.files.storage.FileSystemStorage"
