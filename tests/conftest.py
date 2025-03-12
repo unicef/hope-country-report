@@ -81,41 +81,35 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    os.environ.update(
-        ADMINS="",
-        ALLOWED_HOSTS="*",
-        AUTHENTICATION_BACKENDS="",
-        DJANGO_SETTINGS_MODULE="hope_country_report.config.settings",
-        FILE_STORAGE_DEFAULT="django.core.files.storage.FileSystemStorage",
-        FILE_STORAGE_MEDIA="django.core.files.storage.FileSystemStorage",
-        FILE_STORAGE_HOPE="django.core.files.storage.FileSystemStorage",
-        CATCH_ALL_EMAIL="",
-        CELERY_TASK_ALWAYS_EAGER="1",
-        CSRF_COOKIE_SECURE="False",
-        EMAIL_BACKEND="",
-        EMAIL_HOST="",
-        EMAIL_HOST_PASSWORD="",
-        EMAIL_HOST_USER="",
-        EMAIL_PORT="",
-        EMAIL_USE_SSL="",
-        EMAIL_USE_TLS="",
-        MAILJET_API_KEY="",
-        MAILJET_SECRET_KEY="",
-        MAILJET_TEMPLATE_REPORT_READY="",
-        MAILJET_TEMPLATE_ZIP_PASSWORD="",
-        MEDIA_ROOT="/tmp/media",
-        SECURE_HSTS_PRELOAD="False",
-        SECURE_SSL_REDIRECT="False",
-        SECRET_KEY="123",
-        SENTRY_ENVIRONMENT="",
-        SENTRY_URL="",
-        SESSION_COOKIE_SECURE="False",
-        SESSION_COOKIE_NAME="hcr_test",
-        SESSION_COOKIE_DOMAIN="",
-        STATIC_ROOT="/tmp/static",
-        SIGNING_BACKEND="django.core.signing.TimestampSigner",
-        WP_PRIVATE_KEY="",
-    )
+    sys._called_from_pytest = True
+    from django.conf import settings
+
+    settings.ADMINS = ""
+    settings.ALLOWED_HOSTS = ["*"]
+    settings.AUTHENTICATION_BACKENDS = ["hope_country_report.utils.tests.backends.AnyUserAuthBackend"]
+    settings.DJANGO_SETTINGS_MODULE = "hope_country_report.config.settings"
+    settings.FILE_STORAGE_DEFAULT = "django.core.files.storage.FileSystemStorage"
+    settings.FILE_STORAGE_MEDIA = "django.core.files.storage.FileSystemStorage"
+    settings.FILE_STORAGE_HOPE = "django.core.files.storage.FileSystemStorage"
+    settings.CATCH_ALL_EMAIL = ""
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CSRF_COOKIE_SECURE = False
+    settings.MAILJET_API_KEY = ""
+    settings.MAILJET_SECRET_KEY = ""
+    settings.MAILJET_TEMPLATE_REPORT_READY = ""
+    settings.MAILJET_TEMPLATE_ZIP_PASSWORD = ""
+    settings.MEDIA_ROOT = "/tmp/media"
+    settings.SECURE_HSTS_PRELOAD = False
+    settings.SECURE_SSL_REDIRECT = False
+    settings.SECRET_KEY = "123"
+    settings.SENTRY_ENVIRONMENT = ""
+    settings.SENTRY_URL = ""
+    settings.SESSION_COOKIE_SECURE = False
+    settings.SESSION_COOKIE_NAME = "hcr_test"
+    settings.SESSION_COOKIE_DOMAIN = ""
+    settings.STATIC_ROOT = "/tmp/static"
+    settings.SIGNING_BACKEND = "django.core.signing.TimestampSigner"
+    settings.WP_PRIVATE_KEY = ""
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""
     else:
