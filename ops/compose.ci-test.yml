@@ -2,10 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      target: dev
+    image: ${backend_image}
     command: tests
     environment:
       - ALLOWED_HOSTS=*
