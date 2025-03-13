@@ -1,7 +1,6 @@
-FROM python:3.12-slim-bookworm as base
+FROM python:3.12-slim-bookworm AS base
 
-RUN apt update \
-    && apt install --no-install-recommends -y \
+RUN apt update && apt install --no-install-recommends -y \
         gcc curl libgdal-dev wkhtmltopdf chromium-driver chromium \
     && apt clean && rm -rf /var/lib/apt/lists/* \
     && addgroup --system --gid 82 hcr \
@@ -10,42 +9,82 @@ RUN apt update \
         --disabled-password --home /home/hcr \
         --shell /sbin.nologin --group hcr --gecos hcr \
     && mkdir -p /code /tmp /data /static \
-    && chown -R hcr:hcr /code /tmp /data /static
+    && chown -R hcr:hcr /code /tmp /data /static \
+    && curl -o /data/waitforit -sSL https://github.com/maxclaus/waitforit/releases/download/v2.4.1/waitforit-linux_amd64 \
+    && chmod +x /data/waitforit
 
-ENV PATH=$PATH:/code/.venv/bin/ \
-    PACKAGES_DIR=/code/.venv/lib/python3.12/site-packages \
-    PYTHONPATH=$PYTHONPATH:/code/src
+ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin:/data \
+    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT=/venv \
+    VIRTUAL_ENV=/venv \
+    UWSGI_PROCESSES=4 \
+    PACKAGES_DIR=/code
 
-WORKDIR /code
+RUN pip install uv uwsgi
+WORKDIR $PACKAGES_DIR
 
-FROM base as builder
+FROM base AS builder
 
-COPY ../pyproject.toml ./
-COPY ../uv.lock ./
+RUN apt update \
+    && apt install -y --no-install-recommends \
+        build-essential cmake git libfontconfig1 libgconf-2-4 libglib2.0-0 libnss3 libssl-dev libxml2-dev python3-dev zlib1g-dev \
+    && apt clean && rm -rf /var/lib/apt/lists/*
 
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-RUN sh /uv-installer.sh && rm /uv-installer.sh
-ENV PATH="/root/.local/bin/:$PATH"
+COPY pyproject.toml uv.lock /code/
+COPY src /app/src/
+COPY ./tests ./code/tests
 
-RUN uv sync
+RUN --mount=type=cache,target=/root/.uv-cache \
+    uv sync --cache-dir=/root/.uv-cache \
+        --python=/usr/local/bin/python \
+        --python-preference=system \
+        --frozen --link-mode=copy
+
 
 FROM builder AS dev
 
-WORKDIR /code
-COPY .. ./
+ENV PYTHONPATH=/code/src:/code/tests:$PYTHONPATH \
+    PATH="/venv/bin:$PATH"
+
+
+WORKDIR $PACKAGES_DIR
+COPY uv.lock README.md MANIFEST.in pyproject.toml /code/
+COPY src /code/src/
+COPY --from=base /data/waitforit /usr/local/bin/waitforit
+COPY tests /code/tests
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 
+FROM builder AS prd
 
-FROM base AS prd
+ENV PATH="/code/.venv/bin:$PATH" \
+    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UWSGI_PROCESSES=4
 
-ENV PATH=$PATH:/code/.venv/bin/
-ENV DJANGO_SETTINGS_MODULE="hope_country_report.config.settings"
-
+COPY --chown=hcr:hcr --from=builder . $PACKAGES_DIR
 COPY --chown=hcr:hcr .. ./
-COPY --chown=hcr:hcr --from=builder $PACKAGES_DIR $PACKAGES_DIR
+
 USER hcr
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+
+FROM dev AS dist
+
+ENV PATH="/code/.venv/bin:$PATH" \
+    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    STATIC_URL="/static/" \
+    UWSGI_PROCESSES=4
+
+COPY --chown=hcr:hcr --from=prd $PACKAGES_DIR $PACKAGES_DIR
+COPY --chown=hcr:hcr .. ./
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]

@@ -5,30 +5,30 @@ volumes:
   hope_postgres_data:
 
 x-django-env: &django-env
-  - ALLOWED_HOSTS=*
-  - SECRET_KEY=secret-key
+  - ALLOWED_HOSTS=backend,localhost
+  - AZURE_TENANT_ID=
+  - AZURE_CLIENT_KEY=
+  - CACHE_URL=redis://redis:6379/1
+  - CELERY_BROKER_URL=redis://redis:6379/0
   - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
   - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
-  - REDIS_URL=redis://redis:6379/0
-  - ALLOWED_HOSTS=backend,localhost
-  - STATIC_ROOT=/
-  - CACHE_URL=redis://redis:6379/1
-  - STATIC_URL=/static/
+  - FILE_STORAGE_DEFAULT=django.core.files.storage.FileSystemStorage
+  - FLOWER_URL=http://flower:5555
   - EMAIL_BACKEND=
   - EMAIL_HOST=
   - EMAIL_PORT=
   - EMAIL_USE_TLS=
   - EMAIL_USE_SSL=
-  - SENTRY_ENVIRONMENT=local
-  - CELERY_BROKER_URL=redis://redis:6379/0
   - MAILJET_API_KEY=
   - MAILJET_SECRET_KEY=
-  - WP_PRIVATE_KEY=
+  - POWER_QUERY_FLOWER_ADDRESS=http://flower:5555
+  - REDIS_URL=redis://redis:6379/0
   - SECURE_SSL_REDIRECT=False
-  - AZURE_TENANT_ID=
-  - AZURE_CLIENT_KEY=
-  - FLOWER_URL=http://flower:5555
-  - FILE_STORAGE_DEFAULT=django.core.files.storage.FileSystemStorage
+  - SECRET_KEY=secret-key
+  - SENTRY_ENVIRONMENT=local
+  - STATIC_ROOT=/
+  - STATIC_URL=/static/
+  - WP_PRIVATE_KEY=
 
 services:
   backend:

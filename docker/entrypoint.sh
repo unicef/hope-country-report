@@ -3,6 +3,7 @@
 set -eou pipefail
 
 production() {
+    waitforit -address=tcp://db:5432
     uwsgi \
         --http :8000 \
         --master \
@@ -17,25 +18,28 @@ fi
 
 case "$1" in
     dev)
-        ./docker/wait-for-it.sh db:5432
+        waitforit -address=tcp://db:5432
         python3 manage.py migrate
         python3 manage.py runserver 0.0.0.0:8000
     ;;
     tests)
-        ./docker/wait-for-it.sh db:5432
-        pytest tests/ --create-db --cov-report term --maxfail 5 --with-selenium
+        waitforit -address=tcp://db:5432
+        waitforit -address=tcp://hopedb:5432
+        pytest tests/ --create-db --cov-report term -x  --with-selenium --strict-markers
     ;;
     prd)
         production
     ;;
     celery_worker)
         export C_FORCE_ROOT=1
-        celery -A hope_country_report.config.celery worker -l info
+        watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery -A hope_country_report.config.celery worker -l info
     ;;
     celery_beat)
+        waitforit -host=redis -port=6379
         celery -A hope_country_report.config.celery beat -l info
     ;;
     celery_flower)
+        waitforit -address=tcp://backend:8000
         celery -A hope_country_report.config.celery flower
     ;;
     *)

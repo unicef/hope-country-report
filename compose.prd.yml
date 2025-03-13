@@ -132,3 +132,22 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  flower:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+    command: celery_flower
+    environment: *django-env
+    restart: unless-stopped
+    ports:
+      - 5555:5555
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://flower:5555/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
