@@ -6,25 +6,39 @@ services:
     command: tests
     environment:
       - ALLOWED_HOSTS=*
-      - SECRET_KEY=secret-key
-      - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
+      - AZURE_TENANT_ID=
+      - AZURE_CLIENT_KEY=
+      - AUTHENTICATION_BACKENDS=hope_country_report.utils.tests.backends.AnyUserAuthBackend
+      - CACHE_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CORS_ORIGIN_ALLOW_ALL=True
+      - CSRF_COOKIE_SECURE=False
       - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
-      - REDIS_URL=redis://redis:6379/0
-      - ALLOWED_HOSTS=backend,localhost
-      - STATIC_ROOT=/
-      - STATIC_URL=/static/
-      - EMAIL_BACKEND=
+      - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
+      - DEBUG=True
+      - EMAIL_BACKEND=anymail.backends.mailjet.EmailBackend
       - EMAIL_HOST=
       - EMAIL_PORT=
       - EMAIL_USE_TLS=
       - EMAIL_USE_SSL=
-      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FILE_STORAGE_DEFAULT=django.contrib.staticfiles.storage.StaticFilesStorage
+      - FILE_STORAGE_HOPE=django.core.files.storage.FileSystemStorage
+      - FILE_STORAGE_MEDIA=django.contrib.staticfiles.storage.StaticFilesStorage
+      - FILE_STORAGE_STATIC=django.contrib.staticfiles.storage.StaticFilesStorage
       - MAILJET_API_KEY=
       - MAILJET_SECRET_KEY=
+      - POWER_QUERY_FLOWER_ADDRESS=http://localhost:5555
+      - REDIS_URL=redis://redis:6379/0
+      - SESSION_COOKIE_DOMAIN=localhost
+      - SESSION_COOKIE_HTTPONLY=True
+      - SESSION_COOKIE_NAME=hcr_session
+      - SESSION_COOKIE_PATH=/
+      - SESSION_COOKIE_SECURE=False
+      - STATIC_ROOT=/
+      - STATIC_URL=/static/
+      - SECURE_SSL_REDIRECT=False
+      - SECRET_KEY=secret-key
       - WP_PRIVATE_KEY=
-      - CACHE_URL=redis://redis:6379/1
-      - AZURE_TENANT_ID=
-      - AZURE_CLIENT_KEY=
     depends_on:
       db:
         condition: service_healthy
@@ -37,6 +51,20 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      start_period: 5s
+      interval: 5s
+      timeout: 4s
+      retries: 5
+
+  hopedb:
+    image: postgis/postgis:15-3.4
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hopedb
     restart: always
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
