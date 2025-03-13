@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from django.db import transaction
 from django.urls import reverse
 
 from selenium.webdriver.common.by import By
@@ -39,7 +40,7 @@ def test_user_profile(browser: "SmartDriver", afg_user: "User"):
     select.select_by_visible_text("Spanish")
 
     browser.find_element(By.TAG_NAME, "button").click()
-
-    afg_user.refresh_from_db()
+    transaction.get_autocommit()
+    transaction.on_commit(lambda: afg_user.refresh_from_db())
     assert afg_user.language == "es"
     assert afg_user.timezone.key == "Europe/Rome"
