@@ -35,11 +35,11 @@ case "$1" in
         watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery -A hope_country_report.config.celery worker -l info
     ;;
     celery_beat)
-        waitforit -host=backend
+        waitforit -host=redis -port=6379
         celery -A hope_country_report.config.celery beat -l info
     ;;
     celery_flower)
-        waitforit -host=backend
+        waitforit -address=tcp://backend:8000
         celery -A hope_country_report.config.celery flower
     ;;
     *)

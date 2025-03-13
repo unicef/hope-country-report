@@ -90,6 +90,7 @@ dependencies = [
     "tzdata",
     "unicef-security",
     "uwsgi",
+    "watchdog[watchmedo]>=6.0.0",
 ]
 
 
