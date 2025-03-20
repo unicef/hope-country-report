@@ -37,7 +37,7 @@ jobs:
             -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-country-report:${{ github.sha }}-dev \
             -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-country-report:latest-dev \
             -f ./docker/Dockerfile \
-            --target dev \
+            --target dist \
             --push \
             ./
 
