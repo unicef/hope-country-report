@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     image: ${backend_image}
-    command: tests
+    command: pytest tests/ -n auto -v --maxfail=5 --migrations --cov-report xml:./output/coverage.xml --cov-report term-missing --cov=hope_country_report
     environment:
       - ALLOWED_HOSTS=*
       - AZURE_TENANT_ID=
