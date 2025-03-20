@@ -71,6 +71,7 @@ LABEL org.opencontainers.image.version="$VERSION"
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/venv/lib/python3.12/site-packages:/venv/bin \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
@@ -112,7 +113,7 @@ RUN --mount=type=cache,target=/root/.uv-cache \
 
 
 # ------- dist -------
-FROM base_os AS dist
+FROM builder AS dist
 ARG BUILD_DATE
 ARG GIT_SHA
 ARG BRANCH
@@ -122,10 +123,10 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     GIT_SHA=$GIT_SHA \
     VERSION=$VERSION \
     BRANCH=$BRANCH \
+    PYTHONPATH=/venv/lib/python3.12/site-packages:$PYTHONPATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     STATIC_URL="/static/" \
-    PYTHONPATH=""\
     PGSSLCERT="/tmp/postgresql.crt" \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     UV_PROJECT_ENVIRONMENT=/venv \
