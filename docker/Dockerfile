@@ -93,7 +93,7 @@ RUN --mount=type=cache,target=/root/.uv-cache \
 FROM builder AS production
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
-    PYTHONPATH=/venv/lib/python3.12/site-packages:$PYTHONPATH \
+    PYTHONPATH="/venv/lib/python3.12/site-packages" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
@@ -123,7 +123,7 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     GIT_SHA=$GIT_SHA \
     VERSION=$VERSION \
     BRANCH=$BRANCH \
-    PYTHONPATH=/venv/lib/python3.12/site-packages:$PYTHONPATH \
+    PYTHONPATH="/venv/lib/python3.12/site-packages" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     STATIC_URL="/static/" \
