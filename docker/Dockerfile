@@ -87,13 +87,13 @@ COPY . /app/
 RUN --mount=type=cache,target=/root/.uv-cache \
     uv sync --cache-dir=/root/.uv-cache \
         --python=/usr/local/bin/python \
-        --python-preference=system \
-        --frozen
+        --frozen --extra distribution
 
 # ------- production only deps-------
 FROM builder AS production
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
+    PYTHONPATH=/venv/lib/python3.12/site-packages:$PYTHONPATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
@@ -149,7 +149,6 @@ COPY --chown=hope:unicef --from=production /venv /venv
 COPY --from=builder /usr/local/bin/uwsgi /usr/local/bin/uv /usr/local/bin/
 RUN --mount=type=cache,target=/root/.uv-cache \
     uv --cache-dir=/root/.uv-cache  pip install --no-deps .
-RUN rm -rf /root/.uv-cache
 
 
 EXPOSE 8000
