@@ -22,12 +22,12 @@ RO_CONN.update(
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="",
+        default="postgis://postgres:postgres@db:5432/hopedb",
         engine="django.contrib.gis.db.backends.postgis",
     ),
     "hope_ro": env.db(
-        f"{env('DATABASE_HOPE_URL')}?options=-c%20default_transaction_read_only=on",
-        default="",
+        "DATABASE_HOPE_URL",
+        default="postgis://postgres:postgres@hopedb:5432/hopedb?options=-c%20default_transaction_read_only=on",
         engine="django.contrib.gis.db.backends.postgis",
     ),
 }
