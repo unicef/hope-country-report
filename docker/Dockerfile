@@ -91,9 +91,12 @@ RUN --mount=type=cache,target=/root/.uv-cache \
 
 # ------- production only deps-------
 FROM builder AS production
-ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
+ARG BUILD_DATE
+ARG GIT_SHA
+ARG BRANCH
+ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin:/app/src \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
-    PYTHONPATH="/venv/lib/python3.12/site-packages" \
+    PYTHONPATH="/venv/lib/python3.12/site-packages:/app/src/" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
@@ -110,7 +113,12 @@ RUN --mount=type=cache,target=/root/.uv-cache \
         --python-preference=system \
         --no-dev --frozen --extra distribution
 
+COPY docker/conf /conf/
+COPY docker/bin/* /usr/local/bin/
 
+EXPOSE 8000
+ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
+CMD ["run"]
 
 # ------- dist -------
 FROM builder AS dist
