@@ -30,7 +30,7 @@ DATABASES = {
         default="",
         engine="django.contrib.gis.db.backends.postgis",
     ),
-} 
+}
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
 DATABASE_APPS_MAPPING: dict[str, str] = {
     "core": "default",

@@ -54,7 +54,11 @@ CONFIG = {
     ),
     "CORS_ORIGIN_ALLOW_ALL": (bool, False),
     "CSRF_COOKIE_SECURE": (bool, True, setting("csrf-cookie-secure")),
-    "DATABASE_HOPE_URL": (str, "postgis://postgres:postgres@hopedb:5432/hopedb", "HOPE database connection url (forced to be readonly)"),
+    "DATABASE_HOPE_URL": (
+        str,
+        "postgis://postgres:postgres@hopedb:5432/hopedb",
+        "HOPE database connection url (forced to be readonly)",
+    ),
     "DATABASE_URL": (
         str,
         "postgis://postgres:postgres@db:5432/hcr",
