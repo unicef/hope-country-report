@@ -87,7 +87,7 @@ COPY . /app/
 RUN --mount=type=cache,target=/root/.uv-cache \
     uv sync --cache-dir=/root/.uv-cache \
         --python=/usr/local/bin/python \
-        --frozen --extra distribution
+        --frozen --dev
 
 # ------- production only deps-------
 FROM builder AS production
@@ -111,7 +111,7 @@ RUN --mount=type=cache,target=/root/.uv-cache \
     uv sync --cache-dir=/root/.uv-cache \
         --python=/usr/local/bin/python \
         --python-preference=system \
-        --no-dev --frozen --extra distribution
+        --no-dev --frozen --dev
 
 COPY docker/conf /conf/
 COPY docker/bin/* /usr/local/bin/

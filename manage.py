@@ -2,6 +2,11 @@
 import os
 import sys
 
+SRC = os.path.abspath("src")
+sys.path.insert(0, SRC)
+if sys.argv[1] == "test":
+    os.chdir(os.path.join(SRC, "hope_country_report"))
+
 if __name__ == "__main__":
     from hope_country_report.state import state
 
