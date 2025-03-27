@@ -121,28 +121,17 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
 
         self.link_shapes()
 
-    def link_shapes(self) -> None:
+    def link_shapes(self) -> QuerySet["CountryOffice"]:
         c: CountryOffice
-        for c in CountryOffice.objects.select_related('business_area').filter(shape__isnull=True):
-            shape_found = None
-            try:
-                ba = c.business_area
-                if ba:
-                    country: Country | None = ba.countries.first()
-                    if country and country.iso_code2:
-                        shape_found = CountryShape.objects.get(iso2=country.iso_code2)
-            except Exception as e:
-                 logger.error(f"Error accessing business area or countries for CountryOffice {c.pk} ('{c.name}'): {e}")
-
-
-            if not shape_found and c.slug:
-                shape_found = CountryShape.objects.filter(name__iexact=c.slug).first()
-
-            if shape_found:
-                c.shape = shape_found
-                c.save(update_fields=["shape"])
-            # else:
-            #     logger.debug(f"No shape found for CountryOffice {c.pk} ('{c.name}')") # Optional: log if no shape is found
+        for c in CountryOffice.objects.filter(shape__isnull=True):
+            if c.business_area:
+                country: Country = c.business_area.countries.first()
+                if country:
+                    c.shape = CountryShape.objects.filter(iso2=country.iso_code2).first()
+                else:
+                    c.shape = CountryShape.objects.filter(name=c.name).first()
+                if c.shape:
+                    c.save(update_fields=["shape"])
 
 
 class CountryOffice(TimeStampedModel, models.Model):
