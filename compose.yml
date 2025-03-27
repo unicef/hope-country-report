@@ -35,8 +35,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: dev
-    command: dev
+      target: dist
+    command: run
     environment: *django-env
     ports:
       - 8000:8000
@@ -102,8 +102,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: dev
-    command: celery_worker
+      target: dist
+    command: worker
     environment: *django-env
     volumes:
       - .:/code
@@ -118,8 +118,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: dev
-    command: celery_beat
+      target: dist
+    command: beat
     environment: *django-env
     volumes:
       - .:/code
@@ -134,8 +134,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: dev
-    command: celery_flower
+      target: dist
+    command: flower
     environment: *django-env
     restart: unless-stopped
     ports:

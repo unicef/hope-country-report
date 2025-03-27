@@ -75,7 +75,11 @@ class ReportConfiguration(
         default=False, blank=True, help_text=_("Protect zip file with system generated password")
     )
     pwd = models.CharField(
-        editable=False, blank=True, null=True, help_text=_("Auto generated password to protect .zip files")
+        max_length=257,
+        editable=False,
+        blank=True,
+        null=True,
+        help_text=_("Auto generated password to protect .zip files"),
     )
 
     tags = TaggableManager(blank=True)

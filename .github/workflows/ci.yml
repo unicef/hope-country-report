@@ -37,7 +37,7 @@ jobs:
             -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-country-report:${{ github.sha }}-dev \
             -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-country-report:latest-dev \
             -f ./docker/Dockerfile \
-            --target dev \
+            --target dist \
             --push \
             ./
 
@@ -111,7 +111,7 @@ jobs:
             -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-country-report:${{ github.sha }}-prd \
             -t ${{ vars.DOCKERHUB_ORGANIZATION }}/hope-country-report:${{ github.sha }} \
             -f ./docker/Dockerfile \
-            --target prd \
+            --target production \
             --push ./"
 
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
