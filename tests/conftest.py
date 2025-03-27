@@ -171,7 +171,7 @@ def user(db):
     return UserFactory(username="user@example.com", is_active=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def afghanistan(db):
     from testutils.factories import CountryOfficeFactory
 
@@ -185,7 +185,7 @@ def reporters(db, afghanistan, user):
     return get_or_create_reporter_group()
 
 
-@pytest.fixture()
+@pytest.fixture
 def tenant_user(afghanistan, reporters):
     """User with access to a tenant"""
     from testutils.factories import UserFactory, UserRoleFactory
@@ -195,7 +195,7 @@ def tenant_user(afghanistan, reporters):
     return u
 
 
-@pytest.fixture()
+@pytest.fixture
 def pending_user(db):
     """User with no tenants configured"""
 
@@ -205,7 +205,7 @@ def pending_user(db):
     return u
 
 
-@pytest.fixture()
+@pytest.fixture
 def afg_user(user, afghanistan):
     from testutils.perms import user_grant_permissions
 
@@ -223,7 +223,7 @@ def afg_user(user, afghanistan):
     grant.stop()
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_responses():
     with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
         yield rsps

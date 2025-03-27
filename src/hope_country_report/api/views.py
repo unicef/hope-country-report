@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import json
 
@@ -38,7 +38,7 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LocationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
-    def list(self, request: "AnyRequest", *args: Tuple[Any], **kwargs: Dict[str, str]) -> Response:
+    def list(self, request: "AnyRequest", *args: tuple[Any], **kwargs: dict[str, str]) -> Response:
         return Response({})
 
     @action(detail=False)
@@ -55,13 +55,6 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
         return JsonResponse(topojson, content_type="application/json", safe=False)
 
-    # @action(detail=False)
-    # # @method_decorator(cache_page(60*60*2))
-    # def topology_file(self, request):
-    #     fname = resource_path("apps/charts/datasets/topology.json")
-    #     data = json.load(fname.open("r"))
-    #     return JsonResponse(data, content_type="application/json")
-
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
     def boundaries(self, request: "AnyRequest") -> JsonResponse:
@@ -74,14 +67,6 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
         qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name", "active")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
 
-    # @action(detail=False)
-    # def country_names(self, request):
-    #     fname = resource_path("apps/charts/data/world-country-names.tsv")
-    #     data = fname.read_bytes()
-    #     # qs = CountryOffice.objects.filter(shape__isnull=True).select_related("shape").order_by("slug")
-    #     # ser = LocationSerializer(qs, many=True)
-    #     return HttpResponse(data, content_type="text/plain")
-
 
 class CountryOfficeFilter(filters.FilterSet):
     slug = filters.CharFilter(lookup_expr="istartswith")
@@ -93,10 +78,6 @@ class CountryOfficeViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.DjangoObjectPermissions]
     filterset_class = CountryOfficeFilter
     lookup_field = "slug"
-
-    # @action(detail=True)
-    # def queries(self, **kwargs):
-    #     return HttpResponseRedirect(reverse("api:queries-list", args=[kwargs["slug"]]))
 
 
 class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):

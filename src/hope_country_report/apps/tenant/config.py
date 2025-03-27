@@ -6,7 +6,7 @@ from django.core.signals import setting_changed
 from django.db.models import Model
 
 if TYPE_CHECKING:
-    from typing import Any, Union
+    from typing import Any
 
     from .backend import TenantBackend
 
@@ -57,7 +57,7 @@ class AppSettings:
         # return import_string(self.AUTH)()  # type: ignore[no-any-return]
 
     @cached_property
-    def tenant_model(self) -> "Union[Model, type]":
+    def tenant_model(self) -> "Model | type":
         from django.apps import apps
 
         if not self.TENANT_MODEL:

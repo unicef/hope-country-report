@@ -15,7 +15,7 @@ def m():
     return ExceptionMiddleware(MagicMock())
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_document():
     from testutils.factories import ReportDocumentFactory
 

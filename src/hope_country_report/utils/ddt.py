@@ -70,12 +70,6 @@ class StateDebugPanel(Panel):
     def nav_title(self) -> "_StrPromise":
         return _("Tenant")
 
-    # def nav_subtitle(self):
-    #     if is_tenant_active():
-    #         return "active"
-    #     else:
-    #         return "NOT active"
-
     def title(self) -> "_StrPromise":
         return _("Tenant Debug Panel")
 
@@ -88,9 +82,6 @@ class StateDebugPanel(Panel):
                 "conf": conf,
                 "active_tenant": get_selected_tenant(),
                 "tenant_status": must_tenant(),
-                # "cookie": get_tenant_from_request(state.request),
-                # "perms": state.request.user.get_all_permissions(),
-                # "modules": conf.auth.get_available_modules(state.request.user),
             }
         )
         tpl = Template(TEMPLATE)

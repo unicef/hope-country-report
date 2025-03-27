@@ -13,12 +13,12 @@ if TYPE_CHECKING:
     from hope_country_report.apps.power_query.models import Query
 
 
-@pytest.fixture()
+@pytest.fixture
 def manager():
     return PowerQueryManager()
 
 
-@pytest.fixture()
+@pytest.fixture
 def query(afghanistan: "CountryOffice"):
     from testutils.factories import QueryFactory
 

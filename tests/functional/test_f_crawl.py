@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument
 
 
-@pytest.fixture()
+@pytest.fixture
 def afghanistan(transactional_db) -> "CountryOffice":
     from testutils.factories import CountryOfficeFactory
 
@@ -32,12 +32,12 @@ def afghanistan(transactional_db) -> "CountryOffice":
 #     grant.stop()
 
 
-@pytest.fixture()
+@pytest.fixture
 def no_roles_user(user):
     return user
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_document(afghanistan, afg_user):
     from testutils.factories import HouseholdFactory, QueryFactory, ReportConfigurationFactory
 

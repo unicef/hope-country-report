@@ -11,12 +11,12 @@ if TYPE_CHECKING:
     from hope_country_report.apps.core.models import CountryOffice
 
 
-@pytest.fixture()
+@pytest.fixture
 def manager():
     return TenantManager()
 
 
-@pytest.fixture()
+@pytest.fixture
 def household(afghanistan: "CountryOffice"):
     from testutils.factories import HouseholdFactory
 

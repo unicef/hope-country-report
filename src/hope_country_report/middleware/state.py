@@ -9,8 +9,6 @@ from sentry_sdk import configure_scope
 from hope_country_report.apps.tenant.utils import RequestHandler
 
 if TYPE_CHECKING:
-    from typing import TYPE_CHECKING
-
     from collections.abc import Callable
 
     from hope_country_report.types.http import AuthHttpRequest

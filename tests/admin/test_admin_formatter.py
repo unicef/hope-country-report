@@ -3,14 +3,14 @@ import pytest
 from django.urls import reverse
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_template():
     from testutils.factories import ReportTemplate
 
     return ReportTemplate.objects.first()
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset():
     from testutils.factories import DatasetFactory
 

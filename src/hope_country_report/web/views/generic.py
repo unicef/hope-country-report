@@ -48,31 +48,6 @@ class SimpleView(View):
         return self.content
 
 
-#
-# class SelectedOfficeMixin(LoginRequiredMixin, View):
-#     @cached_property
-#     def selected_office(self) -> CountryOffice:
-#         if self.request.user.is_superuser:
-#             co = CountryOffice.objects.get(slug=self.kwargs["co"])
-#         else:
-#             co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
-#         return co
-#
-#     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-#         kwargs["view"] = self
-#         kwargs["view_name"] = self.__class__.__name__
-#         kwargs["selected_office"] = self.selected_office
-#         kwargs["tenant_form"] = SelectTenantForm(request=self.request, initial={"tenant": self.selected_office})
-#         return super().get_context_data(**kwargs)
-#
-#     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse | StreamingHttpResponse:
-#         response = super().get(request, *args, **kwargs)
-#         signer = get_cookie_signer()
-#         response.set_cookie(conf.COOKIE_NAME, signer.sign(self.selected_office.slug))
-#         return response
-#
-
-
 class OfficePreferencesView(SelectedOfficeMixin, PermissionRequiredMixin, UpdateView[CountryOffice, Any]):
     template_name = "web/office/prefs.html"
     permission_required = ["core.change_countryoffice"]
@@ -108,11 +83,6 @@ class OfficeHomeView(SelectedOfficeMixin, TemplateView):
     template_name = "web/office/index.html"
 
 
-#
-# class OfficeTemplateView(SelectedOfficeMixin, TemplateView):
-#     template_name = "web/office/index.html"
-
-
 class OfficeMapView(SelectedOfficeMixin, TemplateView):
     template_name = "web/office/map.html"
 
@@ -120,7 +90,6 @@ class OfficeMapView(SelectedOfficeMixin, TemplateView):
         return super().get_context_data(
             aaa={
                 "DEFAULT_ZOOM": 13,
-                # "MIN_ZOOM": 12,
                 "MAX_ZOOM": 13,
                 "DEFAULT_CENTER": [self.selected_office.shape.lat, self.selected_office.shape.lon],
             },
@@ -133,8 +102,7 @@ class OfficeUserListView(SelectedOfficeMixin, ListView[User]):
     template_name = "web/office/users.html"
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        qs = User.objects.filter(roles__country_office=self.selected_office)
-        return qs
+        return User.objects.filter(roles__country_office=self.selected_office)
 
 
 class OfficePageListView(SelectedOfficeMixin, ListView[User]):
@@ -161,8 +129,7 @@ def select_tenant(request: "HttpRequest") -> "HttpResponse":
                 resolver = resolve(urlparse(request.META.get("HTTP_REFERER", "/")).path)
                 if list(resolver.kwargs.keys()) == ["co"]:
                     return HttpResponseRedirect(reverse(resolver.url_name, args=[office.slug]))
-                else:
-                    raise Exception(resolver)
+                raise Exception(resolver)
             except Exception:
                 pass
             return HttpResponseRedirect(reverse("office-index", args=[office.slug]))

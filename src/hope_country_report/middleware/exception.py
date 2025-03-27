@@ -25,9 +25,9 @@ class ExceptionMiddleware:
         self.get_response = get_response
 
     def process_exception(self, request: "AuthHttpRequest", exception: BaseException) -> HttpResponse:
-        if isinstance(exception, (PermissionDenied,)):
+        if isinstance(exception, PermissionDenied):
             return HttpResponseForbidden()
-        if isinstance(exception, (RequestablePermissionDenied,)):
+        if isinstance(exception, RequestablePermissionDenied):
             if isinstance(exception.object, ReportConfiguration):
                 obj = exception.object
             elif isinstance(exception.object, ReportDocument):
@@ -36,12 +36,11 @@ class ExceptionMiddleware:
                 return HttpResponseForbidden()
             response = HttpResponseRedirect(reverse("request-access", args=[obj.country_office.slug, obj.pk]))
             return response
-        elif isinstance(exception, (SelectTenantException, InvalidTenantError)):
+        if isinstance(exception, SelectTenantException | InvalidTenantError):
             response = HttpResponseRedirect(reverse("admin:login"))
             response.set_cookie("select", "1")
             return response
-        else:
-            raise exception
+        raise exception
 
     def __call__(self, request: "AuthHttpRequest") -> "HttpResponse":
         return self.get_response(request)

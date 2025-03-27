@@ -11,14 +11,14 @@ if TYPE_CHECKING:
     from hope_country_report.types.http import AuthHttpRequest
 
 
-@pytest.fixture()
+@pytest.fixture
 def anonymous(request):
     from django.contrib.auth.models import AnonymousUser
 
     return AnonymousUser()
 
 
-@pytest.fixture()
+@pytest.fixture
 def tenant_user(request):
     from testutils.factories import CountryOfficeFactory, UserRoleFactory
 
@@ -33,7 +33,7 @@ def tenant_user(request):
     return r.user
 
 
-@pytest.fixture()
+@pytest.fixture
 def req(request, rf) -> "AuthHttpRequest":
     req: "AuthHttpRequest" = rf.get("/")
     current = state.request

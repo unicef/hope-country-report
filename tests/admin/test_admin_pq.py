@@ -8,7 +8,7 @@ from django.urls import reverse
 from hope_country_report.apps.power_query.models import Dataset, Query
 
 
-@pytest.fixture()
+@pytest.fixture
 def query():
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -17,7 +17,7 @@ def query():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset():
     from testutils.factories import DatasetFactory
 
@@ -87,7 +87,7 @@ def test_delete_file(django_app, admin_user, dataset: "Dataset"):
     assert not default_storage.exists(file_path)
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_query_explain(django_app, admin_user, query: "Query"):
     url = reverse("admin:power_query_query_explain", args=[query.pk])
     res = django_app.get(url, user=admin_user)

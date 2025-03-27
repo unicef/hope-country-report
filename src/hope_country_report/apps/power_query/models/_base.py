@@ -26,7 +26,7 @@ from ..manager import PowerQueryManager
 from ..processors import mimetype_map
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
+    from typing import Any
 
     from collections.abc import Callable
 
@@ -77,7 +77,7 @@ class CeleryEnabled(models.Model):
                 return i
         return 0
 
-    def celery_queue_status(self) -> "Dict[str, int]":
+    def celery_queue_status(self) -> "dict[str, int]":
         with app.pool.acquire(block=True) as conn:
             tasks = conn.default_channel.client.lrange(settings.CELERY_TASK_DEFAULT_QUEUE, 0, 1)
             revoked = list(conn.default_channel.client.smembers(settings.CELERY_TASK_REVOKED_QUEUE))
@@ -98,11 +98,10 @@ class CeleryEnabled(models.Model):
     def async_result(self) -> "AbortableAsyncResult|None":
         if self.curr_async_result_id:
             return AbortableAsyncResult(self.curr_async_result_id, app=celery.current_app)
-        else:
-            return None
+        return None
 
     @property
-    def queue_info(self) -> "Dict[str, Any]":
+    def queue_info(self) -> "dict[str, Any]":
         with app.pool.acquire(block=True) as conn:
             tasks = conn.default_channel.client.lrange(settings.CELERY_TASK_DEFAULT_QUEUE, 0, -1)
 
@@ -114,7 +113,7 @@ class CeleryEnabled(models.Model):
         return {"id": "NotFound"}
 
     @property
-    def task_info(self) -> "Dict[str, Any]":
+    def task_info(self) -> "dict[str, Any]":
         if self.async_result:
             info = self.async_result._get_task_meta()
             result, task_status = info["result"], info["status"]

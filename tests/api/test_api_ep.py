@@ -31,7 +31,7 @@ def data(afg_user):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def admin_user_with_permission(admin_user):
     """Admin user with the necessary permissions added for ChartPage."""
     from django.contrib.auth.models import Permission
@@ -46,7 +46,7 @@ def admin_user_with_permission(admin_user):
     return admin_user
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(admin_user_with_permission):
     c = APIClient()
     c.force_authenticate(user=admin_user_with_permission)

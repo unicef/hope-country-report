@@ -7,14 +7,14 @@ from strategy_field.utils import fqn
 from hope_country_report.apps.power_query.processors import ToHTML
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_template():
     from testutils.factories import ReportTemplateFactory
 
     return ReportTemplateFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset():
     from testutils.factories import DatasetFactory
 

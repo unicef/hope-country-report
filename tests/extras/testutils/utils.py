@@ -59,11 +59,10 @@ class MutableQueryDict(QueryDict):
                     else:
                         data.append(v)
                 return data
-            else:
-                for k in data.keys():
-                    if type(data[k]) is dict:
-                        data[k] = transform_lists(data[k])
-                return data
+            for k in data.keys():
+                if type(data[k]) is dict:
+                    data[k] = transform_lists(data[k])
+            return data
 
         data = transform_lists(data)
 

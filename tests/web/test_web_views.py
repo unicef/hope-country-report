@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 REPORT_NAME = "report-1"
 
 
-@pytest.fixture()
+@pytest.fixture
 def data(afghanistan) -> "_DATA":
     from testutils.factories import HouseholdFactory
 
@@ -38,14 +38,14 @@ def data(afghanistan) -> "_DATA":
     return {"co1": afghanistan, "hh1": (h11, h12)}
 
 
-@pytest.fixture()
+@pytest.fixture
 def query1(afg_user, afghanistan, data: "_DATA"):
     from testutils.factories import QueryFactory
 
-    yield QueryFactory(country_office=afghanistan, owner=afg_user)
+    return QueryFactory(country_office=afghanistan, owner=afg_user)
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_configuration(query1: "Query"):
     from testutils.factories import ReportConfigurationFactory
 
@@ -54,20 +54,20 @@ def report_configuration(query1: "Query"):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_document(report_configuration: "ReportConfiguration"):
     report_configuration.execute(True)
     return report_configuration.documents.all()[0]
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_template():
     from testutils.factories import ReportTemplate
 
     return ReportTemplate.objects.first()
 
 
-@pytest.fixture()
+@pytest.fixture
 def restricted_document():
     from testutils.factories import ReportDocumentFactory
 
@@ -86,13 +86,6 @@ def test_select_tenant(django_app, report_configuration):
     res.forms["select-tenant"]["tenant"] = report_configuration.country_office.pk
     res = res.forms["select-tenant"].submit()
     assert res.status_code == 302
-
-
-# def test_user_list(django_app, report_configuration):
-#     url = reverse("office-users", args=[report_configuration.country_office.slug])
-#     res = django_app.get(url, user=report_configuration.owner)
-#     assert res.status_code == 200
-#
 
 
 def test_dashboard_list(django_app, report_configuration: "ReportConfiguration"):

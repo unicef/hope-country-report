@@ -1,4 +1,4 @@
-from typing import List, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from django.contrib import admin
 from django.contrib.admin import ListFilter
@@ -31,7 +31,7 @@ class CursorButtonMixin(ExtraButtonsMixin, CursorPaginatorAdmin):
     change_list_template = "admin/hope/change_list.html"
 
 
-def get_filters_for_model(model: "Type[Model]", only_index: bool = True) -> List[str | ListFilter]:
+def get_filters_for_model(model: "type[Model]", only_index: bool = True) -> list[str | ListFilter]:
     ret = [extra_filters.QueryStringFilter]
     for field in model._meta.fields:
         if only_index and not (field.db_index or field.unique):
@@ -51,10 +51,9 @@ class AutoFiltersMixin(admin.ModelAdmin):
     def get_list_filter(self, request: "AnyRequest"):
         if self.list_filter == ["__auto__"]:
             return get_filters_for_model(self.model)
-        elif self.list_filter:
+        if self.list_filter:
             return super().get_list_filter(request)
-        else:
-            return get_filters_for_model(self.model)
+        return get_filters_for_model(self.model)
 
 
 class HopeModelAdmin(ReadOnlyMixin, AdminFiltersMixin, AutoFiltersMixin, DisplayAllMixin, CursorButtonMixin):

@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import logging
 import mimetypes
 from collections.abc import Iterable
@@ -30,7 +28,7 @@ class ReportTemplate(models.Model):
         tenant_filter_field = "country_office"
 
     @cached_property
-    def content_type(self) -> Tuple[str | None, str | None]:
+    def content_type(self) -> tuple[str | None, str | None]:
         return mimetypes.guess_type(self.doc.name)
 
     @classmethod

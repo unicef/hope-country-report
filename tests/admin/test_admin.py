@@ -96,7 +96,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("modeladmin", m, ids=ids)
 
 
-@pytest.fixture()
+@pytest.fixture
 def record(db, request):
     from testutils.factories import get_factory_for_model
 
@@ -113,7 +113,7 @@ def record(db, request):
     return instance
 
 
-@pytest.fixture()
+@pytest.fixture
 def app(django_app_factory, mocked_responses, monkeypatch):
     from testutils.factories import SuperUserFactory
 
@@ -188,7 +188,7 @@ def test_admin_delete(app, modeladmin, record, monkeypatch):
         pytest.skip("No 'delete' permission")
 
 
-@pytest.mark.skip_buttons()
+@pytest.mark.skip_buttons
 def test_admin_buttons(app, modeladmin, button_handler, record, monkeypatch):
     from admin_extra_buttons.handlers import LinkHandler
 

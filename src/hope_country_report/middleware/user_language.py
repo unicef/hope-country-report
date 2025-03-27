@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING
 
 import logging
 
-from django.http import HttpRequest, HttpResponse
 from django.utils import translation
 
 if TYPE_CHECKING:
+    from django.http import HttpRequest, HttpResponse
     from typing import TYPE_CHECKING
 
     from collections.abc import Callable

@@ -27,7 +27,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("power_query_model", models)
 
 
-@pytest.fixture()
+@pytest.fixture
 def data() -> _DATA:
     from testutils.factories import CountryOfficeFactory, QueryFactory
 
@@ -39,12 +39,12 @@ def data() -> _DATA:
     return _DATA(co1, co2, q1, q2)
 
 
-@pytest.fixture()
+@pytest.fixture
 def backend():
     return PowerQueryBackend()
 
 
-@pytest.fixture()
+@pytest.fixture
 def restricted_document():
     from testutils.factories import ReportDocumentFactory, UserFactory
 

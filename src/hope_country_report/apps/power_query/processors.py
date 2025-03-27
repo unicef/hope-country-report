@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import io
 import logging
@@ -79,7 +79,7 @@ class ProcessorStrategy:
     def content_type(cls) -> str:
         return mimetype_map[cls.file_suffix]
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         raise NotImplementedError
 
 
@@ -88,7 +88,7 @@ class ToXLS(ProcessorStrategy):
     format = TYPE_LIST
     verbose_name = "Dataset to XLS"
 
-    def process(self, context: "Dict[str, Any]") -> bytes:
+    def process(self, context: "dict[str, Any]") -> bytes:
         dt = to_dataset(context["dataset"].data)
         return dt.export("xls")
 
@@ -98,7 +98,7 @@ class ToXLSX(ProcessorStrategy):
     format = TYPE_LIST
     verbose_name = "Dataset to XLSX"
 
-    def process(self, context: "Dict[str, Any]") -> bytes:
+    def process(self, context: "dict[str, Any]") -> bytes:
         dt = to_dataset(context["dataset"].data)
         return dt.export("xlsx")
 
@@ -108,7 +108,7 @@ class ToJSON(ProcessorStrategy):
     format = TYPE_LIST
     verbose_name = "Dataset to JSON"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         dt = to_dataset(context["dataset"].data)
         return dt.export("json").encode()
 
@@ -118,7 +118,7 @@ class ToCSV(ProcessorStrategy):
     format = TYPE_LIST
     verbose_name = "Dataset to CSV"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         dt = to_dataset(context["dataset"].data)
         return dt.export("csv").encode()
 
@@ -128,7 +128,7 @@ class ToYAML(ProcessorStrategy):
     format = TYPE_LIST
     verbose_name = "Dataset to YAML"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         ds: "Dataset" = context["dataset"]
         dt = to_dataset(ds.data)
         return dt.export("yaml").encode()
@@ -139,7 +139,7 @@ class ToHTML(ProcessorStrategy):
     format = TYPE_BOTH
     verbose_name = "Render CODE"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         if self.formatter.template:
             with self.formatter.template.doc.open("rb") as f:
                 code = f.read()
@@ -154,7 +154,7 @@ class ToText(ProcessorStrategy):
     format = TYPE_BOTH
     verbose_name = "To Textfile"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         tpl = Template(self.formatter.code)
         return tpl.render(Context(context)).encode()
 
@@ -164,7 +164,7 @@ class ToWord(ProcessorStrategy):
     format = TYPE_BOTH
     needs_file = True
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         from docxtpl import DocxTemplate
 
         tpl: "ReportTemplate" = self.formatter.template
@@ -182,7 +182,7 @@ class ToPDF(ProcessorStrategy):
     format = TYPE_BOTH
     verbose_name = "Text To PDF"
 
-    def process(self, context: "Dict[str, Any]") -> "ProcessorResult":
+    def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         tpl = Template(self.formatter.code)
         out = tpl.render(Context(context))
         return pdfkit.from_string(out)
@@ -198,7 +198,7 @@ class ToFormPDF(ProcessorStrategy):
     format = TYPE_DETAIL
     needs_file = True
 
-    def process(self, context: Dict[str, Any]) -> bytes:
+    def process(self, context: dict[str, Any]) -> bytes:
         tpl = self.formatter.template
         reader = PdfReader(tpl.doc)
         font_size = int(context.get("context", {}).get("font_size", 10))
@@ -255,9 +255,9 @@ class ToFormPDF(ProcessorStrategy):
     def insert_images_and_qr_codes(
         self,
         document: fitz.Document,
-        images: Dict[str, Tuple[fitz.Rect, str]],
-        qr_codes: Dict[str, str],
-        special_values: Dict[str, Dict[str, str]],
+        images: dict[str, tuple[fitz.Rect, str]],
+        qr_codes: dict[str, str],
+        special_values: dict[str, dict[str, str]],
         font_size: int,
         font_color: str,
     ):
@@ -279,8 +279,8 @@ class ToFormPDF(ProcessorStrategy):
         Loads, resizes, adjusts DPI, and inserts an external image into the specified field.
         Automatically detects orientation using EXIF metadata and adjusts rotation.
         """
-        rect: Optional[fitz.Rect]
-        page_index: Optional[int]
+        rect: fitz.Rect | None
+        page_index: int | None
 
         rect, page_index = get_field_rect(document, field_name)
         if rect is None or page_index is None:
@@ -335,7 +335,7 @@ class ToFormPDF(ProcessorStrategy):
         """
         return annot.get(FieldDictionaryAttributes.FT) == "/Btn" and AnnotationDictionaryAttributes.AP in annot
 
-    def is_special_language_field(self, field_name: str) -> Optional[str]:
+    def is_special_language_field(self, field_name: str) -> str | None:
         """Extract language code from the field name if it exists."""
         special_language_suffixes = {"_ar": "arabic", "_bn": "bengali", "_ru": "cyrillic", "_bur": "burmese"}
         for suffix, lang_code in special_language_suffixes.items():
@@ -349,15 +349,15 @@ class ToFormPDF(ProcessorStrategy):
 
 
 class ProcessorRegistry(Registry):
-    _choices: "List[Tuple[str, str]] | None"
+    _choices: "list[tuple[str, str]] | None"
 
     def get_name(self, entry: "ProcessorStrategy") -> str:
         return entry.label
 
-    def as_choices(self, _filter: Callable[[type], bool] | None = None) -> "List[Tuple[str, str]]":
+    def as_choices(self, _filter: Callable[[type], bool] | None = None) -> "list[tuple[str, str]]":
         if _filter:
             return sorted((str(fqn(klass)), self.get_name(klass)) for klass in self if _filter(klass))
-        elif not self._choices:
+        if not self._choices:
             self._choices = sorted((fqn(klass), self.get_name(klass)) for klass in self)  # type: ignore[return-value]
 
         return self._choices
