@@ -79,7 +79,7 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
             current_slug = slugify(current_name)
 
             if not current_code:
-                 continue
+                continue
 
             if current_code in processed_codes:
                 continue
@@ -105,18 +105,17 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
 
                 else:
                     processed_codes.add(current_code)
-                    continue 
+                    continue
 
             else:
-                conflicting_office_by_hope_id = CountryOffice.objects.filter(hope_id=current_hope_id).exclude(code=current_code).first()
+                conflicting_office_by_hope_id = (
+                    CountryOffice.objects.filter(hope_id=current_hope_id).exclude(code=current_code).first()
+                )
                 if conflicting_office_by_hope_id:
-                     continue
+                    continue
 
                 values["code"] = current_code
-                CountryOffice.objects.update_or_create(
-                    hope_id=current_hope_id,
-                    defaults=values
-                )
+                CountryOffice.objects.update_or_create(hope_id=current_hope_id, defaults=values)
                 processed_codes.add(current_code)
 
         self.link_shapes()
@@ -177,8 +176,10 @@ class CountryOffice(TimeStampedModel, models.Model):
             try:
                 return BusinessArea.objects.get(id=self.hope_id)
             except (ValueError, TypeError):
-                 logger.warning(f"Invalid hope_id '{self.hope_id}' for CountryOffice {self.pk} ('{self.name}'). Cannot fetch BusinessArea.")
-                 return None
+                logger.warning(
+                    f"Invalid hope_id '{self.hope_id}' for CountryOffice {self.pk} ('{self.name}'). Cannot fetch BusinessArea."
+                )
+                return None
         return None
 
     def get_map_settings(self) -> dict[str, int | float]:
@@ -186,9 +187,9 @@ class CountryOffice(TimeStampedModel, models.Model):
         lng = self.settings.get("map", {}).get("center", {}).get("lng", 0)
         zoom = self.settings.get("map", {}).get("zoom", 8)
         return {
-            "lat": lat, 
-            "lng": lng, 
-            "zoom": zoom, 
+            "lat": lat,
+            "lng": lng,
+            "zoom": zoom,
         }
 
     def get_absolute_url(self) -> str:
@@ -254,4 +255,3 @@ class UserRole(TimeStampedModel, models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.group.name}"
-
