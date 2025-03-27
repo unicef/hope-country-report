@@ -1,13 +1,15 @@
+import logging
 from typing import Any, TYPE_CHECKING
 
 import datetime
 from zoneinfo import ZoneInfo
+from django.utils.text import slugify
 
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.gis.db.models import MultiPolygonField
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from django.urls import reverse
 from django.utils import dateformat
 from django.utils.functional import cached_property
@@ -21,6 +23,9 @@ from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from hope_country_report.types.hope import TBusinessArea
+    from django.contrib.gis.db.models.proxy import MultiPolygonProxy
+
+logger = logging.getLogger(__name__)
 
 
 class CountryShape(TimeStampedModel, models.Model):
@@ -54,40 +59,90 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
         from hope_country_report.apps.hope.models import BusinessArea
 
         CountryOffice.objects.update_or_create(
-            hope_id=CountryOffice.HQ,
+            code=CountryOffice.HQ,
             defaults={
+                "hope_id": CountryOffice.HQ,
                 "name": "Headquarter",
                 "slug": "-",
                 "long_name": "Headquarter",
                 "active": True,
-                "code": CountryOffice.HQ,
             },
         )
+
         ba: TBusinessArea
+        processed_codes = {CountryOffice.HQ}
+
         for ba in BusinessArea.objects.all():
+            current_hope_id = str(ba.id)
+            current_code = ba.code
+            current_name = ba.name
+            current_slug = slugify(current_name)
+
+            if not current_code:
+                 continue
+
+            if current_code in processed_codes:
+                continue
+
             values = {
-                "name": ba.name,
+                "name": current_name,
                 "active": ba.active,
                 "long_name": ba.long_name,
                 "region_code": ba.region_code,
+                "slug": current_slug,
             }
-            # country: Country = ba.countries.first()
-            # shape: CountryShape = CountryShape.objects.filter()
-            CountryOffice.objects.update_or_create(hope_id=str(ba.id), code=ba.code, slug=ba.slug, defaults=values)
+
+            existing_office_by_code = CountryOffice.objects.filter(code=current_code).first()
+
+            if existing_office_by_code:
+                if existing_office_by_code.name == current_name:
+                    values["hope_id"] = current_hope_id
+                    values["code"] = current_code
+                    for field, value in values.items():
+                        setattr(existing_office_by_code, field, value)
+                    existing_office_by_code.save()
+                    processed_codes.add(current_code)
+
+                else:
+                    processed_codes.add(current_code)
+                    continue 
+
+            else:
+                conflicting_office_by_hope_id = CountryOffice.objects.filter(hope_id=current_hope_id).exclude(code=current_code).first()
+                if conflicting_office_by_hope_id:
+                     continue
+
+                values["code"] = current_code
+                CountryOffice.objects.update_or_create(
+                    hope_id=current_hope_id,
+                    defaults=values
+                )
+                processed_codes.add(current_code)
+
         self.link_shapes()
 
-    def link_shapes(self) -> QuerySet["CountryOffice"]:
+    def link_shapes(self) -> None:
         c: CountryOffice
-        for c in CountryOffice.objects.filter(shape__isnull=True):
-            if c.business_area:
-                country: Country = c.business_area.countries.first()
-                if country:
-                    c.shape = CountryShape.objects.filter(iso2=country.iso_code2).first()
-                else:
-                    c.shape = CountryShape.objects.filter(name__iexact=c.slug).first()
+        for c in CountryOffice.objects.select_related('business_area').filter(shape__isnull=True):
+            shape_found = None
+            try:
+                ba = c.business_area
+                if ba:
+                    country: Country | None = ba.countries.first()
+                    if country and country.iso_code2:
+                        shape_found = CountryShape.objects.get(iso2=country.iso_code2)
+            except Exception as e:
+                 logger.error(f"Error accessing business area or countries for CountryOffice {c.pk} ('{c.name}'): {e}")
 
-                if c.shape:
-                    c.save(update_fields=["shape"])
+
+            if not shape_found and c.slug:
+                shape_found = CountryShape.objects.filter(name__iexact=c.slug).first()
+
+            if shape_found:
+                c.shape = shape_found
+                c.save(update_fields=["shape"])
+            # else:
+            #     logger.debug(f"No shape found for CountryOffice {c.pk} ('{c.name}')") # Optional: log if no shape is found
 
 
 class CountryOffice(TimeStampedModel, models.Model):
@@ -131,9 +186,10 @@ class CountryOffice(TimeStampedModel, models.Model):
 
         if self.hope_id not in [CountryOffice.HQ, None]:
             try:
-                return BusinessArea.objects.filter(id=self.hope_id).first()
-            except ValueError:
-                return None
+                return BusinessArea.objects.get(id=self.hope_id)
+            except (ValueError, TypeError):
+                 logger.warning(f"Invalid hope_id '{self.hope_id}' for CountryOffice {self.pk} ('{self.name}'). Cannot fetch BusinessArea.")
+                 return None
         return None
 
     def get_map_settings(self) -> dict[str, int | float]:
@@ -141,9 +197,9 @@ class CountryOffice(TimeStampedModel, models.Model):
         lng = self.settings.get("map", {}).get("center", {}).get("lng", 0)
         zoom = self.settings.get("map", {}).get("zoom", 8)
         return {
-            "lat": lat,
-            "lng": lng,
-            "zoom": zoom,
+            "lat": lat, 
+            "lng": lng, 
+            "zoom": zoom, 
         }
 
     def get_absolute_url(self) -> str:
@@ -208,4 +264,5 @@ class UserRole(TimeStampedModel, models.Model):
         unique_together = ("user", "group", "country_office")
 
     def __str__(self) -> str:
-        return f"{self.user.username} {self.group.name}"
+        return f"{self.user.username} - {self.group.name}"
+
