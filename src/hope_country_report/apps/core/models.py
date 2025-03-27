@@ -11,7 +11,6 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from django.utils import dateformat
 from django.utils.functional import cached_property
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from timezone_field import TimeZoneField
@@ -67,17 +66,14 @@ class CountryOfficeManager(models.Manager["CountryOffice"]):
         ba: TBusinessArea
         for ba in BusinessArea.objects.all():
             values = {
-                "hope_id": str(ba.id),
                 "name": ba.name,
                 "active": ba.active,
-                "code": ba.code,
                 "long_name": ba.long_name,
                 "region_code": ba.region_code,
-                "slug": slugify(ba.name),
             }
             # country: Country = ba.countries.first()
             # shape: CountryShape = CountryShape.objects.filter()
-            CountryOffice.objects.update_or_create(hope_id=ba.id, defaults=values)
+            CountryOffice.objects.update_or_create(hope_id=str(ba.id), code=ba.code, slug=ba.slug, defaults=values)
         self.link_shapes()
 
     def link_shapes(self) -> QuerySet["CountryOffice"]:
@@ -125,14 +121,20 @@ class CountryOffice(TimeStampedModel, models.Model):
 
     @cached_property
     def geom(self) -> "MultiPolygonField[Any, Any]|None":
-        return self.shape.mpoly
+        if self.shape:
+            return self.shape.mpoly
+        return None
 
     @cached_property
     def business_area(self) -> "TBusinessArea|None":
         from hope_country_report.apps.hope.models import BusinessArea
 
         if self.hope_id not in [CountryOffice.HQ, None]:
-            return BusinessArea.objects.filter(id=self.hope_id).first()
+            try:
+                return BusinessArea.objects.filter(id=self.hope_id).first()
+            except ValueError:
+                return None
+        return None
 
     def get_map_settings(self) -> dict[str, int | float]:
         lat = self.settings.get("map", {}).get("center", {}).get("lat", 0)
@@ -145,7 +147,9 @@ class CountryOffice(TimeStampedModel, models.Model):
         }
 
     def get_absolute_url(self) -> str:
-        return reverse("office-index", args=[self.slug])
+        if self.slug:
+            return reverse("office-index", args=[self.slug])
+        return reverse("admin:core_countryoffice_changelist")
 
 
 DATE_FORMATS: list[tuple[str, str]]
