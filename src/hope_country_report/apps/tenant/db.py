@@ -1,4 +1,4 @@
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from django.db import models
 from django.db.models import QuerySet
@@ -16,7 +16,7 @@ class TenantManager(models.Manager["TenantModel"]):
     def must_tenant(self) -> bool:
         return must_tenant()
 
-    def get_tenant_filter(self) -> "Dict[str, Any]":
+    def get_tenant_filter(self) -> "dict[str, Any]":
         if not self.must_tenant():
             return {}
         tenant_filter_field = self.model.Tenant.tenant_filter_field

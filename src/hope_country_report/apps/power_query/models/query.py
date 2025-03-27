@@ -27,7 +27,7 @@ from ._base import AdminReversable, CeleryEnabled, PowerQueryModel
 from .arguments import Parametrizer
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Tuple
+    from typing import Any
 
     from django.db.models import QuerySet
 
@@ -58,7 +58,7 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
     def __str__(self) -> str:
         if self.abstract:
             return f"[ABSTRACT] {self.name}"
-        elif self.parent:
+        if self.parent:
             return f"{self.name} ({self.parent.name})"
         return self.name
 
@@ -94,7 +94,7 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
             self.code = None
         super().full_clean(exclude, validate_unique, validate_constraints)
 
-    def _invoke(self, query_id: int, arguments: "Dict[str, Any]") -> "Tuple[Any, Any]":
+    def _invoke(self, query_id: int, arguments: "dict[str, Any]") -> "tuple[Any, Any]":
         query = Query.objects.get(id=query_id)
         result = query.run(persist=False, arguments=arguments, use_existing=True)
         return result
@@ -137,12 +137,12 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
     def run(
         self,
         persist: bool = False,
-        arguments: "Dict[str,Any]|None" = None,
+        arguments: "dict[str,Any]|None" = None,
         use_existing: bool = False,
         preview: bool = False,
         running_task: "PowerQueryTask|None" = None,
-        **kwargs: "Dict[str, Any]",
-    ) -> "Tuple[Dataset, Dict[str,Any]]":
+        **kwargs: "dict[str, Any]",
+    ) -> "tuple[Dataset, dict[str,Any]]":
         from .dataset import Dataset
 
         model = self.parent.target.model_class() if self.parent else self.target.model_class()
@@ -183,8 +183,8 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
                         try:
                             code = self.get_code()
                             exec(code, globals(), locals_)
-                            result = locals_.get("result", None)
-                            extra = locals_.get("extra", None)
+                            result = locals_.get("result")
+                            extra = locals_.get("extra")
                         except Exception:
                             self.info = {
                                 "debug": debug,

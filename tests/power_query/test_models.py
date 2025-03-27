@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from hope_country_report.apps.power_query.models import Query
 
 
-@pytest.fixture()
+@pytest.fixture
 def query():
     from testutils.factories import ContentTypeFactory, QueryFactory
 

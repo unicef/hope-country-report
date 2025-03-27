@@ -26,7 +26,7 @@ if TYPE_CHECKING:
         hh1: tuple[Household, Household]
 
 
-@pytest.fixture()
+@pytest.fixture
 def data() -> "_DATA":
     from testutils.factories import CountryOfficeFactory, HouseholdFactory
 
@@ -38,21 +38,21 @@ def data() -> "_DATA":
     return {"co1": co1, "hh1": (h11, h12)}
 
 
-@pytest.fixture()
+@pytest.fixture
 def query1(data: "_DATA"):
     from testutils.factories import QueryFactory, UserFactory
 
-    yield QueryFactory(owner=UserFactory())
+    return QueryFactory(owner=UserFactory())
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_exception(data: "_DATA"):
     from testutils.factories import QueryFactory, UserFactory
 
-    yield QueryFactory(owner=UserFactory(), code="raise Exception('internal exc')")
+    return QueryFactory(owner=UserFactory(), code="raise Exception('internal exc')")
 
 
-@pytest.fixture()
+@pytest.fixture
 def query2():
     from testutils.factories import Query, QueryFactory
 
@@ -76,7 +76,7 @@ while True:
             conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, q.curr_async_result_id)
 
 
-@pytest.fixture()
+@pytest.fixture
 def report(query1: "Query"):
     from testutils.factories import ReportConfigurationFactory
 

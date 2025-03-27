@@ -1,4 +1,4 @@
-from typing import Any, AnyStr, Dict, List
+from typing import Any, AnyStr, List
 
 import io
 import keyword
@@ -147,7 +147,7 @@ class Command(BaseCommand):
             help="---",
         )
 
-    def handle(self, **options: "Dict[Any]"):
+    def handle(self, **options: "dict[Any]"):
         try:
             output_file = options["output_file"]
             buffer = io.StringIO()
@@ -207,7 +207,7 @@ class Command(BaseCommand):
             for table_name in tables_to_introspect:
                 if ignore_table(table_name):
                     continue
-                known_fields: Dict[str, Dict[str:Any]] = {}
+                known_fields: dict[str, dict[str:Any]] = {}
                 model_name = table2model(table_name)
                 try:
                     try:
@@ -269,11 +269,6 @@ class Command(BaseCommand):
                             ftype = "OneToOneField"
                         else:
                             ftype = "ForeignKey"
-                        # skip fields to unwanted models
-                        # if relations[column_name][1] not in WANTED_TABLES:
-                        #     print("111: 262", relations[column_name][1])
-                        # else:
-                        #     print("222: 262", relations[column_name][1])
                         if ignore_table(relations[column_name][1]):
                             continue
 
@@ -348,9 +343,7 @@ class Command(BaseCommand):
                         break
 
     def normalize_col_name(self, col_name: str, used_column_names: List[str], is_relation: bool):  # noqa
-        """
-        Modify the column name to make it Python-compatible as a field name
-        """
+        """Modify the column name to make it Python-compatible as a field name."""
         field_params = {}
         field_notes = []
 
@@ -403,7 +396,7 @@ class Command(BaseCommand):
 
         return new_name, field_params, field_notes
 
-    def get_field_type(self, connection: Any, table_name: str, row: List):
+    def get_field_type(self, connection: Any, table_name: str, row: list):
         """
         Given the database connection, the table name, and the cursor row
         description, this routine will return the given field type name, as
@@ -454,7 +447,7 @@ class Command(BaseCommand):
 
         return field_type, field_params, field_notes
 
-    def get_meta(self, table_name: str, constraints: Any, column_to_field_name: Dict[str, Any]) -> List[str]:
+    def get_meta(self, table_name: str, constraints: Any, column_to_field_name: dict[str, Any]) -> list[str]:
         """
         Return a sequence comprising the lines of code necessary
         to construct the inner Meta class for the model corresponding

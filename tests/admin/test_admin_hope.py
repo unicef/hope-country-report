@@ -5,7 +5,7 @@ from strategy_field.utils import fqn
 from hope_country_report.apps.power_query.processors import ToHTML
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_qs():
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -16,7 +16,7 @@ def query_qs():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_list():
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -27,7 +27,7 @@ def query_list():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_ds():
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -38,7 +38,7 @@ def query_ds():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def formatter():
     from testutils.factories import ContentTypeFactory, FormatterFactory
 

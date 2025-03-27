@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 import logging
 from collections.abc import Sequence
@@ -51,7 +51,7 @@ from .widget import FormatterEditor
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Type
+    from typing import Any
 
     from django.contrib.admin.options import _ListFilterT
 
@@ -59,11 +59,11 @@ if TYPE_CHECKING:
     from ...types.http import AuthHttpRequest
     from .processors import ProcessorStrategy
 
-    _ListDisplayT = List[str | Callable[[Any], str | bool]] | Tuple[str | Callable[[Any], str | bool],] | tuple[()]
+    _ListDisplayT = list[str | Callable[[Any], str | bool]] | tuple[str | Callable[[Any], str | bool],] | tuple[()]
 
 
 class CeleryEnabledMixin(admin.ModelAdmin):
-    def get_readonly_fields(self, request: HttpRequest, obj: "Optional[AnyModel]" = None) -> Sequence[str]:
+    def get_readonly_fields(self, request: HttpRequest, obj: "AnyModel | None" = None) -> Sequence[str]:
         ret = list(super().get_readonly_fields(request, obj))
         ret.append("curr_async_result_id")
         return ret
@@ -105,8 +105,7 @@ class CeleryEnabledMixin(admin.ModelAdmin):
         if result:
             url = reverse("admin:django_celery_results_taskresult_change", args=[result.pk])
             return redirect(url)
-        else:
-            self.message_user(request, "Result not found", messages.ERROR)
+        self.message_user(request, "Result not found", messages.ERROR)
 
     @view()
     def celery_queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
@@ -206,21 +205,14 @@ class QueryAdmin(
                 code = f"""sql={q}.query"""
                 locals_ = {"conn": ct.model_class().objects}
                 exec(code, globals(), locals_)
-                sql = locals_.get("sql", None)
+                sql = locals_.get("sql")
                 if sql:
                     cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
                     context["sql"] = reformat_sql(str(locals_.get("sql", "")))
                     cursor.execute(f"EXPLAIN ANALYZE {sql}")
                     headers = [d[0] for d in cursor.description]
                     result = cursor.fetchall()
-                    context.update(
-                        **{
-                            "result": result,
-                            "sql": sql,
-                            "headers": headers,
-                            "alias": settings.POWER_QUERY_DB_ALIAS,
-                        }
-                    )
+                    context.update(result=result, sql=sql, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
                 self.message_user(request, code)
                 # context["explain_info"] = json.loads(explain_info)
         else:
@@ -287,7 +279,7 @@ class QueryAdmin(
         url = reverse("admin:power_query_query_changelist")
         return redirect(f"{url}?parent__id={pk}")
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
+    def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
         return {"code": "result=conn.all()", "name": ct, "target": ct, "owner": request.user}
 
@@ -433,7 +425,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
             if form.is_valid():
-                processor: "Type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
+                processor: "type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
                 fmt = Formatter(
                     template=self.object,
                     processor=processor,
@@ -490,7 +482,7 @@ class ReportConfigurationAdmin(
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
+    def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         kwargs: dict[str, Any] = {"owner": request.user}
         if "q" in request.GET:
             q = Query.objects.get(pk=request.GET["q"])

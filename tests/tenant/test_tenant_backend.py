@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 _DATA = namedtuple("_DATA", "afg,ukr")
 
 
-@pytest.fixture()
+@pytest.fixture
 def data() -> _DATA:
     from testutils.factories import CountryOfficeFactory
 
@@ -34,7 +34,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("hope_model", models)
 
 
-@pytest.fixture()
+@pytest.fixture
 def backend():
     return TenantBackend()
 

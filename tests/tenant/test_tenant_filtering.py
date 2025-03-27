@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from hope_country_report.apps.core.models import CountryOffice
 
 
-@pytest.fixture()
+@pytest.fixture
 def data(reporters):
     from testutils.factories import CountryOfficeFactory, HouseholdFactory, UserFactory, UserRoleFactory
 

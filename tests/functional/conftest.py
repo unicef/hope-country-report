@@ -7,7 +7,7 @@ from testutils.selenium import SmartDriver
 
 def pytest_configure(config):
     if not config.option.driver:
-        setattr(config.option, "driver", "chrome")
+        config.option.driver = "chrome"
     os.environ["DISPLAY"] = ":10.0"
 
 
@@ -106,10 +106,10 @@ def browser(transactional_db, driver: "SmartDriver", live_server, settings, monk
     # driver.maximize_window()
     # driver.fullscreen_window()
 
-    yield driver
+    return driver
 
 
-@pytest.fixture()
+@pytest.fixture
 def logged_in_browser(browser: "SmartDriver", user):
     from testutils.utils import force_login
 

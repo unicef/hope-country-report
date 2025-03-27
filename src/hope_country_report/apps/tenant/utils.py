@@ -39,13 +39,9 @@ def must_tenant() -> bool:
         if state.request is None:
             return False
 
-        if state.request.user.is_anonymous:
+        if state.request.user.is_anonymous or state.request.user.is_superuser:
             state.must_tenant = False
-        elif state.request.user.is_superuser:
-            state.must_tenant = False
-        elif state.request.user.is_staff:
-            state.must_tenant = True
-        elif state.request.user.roles.exists():
+        elif state.request.user.is_staff or state.request.user.roles.exists():
             state.must_tenant = True
         else:
             state.must_tenant = None

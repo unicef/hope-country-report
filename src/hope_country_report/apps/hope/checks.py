@@ -1,11 +1,11 @@
-from typing import Any, List
+from typing import Any
 
 from django.apps import AppConfig, apps
 from django.core.checks import Error, register, Warning
 
 
 @register()
-def check_models(app_configs: "AppConfig", **kwargs: "Any") -> "List[Error]":
+def check_models(app_configs: "AppConfig", **kwargs: "Any") -> "list[Error]":
     errors = []
 
     for app_config in (apps.app_configs["hope"], apps.app_configs["power_query"]):

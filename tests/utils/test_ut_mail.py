@@ -9,14 +9,14 @@ from hope_country_report.utils.mail import notify_report_completion, send_docume
 USER_EMAIL = "user@example.com"
 
 
-@pytest.fixture()
+@pytest.fixture
 def report():
     from testutils.factories import ReportConfigurationFactory, UserFactory
 
     return ReportConfigurationFactory(owner=UserFactory(email=USER_EMAIL))
 
 
-@pytest.fixture()
+@pytest.fixture
 def report_document(report):
     from testutils.factories import ReportDocumentFactory
 

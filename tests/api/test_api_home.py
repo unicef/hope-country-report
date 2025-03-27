@@ -31,7 +31,7 @@ def data(afg_user):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(admin_user):
     c = APIClient()
     c.force_authenticate(user=admin_user)

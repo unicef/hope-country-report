@@ -38,10 +38,10 @@ class PowerQueryBackend(ModelBackend):
         if user_obj.is_authenticated and obj and obj._meta.app_label == "power_query":
             if getattr(obj, "owner", None) and user_obj == obj.owner:
                 return True
-            elif isinstance(obj, (ReportDocument,)):
+            if isinstance(obj, (ReportDocument,)):
                 if user_obj == obj.report.owner:
                     return True
-                elif (
+                if (
                     obj.report.limit_access_to.count()
                     and not obj.report.limit_access_to.filter(id=user_obj.id).exists()
                 ):

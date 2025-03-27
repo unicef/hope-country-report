@@ -13,11 +13,7 @@ SOURCE_DIR = PACKAGE_DIR.parent.parent  # .../src
 DEBUG = env.bool("DEBUG")
 
 RO_CONN = dict(**env.db("DATABASE_HOPE_URL")).copy()
-RO_CONN.update(
-    **{
-        "OPTIONS": {"options": "-c default_transaction_read_only=on"},
-    }
-)
+RO_CONN.update(OPTIONS={"options": "-c default_transaction_read_only=on"})
 
 DATABASES = {
     "default": env.db(

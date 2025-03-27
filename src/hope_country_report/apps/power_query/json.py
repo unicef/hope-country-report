@@ -10,6 +10,6 @@ class PQJSONEncoder(DjangoJSONEncoder):
     def default(self, o: Any) -> Any:
         if isinstance(o, models.Model):
             return str(o)
-        elif isinstance(o, UUID):
+        if isinstance(o, UUID):
             return o.hex
         return super().default(o)

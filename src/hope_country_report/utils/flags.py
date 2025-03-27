@@ -38,12 +38,12 @@ def superuser(value: str, request: "AuthHttpRequest|None", **kwargs: "Any") -> b
 
 @conditions.register("debug", validator=validate_bool)
 def debug(value: str, **kwargs: "Any") -> bool:
-    return settings.DEBUG == parse_bool(value)
+    return parse_bool(value) == settings.DEBUG
 
 
 @conditions.register("Server IP")
 def server_ip(value: str, request: "HttpRequest|None", **kwargs: "Any") -> bool:
-    return request.META.get("REMOTE_ADDR", "-1") in value.split(",")  #
+    return request.META.get("REMOTE_ADDR", "-1") in value.split(",")
 
 
 @conditions.register("hostname")
