@@ -84,7 +84,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USERNAME: postgres
         ports:
-          - 15432:5432
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -93,10 +93,10 @@ jobs:
     env:
       DOCKER_DEFAULT_PLATFORM: linux/amd64
       DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
-      DATABASE_URL: postgis://postgres:postgres@localhost:15432/country_report
-      DATABASE_HOPE_URL: postgis://postgres:postgres@localhost:15432/hopedb
-      CELERY_BROKER_URL: redis://localhost:16379/1
-      CACHE_URL: redis://localhost:16379/2
+      DATABASE_URL: postgis://postgres:postgres@db:15432/country_report
+      DATABASE_HOPE_URL: postgis://postgres:postgres@hopedb:5432/hopedb
+      CELERY_BROKER_URL: redis://redis:16379/1
+      CACHE_URL: redis://redis:16379/2
       DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout code
@@ -156,8 +156,7 @@ jobs:
               -e CELERY_BROKER_URL=${CELERY_BROKER_URL} \
               -e CACHE_URL=${CACHE_URL} \
               -e SECRET_KEY=super-secret-key-just-for-testing \
-              -e HOPE_API_URL="https://dev-hope.unitst.org/api/rest/" \
-              -e AURORA_API_URL="https://uni-hope-ukr-sr-dev.unitst.org/api/" \
+              -e DATABASE_HOPE_URL=${DATABASE_HOPE_URL} \
               -v "./output/:/app/output" \
               -v "./src/:/app/src" \
               -v "./tests:/app/tests" \
