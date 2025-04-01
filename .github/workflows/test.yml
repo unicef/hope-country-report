@@ -65,7 +65,7 @@ jobs:
         ports:
           - 16379:6379
       db:
-        image: postgis/postgis:15-3.4
+        image: postgis/postgis:14-3.5
         env:
           POSTGRES_DATABASE: country_report
           POSTGRES_PASSWORD: postgres
@@ -78,7 +78,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       hopedb:
-        image: postgis/postgis:15-3.4
+        image: postgis/postgis:14-3.5
         env:
           POSTGRES_DATABASE: hopedb
           POSTGRES_PASSWORD: postgres
@@ -93,10 +93,10 @@ jobs:
     env:
       DOCKER_DEFAULT_PLATFORM: linux/amd64
       DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
-      DATABASE_URL: postgis://postgres:postgres@db:15432/country_report
-      DATABASE_HOPE_URL: postgis://postgres:postgres@hopedb:5432/hopedb
-      CELERY_BROKER_URL: redis://redis:16379/1
-      CACHE_URL: redis://redis:16379/2
+      DATABASE_URL: postgis://postgres:postgres@localhost:15432/country_report
+      DATABASE_HOPE_URL: postgis://postgres:postgres@localhost:5432/hopedb
+      CELERY_BROKER_URL: redis://localhost:16379/1
+      CACHE_URL: redis://localhost:16379/2
       DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout code
@@ -184,7 +184,7 @@ jobs:
         ports:
           - 5379:6379
       db1:
-        image: postgres:14
+        image: postgis/postgis:14-3.5
         env:
           POSTGRES_HOST: db1
           POSTGRES_DATABASE: country_report
