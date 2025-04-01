@@ -4,14 +4,22 @@
 export MEDIA_ROOT="${MEDIA_ROOT:-/var/run/app/media}"
 export STATIC_ROOT="${STATIC_ROOT:-/var/run/app/static}"
 export UWSGI_PROCESSES="${UWSGI_PROCESSES:-"4"}"
-export DJANGO_SETTINGS_MODULE="hope_country_report.config.settings"
+mkdir -p "${MEDIA_ROOT}" "${STATIC_ROOT}" || echo "Cannot create dirs ${MEDIA_ROOT} ${STATIC_ROOT}"
 
+if [ -d "${MEDIA_ROOT}" ];then
+  chown -R hope:unicef ${MEDIA_ROOT}
+fi
+
+if [ -d "${STATIC_ROOT}" ];then
+  chown -R hope:unicef ${STATIC_ROOT}
+fi
+
+mkdir -p /app/
 chown -R hope:unicef /app
+cd /app
 
 case "$1" in
     run)
-      django-admin migrate
-      django-admin collectstatic --noinput
       django-admin upgrade --with-check
 	    set -- tini -- "$@"
 	    MAPPING=""

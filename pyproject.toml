@@ -179,7 +179,7 @@ testpaths = "tests"
 tmp_path_retention_policy = "all"
 tmp_path_retention_count = 0
 selenium_exclude_debug = true
-addopts = "-rs --reuse-db --tb=short --capture=sys --echo-version django --cov=hope_country_report --cov-config=tests/.coveragerc --cov-report html --cov-report xml"
+addopts = "-rs --reuse-db --tb=short --maxfail=5 --capture=sys --echo-version django --cov=hope_country_report --cov-config=tests/.coveragerc --cov-report html --cov-report xml"
 
 
 markers = [
