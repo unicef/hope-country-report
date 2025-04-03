@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING
 
 import base64
 import binascii
@@ -44,7 +44,7 @@ def is_valid_template(filename: Path) -> bool:
 
 def make_naive(value: datetime.datetime) -> datetime.datetime:
     if isinstance(value, datetime.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
-        return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        return value.astimezone(datetime.UTC).replace(tzinfo=None)
     return value
 
 
@@ -168,7 +168,7 @@ def load_font_for_language(language: str, font_size: int = 12):
     return ImageFont.truetype(str(font_path), size=font_size)
 
 
-def get_field_rect(document: fitz.Document, field_name: str) -> Optional[tuple[fitz.Rect, int]]:
+def get_field_rect(document: fitz.Document, field_name: str) -> tuple[fitz.Rect, int] | None:
     """
     Returns the Rect and page index of the specified field.
     """

@@ -31,11 +31,3 @@ report.register(
 
 router.register(r"queries", views.QueryViewSet)
 router.register(r"charts", views.ChartViewSet)
-#
-# office_router = routers.ExtendedSimpleRouter()
-#
-# office_router.register(r'tasks', TaskViewSet)
-#           .register(r'comments',
-#                     CommentViewSet,
-#                     'tasks-comment',
-#                     parents_query_lookups=['object_id'])

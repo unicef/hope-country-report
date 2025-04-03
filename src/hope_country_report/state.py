@@ -1,11 +1,11 @@
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import contextlib
 from copy import copy
 from threading import local
 
 if TYPE_CHECKING:
-    from typing import Any, List
+    from typing import Any
 
     from collections.abc import Iterator
 
@@ -20,15 +20,15 @@ class State(local):
     tenant_cookie: "str|None" = None
     tenant: "CountryOffice|None" = None
     must_tenant: "bool|None" = None
-    cookies: "dict[str, List[Any]]" = {}
-    filters: "List[Any]" = []
+    cookies: "dict[str, list[Any]]" = {}
+    filters: "list[Any]" = []
     inspecting: bool = False
 
     def __repr__(self) -> str:
         return f"<State {id(self)}: {self.tenant_cookie}:{self.must_tenant}>"
 
     @contextlib.contextmanager
-    def configure(self, **kwargs: "Dict[str,Any]") -> "Iterator[None]":
+    def configure(self, **kwargs: "dict[str,Any]") -> "Iterator[None]":
         pre = copy(self.__dict__)
         self.reset()
         with self.set(**kwargs):
@@ -50,7 +50,7 @@ class State(local):
         self.tenant_cookie = _tenant_cookie
 
     @contextlib.contextmanager
-    def set(self, **kwargs: "Dict[str,Any]") -> "Iterator[None]":
+    def set(self, **kwargs: "dict[str,Any]") -> "Iterator[None]":
         pre = {}
         for k, v in kwargs.items():
             if hasattr(self, k):

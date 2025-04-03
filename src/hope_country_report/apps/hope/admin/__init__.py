@@ -15,8 +15,7 @@ def register_all_app_models() -> None:
         try:
             if model._meta.label in models_to_ignore:
                 continue
-            else:
-                admin.site.register(model, modeladmin_factory(model))
+            admin.site.register(model, modeladmin_factory(model))
         except admin.sites.AlreadyRegistered:
             pass
 

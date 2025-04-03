@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.django_db()
 
 
-@pytest.fixture()
+@pytest.fixture
 def data(reporters) -> "_DATA":
     from testutils.factories import CountryOfficeFactory, HouseholdFactory, UserFactory, UserRoleFactory
 
@@ -49,7 +49,7 @@ def data(reporters) -> "_DATA":
     return {"co1": co1, "co2": co2, "hh1": (h11, h12), "hh2": (h21, h22), "user": user}
 
 
-@pytest.fixture()
+@pytest.fixture
 def query(data: "_DATA"):
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -60,14 +60,14 @@ def query(data: "_DATA"):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_nested(query):
     from testutils.factories import QueryFactory
 
     return QueryFactory(name="Nested Query", code=f"result=invoke({query.pk}, arguments)")
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_parametrizer(data: "_DATA"):
     from testutils.factories import ParametrizerFactory, QueryFactory
 
@@ -79,7 +79,7 @@ def query_parametrizer(data: "_DATA"):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_impl(data: "_DATA", query):
     from testutils.factories import QueryFactory
 
@@ -92,7 +92,7 @@ def query_impl(data: "_DATA", query):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_log(data: "_DATA"):
     from testutils.factories import ParametrizerFactory, QueryFactory
 
@@ -107,7 +107,7 @@ debug("end")
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def formatter() -> "Formatter":
     from testutils.factories import FormatterFactory
 
@@ -122,12 +122,12 @@ def formatter() -> "Formatter":
 #     return ReportFactory(formatter=formatter, query=query)
 
 
-@pytest.fixture()
+@pytest.fixture
 def req(rf, data):
     req = rf.get("/")
     req.user = data["user"]
     req.COOKIES[conf.COOKIE_NAME] = data["user"].roles.first().country_office.slug
-    yield req
+    return req
 
 
 def test_filter_query(req, data: "_DATA"):

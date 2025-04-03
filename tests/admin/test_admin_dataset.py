@@ -7,14 +7,14 @@ from django.urls import reverse
 from hope_country_report.apps.power_query.models import Dataset
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset():
     from testutils.factories import DatasetFactory
 
     return DatasetFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_qs():
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -25,7 +25,7 @@ def query_qs():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_list():
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -36,7 +36,7 @@ def query_list():
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_ds():
     from testutils.factories import ContentTypeFactory, QueryFactory
 

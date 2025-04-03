@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from hope_country_report.apps.power_query.models import Parametrizer
 
 
-@pytest.fixture()
+@pytest.fixture
 def query(db):
     q1 = QueryFactory(
         name="q1",

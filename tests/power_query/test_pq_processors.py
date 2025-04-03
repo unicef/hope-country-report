@@ -35,7 +35,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("pp", m, ids=ids)
 
 
-@pytest.fixture()
+@pytest.fixture
 def data(user: NoReturn):
     from testutils.factories import CountryOfficeFactory, HouseholdFactory
 
@@ -47,7 +47,7 @@ def data(user: NoReturn):
         HouseholdFactory(business_area=co1.business_area, withdrawn=False)
 
 
-@pytest.fixture()
+@pytest.fixture
 def query1(data: None):
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -58,14 +58,14 @@ def query1(data: None):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def formatter():
     from testutils.factories import FormatterFactory
 
     return FormatterFactory(name="Queryset To HTML")
 
 
-@pytest.fixture()
+@pytest.fixture
 def report(query1: NoReturn, formatter: NoReturn):
     from testutils.factories import ReportConfigurationFactory
 

@@ -33,7 +33,7 @@ if TYPE_CHECKING:
         hh2: tuple[Household, Household]
 
 
-@pytest.fixture()
+@pytest.fixture
 def data(reporters) -> "_DATA":
     from testutils.factories import CountryOfficeFactory, HouseholdFactory, UserFactory, UserRoleFactory
 
@@ -52,7 +52,7 @@ def data(reporters) -> "_DATA":
     return {"co1": co1, "co2": co2, "hh1": (h11, h12), "hh2": (h21, h22), "user": user}
 
 
-@pytest.fixture()
+@pytest.fixture
 def query(data: "_DATA"):
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -63,7 +63,7 @@ def query(data: "_DATA"):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query_impl(data: "_DATA", query):
     from testutils.factories import QueryFactory
 
@@ -76,7 +76,7 @@ def query_impl(data: "_DATA", query):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def query2(afg_user):
     from testutils.factories import Query, QueryFactory
 
@@ -93,7 +93,7 @@ def query2(afg_user):
             conn.default_channel.client.srem(settings.CELERY_TASK_REVOKED_QUEUE, q.curr_async_result_id)
 
 
-@pytest.fixture()
+@pytest.fixture
 def report(query2: "Query", monkeypatch):
     from testutils.factories import ReportConfigurationFactory
 

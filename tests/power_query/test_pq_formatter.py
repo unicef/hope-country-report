@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 H1, H2, H3 = sorted([uuid.uuid4(), uuid.uuid4(), uuid.uuid4()])
 
 
-@pytest.fixture()
+@pytest.fixture
 def data(user: "User"):
     from testutils.factories import CountryOfficeFactory, HouseholdFactory
 
@@ -28,7 +28,7 @@ def data(user: "User"):
         HouseholdFactory(id=H3, business_area=co1.business_area, withdrawn=False)
 
 
-@pytest.fixture()
+@pytest.fixture
 def query1(data):
     from testutils.factories import ContentTypeFactory, QueryFactory
 
@@ -39,7 +39,7 @@ def query1(data):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset(query1: "Query"):
     query1.run(persist=True)
     return query1.datasets.first()

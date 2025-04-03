@@ -8,14 +8,14 @@ from hope_country_report.apps.tenant.utils import RequestHandler
 from hope_country_report.state import State, state
 
 
-@pytest.fixture()
+@pytest.fixture
 def req(rf, tenant_user):
     signer = get_cookie_signer()
 
     req = rf.get("/")
     req.user = tenant_user
     req.COOKIES[conf.COOKIE_NAME] = signer.sign(tenant_user.roles.first().country_office.slug)
-    yield req
+    return req
 
 
 def test_set():

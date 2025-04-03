@@ -1,17 +1,19 @@
 from typing import Any
 
-from django.db.models import Model
 from django.utils.functional import cached_property
-
-from djgeojson.fields import MultiPolygonField
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework_gis.fields import GeometrySerializerMethodField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
+from typing import TYPE_CHECKING
 
 from hope_country_report.apps.core.models import CountryOffice, CountryShape
 from hope_country_report.apps.power_query.models import ChartPage, Dataset, Query, ReportConfiguration, ReportDocument
 from hope_country_report.apps.power_query.utils import to_dataset
+
+if TYPE_CHECKING:
+    from django.db.models import Model
+    from djgeojson.fields import MultiPolygonField
 
 
 class SelectedOfficeSerializer(serializers.ModelSerializer):
