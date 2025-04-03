@@ -97,7 +97,6 @@ MODEL_RENAME = {
     "Entitlementcard": "EntitlementCard",
     "Paymentplan": "PaymentPlan",
     "Programcycle": "ProgramCycle",
-    "Targetpopulation": "TargetPopulation",
     "Serviceprovider": "ServiceProvider",
 }
 
