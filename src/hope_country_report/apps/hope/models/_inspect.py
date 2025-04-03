@@ -1129,7 +1129,7 @@ class Household(HopeModel):
         "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", blank=True, null=True
     )
     household_collection = models.ForeignKey(
-        "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", blank=True, null=True
+        "HouseholdCollection", on_delete=models.DO_NOTHING, related_name="household_household_collection", blank=True, null=True
     )
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="household_program", blank=True, null=True
