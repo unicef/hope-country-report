@@ -6,12 +6,14 @@ ARG GOSU_SHA256=bbc4136d03ab138b1ad66fa4fc051bafc6cc7ffae632b069a53657279a450de3
 RUN set -x \
   && runtimeDeps=" \
     libgdal-dev \
+    libmagic1 \
+    libxml2 \
     wkhtmltopdf \
-    " \
+  " \
   && buildDeps=" \
 wget \
 " \
-  && apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends ${buildDeps} ${runtimeDeps} \
+  && apt-get update && apt-get install -y --no-install-recommends ${buildDeps} ${runtimeDeps} \
   && rm -rf /var/lib/apt/lists/* \
   && wget --quiet -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64" \
   && echo "$GOSU_SHA256 /usr/local/bin/gosu" | sha256sum --check --status \
@@ -36,7 +38,7 @@ libglib2.0-0 \
 libnss3 \
 libssl-dev \
 libxml2-dev  \
-libproj-dev \
+python3-dev \
 zlib1g-dev  \
 " \
     && apt-get update \
@@ -71,7 +73,6 @@ LABEL org.opencontainers.image.version="$VERSION"
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/venv/lib/python3.12/site-packages:/venv/bin \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
@@ -79,24 +80,22 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
-COPY docker/conf /conf/
-COPY docker/bin/* /usr/local/bin/
-
-COPY . /app/
+COPY src /app/src/
 
 RUN --mount=type=cache,target=/root/.uv-cache \
-    uv sync --cache-dir=/root/.uv-cache \
+    find ../src -name 'node_modules' -prune \
+        -o -name *.py -o -name *.html -o -name *.js -o -name *.css \
+        -type f \
+        -exec ls -l "{}" \;  | sha1sum | awk '{print $1}' > CODE_CHECKSUM \
+    && uv sync --cache-dir=/root/.uv-cache \
         --python=/usr/local/bin/python \
-        --frozen --dev
+        --python-preference=system \
+        --frozen
 
 # ------- production only deps-------
 FROM builder AS production
-ARG BUILD_DATE
-ARG GIT_SHA
-ARG BRANCH
-ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin:/app/src \
+ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
-    PYTHONPATH="/venv/lib/python3.12/site-packages:/app/src/" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
@@ -111,32 +110,27 @@ RUN --mount=type=cache,target=/root/.uv-cache \
     uv sync --cache-dir=/root/.uv-cache \
         --python=/usr/local/bin/python \
         --python-preference=system \
-        --no-dev --frozen --dev
+        --no-dev --frozen
 
-COPY docker/conf /conf/
-COPY docker/bin/* /usr/local/bin/
 
-EXPOSE 8000
-ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
-CMD ["run"]
 
 # ------- dist -------
-FROM builder AS dist
+FROM base_os AS dist
 ARG BUILD_DATE
 ARG GIT_SHA
 ARG BRANCH
 
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
+    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     BUILD_DATE=$BUILD_DATE \
     GIT_SHA=$GIT_SHA \
     VERSION=$VERSION \
     BRANCH=$BRANCH \
-    PYTHONPATH="/venv/lib/python3.12/site-packages" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     STATIC_URL="/static/" \
+    PYTHONPATH=""\
     PGSSLCERT="/tmp/postgresql.crt" \
-    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
     UWSGI_PROCESSES=4
@@ -153,11 +147,11 @@ COPY docker/bin/* /usr/local/bin/
 
 COPY . /app/
 
-COPY --chown=hope:unicef --from=tests /venv /venv
+COPY --chown=hope:unicef --from=production /venv /venv
 COPY --from=builder /usr/local/bin/uwsgi /usr/local/bin/uv /usr/local/bin/
 RUN --mount=type=cache,target=/root/.uv-cache \
-    uv --cache-dir=/root/.uv-cache  pip install --no-deps .
-
+    uv --cache-dir=/root/.uv-cache  pip install --no-deps . \
+    && rm -fr /app/*
 
 EXPOSE 8000
 ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
