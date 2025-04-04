@@ -535,7 +535,6 @@ class Tickethouseholddataupdatedetails(HopeModel):
         "Household",
         on_delete=models.DO_NOTHING,
         related_name="tickethouseholddataupdatedetails_household",
-        blank=True,
         null=True,
     )
     ticket = models.OneToOneField(
@@ -560,7 +559,6 @@ class Ticketindividualdataupdatedetails(HopeModel):
         "Individual",
         on_delete=models.DO_NOTHING,
         related_name="ticketindividualdataupdatedetails_individual",
-        blank=True,
         null=True,
     )
     ticket = models.OneToOneField(
@@ -1082,7 +1080,6 @@ class Household(HopeModel):
     org_name_enumerator = models.CharField(max_length=250, null=True)
     village = models.CharField(max_length=250, null=True)
     registration_method = models.CharField(max_length=250, null=True)
-    collect_individual_data = models.CharField(max_length=250, null=True)
     currency = models.CharField(max_length=250, null=True)
     unhcr_id = models.CharField(max_length=250, null=True)
     internal_data = models.JSONField(null=True)
@@ -1095,7 +1092,6 @@ class Household(HopeModel):
     origin_unicef_id = models.CharField(max_length=100, blank=True, null=True)
     is_migration_handled = models.BooleanField(null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
-    is_recalculated_group_ages = models.BooleanField(null=True)
     collect_type = models.CharField(max_length=8, null=True)
     kobo_submission_uuid = models.UUIDField(blank=True, null=True)
     kobo_submission_time = models.DateTimeField(blank=True, null=True)
@@ -1772,12 +1768,9 @@ class PaymentPlan(HopeModel):
         "ProgramCycle", on_delete=models.DO_NOTHING, related_name="paymentplan_program_cycle", null=True
     )
     source_payment_plan = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="paymentplan_source_payment_plan", blank=True, null=True
-    )
-    target_population = models.ForeignKey(
-        "TargetPopulation",
+        "self",
         on_delete=models.DO_NOTHING,
-        related_name="paymentplan_target_population",
+        related_name="paymentplan_source_payment_plan",
         blank=True,
         null=True,
     )
@@ -1791,7 +1784,6 @@ class PaymentPlan(HopeModel):
         "Targetingcriteria",
         on_delete=models.DO_NOTHING,
         related_name="paymentplan_targeting_criteria",
-        blank=True,
         null=True,
     )
     vulnerability_score_max = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
@@ -1924,7 +1916,6 @@ class Paymentverificationplan(HopeModel):
         PaymentPlan,
         on_delete=models.DO_NOTHING,
         related_name="paymentverificationplan_payment_plan",
-        blank=True,
         null=True,
     )
 
@@ -1993,8 +1984,6 @@ class Program(HopeModel):
     start_date = models.DateField(null=True)
     end_date = models.DateField(blank=True, null=True)
     description = models.CharField(max_length=255, null=True)
-    ca_id = models.TextField(blank=True, null=True)  # This field type is a guess.
-    ca_hash_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     budget = models.DecimalField(max_digits=11, decimal_places=2, null=True)
     frequency_of_payments = models.CharField(max_length=50, null=True)
     sector = models.CharField(max_length=50, null=True)
@@ -2109,17 +2098,20 @@ class DataDeduplicationenginesimilaritypair(HopeModel):
         Individual,
         on_delete=models.DO_NOTHING,
         related_name="datadeduplicationenginesimilaritypair_individual1",
+        blank=True,
         null=True,
     )
     individual2 = models.ForeignKey(
         Individual,
         on_delete=models.DO_NOTHING,
         related_name="datadeduplicationenginesimilaritypair_individual2",
+        blank=True,
         null=True,
     )
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="datadeduplicationenginesimilaritypair_program", null=True
     )
+    status_code = models.CharField(max_length=20, null=True)
 
     class Meta:
         managed = False
@@ -2217,7 +2209,6 @@ class DataRegistrationdataimport(HopeModel):
     golden_record_unique = models.IntegerField(null=True)
     dedup_engine_batch_duplicates = models.IntegerField(null=True)
     dedup_engine_golden_record_duplicates = models.IntegerField(null=True)
-    datahub_id = models.UUIDField(blank=True, null=True)
     error_message = models.TextField(null=True)
     sentry_id = models.CharField(max_length=100, blank=True, null=True)
     pull_pictures = models.BooleanField(null=True)
@@ -2285,28 +2276,6 @@ class DataRegistrationdataimportdatahub(HopeModel):
         return str(self.name)
 
 
-class Householdselection(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    vulnerability_score = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
-    is_original = models.BooleanField(null=True)
-    is_migration_handled = models.BooleanField(null=True)
-    household = models.ForeignKey(
-        Household, on_delete=models.DO_NOTHING, related_name="householdselection_household", null=True
-    )
-    target_population = models.ForeignKey(
-        "TargetPopulation", on_delete=models.DO_NOTHING, related_name="householdselection_target_population", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "targeting_householdselection"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
 class Targetingcollectorblockrulefilter(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -2355,8 +2324,6 @@ class Targetingcriteria(HopeModel):
     updated_at = models.DateTimeField(null=True)
     flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
     flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
-    household_ids = models.TextField(null=True)
-    individual_ids = models.TextField(null=True)
 
     class Meta:
         managed = False
@@ -2453,57 +2420,3 @@ class Targetingindividualrulefilterblock(HopeModel):
 
     class Tenant:
         tenant_filter_field: str = "__all__"
-
-
-class TargetPopulation(HopeModel):
-    is_removed = models.BooleanField(null=True)
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
-    ca_id = models.TextField(blank=True, null=True)  # This field type is a guess.
-    ca_hash_id = models.TextField(blank=True, null=True)  # This field type is a guess.
-    change_date = models.DateTimeField(blank=True, null=True)
-    finalized_at = models.DateTimeField(blank=True, null=True)
-    status = models.CharField(max_length=256, null=True)
-    build_status = models.CharField(max_length=256, null=True)
-    built_at = models.DateTimeField(blank=True, null=True)
-    sent_to_datahub = models.BooleanField(null=True)
-    steficon_applied_date = models.DateTimeField(blank=True, null=True)
-    vulnerability_score_min = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
-    vulnerability_score_max = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
-    excluded_ids = models.TextField(null=True)
-    exclusion_reason = models.TextField(null=True)
-    total_households_count = models.IntegerField(blank=True, null=True)
-    total_individuals_count = models.IntegerField(blank=True, null=True)
-    child_male_count = models.IntegerField(blank=True, null=True)
-    child_female_count = models.IntegerField(blank=True, null=True)
-    adult_male_count = models.IntegerField(blank=True, null=True)
-    adult_female_count = models.IntegerField(blank=True, null=True)
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="targetpopulation_business_area", blank=True, null=True
-    )
-    program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="targetpopulation_program", null=True
-    )
-    program_cycle = models.ForeignKey(
-        ProgramCycle, on_delete=models.DO_NOTHING, related_name="targetpopulation_program_cycle", null=True
-    )
-    targeting_criteria = models.OneToOneField(
-        Targetingcriteria,
-        on_delete=models.DO_NOTHING,
-        related_name="targetpopulation_targeting_criteria",
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "targeting_targetpopulation"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-    def __str__(self) -> str:
-        return str(self.name)
