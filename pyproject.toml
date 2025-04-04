@@ -31,6 +31,7 @@ dependencies = [
     "django-debug-toolbar",
     "django-entangled",
     "django-environ",
+    "django-extensions",
     "django-filter",
     "django-flags",
     "django-geojson[field]",
@@ -168,6 +169,7 @@ dev = [
 
 [tool.pytest.ini_options]
 norecursedirs = "data .tox _plugin_template .idea  node_modules ~*"
+DJANGO_SETTINGS_MODULE = "hope_country_report.config.settings"
 django_find_project = false
 log_format = "%(asctime)s %(levelname)s %(message)s"
 log_level = "CRITICAL"
