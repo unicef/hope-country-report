@@ -24,13 +24,13 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Remove "-RC" suffix in pyproject.toml
+      - name: Remove rc suffix in pyproject.toml
         run: |
           git checkout $GITHUB_REF_NAME
-          sed -i 's/-RC//' pyproject.toml
+          sed -i 's/rc1//' pyproject.toml
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git commit -am "Remove -RC suffix for stable release ${{ env.VERSION }}"
+          git commit -am "Remove rc suffix for stable release ${{ env.VERSION }}"
           git push origin $GITHUB_REF_NAME
 
   build-push-stable:
@@ -49,6 +49,6 @@ jobs:
 
       - name: Retag and push stable image
         run: |
-          docker pull ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}-RC
-          docker tag ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}-RC ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ env.VERSION }}
+          docker pull ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}rc1
+          docker tag ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}rc1 ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ env.VERSION }}
           docker push ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}

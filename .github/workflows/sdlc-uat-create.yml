@@ -44,7 +44,7 @@ jobs:
         run: |
           git checkout $GITHUB_REF_NAME
           OLD_VERSION=$(grep '^version =' pyproject.toml | awk '{print $3}')
-          NEW_VERSION="$OLD_VERSION-RC"
+          NEW_VERSION="$OLD_VERSIONrc1"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           sed -i "s/^version = .*/version = $NEW_VERSION/" pyproject.toml

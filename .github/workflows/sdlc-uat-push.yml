@@ -25,7 +25,7 @@ jobs:
           MINOR=$(echo $OLD_VERSION | cut -d. -f2)
           PATCH=$(echo $OLD_VERSION | cut -d. -f3)
           NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH-RC"
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCHrc1"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           sed -i "s/^version = .*/version = $NEW_VERSION/" pyproject.toml
