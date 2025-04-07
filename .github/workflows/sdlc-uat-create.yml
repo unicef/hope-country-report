@@ -1,0 +1,73 @@
+name: SDLC - UAT create
+
+on:
+  create:
+    branches:
+      - 'uat/*'
+
+jobs:
+  version-bump-on-uat-create:
+    name: "Bump application version"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'create' && startsWith(github.ref, 'refs/heads/uat/')
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from branch name
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/uat/}
+          VERSION=$(echo $BRANCH_NAME | cut -d '.' -f1,2)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Bump minor version in develop
+        run: |
+          git remote update
+          git fetch
+          git checkout develop
+          OLD_VERSION=$(grep '^version =' pyproject.toml | awk '{print $3}')
+          MAJOR=$(echo $OLD_VERSION | cut -d. -f1)
+          MINOR=$(echo $OLD_VERSION | cut -d. -f2)
+          PATCH=$(echo $OLD_VERSION | cut -d. -f3)
+          NEW_MINOR=$((MINOR + 1))
+          NEW_VERSION="$MAJOR.$NEW_MINOR.$PATCH"
+          sed -i "s/^version = .*/version = $NEW_VERSION/" pyproject.toml
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git commit -am "Bump version to $NEW_VERSION"
+          git push origin develop
+
+      - id: version
+        name: Add RC suffix in pyproject.toml
+        run: |
+          git checkout $GITHUB_REF_NAME
+          OLD_VERSION=$(grep '^version =' pyproject.toml | awk '{print $3}')
+          NEW_VERSION="$OLD_VERSION-RC"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          sed -i "s/^version = .*/version = $NEW_VERSION/" pyproject.toml
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git commit -am "Bump version to $NEW_VERSION"
+          git push origin $GITHUB_REF_NAME
+
+  build-push-uat:
+    name: "Build & push image"
+    runs-on: ubuntu-latest
+    needs: [version-bump-on-uat-create]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push RC image
+        run: |
+          docker build -t ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.version-bump-on-uat-create.outputs.version }} .
+          docker push ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.version-bump-on-uat-create.outputs.version }}
