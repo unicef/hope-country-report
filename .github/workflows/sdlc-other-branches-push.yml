@@ -23,7 +23,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/pull/*/merge ]]; then
             BRANCH_NAME="${GITHUB_HEAD_REF}"
           else
-            BRANCH_NAME="${GITHUB_REF}"
+            BRANCH_NAME="${GITHUB_REF_NAME}"
           fi
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
