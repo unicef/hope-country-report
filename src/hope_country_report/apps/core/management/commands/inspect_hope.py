@@ -95,9 +95,9 @@ MODEL_RENAME = {
     "Documenttype": "DocumentType",
     "Documentvalidator": "DocumentValidator",
     "Entitlementcard": "EntitlementCard",
+    "Householdcollection": "HouseholdCollection",
     "Paymentplan": "PaymentPlan",
     "Programcycle": "ProgramCycle",
-    "Targetpopulation": "TargetPopulation",
     "Serviceprovider": "ServiceProvider",
 }
 

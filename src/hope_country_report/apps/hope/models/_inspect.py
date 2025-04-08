@@ -1124,7 +1124,7 @@ class Household(HopeModel):
         "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", blank=True, null=True
     )
     household_collection = models.ForeignKey(
-        "Householdcollection",
+        "HouseholdCollection",
         on_delete=models.DO_NOTHING,
         related_name="household_household_collection",
         blank=True,
@@ -1149,7 +1149,7 @@ class Household(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class Householdcollection(HopeModel):
+class HouseholdCollection(HopeModel):
     id = models.BigAutoField(primary_key=True)
     unicef_id = models.CharField(max_length=255, blank=True, null=True)
 
