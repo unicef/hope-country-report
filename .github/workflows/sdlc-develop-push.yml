@@ -28,9 +28,9 @@ jobs:
           IMAGE_TAG="develop"
           docker buildx create --use
           docker buildx build \
-            --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG-dist \
-            --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG-dist \
-            -t ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:$IMAGE_TAG-dist \
+            --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG-dist \
+            --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG-dist \
+            -t ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:$IMAGE_TAG-dist \
             -f ./Dockerfile \
             --push \
             ./

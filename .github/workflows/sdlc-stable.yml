@@ -49,6 +49,6 @@ jobs:
 
       - name: Retag and push stable image
         run: |
-          docker pull ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}rc1
-          docker tag ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}rc1 ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ env.VERSION }}
-          docker push ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}
+          docker pull ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}rc1
+          docker tag ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}rc1 ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:${{ env.VERSION }}
+          docker push ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:${{ needs.stable-create.outputs.version }}

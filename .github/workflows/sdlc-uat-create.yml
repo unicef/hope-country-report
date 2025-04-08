@@ -69,5 +69,5 @@ jobs:
 
       - name: Build and push RC image
         run: |
-          docker build -t ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.version-bump-on-uat-create.outputs.version }} .
-          docker push ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ var.DOCKERHUB_REPOSITORY }}:${{ needs.version-bump-on-uat-create.outputs.version }}
+          docker build -t ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:${{ needs.version-bump-on-uat-create.outputs.version }} .
+          docker push ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:${{ needs.version-bump-on-uat-create.outputs.version }}
