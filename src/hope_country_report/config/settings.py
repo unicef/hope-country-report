@@ -81,7 +81,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.admin",
     "push_notifications",
     # "django.contrib.admin",
-    # # "django_extensions",
+    "django_extensions",
     # # "django_filters",
     "django_select2",
     "chartjs",
