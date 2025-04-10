@@ -56,11 +56,12 @@ jobs:
 
   deploy:
     name: "Trigger deployment"
-    needs: [build-push-uat]
+    needs: [version-bump-on-uat-push, build-push-uat]
     uses: ./.github/workflows/trigger-azure-pipeline.yml
     with:
       azure-organization: ${{ vars.AZURE_ORGANIZATION }}
       azure-project: ${{ vars.AZURE_PROJECT }}
       azure-pipeline-id: ${{ vars.AZURE_PIPELINE_ID_UAT }}
+      image-tag: ${{ needs.version-bump-on-uat-push.outputs.version }}
     secrets:
       azure-pat: ${{ secrets.AZURE_PAT }}

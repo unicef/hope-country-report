@@ -43,5 +43,6 @@ jobs:
       azure-organization: ${{ vars.AZURE_ORGANIZATION }}
       azure-project: ${{ vars.AZURE_PROJECT }}
       azure-pipeline-id: ${{ vars.AZURE_PIPELINE_ID_DEVELOP }}
+      image-tag: "develop"
     secrets:
       azure-pat: ${{ secrets.AZURE_PAT }}
