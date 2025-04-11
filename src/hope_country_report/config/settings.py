@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "social_django",
     "admin_extra_buttons",
+    "django_celery_boost",
     "adminactions",
     "adminfilters",
     "adminfilters.depot",

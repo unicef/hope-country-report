@@ -1,4 +1,3 @@
-from ._base import CeleryEnabled  # noqa
 from .arguments import Parametrizer  # noqa
 from .chart import ChartPage  # noqa
 from .dataset import Dataset  # noqa

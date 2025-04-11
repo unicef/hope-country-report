@@ -9,10 +9,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
-from django.db import models, transaction
+from django.db import models
 from django.db.models import JSONField, Q
 from django.utils import timezone
 
+from django_celery_boost.models import CeleryTaskModel
 from sentry_sdk import capture_exception, configure_scope
 
 from hope_country_report.apps.core.models import CountryOffice
@@ -20,10 +21,10 @@ from hope_country_report.state import state
 from hope_country_report.utils.perf import profile
 
 from ..celery_tasks import PowerQueryTask
-from ..exceptions import QueryRunCanceled
+from ..exceptions import QueryRunCanceled, QueryRunTerminated
 from ..json import PQJSONEncoder
 from ..utils import dict_hash, to_dataset
-from ._base import AdminReversable, CeleryEnabled, PowerQueryModel
+from ._base import AdminReversable, PowerQueryCeleryFields, PowerQueryModel
 from .arguments import Parametrizer
 
 if TYPE_CHECKING:
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
+class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminReversable, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     datasets: "QuerySet[Dataset]"
@@ -53,7 +54,7 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
     parametrizer = models.ForeignKey(Parametrizer, on_delete=models.CASCADE, blank=True, null=True)
     active = models.BooleanField(default=True)
 
-    celery_task_name = "run_background_query"
+    celery_task_name = "hope_country_report.apps.power_query.celery_tasks.run_background_query"
 
     def __str__(self) -> str:
         if self.abstract:
@@ -68,10 +69,8 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
 
         constraints = [
             models.CheckConstraint(
-                condition=Q(
-                    parent__isnull=False, country_office__isnull=False, code__isnull=True, target__isnull=True
-                )  # implementation
-                | Q(parent__isnull=True, code__isnull=False, target__isnull=False),  # standard or abstract with code
+                condition=Q(parent__isnull=False, country_office__isnull=False, code__isnull=True, target__isnull=True)
+                | Q(parent__isnull=True, code__isnull=False, target__isnull=False),
                 name="valid_query",
             )
         ]
@@ -104,34 +103,34 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
         self.error_message = results.get("error_message", "")
         self.sentry_error_id = results.get("sentry_error_id", "")
         self.last_run = timezone.now()
-        self.save()
+        self.save(update_fields=["info", "error_message", "sentry_error_id", "last_run"])
 
     def execute_matrix(self, persist: bool = True, running_task: "PowerQueryTask|None" = None) -> "QueryMatrixResult":
         args = self.get_args()
         self.error_message = None
         self.sentry_error_id = None
-        self.last_run = None
         self.info = {}
-        self.running_task = running_task
         results: "QueryMatrixResult" = {}
+
         with configure_scope() as scope:
             scope.set_tag("power_query", True)
             scope.set_tag("power_query.name", self.name)
-            with transaction.atomic():
-                transaction.on_commit(lambda: self.update_results(results))
-                for a in args:
-                    try:
-                        dataset, info = self.run(persist, a, running_task=self.running_task)
-                        results[str(a)] = dataset.pk
-                    except QueryRunCanceled:
-                        raise
-                    except Exception as e:
-                        logger.exception(e)
-                        err = capture_exception(e)
-                        results["sentry_error_id"] = str(err)
-                        results["error_message"] = str(e)
-
-                self.datasets.exclude(pk__in=[dpk for dpk in results.values() if isinstance(dpk, int)]).delete()
+            for a in args:
+                try:
+                    dataset, info = self.run(persist, a, running_task=running_task)
+                    results[str(a)] = dataset.pk
+                except (QueryRunCanceled, QueryRunTerminated):
+                    raise
+                except Exception as e:
+                    logger.exception(e)
+                    err = capture_exception(e)
+                    results[f"error_{str(a)}"] = str(e)
+                    results[f"sentry_{str(a)}"] = str(err)
+                    self.error_message = str(e)
+                    self.sentry_error_id = str(err)
+                    self.save(update_fields=["error_message", "sentry_error_id"])
+            self.update_results(results)
+            self.datasets.exclude(pk__in=[dpk for dpk in results.values() if isinstance(dpk, int)]).delete()
         return results
 
     def run(
@@ -205,7 +204,6 @@ class Query(CeleryEnabled, PowerQueryModel, AdminReversable, models.Model):
                             "info": info,
                             "last_run": timezone.now(),
                             "file": ContentFile(Dataset.marshall(result), name=f"{self.pk}_{h}.pkl"),
-                            # "extra": pickle.dumps(extra),
                         }
                         if persist:
                             dataset, __ = Dataset.objects.update_or_create(
