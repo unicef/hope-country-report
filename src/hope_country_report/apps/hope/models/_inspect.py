@@ -1148,6 +1148,7 @@ class Household(HopeModel):
     class Tenant:
         tenant_filter_field: str = "__all__"
 
+
 class HouseholdCollection(HopeModel):
     id = models.BigAutoField(primary_key=True)
     unicef_id = models.CharField(max_length=255, blank=True, null=True)
