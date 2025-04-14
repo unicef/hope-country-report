@@ -157,7 +157,7 @@ class Command(BaseCommand):
 
             output_filepath = resource_path(f"apps/hope/models/{output_file}")
             Path(output_filepath).write_text(buffer.getvalue())
-            os.system(f"black {output_filepath}")
+            os.system(f"ruff format {output_filepath}")
 
         except NotImplementedError:
             raise CommandError("Database inspection isn't supported for the currently selected database backend.")

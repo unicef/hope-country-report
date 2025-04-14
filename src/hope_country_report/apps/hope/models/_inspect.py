@@ -7,8 +7,9 @@
 # DO NOT rename the models, AND don't rename db_table values or field names.
 import django.contrib.postgres.fields
 from django.contrib.gis.db import models
-from hope_country_report.apps.hope.models._base import HopeModel
+
 from hope_country_report.apps.core.storage import get_hope_storage
+from hope_country_report.apps.hope.models._base import HopeModel
 
 
 class BusinessArea(HopeModel):
@@ -45,11 +46,7 @@ class BusinessArea(HopeModel):
     active = models.BooleanField(null=True)
     enable_email_notification = models.BooleanField(null=True)
     parent = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="businessarea_parent",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="businessarea_parent", blank=True, null=True
     )
 
     class Meta:
@@ -66,16 +63,10 @@ class BusinessArea(HopeModel):
 class BusinessareaCountries(HopeModel):
     id = models.BigAutoField(primary_key=True)
     businessarea = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="businessareacountries_businessarea",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareacountries_businessarea", null=True
     )
     country = models.ForeignKey(
-        "Country",
-        on_delete=models.DO_NOTHING,
-        related_name="businessareacountries_country",
-        null=True,
+        "Country", on_delete=models.DO_NOTHING, related_name="businessareacountries_country", null=True
     )
 
     class Meta:
@@ -91,10 +82,7 @@ class Businessareapartnerthrough(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="businessareapartnerthrough_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareapartnerthrough_business_area", null=True
     )
 
     class Meta:
@@ -126,11 +114,7 @@ class Countrycodemap(HopeModel):
     id = models.BigAutoField(primary_key=True)
     ca_code = models.CharField(unique=True, max_length=5, null=True)
     country = models.OneToOneField(
-        "Country",
-        on_delete=models.DO_NOTHING,
-        related_name="countrycodemap_country",
-        blank=True,
-        null=True,
+        "Country", on_delete=models.DO_NOTHING, related_name="countrycodemap_country", blank=True, null=True
     )
 
     class Meta:
@@ -199,10 +183,7 @@ class DatacollectingtypeLimitTo(HopeModel):
         null=True,
     )
     businessarea = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="datacollectingtypelimitto_businessarea",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="datacollectingtypelimitto_businessarea", null=True
     )
 
     class Meta:
@@ -243,19 +224,8 @@ class Area(HopeModel):
     rght = models.IntegerField(null=True)
     tree_id = models.IntegerField(null=True)
     level = models.IntegerField(null=True)
-    area_type = models.ForeignKey(
-        "Areatype",
-        on_delete=models.DO_NOTHING,
-        related_name="area_area_type",
-        null=True,
-    )
-    parent = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="area_parent",
-        blank=True,
-        null=True,
-    )
+    area_type = models.ForeignKey("Areatype", on_delete=models.DO_NOTHING, related_name="area_area_type", null=True)
+    parent = models.ForeignKey("self", on_delete=models.DO_NOTHING, related_name="area_parent", blank=True, null=True)
 
     class Meta:
         managed = False
@@ -282,18 +252,9 @@ class Areatype(HopeModel):
     rght = models.IntegerField(null=True)
     tree_id = models.IntegerField(null=True)
     level = models.IntegerField(null=True)
-    country = models.ForeignKey(
-        "Country",
-        on_delete=models.DO_NOTHING,
-        related_name="areatype_country",
-        null=True,
-    )
+    country = models.ForeignKey("Country", on_delete=models.DO_NOTHING, related_name="areatype_country", null=True)
     parent = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="areatype_parent",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="areatype_parent", blank=True, null=True
     )
 
     class Meta:
@@ -325,11 +286,7 @@ class Country(HopeModel):
     tree_id = models.IntegerField(null=True)
     level = models.IntegerField(null=True)
     parent = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="country_parent",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="country_parent", blank=True, null=True
     )
 
     class Meta:
@@ -395,24 +352,13 @@ class Grievanceticket(HopeModel):
     is_migration_handled = models.BooleanField(null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
     admin2 = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="grievanceticket_admin2",
-        blank=True,
-        null=True,
+        Area, on_delete=models.DO_NOTHING, related_name="grievanceticket_admin2", blank=True, null=True
     )
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="grievanceticket_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="grievanceticket_business_area", null=True
     )
     copied_from = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="grievanceticket_copied_from",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="grievanceticket_copied_from", blank=True, null=True
     )
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
@@ -436,16 +382,10 @@ class Grievanceticket(HopeModel):
 class GrievanceticketPrograms(HopeModel):
     id = models.BigAutoField(primary_key=True)
     grievanceticket = models.ForeignKey(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="grievanceticketprograms_grievanceticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="grievanceticketprograms_grievanceticket", null=True
     )
     program = models.ForeignKey(
-        "Program",
-        on_delete=models.DO_NOTHING,
-        related_name="grievanceticketprograms_program",
-        null=True,
+        "Program", on_delete=models.DO_NOTHING, related_name="grievanceticketprograms_program", null=True
     )
 
     class Meta:
@@ -461,16 +401,10 @@ class Grievanceticketthrough(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     linked_ticket = models.ForeignKey(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="grievanceticketthrough_linked_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="grievanceticketthrough_linked_ticket", null=True
     )
     main_ticket = models.ForeignKey(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="grievanceticketthrough_main_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="grievanceticketthrough_main_ticket", null=True
     )
 
     class Meta:
@@ -495,10 +429,7 @@ class Ticketaddindividualdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketaddindividualdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketaddindividualdetails_ticket", null=True
     )
 
     class Meta:
@@ -514,11 +445,7 @@ class Ticketcomplaintdetails(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     household = models.ForeignKey(
-        "Household",
-        on_delete=models.DO_NOTHING,
-        related_name="ticketcomplaintdetails_household",
-        blank=True,
-        null=True,
+        "Household", on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_household", blank=True, null=True
     )
     individual = models.ForeignKey(
         "Individual",
@@ -528,17 +455,10 @@ class Ticketcomplaintdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketcomplaintdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_ticket", null=True
     )
     payment = models.ForeignKey(
-        "Payment",
-        on_delete=models.DO_NOTHING,
-        related_name="ticketcomplaintdetails_payment",
-        blank=True,
-        null=True,
+        "Payment", on_delete=models.DO_NOTHING, related_name="ticketcomplaintdetails_payment", blank=True, null=True
     )
 
     class Meta:
@@ -570,10 +490,7 @@ class Ticketdeletehouseholddetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketdeletehouseholddetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketdeletehouseholddetails_ticket", null=True
     )
 
     class Meta:
@@ -598,10 +515,7 @@ class Ticketdeleteindividualdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketdeleteindividualdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketdeleteindividualdetails_ticket", null=True
     )
 
     class Meta:
@@ -618,16 +532,10 @@ class Tickethouseholddataupdatedetails(HopeModel):
     updated_at = models.DateTimeField(null=True)
     household_data = models.JSONField(blank=True, null=True)
     household = models.ForeignKey(
-        "Household",
-        on_delete=models.DO_NOTHING,
-        related_name="tickethouseholddataupdatedetails_household",
-        null=True,
+        "Household", on_delete=models.DO_NOTHING, related_name="tickethouseholddataupdatedetails_household", null=True
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="tickethouseholddataupdatedetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="tickethouseholddataupdatedetails_ticket", null=True
     )
 
     class Meta:
@@ -651,10 +559,7 @@ class Ticketindividualdataupdatedetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketindividualdataupdatedetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketindividualdataupdatedetails_ticket", null=True
     )
 
     class Meta:
@@ -696,10 +601,7 @@ class Ticketneedsadjudicationdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketneedsadjudicationdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketneedsadjudicationdetails_ticket", null=True
     )
 
     class Meta:
@@ -798,10 +700,7 @@ class Ticketnegativefeedbackdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketnegativefeedbackdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketnegativefeedbackdetails_ticket", null=True
     )
 
     class Meta:
@@ -818,10 +717,7 @@ class Ticketnote(HopeModel):
     updated_at = models.DateTimeField(null=True)
     description = models.TextField(null=True)
     ticket = models.ForeignKey(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketnote_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketnote_ticket", null=True
     )
 
     class Meta:
@@ -852,10 +748,7 @@ class Ticketpaymentverificationdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketpaymentverificationdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketpaymentverificationdetails_ticket", null=True
     )
 
     class Meta:
@@ -908,10 +801,7 @@ class Ticketpositivefeedbackdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketpositivefeedbackdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketpositivefeedbackdetails_ticket", null=True
     )
 
     class Meta:
@@ -927,11 +817,7 @@ class Ticketreferraldetails(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     household = models.ForeignKey(
-        "Household",
-        on_delete=models.DO_NOTHING,
-        related_name="ticketreferraldetails_household",
-        blank=True,
-        null=True,
+        "Household", on_delete=models.DO_NOTHING, related_name="ticketreferraldetails_household", blank=True, null=True
     )
     individual = models.ForeignKey(
         "Individual",
@@ -941,10 +827,7 @@ class Ticketreferraldetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketreferraldetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketreferraldetails_ticket", null=True
     )
 
     class Meta:
@@ -960,11 +843,7 @@ class Ticketsensitivedetails(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     household = models.ForeignKey(
-        "Household",
-        on_delete=models.DO_NOTHING,
-        related_name="ticketsensitivedetails_household",
-        blank=True,
-        null=True,
+        "Household", on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_household", blank=True, null=True
     )
     individual = models.ForeignKey(
         "Individual",
@@ -974,17 +853,10 @@ class Ticketsensitivedetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketsensitivedetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_ticket", null=True
     )
     payment = models.ForeignKey(
-        "Payment",
-        on_delete=models.DO_NOTHING,
-        related_name="ticketsensitivedetails_payment",
-        blank=True,
-        null=True,
+        "Payment", on_delete=models.DO_NOTHING, related_name="ticketsensitivedetails_payment", blank=True, null=True
     )
 
     class Meta:
@@ -1008,10 +880,7 @@ class Ticketsystemflaggingdetails(HopeModel):
         null=True,
     )
     ticket = models.OneToOneField(
-        Grievanceticket,
-        on_delete=models.DO_NOTHING,
-        related_name="ticketsystemflaggingdetails_ticket",
-        null=True,
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketsystemflaggingdetails_ticket", null=True
     )
 
     class Meta:
@@ -1037,17 +906,10 @@ class BankaccountInfo(HopeModel):
     bank_branch_name = models.CharField(max_length=255, null=True)
     account_holder_name = models.CharField(max_length=255, null=True)
     copied_from = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="bankaccountinfo_copied_from",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="bankaccountinfo_copied_from", blank=True, null=True
     )
     individual = models.ForeignKey(
-        "Individual",
-        on_delete=models.DO_NOTHING,
-        related_name="bankaccountinfo_individual",
-        null=True,
+        "Individual", on_delete=models.DO_NOTHING, related_name="bankaccountinfo_individual", null=True
     )
 
     class Meta:
@@ -1075,38 +937,18 @@ class Document(HopeModel):
     expiry_date = models.DateTimeField(blank=True, null=True)
     is_migration_handled = models.BooleanField(null=True)
     copied_from = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="document_copied_from",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="document_copied_from", blank=True, null=True
     )
     country = models.ForeignKey(
-        Country,
-        on_delete=models.DO_NOTHING,
-        related_name="document_country",
-        blank=True,
-        null=True,
+        Country, on_delete=models.DO_NOTHING, related_name="document_country", blank=True, null=True
     )
     individual = models.ForeignKey(
-        "Individual",
-        on_delete=models.DO_NOTHING,
-        related_name="document_individual",
-        null=True,
+        "Individual", on_delete=models.DO_NOTHING, related_name="document_individual", null=True
     )
     program = models.ForeignKey(
-        "Program",
-        on_delete=models.DO_NOTHING,
-        related_name="document_program",
-        blank=True,
-        null=True,
+        "Program", on_delete=models.DO_NOTHING, related_name="document_program", blank=True, null=True
     )
-    type = models.ForeignKey(
-        "DocumentType",
-        on_delete=models.DO_NOTHING,
-        related_name="document_type",
-        null=True,
-    )
+    type = models.ForeignKey("DocumentType", on_delete=models.DO_NOTHING, related_name="document_type", null=True)
 
     class Meta:
         managed = False
@@ -1140,10 +982,7 @@ class DocumentValidator(HopeModel):
     updated_at = models.DateTimeField(null=True)
     regex = models.CharField(max_length=100, null=True)
     type = models.ForeignKey(
-        DocumentType,
-        on_delete=models.DO_NOTHING,
-        related_name="documentvalidator_type",
-        null=True,
+        DocumentType, on_delete=models.DO_NOTHING, related_name="documentvalidator_type", null=True
     )
 
     class Meta:
@@ -1166,11 +1005,7 @@ class EntitlementCard(HopeModel):
     service_provider = models.CharField(max_length=255, null=True)
     is_original = models.BooleanField(null=True)
     household = models.ForeignKey(
-        "Household",
-        on_delete=models.DO_NOTHING,
-        related_name="entitlementcard_household",
-        blank=True,
-        null=True,
+        "Household", on_delete=models.DO_NOTHING, related_name="entitlementcard_household", blank=True, null=True
     )
 
     class Meta:
@@ -1246,6 +1081,7 @@ class Household(HopeModel):
     unhcr_id = models.CharField(max_length=250, null=True)
     internal_data = models.JSONField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
+    registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     program_registration_id = models.TextField(unique=True, blank=True, null=True)  # This field type is a guess.
     total_cash_received_usd = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
     total_cash_received = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
@@ -1257,88 +1093,47 @@ class Household(HopeModel):
     kobo_submission_uuid = models.UUIDField(blank=True, null=True)
     kobo_submission_time = models.DateTimeField(blank=True, null=True)
     enumerator_rec_id = models.IntegerField(blank=True, null=True)
+    mis_unicef_id = models.CharField(max_length=255, blank=True, null=True)
     flex_registrations_record_id = models.IntegerField(blank=True, null=True)
     admin1 = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="household_admin1",
-        blank=True,
-        null=True,
+        Area, on_delete=models.DO_NOTHING, related_name="household_admin1", blank=True, null=True
     )
     admin2 = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="household_admin2",
-        blank=True,
-        null=True,
+        Area, on_delete=models.DO_NOTHING, related_name="household_admin2", blank=True, null=True
     )
     admin3 = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="household_admin3",
-        blank=True,
-        null=True,
+        Area, on_delete=models.DO_NOTHING, related_name="household_admin3", blank=True, null=True
     )
     admin4 = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="household_admin4",
-        blank=True,
-        null=True,
+        Area, on_delete=models.DO_NOTHING, related_name="household_admin4", blank=True, null=True
     )
     admin_area = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="household_admin_area",
-        blank=True,
-        null=True,
+        Area, on_delete=models.DO_NOTHING, related_name="household_admin_area", blank=True, null=True
     )
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="household_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="household_business_area", null=True
     )
     copied_from = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="household_copied_from",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="household_copied_from", blank=True, null=True
     )
     country = models.ForeignKey(
-        Country,
-        on_delete=models.DO_NOTHING,
-        related_name="household_country",
-        blank=True,
-        null=True,
+        Country, on_delete=models.DO_NOTHING, related_name="household_country", blank=True, null=True
     )
     country_origin = models.ForeignKey(
-        Country,
-        on_delete=models.DO_NOTHING,
-        related_name="household_country_origin",
-        blank=True,
-        null=True,
+        Country, on_delete=models.DO_NOTHING, related_name="household_country_origin", blank=True, null=True
     )
     head_of_household = models.OneToOneField(
-        "Individual",
-        on_delete=models.DO_NOTHING,
-        related_name="household_head_of_household",
-        blank=True,
-        null=True,
+        "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", blank=True, null=True
     )
     household_collection = models.ForeignKey(
-        "Householdcollection",
+        "HouseholdCollection",
         on_delete=models.DO_NOTHING,
         related_name="household_household_collection",
         blank=True,
         null=True,
     )
     program = models.ForeignKey(
-        "Program",
-        on_delete=models.DO_NOTHING,
-        related_name="household_program",
-        null=True,
+        "Program", on_delete=models.DO_NOTHING, related_name="household_program", blank=True, null=True
     )
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
@@ -1347,8 +1142,6 @@ class Household(HopeModel):
         blank=True,
         null=True,
     )
-    other_sex_group_count = models.IntegerField(blank=True, null=True)
-    unknown_sex_group_count = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1358,7 +1151,24 @@ class Household(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class Householdcollection(HopeModel):
+class HouseholdPrograms(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    household = models.ForeignKey(
+        Household, on_delete=models.DO_NOTHING, related_name="householdprograms_household", null=True
+    )
+    program = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="householdprograms_program", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "household_household_programs"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class HouseholdCollection(HopeModel):
     id = models.BigAutoField(primary_key=True)
     unicef_id = models.CharField(max_length=255, blank=True, null=True)
 
@@ -1408,6 +1218,7 @@ class Individual(HopeModel):
     flex_fields = models.JSONField(null=True)
     internal_data = models.JSONField(null=True)
     enrolled_in_nutrition_programme = models.BooleanField(blank=True, null=True)
+    administration_of_rutf = models.BooleanField(blank=True, null=True)
     deduplication_golden_record_status = models.CharField(max_length=50, null=True)
     deduplication_batch_status = models.CharField(max_length=50, null=True)
     deduplication_golden_record_results = models.JSONField(null=True)
@@ -1430,6 +1241,7 @@ class Individual(HopeModel):
     fchild_hoh = models.BooleanField(null=True)
     child_hoh = models.BooleanField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
+    registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     program_registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     preferred_language = models.CharField(max_length=6, blank=True, null=True)
     relationship_confirmed = models.BooleanField(null=True)
@@ -1440,26 +1252,16 @@ class Individual(HopeModel):
     origin_unicef_id = models.CharField(max_length=100, blank=True, null=True)
     is_migration_handled = models.BooleanField(null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
+    mis_unicef_id = models.CharField(max_length=255, blank=True, null=True)
     vector_column = models.TextField(blank=True, null=True)  # This field type is a guess.
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="individual_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="individual_business_area", null=True
     )
     copied_from = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="individual_copied_from",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="individual_copied_from", blank=True, null=True
     )
     household = models.ForeignKey(
-        Household,
-        on_delete=models.DO_NOTHING,
-        related_name="individual_household",
-        blank=True,
-        null=True,
+        Household, on_delete=models.DO_NOTHING, related_name="individual_household", blank=True, null=True
     )
     individual_collection = models.ForeignKey(
         "Individualcollection",
@@ -1469,10 +1271,7 @@ class Individual(HopeModel):
         null=True,
     )
     program = models.ForeignKey(
-        "Program",
-        on_delete=models.DO_NOTHING,
-        related_name="individual_program",
-        null=True,
+        "Program", on_delete=models.DO_NOTHING, related_name="individual_program", blank=True, null=True
     )
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
@@ -1515,24 +1314,13 @@ class Individualidentity(HopeModel):
     number = models.CharField(max_length=255, null=True)
     is_migration_handled = models.BooleanField(null=True)
     copied_from = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="individualidentity_copied_from",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="individualidentity_copied_from", blank=True, null=True
     )
     country = models.ForeignKey(
-        Country,
-        on_delete=models.DO_NOTHING,
-        related_name="individualidentity_country",
-        blank=True,
-        null=True,
+        Country, on_delete=models.DO_NOTHING, related_name="individualidentity_country", blank=True, null=True
     )
     individual = models.ForeignKey(
-        Individual,
-        on_delete=models.DO_NOTHING,
-        related_name="individualidentity_individual",
-        null=True,
+        Individual, on_delete=models.DO_NOTHING, related_name="individualidentity_individual", null=True
     )
 
     class Meta:
@@ -1555,23 +1343,13 @@ class Individualroleinhousehold(HopeModel):
     is_migration_handled = models.BooleanField(null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
     copied_from = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="individualroleinhousehold_copied_from",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_copied_from", blank=True, null=True
     )
     household = models.ForeignKey(
-        Household,
-        on_delete=models.DO_NOTHING,
-        related_name="individualroleinhousehold_household",
-        null=True,
+        Household, on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_household", null=True
     )
     individual = models.ForeignKey(
-        Individual,
-        on_delete=models.DO_NOTHING,
-        related_name="individualroleinhousehold_individual",
-        null=True,
+        Individual, on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_individual", null=True
     )
 
     class Meta:
@@ -1591,10 +1369,7 @@ class Acceptanceprocessthreshold(HopeModel):
     authorization_number_required = models.IntegerField(null=True)
     finance_release_number_required = models.IntegerField(null=True)
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="acceptanceprocessthreshold_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="acceptanceprocessthreshold_business_area", null=True
     )
 
     class Meta:
@@ -1612,10 +1387,7 @@ class Approval(HopeModel):
     type = models.CharField(max_length=50, null=True)
     comment = models.CharField(max_length=500, blank=True, null=True)
     approval_process = models.ForeignKey(
-        "Approvalprocess",
-        on_delete=models.DO_NOTHING,
-        related_name="approval_approval_process",
-        null=True,
+        "Approvalprocess", on_delete=models.DO_NOTHING, related_name="approval_approval_process", null=True
     )
 
     class Meta:
@@ -1637,10 +1409,7 @@ class Approvalprocess(HopeModel):
     authorization_number_required = models.IntegerField(null=True)
     finance_release_number_required = models.IntegerField(null=True)
     payment_plan = models.ForeignKey(
-        "PaymentPlan",
-        on_delete=models.DO_NOTHING,
-        related_name="approvalprocess_payment_plan",
-        null=True,
+        "PaymentPlan", on_delete=models.DO_NOTHING, related_name="approvalprocess_payment_plan", null=True
     )
 
     class Meta:
@@ -1692,10 +1461,7 @@ class Deliverymechanismdata(HopeModel):
         null=True,
     )
     individual = models.ForeignKey(
-        Individual,
-        on_delete=models.DO_NOTHING,
-        related_name="deliverymechanismdata_individual",
-        null=True,
+        Individual, on_delete=models.DO_NOTHING, related_name="deliverymechanismdata_individual", null=True
     )
     possible_duplicate_of = models.ForeignKey(
         "self",
@@ -1902,23 +1668,11 @@ class Payment(HopeModel):
     additional_document_number = models.CharField(max_length=128, blank=True, null=True)
     fsp_auth_code = models.CharField(max_length=128, blank=True, null=True)
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="payment_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="payment_business_area", null=True
     )
-    collector = models.ForeignKey(
-        Individual,
-        on_delete=models.DO_NOTHING,
-        related_name="payment_collector",
-        null=True,
-    )
+    collector = models.ForeignKey(Individual, on_delete=models.DO_NOTHING, related_name="payment_collector", null=True)
     delivery_type = models.ForeignKey(
-        Deliverymechanism,
-        on_delete=models.DO_NOTHING,
-        related_name="payment_delivery_type",
-        blank=True,
-        null=True,
+        Deliverymechanism, on_delete=models.DO_NOTHING, related_name="payment_delivery_type", blank=True, null=True
     )
     financial_service_provider = models.ForeignKey(
         Financialserviceprovider,
@@ -1928,37 +1682,15 @@ class Payment(HopeModel):
         null=True,
     )
     head_of_household = models.ForeignKey(
-        Individual,
-        on_delete=models.DO_NOTHING,
-        related_name="payment_head_of_household",
-        blank=True,
-        null=True,
+        Individual, on_delete=models.DO_NOTHING, related_name="payment_head_of_household", blank=True, null=True
     )
-    household = models.ForeignKey(
-        Household,
-        on_delete=models.DO_NOTHING,
-        related_name="payment_household",
-        null=True,
-    )
-    parent = models.ForeignKey(
-        "PaymentPlan",
-        on_delete=models.DO_NOTHING,
-        related_name="payment_parent",
-        null=True,
-    )
+    household = models.ForeignKey(Household, on_delete=models.DO_NOTHING, related_name="payment_household", null=True)
+    parent = models.ForeignKey("PaymentPlan", on_delete=models.DO_NOTHING, related_name="payment_parent", null=True)
     program = models.ForeignKey(
-        "Program",
-        on_delete=models.DO_NOTHING,
-        related_name="payment_program",
-        blank=True,
-        null=True,
+        "Program", on_delete=models.DO_NOTHING, related_name="payment_program", blank=True, null=True
     )
     source_payment = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="payment_source_payment",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="payment_source_payment", blank=True, null=True
     )
     is_cash_assist = models.BooleanField(null=True)
     internal_data = models.JSONField(null=True)
@@ -1979,10 +1711,7 @@ class Paymenthouseholdsnapshot(HopeModel):
     snapshot_data = models.JSONField(null=True)
     household_id = models.UUIDField(null=True)
     payment = models.OneToOneField(
-        Payment,
-        on_delete=models.DO_NOTHING,
-        related_name="paymenthouseholdsnapshot_payment",
-        null=True,
+        Payment, on_delete=models.DO_NOTHING, related_name="paymenthouseholdsnapshot_payment", null=True
     )
 
     class Meta:
@@ -2030,23 +1759,13 @@ class PaymentPlan(HopeModel):
     exclude_household_error = models.TextField(null=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplan_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="paymentplan_business_area", null=True
     )
     program_cycle = models.ForeignKey(
-        "ProgramCycle",
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplan_program_cycle",
-        null=True,
+        "ProgramCycle", on_delete=models.DO_NOTHING, related_name="paymentplan_program_cycle", null=True
     )
     source_payment_plan = models.ForeignKey(
-        "self",
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplan_source_payment_plan",
-        blank=True,
-        null=True,
+        "self", on_delete=models.DO_NOTHING, related_name="paymentplan_source_payment_plan", blank=True, null=True
     )
     internal_data = models.JSONField(null=True)
     is_cash_assist = models.BooleanField(null=True)
@@ -2055,10 +1774,7 @@ class PaymentPlan(HopeModel):
     excluded_ids = models.TextField(null=True)
     steficon_targeting_applied_date = models.DateTimeField(blank=True, null=True)
     targeting_criteria = models.OneToOneField(
-        "Targetingcriteria",
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplan_targeting_criteria",
-        null=True,
+        "Targetingcriteria", on_delete=models.DO_NOTHING, related_name="paymentplan_targeting_criteria", null=True
     )
     vulnerability_score_max = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
     vulnerability_score_min = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
@@ -2083,10 +1799,7 @@ class Paymentplansplit(HopeModel):
     sent_to_payment_gateway = models.BooleanField(null=True)
     order = models.IntegerField(null=True)
     payment_plan = models.ForeignKey(
-        PaymentPlan,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplansplit_payment_plan",
-        null=True,
+        PaymentPlan, on_delete=models.DO_NOTHING, related_name="paymentplansplit_payment_plan", null=True
     )
 
     class Meta:
@@ -2102,10 +1815,7 @@ class Paymentplansplitpayments(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     payment = models.ForeignKey(
-        Payment,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplansplitpayments_payment",
-        null=True,
+        Payment, on_delete=models.DO_NOTHING, related_name="paymentplansplitpayments_payment", null=True
     )
     payment_plan_split = models.ForeignKey(
         Paymentplansplit,
@@ -2128,10 +1838,7 @@ class Paymentplansupportingdocument(HopeModel):
     file = models.CharField(max_length=100, null=True)
     uploaded_at = models.DateTimeField(null=True)
     payment_plan = models.ForeignKey(
-        PaymentPlan,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentplansupportingdocument_payment_plan",
-        null=True,
+        PaymentPlan, on_delete=models.DO_NOTHING, related_name="paymentplansupportingdocument_payment_plan", null=True
     )
 
     class Meta:
@@ -2158,10 +1865,7 @@ class Paymentverification(HopeModel):
         null=True,
     )
     payment = models.ForeignKey(
-        Payment,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentverification_payment",
-        null=True,
+        Payment, on_delete=models.DO_NOTHING, related_name="paymentverification_payment", null=True
     )
 
     class Meta:
@@ -2199,10 +1903,7 @@ class Paymentverificationplan(HopeModel):
     xlsx_file_imported = models.BooleanField(null=True)
     error = models.CharField(max_length=500, blank=True, null=True)
     payment_plan = models.ForeignKey(
-        PaymentPlan,
-        on_delete=models.DO_NOTHING,
-        related_name="paymentverificationplan_payment_plan",
-        null=True,
+        PaymentPlan, on_delete=models.DO_NOTHING, related_name="paymentverificationplan_payment_plan", null=True
     )
 
     class Meta:
@@ -2285,22 +1986,13 @@ class Program(HopeModel):
     biometric_deduplication_enabled = models.BooleanField(null=True)
     deduplication_set_id = models.UUIDField(blank=True, null=True)
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="program_business_area",
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="program_business_area", null=True
     )
     data_collecting_type = models.ForeignKey(
-        DataCollectingType,
-        on_delete=models.DO_NOTHING,
-        related_name="program_data_collecting_type",
-        null=True,
+        DataCollectingType, on_delete=models.DO_NOTHING, related_name="program_data_collecting_type", null=True
     )
     beneficiary_group = models.ForeignKey(
-        Beneficiarygroup,
-        on_delete=models.DO_NOTHING,
-        related_name="program_beneficiary_group",
-        null=True,
+        Beneficiarygroup, on_delete=models.DO_NOTHING, related_name="program_beneficiary_group", null=True
     )
 
     class Meta:
@@ -2317,17 +2009,9 @@ class Program(HopeModel):
 class ProgramAdminAreas(HopeModel):
     id = models.BigAutoField(primary_key=True)
     program = models.ForeignKey(
-        Program,
-        on_delete=models.DO_NOTHING,
-        related_name="programadminareas_program",
-        null=True,
+        Program, on_delete=models.DO_NOTHING, related_name="programadminareas_program", null=True
     )
-    area = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="programadminareas_area",
-        null=True,
-    )
+    area = models.ForeignKey(Area, on_delete=models.DO_NOTHING, related_name="programadminareas_area", null=True)
 
     class Meta:
         managed = False
@@ -2347,12 +2031,7 @@ class ProgramCycle(HopeModel):
     status = models.CharField(max_length=10, null=True)
     start_date = models.DateField(null=True)
     end_date = models.DateField(blank=True, null=True)
-    program = models.ForeignKey(
-        Program,
-        on_delete=models.DO_NOTHING,
-        related_name="programcycle_program",
-        null=True,
-    )
+    program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, related_name="programcycle_program", null=True)
 
     class Meta:
         managed = False
@@ -2368,10 +2047,7 @@ class Programpartnerthrough(HopeModel):
     updated_at = models.DateTimeField(null=True)
     full_area_access = models.BooleanField(null=True)
     program = models.ForeignKey(
-        Program,
-        on_delete=models.DO_NOTHING,
-        related_name="programpartnerthrough_program",
-        null=True,
+        Program, on_delete=models.DO_NOTHING, related_name="programpartnerthrough_program", null=True
     )
 
     class Meta:
@@ -2391,10 +2067,7 @@ class ProgrampartnerthroughAreas(HopeModel):
         null=True,
     )
     area = models.ForeignKey(
-        Area,
-        on_delete=models.DO_NOTHING,
-        related_name="programpartnerthroughareas_area",
-        null=True,
+        Area, on_delete=models.DO_NOTHING, related_name="programpartnerthroughareas_area", null=True
     )
 
     class Meta:
@@ -2423,10 +2096,7 @@ class DataDeduplicationenginesimilaritypair(HopeModel):
         null=True,
     )
     program = models.ForeignKey(
-        Program,
-        on_delete=models.DO_NOTHING,
-        related_name="datadeduplicationenginesimilaritypair_program",
-        null=True,
+        Program, on_delete=models.DO_NOTHING, related_name="datadeduplicationenginesimilaritypair_program", null=True
     )
     status_code = models.CharField(max_length=20, null=True)
 
@@ -2463,10 +2133,7 @@ class DataImportdata(HopeModel):
 
 class DataKoboimportdata(HopeModel):
     importdata_ptr = models.OneToOneField(
-        DataImportdata,
-        on_delete=models.DO_NOTHING,
-        related_name="datakoboimportdata_importdata_ptr",
-        null=True,
+        DataImportdata, on_delete=models.DO_NOTHING, related_name="datakoboimportdata_importdata_ptr", null=True
     )
     kobo_asset_id = models.CharField(max_length=100, null=True)
     only_active_submissions = models.BooleanField(null=True)
@@ -2553,11 +2220,7 @@ class DataRegistrationdataimport(HopeModel):
         null=True,
     )
     program = models.ForeignKey(
-        Program,
-        on_delete=models.DO_NOTHING,
-        related_name="dataregistrationdataimport_program",
-        blank=True,
-        null=True,
+        Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", blank=True, null=True
     )
     import_from_ids = models.TextField(blank=True, null=True)
 
