@@ -29,10 +29,13 @@ def test_celery_terminate(django_app, admin_user, query):
     """Test the celery terminate action for Query."""
     url = reverse("admin:power_query_query_celery_terminate", args=[query.pk])
 
+
+    change_url = reverse("admin:power_query_query_change", args=[query.pk])
+
     with mock.patch.object(Query, "is_queued", return_value=False):
         res_get = django_app.get(url, user=admin_user)
         assert res_get.status_code == 302, "Expected a redirect when task is not queued"
-        assert res_get.location == reverse("admin:power_query_query_changelist"), "Redirect should go to changelist"
+        assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
         messages = [m.message for m in res_follow.context["messages"]]
         assert "Task not queued." in messages
@@ -43,13 +46,17 @@ def test_celery_terminate(django_app, admin_user, query):
             assert res.status_code == 200
             assert f"Terminate {query}" in res.text
 
+
+            change_url = reverse("admin:power_query_query_change", args=[query.pk])
+
             res_post = res.forms[1].submit()
             assert res_post.status_code == 302
+            assert res_post.location == change_url, "Redirect should go back to the change page"
             mock_terminate.assert_called_once()
 
             res_follow = res_post.follow()
             messages = [m.message for m in res_follow.context["messages"]]
-            assert len(messages) > 0
+            assert len(messages) > 0, "Expected success/info message after terminate"
 
 
 def test_celery_inspect(django_app, admin_user, query):
@@ -72,17 +79,20 @@ def test_celery_queue(django_app, admin_user, query):
         res_post = res.forms[1].submit()
         assert res_post.status_code == 302
         expected_redirect_url = reverse("admin:power_query_query_change", args=[query.pk])
-        assert res_post.url == expected_redirect_url
+        assert res_post.location == expected_redirect_url
         mock_queue.assert_called_once()
+
     res_follow = res_post.follow()
     assert res_follow.status_code == 200
     messages = [m.message for m in res_follow.context["messages"]]
     assert "Queued" in messages
 
+
+    change_url = reverse("admin:power_query_query_change", args=[query.pk])
     with mock.patch.object(Query, "is_queued", return_value=True):
         res_get_again = django_app.get(url, user=admin_user)
         assert res_get_again.status_code == 302
-        assert res_get_again.location == reverse("admin:power_query_query_change", args=[query.pk])
+        assert res_get_again.location == change_url, "Redirect should go to the change page if already queued"
         res_follow_again = res_get_again.follow()
         messages = [m.message for m in res_follow_again.context["messages"]]
         assert "Task has already been queued." in messages
@@ -92,10 +102,13 @@ def test_celery_revoke(django_app, admin_user, query):
     """Test the celery revoke action for Query."""
     url = reverse("admin:power_query_query_celery_revoke", args=[query.pk])
 
+
+    change_url = reverse("admin:power_query_query_change", args=[query.pk])
+
     with mock.patch.object(Query, "is_queued", return_value=False):
         res_get = django_app.get(url, user=admin_user)
         assert res_get.status_code == 302
-        assert res_get.location == reverse("admin:power_query_query_changelist")
+        assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
         messages = [m.message for m in res_follow.context["messages"]]
         assert "Task not queued." in messages
@@ -108,7 +121,9 @@ def test_celery_revoke(django_app, admin_user, query):
 
             res_post = res.forms[1].submit()
             assert res_post.status_code == 302
-            assert res_post.url == reverse("admin:power_query_query_change", args=[query.pk])
+
+            change_url = reverse("admin:power_query_query_change", args=[query.pk])
+            assert res_post.location == change_url, "Redirect should go back to the change page"
             mock_revoke.assert_called_once()
 
             res_follow = res_post.follow()

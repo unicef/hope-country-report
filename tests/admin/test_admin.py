@@ -241,10 +241,9 @@ def test_reportconfig_admin_queue(app, report_config):
 
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=True):
         res_get_again = app.get(url)
+        change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
         assert res_get_again.status_code == 302
-        assert res_get_again.location == reverse(
-            "admin:power_query_reportconfiguration_change", args=[report_config.pk]
-        )
+        assert res_get_again.location == change_url, "Redirect should go to the change page if already queued"
         res_follow_again = res_get_again.follow()
         assert res_follow_again.status_code == 200
         messages = [m.message for m in res_follow_again.context["messages"]]
@@ -255,10 +254,11 @@ def test_reportconfig_admin_terminate(app, report_config):
     """Test the celery terminate action."""
     url = reverse("admin:power_query_reportconfiguration_celery_terminate", args=[report_config.pk])
 
+    change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=False):
         res_get = app.get(url)
         assert res_get.status_code == 302, "Expected a redirect when task is not queued"
-        assert res_get.location == "/", "Redirect should go to root"
+        assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
         messages = [m.message for m in res_follow.context["messages"]]
         assert "Task not queued." in messages
@@ -269,23 +269,27 @@ def test_reportconfig_admin_terminate(app, report_config):
             assert res.status_code == 200
             assert f"Terminate {report_config}" in res.text
 
+            change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
+
             res_post = res.forms[1].submit()
             assert res_post.status_code == 302
+            assert res_post.location == change_url, "Redirect should go back to the change page"
             mock_terminate.assert_called_once()
 
             res_follow = res_post.follow()
             messages = [m.message for m in res_follow.context["messages"]]
-            assert len(messages) > 0
+            assert len(messages) > 0, "Expected success/info message after terminate"
 
 
 def test_reportconfig_admin_revoke(app, report_config):
     """Test the celery revoke action."""
     url = reverse("admin:power_query_reportconfiguration_celery_revoke", args=[report_config.pk])
 
+    change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=False):
         res_get = app.get(url)
         assert res_get.status_code == 302, "Expected a redirect when task is not queued"
-        assert res_get.location == "/", "Redirect should go to root"
+        assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
         messages = [m.message for m in res_follow.context["messages"]]
         assert "Task not queued." in messages
@@ -297,7 +301,10 @@ def test_reportconfig_admin_revoke(app, report_config):
             assert f"Revoke {report_config}" in res.text
 
             res_post = res.forms[1].submit()
+            change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
+            res_post = res.forms[1].submit()
             assert res_post.status_code == 302
+            assert res_post.location == change_url, "Redirect should go back to the change page"
             mock_revoke.assert_called_once()
 
             res_follow = res_post.follow()
