@@ -80,7 +80,7 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
-COPY src /app/src/
+COPY . /app/
 
 RUN --mount=type=cache,target=/root/.uv-cache \
     find ../src -name 'node_modules' -prune \
