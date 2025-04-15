@@ -29,7 +29,6 @@ def test_celery_terminate(django_app, admin_user, query):
     """Test the celery terminate action for Query."""
     url = reverse("admin:power_query_query_celery_terminate", args=[query.pk])
 
-
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
     with mock.patch.object(Query, "is_queued", return_value=False):
@@ -45,7 +44,6 @@ def test_celery_terminate(django_app, admin_user, query):
             res = django_app.get(url, user=admin_user)
             assert res.status_code == 200
             assert f"Terminate {query}" in res.text
-
 
             change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
@@ -87,7 +85,6 @@ def test_celery_queue(django_app, admin_user, query):
     messages = [m.message for m in res_follow.context["messages"]]
     assert "Queued" in messages
 
-
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
     with mock.patch.object(Query, "is_queued", return_value=True):
         res_get_again = django_app.get(url, user=admin_user)
@@ -101,7 +98,6 @@ def test_celery_queue(django_app, admin_user, query):
 def test_celery_revoke(django_app, admin_user, query):
     """Test the celery revoke action for Query."""
     url = reverse("admin:power_query_query_celery_revoke", args=[query.pk])
-
 
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
