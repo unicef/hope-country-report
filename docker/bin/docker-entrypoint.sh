@@ -24,7 +24,7 @@ case "$1" in
         django-admin upgrade --with-check
         MAPPING=""
         if [ "${STATIC_URL}" = "/static/" ]; then
-            MAPPING="--static-map ${STATIC_URL}=${MEDIA_ROOT}"
+            MAPPING="--static-map ${STATIC_URL}=${STATIC_ROOT}"
         fi
         exec tini -- uwsgi --http :8000 \
             -H /venv \

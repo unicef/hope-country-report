@@ -12,7 +12,11 @@ x-django-env: &django-env
   - CELERY_BROKER_URL=redis://redis:6379/0
   - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
   - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
+  - DEBUG=True
   - FILE_STORAGE_DEFAULT=django.core.files.storage.FileSystemStorage
+  - FILE_STORAGE_MEDIA=django.core.files.storage.FileSystemStorage
+  - FILE_STORAGE_STATIC=django.contrib.staticfiles.storage.StaticFilesStorage
+  - FILE_STORAGE_HOPE=django.core.files.storage.FileSystemStorage
   - FLOWER_URL=http://flower:5555
   - EMAIL_BACKEND=
   - EMAIL_HOST=
