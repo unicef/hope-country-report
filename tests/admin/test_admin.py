@@ -240,8 +240,8 @@ def test_reportconfig_admin_queue(app, report_config):
     assert "Queued" in messages
 
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=True):
-        res_get_again = app.get(url)
         change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
+        res_get_again = app.get(url, headers={"Referer": change_url})
         assert res_get_again.status_code == 302
         assert res_get_again.location == change_url, "Redirect should go to the change page if already queued"
         res_follow_again = res_get_again.follow()
@@ -256,7 +256,7 @@ def test_reportconfig_admin_terminate(app, report_config):
 
     change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=False):
-        res_get = app.get(url)
+        res_get = app.get(url, headers={"Referer": change_url})
         assert res_get.status_code == 302, "Expected a redirect when task is not queued"
         assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
@@ -267,7 +267,7 @@ def test_reportconfig_admin_terminate(app, report_config):
         with mock.patch.object(ReportConfiguration, "terminate") as mock_terminate:
             res = app.get(url)
             assert res.status_code == 200
-            assert f"Terminate {report_config}" in res.text
+            assert f"Confirm termination request for {report_config}" in res.text
 
             change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
 
@@ -287,7 +287,7 @@ def test_reportconfig_admin_revoke(app, report_config):
 
     change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=False):
-        res_get = app.get(url)
+        res_get = app.get(url, headers={"Referer": change_url})
         assert res_get.status_code == 302, "Expected a redirect when task is not queued"
         assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
@@ -298,9 +298,8 @@ def test_reportconfig_admin_revoke(app, report_config):
         with mock.patch.object(ReportConfiguration, "revoke") as mock_revoke:
             res = app.get(url)
             assert res.status_code == 200
-            assert f"Revoke {report_config}" in res.text
+            assert f"Confirm revoking action for {report_config}" in res.text
 
-            res_post = res.forms[1].submit()
             change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
             res_post = res.forms[1].submit()
             assert res_post.status_code == 302
