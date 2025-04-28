@@ -1,15 +1,40 @@
-name: SDLC - Develop push
+name: SDLC - Branch push
 
 on:
   push:
     branches:
-      - develop
+      - "**"
 
 jobs:
-  build-push-develop:
+  prepare-docker:
+    name: "Prepare Docker image tag"
+    runs-on: ubuntu-latest
+    outputs:
+      docker_image_tag: ${{ steps.sanitize-branch.outputs.docker_image_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get current branch name
+        id: get-branch
+        run: |
+          if [[ "${GITHUB_REF}" == refs/pull/*/merge ]]; then
+            BRANCH_NAME="${GITHUB_HEAD_REF}"
+          else
+            BRANCH_NAME="${GITHUB_REF_NAME}"
+          fi
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Sanitize branch name for Docker
+        id: sanitize-branch
+        run: |
+          SAFE_BRANCH=$(echo "${{ steps.get-branch.outputs.branch_name }}" | tr '[:upper:]' '[:lower:]' | sed 's#[^a-z0-9_.-]#-#g')
+          echo "docker_image_tag=$SAFE_BRANCH" >> $GITHUB_OUTPUT
+
+  build-push:
     name: "Build & push image"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    needs: [prepare-docker]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,11 +48,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push develop image
+      - name: Build and push image
         run: |
-          IMAGE_TAG="develop"
+          IMAGE_TAG="${{ needs.prepare-docker.outputs.docker_image_tag }}"
           docker buildx create --use
           docker buildx build \
+            --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-develop \
             --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \
             --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \
             -t ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:$IMAGE_TAG \
@@ -37,6 +63,7 @@ jobs:
 
   deploy:
     name: "Trigger deployment"
+    if: github.ref == 'refs/heads/develop'
     needs: [build-push-develop]
     uses: ./.github/workflows/trigger-azure-pipeline.yml
     with:
