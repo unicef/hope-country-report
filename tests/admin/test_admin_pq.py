@@ -32,18 +32,19 @@ def test_celery_terminate(django_app, admin_user, query):
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
     with mock.patch.object(Query, "is_queued", return_value=False):
-        res_get = django_app.get(url, user=admin_user)
-        assert res_get.status_code == 302, "Expected a redirect when task is not queued"
-        assert res_get.location == change_url, "Redirect should go to the change page"
-        res_follow = res_get.follow()
+        res_get = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get.status_code == 302
+        assert res_get.location == change_url
+        res_follow = res_get.follow(expect_errors=True)
         messages = [m.message for m in res_follow.context["messages"]]
         assert "Task not queued." in messages
 
     with mock.patch.object(Query, "is_queued", return_value=True):
         with mock.patch.object(Query, "terminate") as mock_terminate:
-            res = django_app.get(url, user=admin_user)
+            res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
             assert res.status_code == 200
-            assert f"Terminate {query}" in res.text
+            assert "Confirm termination request" in res.text
+            assert str(query) in res.text
 
             change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
@@ -70,7 +71,7 @@ def test_celery_queue(django_app, admin_user, query):
     url = reverse("admin:power_query_query_celery_queue", args=[query.pk])
 
     with mock.patch.object(Query, "queue") as mock_queue:
-        res = django_app.get(url, user=admin_user)
+        res = django_app.get(url, user=admin_user, headers={"Referer": url})
         assert res.status_code == 200
         assert f"Confirm queue action for {query}" in res.text
 
@@ -87,11 +88,11 @@ def test_celery_queue(django_app, admin_user, query):
 
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
     with mock.patch.object(Query, "is_queued", return_value=True):
-        res_get_again = django_app.get(url, user=admin_user)
-        assert res_get_again.status_code == 302
-        assert res_get_again.location == change_url, "Redirect should go to the change page if already queued"
-        res_follow_again = res_get_again.follow()
-        messages = [m.message for m in res_follow_again.context["messages"]]
+        res_get_already_queued = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get_already_queued.status_code == 302
+        assert res_get_already_queued.location == change_url
+        res_follow_already_queued = res_get_already_queued.follow(expect_errors=True)
+        messages = [m.message for m in res_follow_already_queued.context["messages"]]
         assert "Task has already been queued." in messages
 
 
@@ -102,18 +103,19 @@ def test_celery_revoke(django_app, admin_user, query):
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
     with mock.patch.object(Query, "is_queued", return_value=False):
-        res_get = django_app.get(url, user=admin_user)
-        assert res_get.status_code == 302
-        assert res_get.location == change_url, "Redirect should go to the change page"
-        res_follow = res_get.follow()
-        messages = [m.message for m in res_follow.context["messages"]]
+        res_get_not_queued = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get_not_queued.status_code == 302
+        assert res_get_not_queued.location == change_url
+        res_follow_not_queued = res_get_not_queued.follow(expect_errors=True)
+        messages = [m.message for m in res_follow_not_queued.context["messages"]]
         assert "Task not queued." in messages
 
     with mock.patch.object(Query, "is_queued", return_value=True):
         with mock.patch.object(Query, "revoke") as mock_revoke:
-            res = django_app.get(url, user=admin_user)
+            res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
             assert res.status_code == 200
-            assert f"Revoke {query}" in res.text
+            assert "Confirm revoking action for [ABSTRACT]" in res.text
+            assert str(query) in res.text
 
             res_post = res.forms[1].submit()
             assert res_post.status_code == 302

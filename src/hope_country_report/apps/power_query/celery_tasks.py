@@ -135,14 +135,8 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
     except (Ignore, Reject, Retry):
         raise
     except Exception as e:
+        # Let the on_failure handler in AbstractPowerQueryTask handle saving error details
         logger.exception(f"Unhandled exception in run_background_query for query {query_id}: {e}")
-        if query:
-            try:
-                query.error_message = str(e)
-                query.sentry_error_id = str(capture_exception(e))
-                query.save(update_fields=["error_message", "sentry_error_id"])
-            except Exception as save_e:
-                logger.error(f"Failed to save error details for query {query_id} on exception: {save_e}")
         raise
 
 

@@ -128,7 +128,9 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                     results[f"sentry_{str(a)}"] = str(err)
                     self.error_message = str(e)
                     self.sentry_error_id = str(err)
-                    self.save(update_fields=["error_message", "sentry_error_id"])
+            if self.error_message:
+                results["error_message"] = self.error_message
+                results["sentry_error_id"] = self.sentry_error_id
             self.update_results(results)
             self.datasets.exclude(pk__in=[dpk for dpk in results.values() if isinstance(dpk, int)]).delete()
         return results

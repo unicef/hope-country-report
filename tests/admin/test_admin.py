@@ -1,3 +1,5 @@
+from typing import Callable
+
 import pytest
 from unittest import mock
 from unittest.mock import Mock
@@ -237,17 +239,17 @@ def test_reportconfig_admin_queue(app, report_config):
     res_follow = res_post.follow()
     assert res_follow.status_code == 200
     messages = [m.message for m in res_follow.context["messages"]]
-    assert "Queued" in messages
+    assert "Queued" in messages[0]
 
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=True):
         change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
         res_get_again = app.get(url, headers={"Referer": change_url})
         assert res_get_again.status_code == 302
-        assert res_get_again.location == change_url, "Redirect should go to the change page if already queued"
+        assert res_get_again.location == change_url
         res_follow_again = res_get_again.follow()
         assert res_follow_again.status_code == 200
         messages = [m.message for m in res_follow_again.context["messages"]]
-        assert "Task has already been queued." in messages
+        assert "Task has already been queued." in messages[0]
 
 
 def test_reportconfig_admin_terminate(app, report_config):
@@ -281,7 +283,7 @@ def test_reportconfig_admin_terminate(app, report_config):
             assert len(messages) > 0, "Expected success/info message after terminate"
 
 
-def test_reportconfig_admin_revoke(app, report_config):
+def test_reportconfig_admin_revoke(app: Callable, report_config: ReportConfiguration) -> None:
     """Test the celery revoke action."""
     url = reverse("admin:power_query_reportconfiguration_celery_revoke", args=[report_config.pk])
 
