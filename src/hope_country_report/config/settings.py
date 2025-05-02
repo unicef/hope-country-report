@@ -41,7 +41,7 @@ MIGRATION_MODULES = {"hope": None}
 
 STORAGES = {
     "default": env.storage("FILE_STORAGE_DEFAULT"),
-    "staticfiles": env.storage("FILE_STORAGE_DEFAULT"),
+    "staticfiles": env.storage("FILE_STORAGE_STATIC"),
     "media": env.storage("FILE_STORAGE_MEDIA"),
     "hope": env.storage("FILE_STORAGE_HOPE"),
 }
@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "social_django",
     "admin_extra_buttons",
+    "django_celery_boost",
     "adminactions",
     "adminfilters",
     "adminfilters.depot",

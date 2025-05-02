@@ -9,6 +9,7 @@ RUN set -x \
     libmagic1 \
     libxml2 \
     wkhtmltopdf \
+    tini \
   " \
   && buildDeps=" \
 wget \
@@ -80,7 +81,7 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
-COPY src /app/src/
+COPY --chown=hope:unicef . /app/
 
 RUN --mount=type=cache,target=/root/.uv-cache \
     find ../src -name 'node_modules' -prune \
@@ -145,7 +146,7 @@ WORKDIR /app
 COPY docker/conf /conf/
 COPY docker/bin/* /usr/local/bin/
 
-COPY . /app/
+COPY --chown=hope:unicef . /app/
 
 COPY --chown=hope:unicef --from=production /venv /venv
 COPY --from=builder /usr/local/bin/uwsgi /usr/local/bin/uv /usr/local/bin/

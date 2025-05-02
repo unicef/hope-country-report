@@ -9,7 +9,6 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.db import connections, models
 from django.db.models import QuerySet
-from django.forms import Media
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
@@ -17,7 +16,7 @@ from django.urls import reverse
 from django.utils.module_loading import import_string
 
 import tablib
-from admin_extra_buttons.decorators import button, view
+from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminactions.helpers import AdminActionPermMixin
@@ -25,7 +24,7 @@ from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from constance import config
 from debug_toolbar.panels.sql.utils import reformat_sql
-from django_celery_results.models import TaskResult
+from django_celery_boost.admin import CeleryTaskModelAdmin
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
@@ -34,7 +33,6 @@ from ...utils.media import download_media
 from ...utils.perf import profile
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import (
-    CeleryEnabled,
     ChartPage,
     Dataset,
     Formatter,
@@ -50,79 +48,16 @@ from .widget import FormatterEditor
 
 logger = logging.getLogger(__name__)
 
+
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Type
+    from typing import Any, Dict, Type
 
     from django.contrib.admin.options import _ListFilterT
 
-    from ...types.django import AnyModel
     from ...types.http import AuthHttpRequest
     from .processors import ProcessorStrategy
 
     _ListDisplayT = List[str | Callable[[Any], str | bool]] | Tuple[str | Callable[[Any], str | bool],] | tuple[()]
-
-
-class CeleryEnabledMixin(admin.ModelAdmin):
-    def get_readonly_fields(self, request: HttpRequest, obj: "Optional[AnyModel]" = None) -> Sequence[str]:
-        ret = list(super().get_readonly_fields(request, obj))
-        ret.append("curr_async_result_id")
-        return ret
-
-    @button()
-    def check_status(self, request: HttpRequest) -> "HttpResponse":
-        obj: CeleryEnabled
-        for obj in self.get_queryset(request):
-            if obj.async_result is None:
-                obj.curr_async_result_id = None
-                obj.save()
-
-    @view()
-    def celery_discard_all(self, request: HttpRequest) -> "HttpResponse":
-        self.model.discard_all()
-
-    @view()
-    def celery_purge(self, request: HttpRequest) -> "HttpResponse":
-        self.model.purge()
-
-    @view()
-    def celery_terminate(self, request: HttpRequest, pk: str) -> "HttpResponse":
-        obj: CeleryEnabled = self.get_object(request, pk)
-        obj.terminate()
-
-    @view()
-    def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
-        ctx = self.get_common_context(request, pk=pk)
-        return render(
-            request,
-            f"admin/power_query/{self.model._meta.model_name}/inspect.html",
-            ctx,
-        )
-
-    @view()
-    def celery_result(self, request: HttpRequest, pk: int) -> HttpResponse:
-        self.get_common_context(request, pk=pk)
-        result = TaskResult.objects.filter(task_id=self.object.curr_async_result_id).first()
-        if result:
-            url = reverse("admin:django_celery_results_taskresult_change", args=[result.pk])
-            return redirect(url)
-        else:
-            self.message_user(request, "Result not found", messages.ERROR)
-
-    @view()
-    def celery_queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
-        obj: CeleryEnabled | None
-        try:
-            obj = self.get_object(request, str(pk))
-            if obj.queue():
-                self.message_user(request, f"Task scheduled: {obj.curr_async_result_id}")
-        except Exception as e:
-            self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
-
-    @property
-    def media(self) -> Media:
-        response = super().media
-        response._js_lists.append(["admin/celery.js"])
-        return response
 
 
 class AutoProjectCol(admin.ModelAdmin):
@@ -145,13 +80,13 @@ class AutoProjectCol(admin.ModelAdmin):
 class QueryAdmin(
     AdminFiltersMixin,
     AutoProjectCol,
-    CeleryEnabledMixin,
+    CeleryTaskModelAdmin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin[Query],
 ):
-    list_display = ("name", "parent", "target", "owner", "active", "success", "last_run", "status")
+    list_display = ("name", "parent", "target", "owner", "active", "success", "last_run", "task_status")
     search_fields = ("name",)
     list_filter = (
         ("target", AutoCompleteFilter),
@@ -166,8 +101,7 @@ class QueryAdmin(
         "error_message",
         "info",
         "last_run",
-        "last_async_result_id",
-        "curr_async_result_id",
+        "version",
     )
     change_form_template = None
     ordering = ["-last_run"]
@@ -191,6 +125,17 @@ class QueryAdmin(
         self, request: "HttpRequest", object_id: str, form_url: str = "", extra_context: "dict[str, Any] | None" = None
     ) -> "HttpResponse":
         return super().change_view(request, object_id, form_url, extra_context)
+
+    @button(label="Inspect", icon="search")
+    def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
+        self.object = self.get_object(request, pk)
+        ctx = self.get_common_context(request, pk=pk, object=self.object)
+        ctx["object"] = self.object
+        return render(
+            request,
+            f"admin/power_query/{self.model._meta.model_name}/inspect.html",
+            ctx,
+        )
 
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return super().has_change_permission(request, obj)
@@ -222,7 +167,6 @@ class QueryAdmin(
                         }
                     )
                 self.message_user(request, code)
-                # context["explain_info"] = json.loads(explain_info)
         else:
             form = ExplainQueryForm(initial={"query": "conn.all()", "target": None})
 
@@ -450,20 +394,31 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
 @admin.register(ReportConfiguration)
 class ReportConfigurationAdmin(
     AdminFiltersMixin,
-    CeleryEnabledMixin,
+    CeleryTaskModelAdmin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
     AdminActionPermMixin,
     ModelAdmin[ReportConfiguration],
 ):
-    list_display = ("name", "country_office", "updated_on", "last_run", "owner", "schedule", "compress", "protect")
+    list_display = (
+        "name",
+        "country_office",
+        "updated_on",
+        "last_run",
+        "owner",
+        "schedule",
+        "compress",
+        "protect",
+        "task_status",
+    )
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
     readonly_fields = (
+        # "task_id",  # Removed in migration 0011
         "last_run",
         "sentry_error_id",
         "error_message",
-        "last_async_result_id",
+        "version",
     )
     list_filter = (
         ("country_office", AutoCompleteFilter),
@@ -498,6 +453,17 @@ class ReportConfigurationAdmin(
             kwargs["name"] = f"Report for {q.name}"
             kwargs["notify_to"] = [request.user]
         return kwargs
+
+    @button(label="Inspect", icon="search")
+    def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
+        self.object = self.get_object(request, pk)
+        ctx = self.get_common_context(request, pk=pk, object=self.object)
+        ctx["object"] = self.object
+        return render(
+            request,
+            f"admin/power_query/{self.model._meta.model_name}/inspect.html",
+            ctx,
+        )
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def execute(self, request: HttpRequest, pk: int) -> HttpResponse:

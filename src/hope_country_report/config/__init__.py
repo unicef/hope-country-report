@@ -37,6 +37,11 @@ CONFIG = {
         NOT_SET,
         "https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html",
     ),
+    "CELERY_BOOST_FLOWER": (
+        str,
+        "http://localhost:5555",
+        "https://unicef.github.io/django-celery-boost/",
+    ),
     "CELERY_TASK_ALWAYS_EAGER": (
         bool,
         False,

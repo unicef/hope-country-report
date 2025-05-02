@@ -14,10 +14,11 @@ from django.utils.functional import cached_property
 from billiard.einfo import ExceptionInfo
 from celery import group
 from celery.contrib.abortable import AbortableTask
-from celery.exceptions import Ignore, Reject
+from celery.exceptions import Ignore, Reject, Retry
 from concurrency.exceptions import RecordModifiedError
 from django_celery_beat.models import PeriodicTask
 from redis import StrictRedis
+from sentry_sdk import capture_exception
 
 from ...config.celery import app
 from .exceptions import QueryRunCanceled, QueryRunTerminated
@@ -60,6 +61,17 @@ class AbstractPowerQueryTask(AbortableTask):
     def on_failure(
         self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict[str, str], einfo: ExceptionInfo
     ) -> None:
+        try:
+            obj_id = args[0]
+            instance = self.model.objects.filter(pk=obj_id).first()
+            if instance:
+                instance.error_message = str(exc)
+                sentry_id = getattr(einfo, "sentry_event_id", None) or capture_exception(exc)
+                instance.sentry_error_id = str(sentry_id) if sentry_id else None
+                instance.save(update_fields=["error_message", "sentry_error_id"])
+        except Exception as e:
+            logger.error(f"Failed to save error details for task {task_id} on failure: {e}")
+
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
         super().on_failure(exc, task_id, args, kwargs, einfo)
 
@@ -98,8 +110,9 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
         query = Query.objects.get(pk=query_id)
         if query.version != version:
             raise RecordModifiedError(target=query)
-        if query.status == Query.CANCELED:
-            raise Ignore()
+        query.error_message = None
+        query.sentry_error_id = None
+        query.save(update_fields=["error_message", "sentry_error_id"])
 
         def trap(sig: Any, frame: Any):
             raise QueryRunTerminated
@@ -119,10 +132,11 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
         raise Reject(e, requeue=False)
     except RecordModifiedError as e:
         raise Reject(e, requeue=False)
-    except (Ignore, Reject):
+    except (Ignore, Reject, Retry):
         raise
-    except BaseException as e:
-        logger.exception(e)
+    except Exception as e:
+        # Let the on_failure handler in AbstractPowerQueryTask handle saving error details
+        logger.exception(f"Unhandled exception in run_background_query for query {query_id}: {e}")
         raise
 
 
@@ -132,11 +146,31 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
     from hope_country_report.apps.power_query.models import ReportConfiguration
 
     result: "ReportResult" = []
+    report = None
     try:
-        report: ReportConfiguration = ReportConfiguration.objects.get(id=id)
+        report = ReportConfiguration.objects.get(id=id)
+        if version and report.version != version:
+            raise RecordModifiedError(target=report)
+
+        report.error_message = None
+        report.sentry_error_id = None
+        report.save(update_fields=["error_message", "sentry_error_id"])
+
         result = report.execute(run_query=True)
+    except RecordModifiedError as e:
+        raise Reject(e, requeue=False)
+    except (Ignore, Reject, Retry):
+        raise
     except Exception as e:
-        logger.exception(e)
+        logger.exception(f"Unhandled exception in refresh_report for report {id}: {e}")
+        if report:
+            try:
+                report.error_message = str(e)
+                report.sentry_error_id = str(capture_exception(e))
+                report.save(update_fields=["error_message", "sentry_error_id"])
+            except Exception as save_e:
+                logger.error(f"Failed to save error details for report {id} on exception: {save_e}")
+        raise
     return result
 
 

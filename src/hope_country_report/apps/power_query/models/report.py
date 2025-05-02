@@ -11,13 +11,14 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from django_celery_beat.models import PeriodicTask
+from django_celery_boost.models import CeleryTaskModel
 from taggit.managers import TaggableManager
 
 from ....utils.mail import notify_report_completion
 from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
-from ._base import AdminReversable, CeleryEnabled, ManageableObject, PowerQueryModel, TimeStampMixin
+from ._base import AdminReversable, ManageableObject, PowerQueryCeleryFields, PowerQueryModel, TimeStampMixin
 from .formatter import Formatter
 from .query import Query
 
@@ -33,7 +34,13 @@ MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
 class ReportConfiguration(
-    PowerQueryModel, ManageableObject, CeleryEnabled, AdminReversable, TimeStampMixin, models.Model
+    CeleryTaskModel,
+    PowerQueryCeleryFields,
+    PowerQueryModel,
+    ManageableObject,
+    AdminReversable,
+    TimeStampMixin,
+    models.Model,
 ):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
@@ -83,7 +90,7 @@ class ReportConfiguration(
     )
 
     tags = TaggableManager(blank=True)
-    celery_task_name = "refresh_report"
+    celery_task_name = "hope_country_report.apps.power_query.celery_tasks.refresh_report"
 
     class Tenant:
         tenant_filter_field = "country_office"

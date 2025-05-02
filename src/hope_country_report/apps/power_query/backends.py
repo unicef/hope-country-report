@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class PowerQueryBackend(ModelBackend):
     def _get_role_permissions(self, user_obj: "AnyUser", obj: "Model | HopeModel"):
-        if not user_obj.is_active or user_obj.is_anonymous or obj is None:
+        if not user_obj.is_active or user_obj.is_anonymous or obj is None or user_obj.is_superuser:
             return set()
         if obj._meta.app_label == "power_query" and getattr(obj, "country_office", None):
             co = obj.country_office
@@ -35,6 +35,9 @@ class PowerQueryBackend(ModelBackend):
         }
 
     def has_perm(self, user_obj: "AnyUser", perm: str, obj: "AnyModel|None" = None) -> bool:
+        if user_obj.is_active and user_obj.is_superuser:
+            return True
+
         if user_obj.is_authenticated and obj and obj._meta.app_label == "power_query":
             if getattr(obj, "owner", None) and user_obj == obj.owner:
                 return True
