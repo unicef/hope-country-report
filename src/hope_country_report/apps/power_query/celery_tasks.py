@@ -180,17 +180,11 @@ def refresh_report(self: PowerQueryTask, report_id: int, version: int = 0) -> "R
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def reports_refresh(self: AbortableTask, **kwargs: dict[str, Any]) -> Any:
-    # Import moved inside to satisfy TC001 for application imports potentially used only for typing
-    # although it's used at runtime here.
-    from hope_country_report.apps.power_query.models import ReportConfiguration
-
-    report: "ReportConfiguration"
     result: Any = {}
     if periodic_task_name := (getattr(self.request, "properties", {}) or {}).get("periodic_task_name"):
         periodic_task = PeriodicTask.objects.get(name=periodic_task_name)
         grp = [
-            refresh_report.subtask([report.pk, report.version])
-            for report in periodic_task.reports.filter(active=True)
+            refresh_report.subtask([report.pk, report.version]) for report in periodic_task.reports.filter(active=True)
         ]
 
         if grp:
