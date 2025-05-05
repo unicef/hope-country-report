@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, NoReturn, TYPE_CHECKING
 
 import logging
 import signal
@@ -7,7 +7,7 @@ import uuid
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import caches
-from django.db import connection
+from django.db import connection, Error as DjangoDbError
 from django.db.models import Model
 from django.utils.functional import cached_property
 
@@ -40,26 +40,26 @@ rds = StrictRedis(settings.REDIS_URL, decode_responses=True, charset="utf-8")
 
 
 class AbstractPowerQueryTask(AbortableTask):
-    model: "Union[Type[Query], Type[ReportConfiguration]]"
+    model: "type[Query] | type[ReportConfiguration]"
     cache = caches[getattr(settings, "CELERY_TASK_LOCK_CACHE", "default")]
     lock_expiration = 60 * 60 * 24  # 1 day
     model_name: str = ""
     abstract = True
 
     @cached_property
-    def model(self) -> Type[Model]:
+    def model(self) -> type[Model]:
         return apps.get_app_config("power_query").get_model(self.model_name)
 
     def after_return(self, *args: Any, **kwargs: Any) -> None:
         if not settings.CELERY_TASK_ALWAYS_EAGER:
             connection.close()
 
-    def on_success(self, retval: Any, task_id: str, args: Tuple, kwargs: Dict[str, str]) -> None:
+    def on_success(self, retval: Any, task_id: str, args: tuple, kwargs: dict[str, str]) -> None:
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
         super().on_success(retval, task_id, args, kwargs)
 
     def on_failure(
-        self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict[str, str], einfo: ExceptionInfo
+        self, exc: Exception, task_id: str, args: tuple, kwargs: dict[str, str], einfo: ExceptionInfo
     ) -> None:
         try:
             obj_id = args[0]
@@ -69,8 +69,10 @@ class AbstractPowerQueryTask(AbortableTask):
                 sentry_id = getattr(einfo, "sentry_event_id", None) or capture_exception(exc)
                 instance.sentry_error_id = str(sentry_id) if sentry_id else None
                 instance.save(update_fields=["error_message", "sentry_error_id"])
+        except DjangoDbError as e:
+            logger.error(f"DB error saving failure details for task {task_id}: {e}")
         except Exception as e:
-            logger.error(f"Failed to save error details for task {task_id} on failure: {e}")
+            logger.error(f"Unexpected error saving failure details for task {task_id}: {e}")
 
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
         super().on_failure(exc, task_id, args, kwargs, einfo)
@@ -84,12 +86,13 @@ class AbstractPowerQueryTask(AbortableTask):
         logger.debug("Acquiring %s key %s", self.lock_key, "succeed" if lock_acquired else "failed")
         return lock_acquired
 
-    def __call__(self, *args: Tuple, **kwargs: Dict[str, str]) -> Any:
+    def __call__(self, *args: tuple, **kwargs: dict[str, str]) -> Any:
         self.lock_signature = str(uuid.uuid4())
         if self.acquire_lock():
             logger.debug("Task %s execution with lock started", self.request.id)
             return super().__call__(*args, **kwargs)
         logger.warning("Task %s skipped due lock detection", self.request.id)
+        return None
 
 
 class PowerQueryTask(AbstractPowerQueryTask):
@@ -114,14 +117,13 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
         query.sentry_error_id = None
         query.save(update_fields=["error_message", "sentry_error_id"])
 
-        def trap(sig: Any, frame: Any):
+        def trap(sig: Any, frame: Any) -> NoReturn:
             raise QueryRunTerminated
 
         for sig in ("TERM", "HUP", "INT", "USR1"):
             signal.signal(getattr(signal, "SIG" + sig), trap)
 
-        res = query.execute_matrix(running_task=self)
-        return res
+        return query.execute_matrix(running_task=self)
     except QueryRunTerminated as e:
         raise Reject(e, requeue=False)
     except QueryRunCanceled as e:
@@ -135,20 +137,19 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
     except (Ignore, Reject, Retry):
         raise
     except Exception as e:
-        # Let the on_failure handler in AbstractPowerQueryTask handle saving error details
         logger.exception(f"Unhandled exception in run_background_query for query {query_id}: {e}")
         raise
 
 
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
-def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportResult":
+def refresh_report(self: PowerQueryTask, report_id: int, version: int = 0) -> "ReportResult":
     from hope_country_report.apps.power_query.models import ReportConfiguration
 
     result: "ReportResult" = []
     report = None
     try:
-        report = ReportConfiguration.objects.get(id=id)
+        report = ReportConfiguration.objects.get(id=report_id)
         if version and report.version != version:
             raise RecordModifiedError(target=report)
 
@@ -162,33 +163,32 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
     except (Ignore, Reject, Retry):
         raise
     except Exception as e:
-        logger.exception(f"Unhandled exception in refresh_report for report {id}: {e}")
+        logger.exception(f"Unhandled exception in refresh_report for report {report_id}: {e}")
         if report:
             try:
                 report.error_message = str(e)
                 report.sentry_error_id = str(capture_exception(e))
                 report.save(update_fields=["error_message", "sentry_error_id"])
+            except DjangoDbError as save_e:
+                logger.error(f"DB error saving failure details for report {report_id}: {save_e}")
             except Exception as save_e:
-                logger.error(f"Failed to save error details for report {id} on exception: {save_e}")
+                logger.error(f"Unexpected error saving failure details for report {report_id}: {save_e}")
         raise
     return result
 
 
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
-def reports_refresh(self: AbortableTask, **kwargs: Dict[str, Any]) -> Any:
-    from hope_country_report.apps.power_query.models import ReportConfiguration
-
-    report: ReportConfiguration
-    result = {}
+def reports_refresh(self: AbortableTask, **kwargs: dict[str, Any]) -> Any:
+    result: Any = {}
     if periodic_task_name := (getattr(self.request, "properties", {}) or {}).get("periodic_task_name"):
         periodic_task = PeriodicTask.objects.get(name=periodic_task_name)
-        grp = []
-        for report in periodic_task.reports.filter(active=True):
-            grp.append(refresh_report.subtask([report.pk, report.version]))
+        grp = [
+            refresh_report.subtask([report.pk, report.version]) for report in periodic_task.reports.filter(active=True)
+        ]
 
         if grp:
             job = group(grp)
             result = job.apply_async()
 
-        return result
+    return result

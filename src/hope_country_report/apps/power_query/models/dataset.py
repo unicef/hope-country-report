@@ -8,12 +8,12 @@ from django.utils.functional import cached_property
 
 from django_cleanup import cleanup
 
-from ...core.models import CountryOffice
 from ._base import FileProviderMixin, PowerQueryModel, TimeStampMixin
 from .query import Query
 
 if TYPE_CHECKING:
-    from typing import Dict
+    from ...core.models import CountryOffice
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,9 @@ class Dataset(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.Model):
         return self.query.country_office
 
     @cached_property
-    def arguments(self) -> "Dict[str, int|str]":
+    def arguments(self) -> "dict[str, int|str]":
         return self.info.get("arguments", {}) or {}
 
     @cached_property
-    def extra(self) -> "Dict[str, int|str]":
+    def extra(self) -> "dict[str, int|str]":
         return self.info.get("extra", {}) or {}

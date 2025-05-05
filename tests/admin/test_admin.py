@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 import pytest
 from unittest import mock
@@ -6,13 +6,15 @@ from unittest.mock import Mock
 
 from django.contrib.admin.sites import site
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
-from django.db.models.options import Options
 from django.urls import reverse
 
 from admin_extra_buttons.handlers import ChoiceHandler
 from django_regex.utils import RegexList as _RegexList
 
 from hope_country_report.apps.power_query.models import ReportConfiguration
+
+if TYPE_CHECKING:
+    from django.db.models.options import Options
 
 pytestmark = [pytest.mark.admin, pytest.mark.smoke, pytest.mark.django_db]
 

@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 from django.conf import settings
 
 from celery import states
-from celery.result import EagerResult
 from django_celery_beat.models import PeriodicTask
 
 from hope_country_report.apps.power_query.celery_tasks import refresh_report, reports_refresh, run_background_query
@@ -19,9 +18,11 @@ from hope_country_report.state import state
 if TYPE_CHECKING:
     from typing import TypedDict
 
+    from celery.result import EagerResult
+
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.apps.hope.models import Household
-    from hope_country_report.apps.power_query.models import Query, ReportConfiguration
+    from hope_country_report.apps.power_query.models import ReportConfiguration
 
     class _DATA(TypedDict):
         co1: CountryOffice

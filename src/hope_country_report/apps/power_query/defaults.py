@@ -5,12 +5,10 @@ from strategy_field.utils import fqn
 from hope_country_report.apps.power_query.processors import ToCSV, ToHTML, ToJSON, ToPDF, ToText, ToXLS, ToXLSX, ToYAML
 
 if TYPE_CHECKING:
-    from typing import List
-
     from hope_country_report.apps.power_query.models import Formatter
 
 
-def create_defaults() -> "List[Formatter]":
+def create_defaults() -> "list[Formatter]":
     from hope_country_report.apps.power_query.models import Formatter, ReportTemplate
 
     Formatter.objects.get_or_create(
@@ -68,7 +66,7 @@ def create_defaults() -> "List[Formatter]":
     return Formatter.objects.all()
 
 
-def create_periodic_tasks():
+def create_periodic_tasks() -> None:
     from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
     import hope_country_report.apps.power_query.celery_tasks

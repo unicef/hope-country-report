@@ -3,7 +3,6 @@ from typing import Any, TYPE_CHECKING, TypeVar
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.signing import get_cookie_signer
-from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
 from django.utils.functional import cached_property
 from django.views import View
@@ -14,6 +13,8 @@ from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.forms import SelectTenantForm
 
 if TYPE_CHECKING:
+    from django.db.models import Model
+
     _M = TypeVar("_M", bound=Model, covariant=True)
 
 

@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 import logging
 from collections.abc import Sequence
@@ -42,7 +42,6 @@ from .models import (
     ReportDocument,
     ReportTemplate,
 )
-from .models._base import FileProviderMixin
 from .utils import to_dataset
 from .widget import FormatterEditor
 
@@ -50,14 +49,15 @@ logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type
+    from typing import Any
 
     from django.contrib.admin.options import _ListFilterT
 
     from ...types.http import AuthHttpRequest
+    from .models._base import FileProviderMixin
     from .processors import ProcessorStrategy
 
-    _ListDisplayT = List[str | Callable[[Any], str | bool]] | Tuple[str | Callable[[Any], str | bool],] | tuple[()]
+    _ListDisplayT = list[str | Callable[[Any], str | bool]] | tuple[str | Callable[[Any], str | bool],] | tuple[()]
 
 
 class AutoProjectCol(admin.ModelAdmin):
@@ -151,21 +151,14 @@ class QueryAdmin(
                 code = f"""sql={q}.query"""
                 locals_ = {"conn": ct.model_class().objects}
                 exec(code, globals(), locals_)
-                sql = locals_.get("sql", None)
+                sql = locals_.get("sql")
                 if sql:
                     cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
                     context["sql"] = reformat_sql(str(locals_.get("sql", "")))
                     cursor.execute(f"EXPLAIN ANALYZE {sql}")
                     headers = [d[0] for d in cursor.description]
                     result = cursor.fetchall()
-                    context.update(
-                        **{
-                            "result": result,
-                            "sql": sql,
-                            "headers": headers,
-                            "alias": settings.POWER_QUERY_DB_ALIAS,
-                        }
-                    )
+                    context.update(result=result, sql=sql, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
                 self.message_user(request, code)
         else:
             form = ExplainQueryForm(initial={"query": "conn.all()", "target": None})
@@ -214,7 +207,7 @@ class QueryAdmin(
                 context["queryset"] = ret
             elif isinstance(ret, tablib.Dataset):
                 context["dataset"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
-            elif isinstance(ret, (dict, list, tuple)):
+            elif isinstance(ret, dict | list | tuple):
                 context["result"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
             else:
                 self.message_user(
@@ -231,7 +224,7 @@ class QueryAdmin(
         url = reverse("admin:power_query_query_changelist")
         return redirect(f"{url}?parent__id={pk}")
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
+    def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
         return {"code": "result=conn.all()", "name": ct, "target": ct, "owner": request.user}
 
@@ -377,7 +370,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
             if form.is_valid():
-                processor: "Type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
+                processor: "type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
                 fmt = Formatter(
                     template=self.object,
                     processor=processor,
@@ -445,7 +438,7 @@ class ReportConfigurationAdmin(
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
+    def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         kwargs: dict[str, Any] = {"owner": request.user}
         if "q" in request.GET:
             q = Query.objects.get(pk=request.GET["q"])

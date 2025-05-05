@@ -14,20 +14,19 @@ from ..processors import mimetype_map
 from ._base import AdminReversable
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Iterable, List, Tuple
+    from typing import Any, Iterable
 
 logger = logging.getLogger(__name__)
 
 MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
-def get_matrix(param, input_: "Iterable" = None) -> "List[Dict[str,str]]":
+def get_matrix(param, input_: "Iterable" = None) -> "list[dict[str,str]]":
     if isinstance(input_, dict):
         product = list(itertools.product(*input_.values()))
-        return [dict(zip(input_.keys(), e)) for e in product]
-    else:
-        param = slugify(param).replace("-", "_")
-        return [{param: e} for e in input_]
+        return [dict(zip(input_.keys(), e, strict=False)) for e in product]
+    param = slugify(param).replace("-", "_")
+    return [{param: e} for e in input_]
 
 
 def validate_queryargs(value: "Any") -> bool:
@@ -63,7 +62,7 @@ class Parametrizer(NaturalKeyModel, AdminReversable, models.Model):
     def clean(self) -> None:
         return validate_queryargs(self.value)
 
-    def get_matrix(self, value: "Dict|List|Tuple|None" = None) -> "List[Dict[str,str]]":
+    def get_matrix(self, value: "dict|list|tuple|None" = None) -> "list[dict[str,str]]":
         input = value or self.value
         param = slugify(self.code).replace("-", "_")
         return get_matrix(param, input)

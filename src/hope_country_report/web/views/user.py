@@ -5,7 +5,6 @@ from django.contrib import messages
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.signing import get_cookie_signer
 from django.db.models import Model, QuerySet
-from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import UpdateView
@@ -17,6 +16,7 @@ from hope_country_report.web.forms import UserProfileForm
 from .base import SelectedOfficeMixin
 
 if TYPE_CHECKING:
+    from django.http import HttpResponse
     from django.views.generic.edit import _ModelFormT
 
     from hope_country_report.types.http import AuthHttpRequest

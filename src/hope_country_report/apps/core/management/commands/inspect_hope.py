@@ -1,4 +1,4 @@
-from typing import Any, AnyStr, Dict, List
+from typing import Any, AnyStr, List
 
 import io
 import keyword
@@ -102,12 +102,10 @@ MODEL_RENAME = {
 }
 
 
-def ignore_table(table_name: str):
+def ignore_table(table_name: str) -> bool:
     if table_name in IGNORED_TABLES:
         return True
-    if table_name not in WANTED_TABLES:
-        return True
-    return False
+    return table_name not in WANTED_TABLES
 
 
 class Command(BaseCommand):
@@ -117,7 +115,7 @@ class Command(BaseCommand):
     stealth_options = ("table_name_filter",)
     db_module = "etools_datamart.apps.multitenant"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser) -> None:
         parser.add_argument(
             "table",
             action="store",
@@ -147,7 +145,7 @@ class Command(BaseCommand):
             help="---",
         )
 
-    def handle(self, **options: "Dict[Any]"):
+    def handle(self, **options: "dict[Any]") -> None:
         try:
             output_file = options["output_file"]
             buffer = io.StringIO()
@@ -207,7 +205,7 @@ class Command(BaseCommand):
             for table_name in tables_to_introspect:
                 if ignore_table(table_name):
                     continue
-                known_fields: Dict[str, Dict[str:Any]] = {}
+                known_fields: dict[str, dict[str:Any]] = {}
                 model_name = table2model(table_name)
                 try:
                     try:
@@ -235,7 +233,7 @@ class Command(BaseCommand):
                 known_models.append(model_name)
                 used_column_names = []  # Holds column names used in the table so far
                 column_to_field_name = {}  # Maps column names to names of model fields
-                for index, row in enumerate(table_description):
+                for _index, row in enumerate(table_description):
                     comment_notes = []  # Holds Field notes, to be displayed in a Python comment.
                     extra_params = OrderedDict()  # Holds Field parameters such as 'db_column'.
                     column_name = row[0]
@@ -316,7 +314,7 @@ class Command(BaseCommand):
                         "" if "." in field_type else "models.",
                         field_type,
                     )
-                    if field_type.startswith("ForeignKey(") or field_type.startswith("OneToOneField("):
+                    if field_type.startswith(("ForeignKey(", "OneToOneField(")):
                         # _related_name = f'{table2model(relations[column_name][1]).lower()}_{table_name}_{column_name}'
                         _related_name = f"{model_name}.{att_name}".lower()
 
@@ -335,8 +333,7 @@ class Command(BaseCommand):
                     if comment_notes:
                         field_desc += "  # " + " ".join(comment_notes)
                     yield f"    {field_desc}"
-                for meta_line in self.get_meta(table_name, constraints, column_to_field_name):
-                    yield meta_line
+                yield from self.get_meta(table_name, constraints, column_to_field_name)
 
                 yield ""
                 yield "    class Tenant:"
@@ -348,9 +345,7 @@ class Command(BaseCommand):
                         break
 
     def normalize_col_name(self, col_name: str, used_column_names: List[str], is_relation: bool):  # noqa
-        """
-        Modify the column name to make it Python-compatible as a field name
-        """
+        """Modify the column name to make it Python-compatible as a field name."""
         field_params = {}
         field_notes = []
 
@@ -403,7 +398,7 @@ class Command(BaseCommand):
 
         return new_name, field_params, field_notes
 
-    def get_field_type(self, connection: Any, table_name: str, row: List):
+    def get_field_type(self, connection: Any, table_name: str, row: list):
         """
         Given the database connection, the table name, and the cursor row
         description, this routine will return the given field type name, as
@@ -454,14 +449,14 @@ class Command(BaseCommand):
 
         return field_type, field_params, field_notes
 
-    def get_meta(self, table_name: str, constraints: Any, column_to_field_name: Dict[str, Any]) -> List[str]:
+    def get_meta(self, table_name: str, constraints: Any, column_to_field_name: dict[str, Any]) -> list[str]:
         """
         Return a sequence comprising the lines of code necessary
         to construct the inner Meta class for the model corresponding
         to the given database table name.
         """
         unique_together = set()
-        for index, params in constraints.items():
+        for params in constraints.values():
             if params["unique"]:
                 columns = params["columns"]
                 if len(columns) > 1:
@@ -476,9 +471,8 @@ class Command(BaseCommand):
                             + ")"
                         )
                         unique_together.add(tup)
-        meta = ["", "    class Meta:", "        managed = False", f"        db_table = '{table_name}'"]
+        return ["", "    class Meta:", "        managed = False", f"        db_table = '{table_name}'"]
 
         # if unique_together:
         #     tup = "(" + ", ".join(sorted(unique_together)) + ",)"
         #     meta += ["        unique_together = %s" % tup]
-        return meta

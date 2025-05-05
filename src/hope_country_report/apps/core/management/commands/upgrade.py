@@ -115,7 +115,7 @@ class Command(BaseCommand):
             echo = self.stdout.write
         else:
 
-            def echo(*a, **kw):
+            def echo(*a, **kw) -> None:
                 pass
 
         try:
@@ -182,8 +182,8 @@ class Command(BaseCommand):
                     }
                     lm = LayerMapping(CountryShape, data, world_mapping, transform=False)
                     lm.save(strict=True)
-                except TypeError as e:
-                    print(e)
+                except TypeError:
+                    pass
 
             echo("Create default group")
             get_or_create_reporter_group()

@@ -7,9 +7,10 @@ from django.urls import reverse
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from testutils.selenium import SmartDriver
 
 if TYPE_CHECKING:
+    from testutils.selenium import SmartDriver
+
     from hope_country_report.apps.core.models import User
 
 

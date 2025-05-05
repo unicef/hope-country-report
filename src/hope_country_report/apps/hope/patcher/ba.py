@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
-from django.db.models import QuerySet
-
 from hope_country_report.apps.hope.models import BusinessArea, BusinessareaCountries, Country
 from hope_country_report.apps.hope.patcher import add_m2m
 from hope_country_report.apps.tenant.db import TenantManager
 from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tenant
 
 if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
     from hope_country_report.apps.core.models import CountryOffice
 
 

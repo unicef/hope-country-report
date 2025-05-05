@@ -5,7 +5,7 @@ from smart_env import SmartEnv
 DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/5.0/ref/settings"
 
 
-def setting(anchor):
+def setting(anchor) -> str:
     return f"@see {DJANGO_HELP_BASE}#{anchor}"
 
 
