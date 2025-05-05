@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 import logging
 import signal
@@ -40,26 +40,26 @@ rds = StrictRedis(settings.REDIS_URL, decode_responses=True, charset="utf-8")
 
 
 class AbstractPowerQueryTask(AbortableTask):
-    model: "Union[Type[Query], Type[ReportConfiguration]]"
+    model: "type[Query] | type[ReportConfiguration]"
     cache = caches[getattr(settings, "CELERY_TASK_LOCK_CACHE", "default")]
     lock_expiration = 60 * 60 * 24  # 1 day
     model_name: str = ""
     abstract = True
 
     @cached_property
-    def model(self) -> Type[Model]:
+    def model(self) -> type[Model]:
         return apps.get_app_config("power_query").get_model(self.model_name)
 
     def after_return(self, *args: Any, **kwargs: Any) -> None:
         if not settings.CELERY_TASK_ALWAYS_EAGER:
             connection.close()
 
-    def on_success(self, retval: Any, task_id: str, args: Tuple, kwargs: Dict[str, str]) -> None:
+    def on_success(self, retval: Any, task_id: str, args: tuple, kwargs: dict[str, str]) -> None:
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
         super().on_success(retval, task_id, args, kwargs)
 
     def on_failure(
-        self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict[str, str], einfo: ExceptionInfo
+        self, exc: Exception, task_id: str, args: tuple, kwargs: dict[str, str], einfo: ExceptionInfo
     ) -> None:
         try:
             obj_id = args[0]
@@ -84,7 +84,7 @@ class AbstractPowerQueryTask(AbortableTask):
         logger.debug("Acquiring %s key %s", self.lock_key, "succeed" if lock_acquired else "failed")
         return lock_acquired
 
-    def __call__(self, *args: Tuple, **kwargs: Dict[str, str]) -> Any:
+    def __call__(self, *args: tuple, **kwargs: dict[str, str]) -> Any:
         self.lock_signature = str(uuid.uuid4())
         if self.acquire_lock():
             logger.debug("Task %s execution with lock started", self.request.id)
@@ -135,7 +135,6 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
     except (Ignore, Reject, Retry):
         raise
     except Exception as e:
-        # Let the on_failure handler in AbstractPowerQueryTask handle saving error details
         logger.exception(f"Unhandled exception in run_background_query for query {query_id}: {e}")
         raise
 
@@ -176,7 +175,7 @@ def refresh_report(self: PowerQueryTask, id: int, version: int = 0) -> "ReportRe
 
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
-def reports_refresh(self: AbortableTask, **kwargs: Dict[str, Any]) -> Any:
+def reports_refresh(self: AbortableTask, **kwargs: dict[str, Any]) -> Any:
     from hope_country_report.apps.power_query.models import ReportConfiguration
 
     report: ReportConfiguration
