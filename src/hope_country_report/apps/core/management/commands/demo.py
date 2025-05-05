@@ -33,7 +33,7 @@ class Command(BaseCommand):
         )
         Site.objects.clear_cache()
 
-        for flag in settings.FLAGS.keys():
+        for flag in settings.FLAGS:
             FlagState.objects.get_or_create(name=flag, condition="hostname", value="127.0.0.1,localhost")
 
         reporters = Group.objects.get(name=settings.REPORTERS_GROUP_NAME)
@@ -45,45 +45,45 @@ class Command(BaseCommand):
         )
         q1 = Query.objects.get_or_create(
             name="Full HH list",
-            defaults=dict(country_office=afg, owner=user, target=ContentType.objects.get_for_model(Household)),
+            defaults={"country_office": afg, "owner": user, "target": ContentType.objects.get_for_model(Household)},
         )[0]
         q2 = Query.objects.get_or_create(
             name="Monthly registrations: {monthname}",
-            defaults=dict(
-                country_office=afg,
-                parametrizer=p,
-                code="""import calendar
+            defaults={
+                "country_office": afg,
+                "parametrizer": p,
+                "code": """import calendar
 month=args['month']
 result=conn.filter(first_registration_date__month=month)
 extra={"monthname": calendar.month_name[month]}
 """,
-                owner=user,
-                target=ContentType.objects.get_for_model(Household),
-            ),
+                "owner": user,
+                "target": ContentType.objects.get_for_model(Household),
+            },
         )[0]
         q3 = Query.objects.get_or_create(
             name="Programme List",
-            defaults=dict(
-                country_office=afg,
-                owner=user,
-                target=ContentType.objects.get_for_model(Household),
-                code="""result=conn.all()""",
-            ),
+            defaults={
+                "country_office": afg,
+                "owner": user,
+                "target": ContentType.objects.get_for_model(Household),
+                "code": """result=conn.all()""",
+            },
         )[0]
 
         Query.objects.get_or_create(
             name="Dev Query",
-            defaults=dict(
-                country_office=afg,
-                owner=None,
-                target=ContentType.objects.get_for_model(Household),
-                code="""import time
+            defaults={
+                "country_office": afg,
+                "owner": None,
+                "target": ContentType.objects.get_for_model(Household),
+                "code": """import time
         start=time.time()
         while True:
             time.sleep(1)
             print(f"Query: {self} -  Aborted: {self.is_aborted()}")
         """,
-            ),
+            },
         )
 
         tags = ["tag%d" % d for d in range(10)]
@@ -127,7 +127,6 @@ extra={"monthname": calendar.month_name[month]}
             )[0]
             r.formatters.add(*Formatter.objects.all())
             r.tags.add(*random.choices(tags, k=random.choice([1, 2, 3])))
-            print("--------", r.pk, r.name)
 
         for r in ReportConfiguration.objects.all():
             r.execute(True, notify=False)

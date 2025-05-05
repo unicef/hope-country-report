@@ -38,7 +38,6 @@ class Command(BaseCommand):
                         "iso2": "",
                         "iso3": "",
                     }
-                    print("Unknown ", entry["id"])
             except Exception:
                 raise
         _out = resource_path("apps/charts/data/topology.json")

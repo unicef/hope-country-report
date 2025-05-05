@@ -2,16 +2,14 @@ from typing import TYPE_CHECKING
 
 import logging
 
-from django.http import HttpRequest, HttpResponse
-
 from sentry_sdk import configure_scope
 
 from hope_country_report.apps.tenant.utils import RequestHandler
 
 if TYPE_CHECKING:
-    from typing import TYPE_CHECKING
-
     from collections.abc import Callable
+
+    from django.http import HttpRequest, HttpResponse
 
     from hope_country_report.types.http import AuthHttpRequest
 
@@ -29,8 +27,7 @@ class StateSetMiddleware:
             scope.set_tag("state:cookie", state.tenant_cookie)
             scope.set_tag("state:tenant", state.tenant)
             scope.set_tag("state:state", state)
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
 
 
 class StateClearMiddleware:

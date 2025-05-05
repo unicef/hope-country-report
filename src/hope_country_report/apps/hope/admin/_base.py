@@ -1,4 +1,4 @@
-from typing import List, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from django.contrib import admin
 from django.contrib.admin import ListFilter
@@ -31,16 +31,16 @@ class CursorButtonMixin(ExtraButtonsMixin, CursorPaginatorAdmin):
     change_list_template = "admin/hope/change_list.html"
 
 
-def get_filters_for_model(model: "Type[Model]", only_index: bool = True) -> List[str | ListFilter]:
+def get_filters_for_model(model: "type[Model]", only_index: bool = True) -> list[str | ListFilter]:
     ret = [extra_filters.QueryStringFilter]
     for field in model._meta.fields:
         if only_index and not (field.db_index or field.unique):
             continue
-        if isinstance(field, (models.CharField,)):
+        if isinstance(field, models.CharField):
             ret.append((field.name, extra_filters.ValueFilter))
-        if isinstance(field, (models.BooleanField, models.DateField, models.DateTimeField)):
+        if isinstance(field, models.BooleanField | models.DateField | models.DateTimeField):
             ret.append(field.name)
-        elif isinstance(field, (models.ForeignKey,)):
+        elif isinstance(field, models.ForeignKey):
             ret.append((field.name, extra_filters.AutoCompleteFilter))
         else:
             pass
@@ -51,10 +51,9 @@ class AutoFiltersMixin(admin.ModelAdmin):
     def get_list_filter(self, request: "AnyRequest"):
         if self.list_filter == ["__auto__"]:
             return get_filters_for_model(self.model)
-        elif self.list_filter:
+        if self.list_filter:
             return super().get_list_filter(request)
-        else:
-            return get_filters_for_model(self.model)
+        return get_filters_for_model(self.model)
 
 
 class HopeModelAdmin(ReadOnlyMixin, AdminFiltersMixin, AutoFiltersMixin, DisplayAllMixin, CursorButtonMixin):
@@ -62,7 +61,7 @@ class HopeModelAdmin(ReadOnlyMixin, AdminFiltersMixin, AutoFiltersMixin, Display
     save_as_continue = False
     list_filter = []
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.opts.app_label}.{self.__class__.__name__}"
 
     def has_module_permission(self, request: "AnyRequest") -> bool:

@@ -23,7 +23,7 @@ from .formatter import Formatter
 from .query import Query
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
     from ....types.pq import ReportResult
     from .dataset import Dataset
@@ -99,15 +99,15 @@ class ReportConfiguration(
         self,
         force_insert: bool = False,
         force_update: bool = False,
-        using: "Optional[Any]" = None,
-        update_fields: "Optional[Any]" = None,
+        using: "Any | None" = None,
+        update_fields: "Any | None" = None,
     ) -> None:
         if not self.name:
             self.name = slugify(self.title)
         super().save(force_insert, force_update, using, update_fields)
         self.update_or_create_children()
 
-    def update_or_create_children(self):
+    def update_or_create_children(self) -> None:
         if self.query.abstract:
             defaults = {
                 field: getattr(self, field)
@@ -178,6 +178,6 @@ class ReportConfiguration(
     def get_absolute_url(self):
         return reverse("office-config", args=[self.country_office.slug, self.pk])
 
-    def get_documents_url(self):
+    def get_documents_url(self) -> str:
         base = reverse("office-doc-list", args=[self.country_office.slug])
         return f"{base}?report={self.name}"

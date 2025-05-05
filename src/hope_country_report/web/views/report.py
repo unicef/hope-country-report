@@ -1,7 +1,6 @@
 from typing import Any, TYPE_CHECKING, TypeVar
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Model
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, ListView
 
@@ -13,7 +12,7 @@ from .base import SelectedOfficeMixin
 
 if TYPE_CHECKING:
     from django.core.paginator import _SupportsPagination
-    from django.db.models import QuerySet
+    from django.db.models import Model, QuerySet
 
     _M = TypeVar("_M", bound=Model, covariant=True)
 

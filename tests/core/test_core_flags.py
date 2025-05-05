@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from unittest import mock
 
 from django.core.exceptions import ValidationError
-from django.http import HttpRequest
 
 from hope_country_report.utils.flags import debug, hostname, server_ip, superuser, validate_bool
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 
 @pytest.mark.parametrize("value", ["true", "1", "yes", "t", "y", "false", "0", "no", "f", "n"])

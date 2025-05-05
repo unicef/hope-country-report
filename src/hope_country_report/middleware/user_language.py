@@ -2,13 +2,12 @@ from typing import TYPE_CHECKING
 
 import logging
 
-from django.http import HttpRequest, HttpResponse
 from django.utils import translation
 
 if TYPE_CHECKING:
-    from typing import TYPE_CHECKING
-
     from collections.abc import Callable
+
+    from django.http import HttpRequest, HttpResponse
 
     from hope_country_report.types.http import AuthHttpRequest
 
@@ -27,5 +26,4 @@ class UserLanguageMiddleware:
             language = translation.get_language_from_request(request, check_path=False)
 
         translation.activate(language)
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)

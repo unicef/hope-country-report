@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
-from hope_country_report.apps.power_query.models import Query
+if TYPE_CHECKING:
+    from hope_country_report.apps.power_query.models import Query
 
 
 @pytest.fixture()

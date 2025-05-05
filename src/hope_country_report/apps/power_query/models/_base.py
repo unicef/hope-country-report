@@ -70,8 +70,7 @@ class FileProviderMixin(models.Model):
     @property
     def data(self) -> "Any":
         with self.file.open("rb") as f:
-            x = self.unmarshall(f)
-        return x
+            return self.unmarshall(f)
 
 
 class TimeStampMixin(models.Model):
