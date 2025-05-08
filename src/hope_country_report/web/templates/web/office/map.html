@@ -1,4 +1,4 @@
-{% extends "web/office/_base.html" %}{% load i18n leaflet_tags geojson_tags %}
+{% extends "web/office/_base.html" %}{% load geojson_tags i18n leaflet_tags %}
 {% block extrahead %}
     {% leaflet_css plugins="ALL" %}
     {% leaflet_js plugins="ALL" %}
@@ -31,7 +31,7 @@
             map.doubleClickZoom.disable();
 
             L.geoJson({{ feature }}).addTo(map);
-            map.setView([{{ selected_office.shape.lat}}, {{ selected_office.shape.lon }}], 6);
+            map.setView([{{ selected_office.shape.lat }}, {{ selected_office.shape.lon }}], 6);
             {% for d in values %}L.circle([d[0], d[1]], {color: 'red',
             fillColor: '#FF0000', fillOpacity: 0.5, radius: d[3]}).addTo(map);{% endfor %}
             map.on('click', function (e) {
@@ -41,8 +41,10 @@
             });
         }, false);
     </script>
-{% endblock %}
-{% block page-title %}{% trans "Country Map" %}: {{ selected_office }}{% endblock %}
+{% endblock extrahead %}
+
+{% block page-title %}{% translate "Country Map" %}: {{ selected_office }}{% endblock %}
+
 {% block content %}
     {% leaflet_map "map" settings_overrides=aaa %}
-{% endblock %}
+{% endblock content %}

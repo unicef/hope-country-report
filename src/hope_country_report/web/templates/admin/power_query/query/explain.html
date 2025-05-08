@@ -1,15 +1,17 @@
-{% extends "admin_extra_buttons/action_page.html" %}{% load power_query i18n %}
+{% extends "admin_extra_buttons/action_page.html" %}{% load i18n power_query %}
 {% block extrahead %}
 	{{ block.super }}
     {{ form.media }}
 
-{% endblock %}
+{% endblock extrahead %}
+
 {% block content_title %}{% endblock %}
+
 {% block action-content %}
     <div style="width: 100%">
         {% if sql %}
             <dl>
-                <dt>{% trans "Executed SQL" %}</dt>
+                <dt>{% translate "Executed SQL" %}</dt>
                 <dd id="sql-short" style="">{{ sql|safe|truncatechars:200 }}</dd>
                 <dd id="sql-full" style="display: none">{{ sql|safe }}</dd>
             </dl>

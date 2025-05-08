@@ -1,4 +1,4 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters %}
+{% extends "web/office/_base.html" %}{% load colors filters i18n user_tz %}
 
 {% block content %}
     {% if request.GET %}
@@ -13,7 +13,7 @@
                         <a href="{% build_filter_url "report" %}"><span class="tag yellow">{{ request.GET.report }}</span></a>
                     {% endif %}
                     {% if request.GET.active %}
-                        {% with request.GET.active|parse_bool|yesno:"t,f" as status %}
+                        {% with status=request.GET.active|parse_bool|yesno:"t,f" %}
                             <a href="{% build_filter_url "active" %}">
                             <span class="tag blue">{{ status|parse_bool|yesno:"active, not active" }}</span></a>
                         {% endwith %}
@@ -33,12 +33,12 @@
         <table class="table-auto searchable">
             <thead class="text-left border-b  text-xs">
             <tr class="my-4 h-16">
-                <th>{% trans "Name" %}</th>
-                <th>{% trans "Active" %}</th>
-                <th>{% trans "Refreshed On" %}</th>
-                <th>{% trans "Configuration" %}</th>
-                <th>{% trans "Owner" %}</th>
-                <th>{% trans "Tags" %}</th>
+                <th>{% translate "Name" %}</th>
+                <th>{% translate "Active" %}</th>
+                <th>{% translate "Refreshed On" %}</th>
+                <th>{% translate "Configuration" %}</th>
+                <th>{% translate "Owner" %}</th>
+                <th>{% translate "Tags" %}</th>
             </tr>
             </thead>
             <tbody>
@@ -46,7 +46,7 @@
                 <tr class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100 ">
                     <td><a class="underline" href="{% url "office-doc" selected_office.slug doc.pk %}">{{ doc.title }}</a></td>
                     <td>
-                        {% with doc.report.active|yesno:"t,f" as status %}
+                        {% with status=doc.report.active|yesno:"t,f" %}
                             <a href="{% build_filter_url "active" status %}">
                                 {{ doc.report.active|as_bool_icon }}
                             </a>
@@ -56,7 +56,7 @@
                     <td>
                         <a href="{% build_filter_url "report" doc.report.name %}">{{ doc.report.name }}</a>
                     </td>
-{#                    <td>{% trans report.status %}</td>#}
+{# <td>{% trans report.status %}</td> #}
                     <td>{{ doc.report.owner|default_if_none:"" }}</td>
                     <td>{% for t in doc.report.tags.all %}
                         <a href="{% build_filter_url "tag" t.name %}"><span class="tag {{ t.name|color }}">{{ t }}</span></a>
@@ -67,4 +67,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
+{% endblock content %}

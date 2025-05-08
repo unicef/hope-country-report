@@ -1,6 +1,8 @@
 {% extends "web/office/_base.html" %}{% load i18n %}
 {% block extrahead %}{{ form.media }}{% endblock %}
-{% block page-title %}{% trans "User Preferences" %}{% endblock %}
+
+{% block page-title %}{% translate "User Preferences" %}{% endblock %}
+
 {% block content %}
     <div class="box">
         <form method="post" id="user-profile">
@@ -8,9 +10,9 @@
             <table>{{ form }}</table>
             <button class="button primary"
                     type="submit">
-                {% trans "Save" %}
+                {% translate "Save" %}
             </button>
         </form>
     </div>
 
-{% endblock %}
+{% endblock content %}

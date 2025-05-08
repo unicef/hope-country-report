@@ -1,8 +1,9 @@
-{% extends "admin_extra_buttons/action_page.html" %}{% load static i18n %}
+{% extends "admin_extra_buttons/action_page.html" %}{% load i18n static %}
 {% block content_title %}<h1>{{ original }}</h1>{% endblock %}
+
 {% block content %}
     {% if not linked and not empty %}
-        <div>{% trans "No linked objects found" %}</div>
+        <div>{% translate "No linked objects found" %}</div>
     {% else %}
         {% for e in linked %}
             <fieldset class="module">
@@ -15,7 +16,7 @@
                 <table>
                     {% for row in e.data %}
                         <tr>
-{#                            <td>{% get_admin_href row 'pk' %}</td>#}
+{# <td>{% get_admin_href row 'pk' %}</td> #}
                             <td>{{ row }}</td>
                         </tr>
                     {% endfor %}
@@ -34,6 +35,7 @@
         {% endif %}
     {% endif %}
 {% endblock content %}
+
 {% block footer %}
     <div id="footer"></div>
-{% endblock %}
+{% endblock footer %}
