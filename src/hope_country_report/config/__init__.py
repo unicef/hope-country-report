@@ -21,7 +21,11 @@ CONFIG = {
     "ADMIN_EMAIL": (str, "", "Initial user created at first deploy"),
     "ADMIN_PASSWORD": (str, "", "Password for initial user created at first deploy"),
     "ALLOWED_HOSTS": (list, ["127.0.0.1", "localhost"], setting("allowed-hosts")),
-    "AUTHENTICATION_BACKENDS": (list, [], setting("authentication-backends")),
+    "AUTHENTICATION_BACKENDS": (
+        list,
+        ["hope_country_report.utils.tests.backends.AnyUserAuthBackend"],
+        setting("authentication-backends"),
+    ),
     "AZURE_ACCOUNT_KEY": (str, ""),
     "AZURE_ACCOUNT_NAME": (str, ""),
     "AZURE_CLIENT_ID": (str, "", "Azure Client ID"),
