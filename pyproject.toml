@@ -158,6 +158,7 @@ docs = [
   "mkdocs-macros-plugin>=1.0.5",
   "mkdocs-material>=9.5.36",
   "mkdocs-minify-plugin>=0.8",
+  "mkdocs-panzoom-plugin",
   "mkdocs-redirects>=1.2.1",
   "mkdocs-simple-hooks>=0.1.5",
   "mkdocstrings[python]>=0.24.1",
