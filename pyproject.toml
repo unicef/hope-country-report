@@ -1,20 +1,26 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [
+  "hatch-vcs>=0.4",
+  "hatchling>=1.25",
+]
+
 [project]
 name = "hcr"
-version = "0.1"
 description = "Hope Country Report for displaying Hope data"
 readme = "README.md"
+keywords = [ "HOPE", "UNICEF" ]
 license = { text = "MIT" }
 authors = [
   { name = "sax", email = "s.apostolico@gmail.com" },
-  { name = "stockman", email = "kuristockyrugano@gmail.com" },
 ]
 requires-python = ">=3.12"
-
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
+dynamic = [ "version" ]
 dependencies = [
   "azure-devops",
   "celery",
@@ -70,6 +76,7 @@ dependencies = [
   "drf-extensions",
   "flower",
   "geojson",
+  "hatch>=1.14.1",
   "htmlmin",
   "natural-keys",
   "pathvalidate",
@@ -99,10 +106,13 @@ dependencies = [
   "watchdog[watchmedo]",
 ]
 
+urls.Documentation = "https://unicef.github.io/hope-country-report"
+urls.Issues = "https://github.com/unicef/hope-country-report/issues"
+urls.Source = "https://github.com/unicef/hope-country-report"
+
 [dependency-groups]
 dev = [
   "black",
-  "cairosvg",
   "django-stubs",
   "django-stubs-ext",
   "django-webtest",
@@ -112,25 +122,6 @@ dev = [
   "freezegun",
   "fs",
   "isort",
-  "mkdocs",
-  "mkdocs-alias-plugin",
-  "mkdocs-autolinks-plugin",
-  "mkdocs-awesome-pages-plugin",
-  "mkdocs-click",
-  "mkdocs-embed-external-markdown",
-  "mkdocs-ezglossary-plugin",
-  "mkdocs-ezlinks-plugin",
-  "mkdocs-gen-files",
-  "mkdocs-get-deps",
-  "mkdocs-gitsnippet-plugin",
-  "mkdocs-include-markdown-plugin",
-  "mkdocs-link-marker",
-  "mkdocs-macros-plugin",
-  "mkdocs-material",
-  "mkdocs-panzoom-plugin",
-  "mkdocs-pdf-export-plugin",
-  "mkdocs-simple-hooks",
-  "mkdocstrings[python]",
   "mypy",
   "pdbpp",
   "pre-commit",
@@ -155,8 +146,70 @@ dev = [
   "types-setuptools",
 ]
 
+docs = [
+  "cairosvg>=2.7.1",
+  "markupsafe>=2.1.5",
+  "mdx-gh-links>=0.4",
+  "mkdocs>=1.6.1",
+  "mkdocs-autolinks-plugin>=0.7.1",
+  "mkdocs-awesome-pages-plugin>=2.9.3",
+  "mkdocs-click>=0.8.1",
+  "mkdocs-embed-external-markdown>=3.0.2",
+  "mkdocs-ezglossary-plugin>=1.6.10",
+  "mkdocs-ezlinks-plugin>=0.1.14",
+  "mkdocs-gen-files>=0.5",
+  "mkdocs-get-deps>=0.2",
+  "mkdocs-gitsnippet-plugin",
+  "mkdocs-include-markdown-plugin>=6.2.2",
+  "mkdocs-link-marker>=0.1.3",
+  "mkdocs-macros-plugin>=1.0.5",
+  "mkdocs-material>=9.5.36",
+  "mkdocs-minify-plugin>=0.8",
+  "mkdocs-redirects>=1.2.1",
+  "mkdocs-simple-hooks>=0.1.5",
+  "mkdocstrings[python]>=0.24.1",
+  "mkdocstrings-python",
+  "pymdown-extensions>=10.7.1",
+]
+
 types-decorator = [
   "types-six>=1.16.21.20241105",
+]
+
+mypy = [
+  "djangorestframework-stubs",
+  "lxml-stubs",
+  "mypy",
+  "types-defusedxml",
+  "types-gevent",
+  "types-html5lib",
+  "types-jmespath",
+  "types-markdown",
+  "types-psycopg2",
+  "types-pygments",
+  "types-python-dateutil",
+  "types-pytz",
+  "types-qrcode",
+  "types-requests",
+]
+
+[tool.hatch]
+build.hooks.vcs.version-file = "src/hope_country_report/version.py"
+version.source = "vcs"
+raw-options = { root = "../.." }
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
+[tool.hatch.build.targets.sdist]
+ignore-vcs = true
+include = [
+  "src/hope_country_report/**/*.*",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/hope_country_report",
 ]
 
 [tool.isort]
@@ -174,36 +227,11 @@ balanced_wrapping = true
 order_by_type = false
 skip_glob = [ "**/migrations/**" ]
 
-[tool.pytest.ini_options]
-norecursedirs = "data .tox _plugin_template .idea  node_modules ~*"
-DJANGO_SETTINGS_MODULE = "hope_country_report.config.settings"
-django_find_project = false
-log_format = "%(asctime)s %(levelname)s %(message)s"
-log_level = "CRITICAL"
-log_cli = false
-log_date_format = "%Y-%m-%d %H:%M:%S"
-junit_family = "xunit1"
-pythonpath = "src"
-testpaths = "tests"
-tmp_path_retention_policy = "all"
-tmp_path_retention_count = 0
-selenium_exclude_debug = true
-addopts = "-rs --reuse-db -n auto --maxfail=5 --with-selenium --tb=short --capture=sys --echo-version django --cov=hope_country_report --cov-config=tests/.coveragerc --cov-report html --cov-report xml"
+[tool.uv]
+package = true
 
-markers = [
-  "selenium",
-  "api",
-  "admin",
-  "skip_models",
-  "skip_buttons",
-  "select_buttons",
-  "smoke",
-  "needs_prod_environment",
+[tool.nitpick]
+style = [
+  "github://unicef/hope-code-conventions@main/django/django.toml",
 ]
-
-python_files = "test_*.py"
-filterwarnings = [
-  "ignore::DeprecationWarning",
-  "ignore::django.utils.deprecation.RemovedInDjango60Warning",
-  "ignore::coverage.exceptions.CoverageWarning",
-]
+cache = "1 day"

@@ -24,3 +24,4 @@ pdm.toml
 .pdm-python
 .tox/
 .idea/
+src/hope_country_report/version.py
