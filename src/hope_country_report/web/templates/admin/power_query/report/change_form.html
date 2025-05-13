@@ -1,4 +1,4 @@
-{% extends "admin_extra_buttons/change_form.html" %}{% load power_query i18n admin_urls static admin_modify user_tz %}
+{% extends "admin_extra_buttons/change_form.html" %}{% load admin_modify admin_urls i18n power_query static user_tz %}
 
 {% block breadcrumbs %}
     {{ block.super }}
@@ -11,13 +11,14 @@
             </li>
         </ul>
     {% endif %}
-{% endblock %}
+{% endblock breadcrumbs %}
+
 {% block content %}
     {% if change and not is_popup %}
         <ul class="object-tools">
             {% block object-tools-items %}
                 {% change_form_object_tools %}
-            {% endblock %}
+            {% endblock object-tools-items %}
             {% include "admin_extra_buttons/includes/change_form_buttons.html" %}
 
         </ul>
@@ -48,4 +49,4 @@
             </td>
         </tr>
     </table>
-{% endblock %}
+{% endblock content %}

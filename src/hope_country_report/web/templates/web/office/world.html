@@ -1,4 +1,4 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters %}
+{% extends "web/office/_base.html" %}{% load colors filters i18n user_tz %}
 {% block extrahead %}
     <meta charset="utf-8">
     <!-- Include d3 library -->
@@ -43,8 +43,10 @@
             stroke-dasharray: 1, 0.5, 0.2, 0.5
         }
     </style>
-{% endblock %}
+{% endblock extrahead %}
+
 {% block page-title %}&nbsp;<span id="current">AAAA</span>{% endblock %}
+
 {% block content %}
     <div class="h-50" id="viz_container"></div>
     <script>
@@ -80,10 +82,10 @@
 
         // declare URL
         const dataURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/choropleth_map.csv";
-        {#const polygonsURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_polygons_simplified.json";#}
-        {#const polylinesURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_lines_simplified.json";#}
-{##}
-{#        const polylinesURL = "http://localhost:8000/api/home/topology/";#}
+        {# const polygonsURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_polygons_simplified.json"; #}
+        {# const polylinesURL = "https://raw.githubusercontent.com/GDS-ODSSS/unhcr-dataviz-platform/master/data/geospatial/world_lines_simplified.json"; #}
+{#  #}
+{# const polylinesURL = "http://localhost:8000/api/home/topology/"; #}
         const polygonsURL = "http://localhost:8000/api/home/topology/";
 
         // load data
@@ -126,15 +128,15 @@
             // load and draw polygons
             poly
                 .selectAll("path")
-                {#.data(topology.features)#}
+                {# .data(topology.features) #}
                 .data(tj)
-                {#.data(topojson.feature(topology, topology.objects.world_polygons_simplified).features)#}
+                {# .data(topojson.feature(topology, topology.objects.world_polygons_simplified).features) #}
                 .join("path")
                 .attr("fill", function (d) {
                     console.log(11111, d.properties)
                     return "#37b0f8"
-                    {#return color(d.refugees = 0)#}
-                    {#return color(d.refugees = data[d.properties.color_code])#}
+                    {# return color(d.refugees = 0) #}
+                    {# return color(d.refugees = data[d.properties.color_code]) #}
                 })
                 .attr("d", path)
                 .attr("class", function (d) {
@@ -147,32 +149,32 @@
                         return `${d.properties.name} \nTotal beneficiaries: ${d3.format(",")(d.refugees)}`
                     }
                 )
-            {#line#}
-            {#    .selectAll("path")#}
-            {#    .data(tj)#}
-            {#    .enter()#}
-            {#    .append("path")#}
-            {#    .attr("d", path)#}
-            {#    .style("fill", "none")#}
-            {#    .attr("class", function (d) {#}
-            {#        return "solid"#}
-                    {#return d.properties.type;#}
-            {#     })#}
+            {# line #}
+            {# .selectAll("path") #}
+            {# .data(tj) #}
+            {# .enter() #}
+            {# .append("path") #}
+            {# .attr("d", path) #}
+            {# .style("fill", "none") #}
+            {# .attr("class", function (d) { #}
+            {# return "solid" #}
+                    {# return d.properties.type; #}
+            {# }) #}
         };
 
         //load and draw lines
-        {#d3.json(polylinesURL).then(function (topology) {#}
-        {#    line#}
-        {#        .selectAll("path")#}
-        {#        .data(topojson.feature(topology, topology.objects.countries).features)#}
-        {#        .enter()#}
-        {#        .append("path")#}
-        {#        .attr("d", path)#}
-        {#        .style("fill", "none")#}
-        {#        .attr("class", function (d) {#}
-        {#            return d.properties.type;#}
-        {#        })#}
-        {# });#}
+        {# d3.json(polylinesURL).then(function (topology) { #}
+        {# line #}
+        {# .selectAll("path") #}
+        {# .data(topojson.feature(topology, topology.objects.countries).features) #}
+        {# .enter() #}
+        {# .append("path") #}
+        {# .attr("d", path) #}
+        {# .style("fill", "none") #}
+        {# .attr("class", function (d) { #}
+        {# return d.properties.type; #}
+        {# }) #}
+        {# }); #}
 
         //zoom function
         const zoom = false
@@ -222,4 +224,4 @@
             .style('font-size', 5)
             .text('The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.');
     </script>
-{% endblock %}
+{% endblock content %}

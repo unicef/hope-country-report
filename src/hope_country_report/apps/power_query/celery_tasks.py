@@ -36,7 +36,7 @@ else
     return 0
 end
 """
-rds = StrictRedis(settings.REDIS_URL, decode_responses=True, charset="utf-8")
+rds = StrictRedis(settings.REDIS_URL, decode_responses=True)
 
 
 class AbstractPowerQueryTask(AbortableTask):

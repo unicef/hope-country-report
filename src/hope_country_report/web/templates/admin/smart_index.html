@@ -1,7 +1,7 @@
-{% extends "admin/index.html" %}{% load i18n static log %}
+{% extends "admin/index.html" %}{% load i18n log static %}
 {% block nav-sidebar %}
     {% include "admin/nav_sidebar.html" with groups=groups %}
-{% endblock %}
+{% endblock nav-sidebar %}
 
 {% block content %}
     <div id="content-main">
@@ -45,15 +45,16 @@
                 {% endif %}
             {% endfor %}
         {% else %}
-            <p>{% trans "You don't have permission to view or edit anything." %}</p>
+            <p>{% translate "You don't have permission to view or edit anything." %}</p>
         {% endif %}
     </div>
-{% endblock %}
+{% endblock content %}
+
 {% block sidebar %}
     <div id="content-related">
         <div class="module" id="recent-actions-module">
             {% if bookmarks %}
-                <h2>{% trans 'Quick Links' %}</h2>
+                <h2>{% translate 'Quick Links' %}</h2>
                 <ul class="actionlist">
                     {% for entry in bookmarks %}
                         {{ entry }}
@@ -61,18 +62,18 @@
                 </ul>
             {% endif %}
 
-            <h2>{% trans 'Recent actions' %}</h2>
+            <h2>{% translate 'Recent actions' %}</h2>
 
             <h3>{% if smart_settings.ANYUSER_LOG %}
-{#                {% url "admin:admin_logentry_changelist" as aaaa%}#}
-{#                <a href="{{ aaaa }}">{% trans 'Actions' %}</a>#}
-{#                {% get_admin_log 10 as admin_log %}#}
+{# {% url "admin:admin_logentry_changelist" as aaaa%} #}
+{# <a href="{{ aaaa }}">{% trans 'Actions' %}</a> #}
+{# {% get_admin_log 10 as admin_log %} #}
             {% else %}
-                <a href="">{% trans 'My actions' %}</a>
+                <a href="">{% translate 'My actions' %}</a>
                 {% get_admin_log 10 as admin_log for_user user %}
             {% endif %}</h3>
             {% if not admin_log %}
-                <p>{% trans 'None available' %}</p>
+                <p>{% translate 'None available' %}</p>
             {% else %}
                 <ul class="actionlist">
                     {% for entry in admin_log %}
@@ -87,7 +88,7 @@
                                 <span class="mini quiet">{% filter capfirst %}
                                     {{ entry.content_type }}{% endfilter %}</span>
                             {% else %}
-                                <span class="mini quiet">{% trans 'Unknown content' %}</span>
+                                <span class="mini quiet">{% translate 'Unknown content' %}</span>
                             {% endif %}
                             {% if smart_settings.ANYUSER_LOG %}
                                 (<a href="{% url "admin:admin_logentry_changelist" %}?user__id__exact={{ entry.user.pk }}">{{ entry.user }}</a>)
@@ -98,6 +99,7 @@
             {% endif %}
         </div>
     </div>{% endblock sidebar %}
+
 {% block footer %}
     <script type="text/javascript" src="{% static "admin/js/vendor/jquery/jquery.js" %}"></script>
     <script type="text/javascript" src="{% static "admin/js/jquery.init.js" %}"></script>
@@ -136,4 +138,4 @@
         })(django.jQuery);
 
     </script>
-    <div id="footer"></div>{% endblock %}
+    <div id="footer"></div>{% endblock footer %}

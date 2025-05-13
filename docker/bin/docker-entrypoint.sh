@@ -41,7 +41,7 @@ case "$1" in
         ;;
     worker)
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery worker \
-            --statedb /app/worker --concurrency=4 -E --loglevel=ERROR
+            --concurrency=4 -E --loglevel=ERROR
         ;;
     beat)
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery beat \

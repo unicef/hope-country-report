@@ -1,6 +1,7 @@
 from typing import Callable, TYPE_CHECKING
 
 import pytest
+import responses
 from unittest import mock
 from unittest.mock import Mock
 
@@ -316,7 +317,7 @@ def test_reportconfig_admin_revoke(app: Callable, report_config: ReportConfigura
 
 
 @pytest.mark.skip_buttons()
-def test_admin_buttons(app, modeladmin, button_handler, record, monkeypatch):
+def test_admin_buttons(app, modeladmin, button_handler, record, monkeypatch, mocked_responses):
     from admin_extra_buttons.handlers import LinkHandler
 
     if isinstance(button_handler, ChoiceHandler):
@@ -325,7 +326,35 @@ def test_admin_buttons(app, modeladmin, button_handler, record, monkeypatch):
         btn = button_handler.get_button({"original": record})
         button_handler.func(None, btn)
     else:
-        if len(button_handler.sig.parameters) == 2:
+        admin_name = f"{modeladmin.model._meta.app_label}.{modeladmin.__class__.__name__}"
+        button_id = f"{admin_name}:{button_handler.name}"
+
+        if button_id == "core.UserAdmin:sync_user":
+            mocked_responses.add(
+                method=responses.POST,
+                url="https://login.microsoftonline.com/unicef.org/oauth2/token",
+                json={"access_token": "fake_token", "expires_in": 3600},
+                status=200,
+                content_type="application/json",
+            )
+            user_id_for_url = getattr(record, "azure_id", record.pk)
+            mocked_responses.add(
+                method=responses.GET,
+                url=f"https://graph.microsoft.com/v1.0/users/{user_id_for_url}",
+                json={
+                    "id": str(user_id_for_url),
+                    "userPrincipalName": record.username,
+                    "mail": record.email,
+                    "jobTitle": "Job CEO",
+                    "displayName": "John Smith",
+                    "givenName": "John",
+                    "surname": "Smith",
+                },
+                status=200,
+                content_type="application/json",
+            )
+
+        if len(button_handler._sig.parameters) == 2:
             url = reverse(f"admin:{button_handler.url_name}")
         else:
             url = reverse(f"admin:{button_handler.url_name}", args=[record.pk])

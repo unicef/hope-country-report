@@ -28,7 +28,7 @@ jobs:
 
       - name: Trigger deploy
         run: |
-          pipelineId=${{ inputs.azure-pipeline-id }} 
+          pipelineId=${{ inputs.azure-pipeline-id }}
 
           IFS=',' read -ra pipelines <<< "$pipelineId"
           for pipeline in "${pipelines[@]}"; do
