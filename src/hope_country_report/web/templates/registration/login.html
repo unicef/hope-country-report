@@ -1,11 +1,13 @@
-{% extends "layout.html" %}{% load static i18n feature_flags %}
+{% extends "layout.html" %}{% load feature_flags i18n static %}
 {% block extrahead %}
     <script src="{% static "d3.min.js" %}"></script>
 
-{% endblock %}
+{% endblock extrahead %}
 
 {% block logo %}{% endblock %}
+
 {% block sidebar %}{% endblock %}
+
 {% block content-header %}
     <div class="flex flex-1 flex-col bg-unicef-blue">
         <div class="flex-grow">
@@ -13,7 +15,8 @@
             <img src="{% static "hope_logo.png" %}" class="pl-8 h-16">
         </div>
     </div>
-{% endblock %}
+{% endblock content-header %}
+
 {% block content %}
     {% flag_enabled 'LOCAL_LOGIN' as FLAG_LOCAL_LOGIN %}
     <div class="flex items-center justify-center">
@@ -29,19 +32,19 @@
                 </table>
                 <div class="text-center">
                     <button class="button primary" type="submit">
-                        {% trans "Login" %}
+                        {% translate "Login" %}
                     </button>
                 </div>
                 </form>
             {% endif %}
             <div class="text-center mt-10">
-                <a class="button primary" href="{% url 'social:begin' 'azuread-tenant-oauth2' %}">{% trans "SSO Login" %}</a>
+                <a class="button primary" href="{% url 'social:begin' 'azuread-tenant-oauth2' %}">{% translate "SSO Login" %}</a>
 
-{#                <button class="bg-unicef-blue hover:bg-blue text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"#}
-{#                        type="submit">#}
-{#                    SSO Login#}
-{#                </button>#}
+{# <button class="bg-unicef-blue hover:bg-blue text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" #}
+{# type="submit"> #}
+{# SSO Login #}
+{# </button> #}
                 </div>
         </div>
     </div>
-{% endblock %}
+{% endblock content %}

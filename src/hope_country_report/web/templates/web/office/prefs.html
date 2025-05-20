@@ -1,6 +1,8 @@
 {% extends "web/office/_base.html" %}{% load i18n l10n %}
 {% block extrahead %}{{ form.media }}{% endblock %}
-{% block page-title %}{% trans "Country Office Preferences" %}{% endblock %}
+
+{% block page-title %}{% translate "Country Office Preferences" %}{% endblock %}
+
 {% block content %}
     <div class="box">
         <form method="post" id="office-profile">
@@ -8,7 +10,7 @@
             <table>{{ form }}</table>
             <button class="button primary"
                     type="submit">
-                {% trans "Save" %}
+                {% translate "Save" %}
             </button>
         </form>
     </div>
@@ -20,4 +22,4 @@
             <div>Decimal: {{ ddd }}</div>
         {% endlocalize %}
     </div>
-{% endblock %}
+{% endblock content %}

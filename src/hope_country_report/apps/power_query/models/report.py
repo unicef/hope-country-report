@@ -11,18 +11,19 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from django_celery_beat.models import PeriodicTask
+from django_celery_boost.models import CeleryTaskModel
 from taggit.managers import TaggableManager
 
 from ....utils.mail import notify_report_completion
 from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
-from ._base import AdminReversable, CeleryEnabled, ManageableObject, PowerQueryModel, TimeStampMixin
+from ._base import AdminReversable, ManageableObject, PowerQueryCeleryFields, PowerQueryModel, TimeStampMixin
 from .formatter import Formatter
 from .query import Query
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
     from ....types.pq import ReportResult
     from .dataset import Dataset
@@ -33,7 +34,13 @@ MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
 class ReportConfiguration(
-    PowerQueryModel, ManageableObject, CeleryEnabled, AdminReversable, TimeStampMixin, models.Model
+    CeleryTaskModel,
+    PowerQueryCeleryFields,
+    PowerQueryModel,
+    ManageableObject,
+    AdminReversable,
+    TimeStampMixin,
+    models.Model,
 ):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
@@ -83,7 +90,7 @@ class ReportConfiguration(
     )
 
     tags = TaggableManager(blank=True)
-    celery_task_name = "refresh_report"
+    celery_task_name = "hope_country_report.apps.power_query.celery_tasks.refresh_report"
 
     class Tenant:
         tenant_filter_field = "country_office"
@@ -92,15 +99,15 @@ class ReportConfiguration(
         self,
         force_insert: bool = False,
         force_update: bool = False,
-        using: "Optional[Any]" = None,
-        update_fields: "Optional[Any]" = None,
+        using: "Any | None" = None,
+        update_fields: "Any | None" = None,
     ) -> None:
         if not self.name:
             self.name = slugify(self.title)
         super().save(force_insert, force_update, using, update_fields)
         self.update_or_create_children()
 
-    def update_or_create_children(self):
+    def update_or_create_children(self) -> None:
         if self.query.abstract:
             defaults = {
                 field: getattr(self, field)
@@ -171,6 +178,6 @@ class ReportConfiguration(
     def get_absolute_url(self):
         return reverse("office-config", args=[self.country_office.slug, self.pk])
 
-    def get_documents_url(self):
+    def get_documents_url(self) -> str:
         base = reverse("office-doc-list", args=[self.country_office.slug])
         return f"{base}?report={self.name}"

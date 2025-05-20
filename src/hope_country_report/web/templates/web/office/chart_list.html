@@ -1,4 +1,4 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters humanize %}
+{% extends "web/office/_base.html" %}{% load colors filters humanize i18n user_tz %}
 
 {% block content %}
     {% if request.GET %}
@@ -13,7 +13,7 @@
                         <a href="{% build_filter_url "report" %}"><span class="tag yellow">{{ request.GET.report }}</span></a>
                     {% endif %}
                     {% if request.GET.active %}
-                        {% with request.GET.active|parse_bool|yesno:"t,f" as status %}
+                        {% with status=request.GET.active|parse_bool|yesno:"t,f" %}
                             <a href="{% build_filter_url "active" %}">
                             <span class="tag blue">{{ status|parse_bool|yesno:"active, not active" }}</span></a>
                         {% endwith %}
@@ -33,12 +33,12 @@
         <table class="table-auto searchable">
             <thead class="text-left border-b  text-xs">
             <tr class="my-4 h-16">
-                <th>{% trans "Name" %}</th>
-                <th>{% trans "Query" %}</th>
-                <th>{% trans "Refreshed" %}</th>
-{#                <th>{% trans "Configuration" %}</th>#}
-{#                <th>{% trans "Owner" %}</th>#}
-{#                <th>{% trans "Tags" %}</th>#}
+                <th>{% translate "Name" %}</th>
+                <th>{% translate "Query" %}</th>
+                <th>{% translate "Refreshed" %}</th>
+{# <th>{% trans "Configuration" %}</th> #}
+{# <th>{% trans "Owner" %}</th> #}
+{# <th>{% trans "Tags" %}</th> #}
             </tr>
             </thead>
             <tbody>
@@ -46,10 +46,10 @@
                 <tr class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100 ">
                     <td><a class="underline" href="{{ chart.get_absolute_url }}">{{ chart.title }}</a></td>
                     <td>{{ chart.query.name }}</td>
-                    <td>{{ chart.query.last_run|naturaltime}}</td>
+                    <td>{{ chart.query.last_run|naturaltime }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
-{% endblock %}
+{% endblock content %}

@@ -9,7 +9,7 @@
 {% block dark-mode-vars %}
   <link rel="stylesheet" href="{% static "admin/css/dark_mode.css" %}">
   <script src="{% static "admin/js/theme.js" %}" defer></script>
-{% endblock %}
+{% endblock dark-mode-vars %}
 {% if not is_popup and is_nav_sidebar_enabled %}
   <link rel="stylesheet" href="{% static "admin/css/nav_sidebar.css" %}">
   <script src="{% static 'admin/js/nav_sidebar.js' %}" defer></script>
@@ -21,7 +21,7 @@
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" href="{% static "admin/css/responsive.css" %}">
     {% if LANGUAGE_BIDI %}<link rel="stylesheet" href="{% static "admin/css/responsive_rtl.css" %}">{% endif %}
-{% endblock %}
+{% endblock responsive %}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
 </head>
 
@@ -44,7 +44,7 @@
             {% block welcome-msg %}
                 {% translate 'Welcome,' %}
                 <strong>{% firstof user.get_short_name user.get_username %}</strong>.
-            {% endblock %}
+            {% endblock welcome-msg %}
             {% block userlinks %}
                 {% if site_url %}
                     <a href="{{ site_url }}">{% translate 'View site' %}</a> /
@@ -63,13 +63,13 @@
                     <button type="submit">{% translate 'Logout' %}</button>
                 </form>
                 {% include "admin/color_theme_toggle.html" %}
-            {% endblock %}
+            {% endblock userlinks %}
         </div>
         {% endif %}
-        {% endblock %}
+        {% endblock usertools %}
         {% block nav-global %}{% endblock %}
     </div>
-    {% endblock %}
+    {% endblock header %}
     <!-- END Header -->
     {% block nav-breadcrumbs %}
       <nav aria-label="{% translate 'Breadcrumbs' %}">
@@ -78,16 +78,16 @@
             <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
             {% if title %} &rsaquo; {{ title }}{% endif %}
           </div>
-        {% endblock %}
+        {% endblock breadcrumbs %}
       </nav>
-    {% endblock %}
+    {% endblock nav-breadcrumbs %}
     {% endif %}
 
     <div class="main" id="main">
       {% if not is_popup and is_nav_sidebar_enabled %}
         {% block nav-sidebar %}
           {% include "admin/nav_sidebar.html" %}
-        {% endblock %}
+        {% endblock nav-sidebar %}
       {% endif %}
       <div id="content-start" class="content" tabindex="-1">
         {% block messages %}
@@ -105,7 +105,7 @@
           {% block content %}
             {% block object-tools %}{% endblock %}
             {{ content }}
-          {% endblock %}
+          {% endblock content %}
           {% block sidebar %}{% endblock %}
           <br class="clear">
         </div>

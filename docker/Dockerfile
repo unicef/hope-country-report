@@ -1,7 +1,9 @@
 FROM python:3.12-slim-bookworm AS base_os
 ARG GOSU_VERSION=1.17
 ARG GOSU_SHA256=bbc4136d03ab138b1ad66fa4fc051bafc6cc7ffae632b069a53657279a450de3
-
+ARG BUILD_DATE
+ARG VERSION
+ARG GIT_SHA
 
 RUN set -x \
   && runtimeDeps=" \
@@ -9,6 +11,7 @@ RUN set -x \
     libmagic1 \
     libxml2 \
     wkhtmltopdf \
+    tini \
   " \
   && buildDeps=" \
 wget \
@@ -80,7 +83,7 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
-COPY src /app/src/
+COPY --chown=hope:unicef . /app/
 
 RUN --mount=type=cache,target=/root/.uv-cache \
     find ../src -name 'node_modules' -prune \
@@ -100,7 +103,8 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
-    UWSGI_PROCESSES=4
+    UWSGI_PROCESSES=4 \
+    VERSION="${VERSION}"
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
@@ -145,7 +149,7 @@ WORKDIR /app
 COPY docker/conf /conf/
 COPY docker/bin/* /usr/local/bin/
 
-COPY . /app/
+COPY --chown=hope:unicef . /app/
 
 COPY --chown=hope:unicef --from=production /venv /venv
 COPY --from=builder /usr/local/bin/uwsgi /usr/local/bin/uv /usr/local/bin/
@@ -158,7 +162,10 @@ ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
 CMD ["run"]
 
 
+LABEL distro="final"
 LABEL maintainer="hope@unicef.org"
+LABEL cheksum="$CHECKSUM"
+
 LABEL org.opencontainers.image.authors="hope@unicef.org"
 LABEL org.opencontainers.image.description="Hope Country Report"
 LABEL org.opencontainers.image.documentation="https://github.com/unicef/hope-country-report/"

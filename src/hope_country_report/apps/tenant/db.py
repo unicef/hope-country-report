@@ -1,7 +1,6 @@
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from django.db import models
-from django.db.models import QuerySet
 
 from hope_country_report.state import state
 
@@ -9,6 +8,8 @@ from .exceptions import InvalidTenantError
 from .utils import get_selected_tenant, must_tenant
 
 if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
     from ...types.django import AnyModel
 
 
@@ -16,7 +17,7 @@ class TenantManager(models.Manager["TenantModel"]):
     def must_tenant(self) -> bool:
         return must_tenant()
 
-    def get_tenant_filter(self) -> "Dict[str, Any]":
+    def get_tenant_filter(self) -> "dict[str, Any]":
         if not self.must_tenant():
             return {}
         tenant_filter_field = self.model.Tenant.tenant_filter_field

@@ -1,10 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
 from django.urls import reverse
 
-from hope_country_report.apps.power_query.models import Dataset
+if TYPE_CHECKING:
+    from hope_country_report.apps.power_query.models import Dataset
 
 
 @pytest.fixture()

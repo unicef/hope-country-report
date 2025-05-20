@@ -1,4 +1,5 @@
 import pytest
+from unittest import mock
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -24,54 +25,116 @@ def dataset():
     return DatasetFactory()
 
 
-def test_celery_discard_all(request, django_app, admin_user):
-    url = reverse("admin:power_query_query_celery_discard_all")
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_purge(request, django_app, admin_user):
-    url = reverse("admin:power_query_query_celery_purge")
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_terminate(request, django_app, admin_user, query):
+def test_celery_terminate(django_app, admin_user, query):
+    """Test the celery terminate action for Query."""
     url = reverse("admin:power_query_query_celery_terminate", args=[query.pk])
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
+
+    change_url = reverse("admin:power_query_query_change", args=[query.pk])
+
+    with mock.patch.object(Query, "is_queued", return_value=False):
+        res_get = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get.status_code == 302
+        assert res_get.location == change_url
+        res_follow = res_get.follow(expect_errors=True)
+        messages = [m.message for m in res_follow.context["messages"]]
+        assert "Task not queued." in messages
+
+    with mock.patch.object(Query, "is_queued", return_value=True):
+        with mock.patch.object(Query, "terminate") as mock_terminate:
+            res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+            assert res.status_code == 200
+            assert "Confirm termination request" in res.text
+            assert str(query) in res.text
+
+            change_url = reverse("admin:power_query_query_change", args=[query.pk])
+
+            res_post = res.forms[1].submit()
+            assert res_post.status_code == 302
+            assert res_post.location == change_url, "Redirect should go back to the change page"
+            mock_terminate.assert_called_once()
+
+            res_follow = res_post.follow()
+            messages = [m.message for m in res_follow.context["messages"]]
+            assert len(messages) > 0, "Expected success/info message after terminate"
 
 
-def test_celery_inspect(request, django_app, admin_user, query):
+def test_celery_inspect(django_app, admin_user, query):
+    """Test the celery inspect view for Query."""
     url = reverse("admin:power_query_query_celery_inspect", args=[query.pk])
-    query.queue()
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 200
+    with mock.patch.object(Query, "curr_async_result_id", "some-task-id", create=True):
+        res = django_app.get(url, user=admin_user)
+        assert res.status_code == 200
 
 
-def test_celery_result(request, django_app, admin_user, query):
-    url = reverse("admin:power_query_query_celery_result", args=[query.pk])
-    query.queue()
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_queue(request, django_app, admin_user, query):
+def test_celery_queue(django_app, admin_user, query):
+    """Test the celery queue action for Query."""
     url = reverse("admin:power_query_query_celery_queue", args=[query.pk])
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
+
+    with mock.patch.object(Query, "queue") as mock_queue:
+        res = django_app.get(url, user=admin_user, headers={"Referer": url})
+        assert res.status_code == 200
+        assert f"Confirm queue action for {query}" in res.text
+
+        res_post = res.forms[1].submit()
+        assert res_post.status_code == 302
+        expected_redirect_url = reverse("admin:power_query_query_change", args=[query.pk])
+        assert res_post.location == expected_redirect_url
+        mock_queue.assert_called_once()
+
+    res_follow = res_post.follow()
+    assert res_follow.status_code == 200
+    messages = [m.message for m in res_follow.context["messages"]]
+    assert "Queued" in messages
+
+    change_url = reverse("admin:power_query_query_change", args=[query.pk])
+    with mock.patch.object(Query, "is_queued", return_value=True):
+        res_get_already_queued = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get_already_queued.status_code == 302
+        assert res_get_already_queued.location == change_url
+        res_follow_already_queued = res_get_already_queued.follow(expect_errors=True)
+        messages = [m.message for m in res_follow_already_queued.context["messages"]]
+        assert "Task has already been queued." in messages
 
 
-def test_celery_run(request, django_app, admin_user, query):
+def test_celery_revoke(django_app, admin_user, query):
+    """Test the celery revoke action for Query."""
+    url = reverse("admin:power_query_query_celery_revoke", args=[query.pk])
+
+    change_url = reverse("admin:power_query_query_change", args=[query.pk])
+
+    with mock.patch.object(Query, "is_queued", return_value=False):
+        res_get_not_queued = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get_not_queued.status_code == 302
+        assert res_get_not_queued.location == change_url
+        res_follow_not_queued = res_get_not_queued.follow(expect_errors=True)
+        messages = [m.message for m in res_follow_not_queued.context["messages"]]
+        assert "Task not queued." in messages
+
+    with mock.patch.object(Query, "is_queued", return_value=True):
+        with mock.patch.object(Query, "revoke") as mock_revoke:
+            res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+            assert res.status_code == 200
+            assert "Confirm revoking action for [ABSTRACT]" in res.text
+            assert str(query) in res.text
+
+            res_post = res.forms[1].submit()
+            assert res_post.status_code == 302
+
+            change_url = reverse("admin:power_query_query_change", args=[query.pk])
+            assert res_post.location == change_url, "Redirect should go back to the change page"
+            mock_revoke.assert_called_once()
+
+            res_follow = res_post.follow()
+            messages = [m.message for m in res_follow.context["messages"]]
+            assert "Revoked" in messages
+
+
+def test_query_run(django_app, admin_user, query):
+    """Test the non-celery 'run' action (likely for debug/dev)."""
     url = reverse("admin:power_query_query_run", args=[query.pk])
     res = django_app.get(url, user=admin_user)
-    assert res.status_code == 200
-
-
-def test_check_status(request, django_app, admin_user, query):
-    url = reverse("admin:power_query_query_check_status")
     res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
+    assert res.status_code == 200
 
 
 @pytest.mark.django_db(transaction=True)

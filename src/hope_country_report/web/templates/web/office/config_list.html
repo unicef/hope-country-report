@@ -1,4 +1,4 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters %}
+{% extends "web/office/_base.html" %}{% load colors filters i18n user_tz %}
 
 {% block content %}
     {% if request.GET %}
@@ -13,7 +13,7 @@
                         <a href="{% build_filter_url "report" %}">{{ request.GET.report }}</a>
                     {% endif %}
                     {% if request.GET.active %}
-                        {% with request.GET.active|parse_bool|yesno:"t,f" as status %}
+                        {% with status=request.GET.active|parse_bool|yesno:"t,f" %}
                             <a href="{% build_filter_url "active" %}">
                             <span class="tag blue">{{ status|parse_bool|yesno:"active, not active" }}</span></a>
                         {% endwith %}
@@ -32,15 +32,15 @@
         <table class="table-auto">
             <thead class="text-left border-b  text-xs">
             <tr class="my-4 h-16">
-                <th>{% trans "Name" %}</th>
-                <th>{% trans "Active" %}</th>
-                <th>{% trans "Parametrized" %}</th>
-                <th>{% trans "Refreshed On" %}</th>
-                <th>{% trans "Scheduling" %}</th>
-                <th>{% trans "Restricted" %}</th>
-                <th>{% trans "Compress" %}</th>
-                <th>{% trans "Protected" %}</th>
-                <th>{% trans "Tags" %}</th>
+                <th>{% translate "Name" %}</th>
+                <th>{% translate "Active" %}</th>
+                <th>{% translate "Parametrized" %}</th>
+                <th>{% translate "Refreshed On" %}</th>
+                <th>{% translate "Scheduling" %}</th>
+                <th>{% translate "Restricted" %}</th>
+                <th>{% translate "Compress" %}</th>
+                <th>{% translate "Protected" %}</th>
+                <th>{% translate "Tags" %}</th>
             </tr>
             </thead>
             <tbody>
@@ -49,7 +49,7 @@
                     <td><a class="underline"
                            href="{% url "office-config" selected_office.slug report.pk %}">{{ report.title }}</a></td>
                     <td>
-                        {% with report.active|yesno:"t,f" as status %}
+                        {% with status=report.active|yesno:"t,f" %}
                             <a href="{% build_filter_url "active" status %}">
                                 {{ report.active|as_bool_icon }}
                             </a>
@@ -71,4 +71,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
+{% endblock content %}

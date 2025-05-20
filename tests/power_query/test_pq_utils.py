@@ -223,7 +223,7 @@ def test_insert_special_image(sample_pdf: fitz.Document) -> None:
 
     insert_special_image(sample_pdf, field_name, text_info)
 
-    annotations = [annot for annot in page.annots()]
+    annotations = list(page.annots())
     assert len(annotations) == 0, "No annotations found after insertion"
 
 

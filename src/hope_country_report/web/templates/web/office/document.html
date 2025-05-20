@@ -1,4 +1,4 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors browser filters %}
+{% extends "web/office/_base.html" %}{% load browser colors filters i18n user_tz %}
 
 {% block content %}
 
@@ -6,15 +6,15 @@
 
         <table class="report-detail">
             <tr>
-                <th>{% trans "title" %}</th>
+                <th>{% translate "title" %}</th>
                 <td>{{ doc.title }}</td>
             </tr>
             <tr>
-                <th>{% trans "configuration" %}</th>
+                <th>{% translate "configuration" %}</th>
                 <td><a href="{{ doc.report.get_absolute_url }}">{{ doc.report }}</a></td>
             </tr>
             <tr>
-                <th>{% trans "Owner" %}</th>
+                <th>{% translate "Owner" %}</th>
                 <td>{% if doc.report.owner %}
                     <div class="flex items-center">
                     {{ doc.report.owner }}
@@ -25,23 +25,23 @@
                 </td>
             </tr>
             <tr>
-                <th>{% trans "date" %}</th>
+                <th>{% translate "date" %}</th>
                 <td>{{ doc.updated_on|userdatetime:"-" }}</td>
             </tr>
             <tr>
-                <th>{% trans "restricted" %}</th>
+                <th>{% translate "restricted" %}</th>
                 <td>
                     {{ doc.report.limit_access_to.count|as_group_icon }}
                 </td>
             </tr>
             <tr>
-                <th>{% trans "tags" %}</th>
+                <th>{% translate "tags" %}</th>
                 <td>
                     {% for t in doc.report.tags.all %}<span class="tag {{ t.name|color }}">{{ t }}</span>{% endfor %}
                 </td>
             </tr>
             <tr>
-                <th>{% trans "description" %}</th>
+                <th>{% translate "description" %}</th>
                 <td>{{ doc.report.description }}</td>
             </tr>
         </table>
@@ -51,10 +51,10 @@
         <table class="document-list">
             <thead>
             <tr>
-                <th>{% trans "format" %}</th>
-                <th>{% trans "view" %}</th>
-                <th>{% trans "download" %}</th>
-                <th>{% trans "created" %}/{% trans "updated" %}</th>
+                <th>{% translate "format" %}</th>
+                <th>{% translate "view" %}</th>
+                <th>{% translate "download" %}</th>
+                <th>{% translate "created" %}/{% translate "updated" %}</th>
             </tr>
             </thead>
             {% for instance in doc.formats %}
@@ -91,4 +91,4 @@
             {% endfor %}
         </table>
     </div>
-{% endblock %}
+{% endblock content %}

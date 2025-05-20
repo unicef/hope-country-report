@@ -1,12 +1,16 @@
+from typing import TYPE_CHECKING
+
 import contextlib
 
-from pytest_django.live_server_helper import LiveServer
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.timeouts import Timeouts
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.select import Select
+
+if TYPE_CHECKING:
+    from pytest_django.live_server_helper import LiveServer
+    from selenium.webdriver.common.timeouts import Timeouts
 
 
 class SmartDriver(WebDriver):
@@ -60,8 +64,6 @@ class SmartDriver(WebDriver):
 
     @contextlib.contextmanager
     def with_timeouts(self, wait=None, page=None, script=None):
-        from selenium.webdriver.common.timeouts import Timeouts
-
         _current: Timeouts = self.timeouts
         if wait:
             self.implicitly_wait(wait)

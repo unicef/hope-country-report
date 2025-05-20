@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING
 
 import base64
 import binascii
@@ -37,14 +37,12 @@ def is_valid_template(filename: Path) -> bool:
         return False
     if filename.stem.startswith("~"):
         return False
-    if filename.stem.startswith("."):
-        return False
-    return True
+    return not filename.stem.startswith(".")
 
 
 def make_naive(value: datetime.datetime) -> datetime.datetime:
     if isinstance(value, datetime.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
-        return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        return value.astimezone(datetime.UTC).replace(tzinfo=None)
     return value
 
 
@@ -70,7 +68,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
             logger.exception(e)
             raise
             # raise ValueError(f"Results can't be rendered as a tablib Dataset: {e}")
-    elif isinstance(result, (list, tuple)):
+    elif isinstance(result, list | tuple):
         data = tablib.Dataset()
         fields = set().union(*(d.keys() for d in list(result)))
         data.headers = fields
@@ -79,7 +77,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
                 data.append([make_naive(obj[f]) if isinstance(obj[f], datetime.datetime) else obj[f] for f in fields])
         except Exception:
             raise ValueError("Results can't be rendered as a tablib Dataset")
-    elif isinstance(result, (tablib.Dataset, dict)):
+    elif isinstance(result, tablib.Dataset | dict):
         data = result
     else:
         raise ValueError(f"{result} ({type(result)}")
@@ -101,13 +99,12 @@ def basicauth(view: Callable[..., Callable]) -> Callable[..., Any]:
         if "HTTP_AUTHORIZATION" in request.META:
             try:
                 auth = request.headers["Authorization"].split()
-                if len(auth) == 2:
-                    if auth[0].lower() == "basic":
-                        uname, passwd = base64.b64decode(auth[1].encode()).decode().split(":")
-                        user = authenticate(username=uname, password=passwd)
-                        if user is not None and user.is_active:
-                            request.user = user
-                            return view(request, *args, **kwargs)
+                if len(auth) == 2 and auth[0].lower() == "basic":
+                    uname, passwd = base64.b64decode(auth[1].encode()).decode().split(":")
+                    user = authenticate(username=uname, password=passwd)
+                    if user is not None and user.is_active:
+                        request.user = user
+                        return view(request, *args, **kwargs)
             except binascii.Error:
                 pass
         response = HttpResponse()
@@ -168,10 +165,8 @@ def load_font_for_language(language: str, font_size: int = 12):
     return ImageFont.truetype(str(font_path), size=font_size)
 
 
-def get_field_rect(document: fitz.Document, field_name: str) -> Optional[tuple[fitz.Rect, int]]:
-    """
-    Returns the Rect and page index of the specified field.
-    """
+def get_field_rect(document: fitz.Document, field_name: str) -> tuple[fitz.Rect, int] | None:
+    """Returns the Rect and page index of the specified field."""
     for page_num in range(len(document)):
         page = document[page_num]
         for widget in page.widgets():
@@ -231,7 +226,7 @@ def convert_pdf_to_image_pdf(pdf_document: fitz.Document, dpi: int = 300) -> byt
 
 def insert_special_image(
     document: fitz.Document, field_name: str, text_info: dict, font_size: int = 10, font_color: str = "black"
-):
+) -> None:
     """
     Generates and inserts an image containing the given special non-Latin text into
     the specified field as an annotation.
@@ -248,10 +243,8 @@ def insert_special_image(
         logger.info(f"Field {field_name} not found")
 
 
-def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fitz.Rect, page_index: int):
-    """
-    Generates a QR code and inserts it into the specified field.
-    """
+def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fitz.Rect, page_index: int) -> None:
+    """Generates a QR code and inserts it into the specified field."""
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -277,9 +270,7 @@ def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fi
 
 
 def apply_exif_orientation(image: Image.Image) -> Image.Image:
-    """
-    Adjusts the image based on EXIF orientation metadata.
-    """
+    """Adjusts the image based on EXIF orientation metadata."""
     try:
         exif = image._getexif()
         if exif is not None:

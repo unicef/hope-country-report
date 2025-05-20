@@ -6,20 +6,23 @@ from unittest.mock import MagicMock
 
 from django.conf import settings
 
-from celery.result import EagerResult
+from celery import states
 from django_celery_beat.models import PeriodicTask
 
 from hope_country_report.apps.power_query.celery_tasks import refresh_report, reports_refresh, run_background_query
 from hope_country_report.apps.power_query.exceptions import QueryRunCanceled, QueryRunTerminated
+from hope_country_report.apps.power_query.models import Query, ReportConfiguration
 from hope_country_report.config.celery import app
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from typing import TypedDict
 
+    from celery.result import EagerResult
+
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.apps.hope.models import Household
-    from hope_country_report.apps.power_query.models import Query, ReportConfiguration
+    from hope_country_report.apps.power_query.models import ReportConfiguration
 
     class _DATA(TypedDict):
         co1: CountryOffice
@@ -77,41 +80,45 @@ while True:
 
 
 @pytest.fixture()
-def report(query1: "Query"):
+def report(query1: Query):
     from testutils.factories import ReportConfigurationFactory
 
     return ReportConfigurationFactory(name="Celery Report", query=query1, owner=query1.owner)
 
 
-def test_run_background_query(settings, query1: "Query") -> None:
+def test_run_background_query(settings, query1: Query) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     run_background_query.delay(query1.pk, query1.version)
     assert query1.datasets.exists()
 
 
-def test_run_background_query_version_mismatch(settings, query1: "Query") -> None:
+def test_run_background_query_version_mismatch(settings, query1: Query) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
-    result = run_background_query.delay(query1.pk, -1)
-    assert result.state == "REJECTED"
+    result: EagerResult = run_background_query.delay(query1.pk, -1)
+    assert result.state == states.REJECTED
 
 
-def test_run_background_query_removed(settings, query1: "Query", monkeypatch) -> None:
-    from hope_country_report.apps.power_query.models import Query
+def test_run_background_query_removed(settings, query1: Query) -> None:
+    from unittest.mock import PropertyMock
 
     settings.CELERY_TASK_ALWAYS_EAGER = True
-    with mock.patch("hope_country_report.apps.power_query.models.Query.status", Query.CANCELED):
+    with mock.patch(
+        "hope_country_report.apps.power_query.models.Query.task_status",
+        new_callable=PropertyMock,
+        return_value=states.REVOKED,
+    ):
         result: EagerResult = run_background_query.delay(query1.pk, query1.version)
-        assert result.state == "IGNORED"
+        assert result.state == "SUCCESS"
 
 
-def test_run_background_query_canceled(settings, query1: "Query", monkeypatch) -> None:
+def test_run_background_query_canceled(settings, query1: Query, monkeypatch) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     with mock.patch("hope_country_report.apps.power_query.models.Query.execute_matrix", side_effect=QueryRunCanceled()):
         result: EagerResult = run_background_query.delay(query1.pk, query1.version)
         assert result.state == "REJECTED"
 
 
-def test_run_background_query_terminate(settings, query1: "Query", monkeypatch) -> None:
+def test_run_background_query_terminate(settings, query1: Query, monkeypatch) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     with mock.patch(
         "hope_country_report.apps.power_query.models.Query.execute_matrix", side_effect=QueryRunTerminated()
@@ -125,13 +132,13 @@ def test_refresh_report(report: "ReportConfiguration") -> None:
     assert report.documents.exists()
 
 
-def test_celery_no_worker(db, settings, query2: "Query") -> None:
+def test_celery_no_worker(db, settings, query2: Query) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = False
-    assert query2.status == "Not scheduled"
+    assert query2.task_status == "Not scheduled"
     query2.queue()
-    assert query2.status == "QUEUED"
+    assert query2.task_status == "QUEUED"
     query2.terminate()
-    assert query2.status == "CANCELED"
+    assert query2.task_status == "Not scheduled"
 
 
 def test_celery_reports_refresh(db, settings, report: "ReportConfiguration") -> None:
@@ -147,45 +154,19 @@ def test_celery_reports_refresh(db, settings, report: "ReportConfiguration") -> 
     assert result.state == "SUCCESS"
 
 
-# @pytest.fixture(scope="session")
-# def celery_config():
-#     return {"broker_url": settings.CELERY_BROKER_URL, "result_backend": settings.CELERY_BROKER_URL}
-#
-#
-# @pytest.fixture(scope="session")
-# def celery_enable_logging():
-#     return True
-#
-#
-# @pytest.fixture(scope="session")
-# def celery_worker_pool():
-#     return "prefork"
-#
-
-
-@pytest.mark.django_db(transaction=True)
-def test_celery_error(settings, query_exception: "Query") -> None:
+@pytest.mark.django_db
+def test_celery_error(settings, query_exception: Query) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_STORE_EAGER_RESULT = True
     query_exception.last_run = None
-    result = query_exception.queue()
-    assert result
+    query_exception.error_message = None
+    query_exception.sentry_error_id = None
+    query_exception.save()
+
+    query_exception.queue()
+
     query_exception.refresh_from_db()
-    assert query_exception.last_run
-    assert query_exception.curr_async_result_id == result
-    assert query_exception.status == "Not scheduled"
-    assert query_exception.error_message
 
-
-#
-#
-# @pytest.mark.django_db(transaction=True)
-# def test_celery_async(settings, celery_worker, query_exception: "Query") -> None:
-#     settings.CELERY_TASK_ALWAYS_EAGER = True
-#     query_exception.last_run = None
-#     result = query_exception.queue()
-#     assert result
-#     query_exception.refresh_from_db()
-#     assert query_exception.last_run
-#     assert query_exception.curr_async_result_id == result
-#     assert query_exception.status == "Not scheduled"
-#     assert query_exception.error_message
+    assert query_exception.error_message == "internal exc"
+    assert query_exception.sentry_error_id
+    assert query_exception.task_status == "MISSING"
