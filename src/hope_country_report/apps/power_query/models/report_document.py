@@ -20,7 +20,6 @@ from ....state import state
 from ....utils.mail import send_document_password
 from ....utils.os import pushd
 from ....utils.perf import profile
-from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
 from ._base import FileProviderMixin, PowerQueryModel, TimeStampMixin
@@ -30,6 +29,8 @@ from .report import ReportConfiguration
 
 if TYPE_CHECKING:
     from typing import Tuple
+
+    from ...core.models import CountryOffice
 
 
 logger = logging.getLogger(__name__)
@@ -64,12 +65,11 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
     @cached_property
     def filename(self):
         args_desc = "_".join([str(value) for value in self.arguments.values()])
-        base_filename = sanitize_filename(f"{self.title}_{args_desc}{self.file_suffix}").lower()
-        return base_filename
+        return sanitize_filename(f"{self.title}_{args_desc}{self.file_suffix}").lower()
 
     @classmethod
     def process(
-        self, report: "ReportConfiguration", dataset: "Dataset", formatter: "Formatter", notify: bool = True
+        cls, report: "ReportConfiguration", dataset: "Dataset", formatter: "Formatter", notify: bool = True
     ) -> "Tuple[int|None, Exception|str]":  # noqa
         try:
             args_desc = "_".join([str(value) for value in dataset.arguments.values()])
@@ -110,24 +110,23 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                     }
                     if report.protect:
                         email_password = True
-                        with TemporaryDirectory(prefix="___") as tdir:
-                            with pushd(tdir):
-                                source_file = Path(filename)
-                                source_file.write_bytes(output)
+                        with TemporaryDirectory(prefix="___") as tdir, pushd(tdir):
+                            source_file = Path(filename)
+                            source_file.write_bytes(output)
 
-                                destination_file = Path(f"{source_file}.zip")
-                                password = report.pwd
+                            destination_file = Path(f"{source_file}.zip")
+                            password = report.pwd
 
-                                with pyzipper.AESZipFile(
-                                    destination_file,
-                                    "w",
-                                    compression=pyzipper.ZIP_DEFLATED,
-                                    encryption=pyzipper.WZ_AES,
-                                ) as zf:
-                                    zf.setpassword(password.encode("utf-8"))
-                                    zf.writestr(filename, output)
+                            with pyzipper.AESZipFile(
+                                destination_file,
+                                "w",
+                                compression=pyzipper.ZIP_DEFLATED,
+                                encryption=pyzipper.WZ_AES,
+                            ) as zf:
+                                zf.setpassword(password.encode("utf-8"))
+                                zf.writestr(filename, output)
 
-                                content = ContentFile(destination_file.read_bytes(), destination_file.name)
+                            content = ContentFile(destination_file.read_bytes(), destination_file.name)
                     else:
                         mf = BytesIO()
                         with pyzipper.AESZipFile(mf, mode="w", compression=pyzipper.ZIP_DEFLATED) as zf:

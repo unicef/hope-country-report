@@ -2,6 +2,6 @@
 {% block object-tools-items %}
     {{ block.super }}
     {% include "admin_extra_buttons/includes/change_list_buttons.html" %}
-{% endblock %}
+{% endblock object-tools-items %}
 {% load admin_cursor_paginator_tags %}
 {% block pagination %}{% admin_cursor_pagination cl %}{% endblock %}

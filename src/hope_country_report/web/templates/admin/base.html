@@ -1,8 +1,8 @@
 {% extends "admin/layout.html" %}{% load i18n static %}
-{#{% block extrastyle %}#}
-{#    {{ block.super }}#}
-{#    <link rel="stylesheet" href="{% static 'admin/hr.css' %}">#}
-{#{% endblock %}#}
+{# {% block extrastyle %} #}
+{# {{ block.super }} #}
+{# <link rel="stylesheet" href="{% static 'admin/hr.css' %}"> #}
+{# {% endblock %} #}
 
 {% block userlinks %}
     {% if active_tenant %}
@@ -17,7 +17,7 @@
                     </script>
                 </form>
             </div>
-        {% endblock %}
+        {% endblock select_ba_form %}
         <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
             {% csrf_token %}
             <button type="submit">{% translate 'Logout' %}</button>
@@ -26,5 +26,6 @@
     {% else %}
         {{ block.super }}
     {% endif %}
-{% endblock %}
+{% endblock userlinks %}
+
 {% block footer %}{% include "admin/_footer.html" %}{% endblock %}

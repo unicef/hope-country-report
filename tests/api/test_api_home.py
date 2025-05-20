@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from unittest import mock
 from unittest.mock import Mock
@@ -5,8 +7,10 @@ from unittest.mock import Mock
 from rest_framework.test import APIClient
 from testutils.factories import QueryFactory, ReportConfigurationFactory
 
-from hope_country_report.apps.power_query.models import Query
 from hope_country_report.state import state
+
+if TYPE_CHECKING:
+    from hope_country_report.apps.power_query.models import Query
 
 pytestmark = [pytest.mark.api, pytest.mark.django_db]
 

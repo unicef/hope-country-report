@@ -1,10 +1,12 @@
 {% extends "admin_extra_buttons/change_form.html" %}{% load power_query %}
 {% block breadcrumbs %}
     {{ block.super }}
-{% endblock %}
+{% endblock breadcrumbs %}
+
 {% block content %}
     {{ block.super }}
 {% endblock content %}
+
 {% block admin_change_form_document_ready %}{{ block.super }}
     <style>
         a.btn-action.disabled {
@@ -31,14 +33,14 @@
                             $container.show();
                             editor.setOption("mode", 'django');
                             break;
-                        {#case 'csv':#}
+                        {# case 'csv': #}
                         case 'json':
                             $container.show();
                             editor.setOption("mode", 'javascript');
                             break;
-                        {#case 'txt':#}
-                        {#case 'xml':#}
-                        {#case 'yaml':#}
+                        {# case 'txt': #}
+                        {# case 'xml': #}
+                        {# case 'yaml': #}
                         default:
                             $container.show();
                             editor.setOption("mode", ct);
@@ -69,4 +71,4 @@
         }
     </script>
 
-{% endblock %}
+{% endblock admin_change_form_document_ready %}

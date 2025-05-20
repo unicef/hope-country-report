@@ -1,7 +1,6 @@
 from typing import Any
 
 from pathlib import Path
-from pprint import pprint
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -65,13 +64,11 @@ class Command(BaseCommand):
         pq = PowerQuery(name="Test", target=model, code=code)
         arguments = {}
         result, info = pq.run(persist=False, arguments=arguments)
-        for entry in result:
-            print(type(entry), entry)
+        for _entry in result:
+            pass
 
     def _check(self, *args: Any, **options: Any) -> None:
-        pq = PowerQuery.objects.get(pk=options["id"])
-        pprint(pq.task_info)
-        pprint(pq.queue_info)
+        PowerQuery.objects.get(pk=options["id"])
 
     def _queue(self, *args: Any, **options: Any) -> None:
         pq = PowerQuery.objects.get(pk=options["id"])

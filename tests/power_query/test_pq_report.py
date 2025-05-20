@@ -103,11 +103,11 @@ def report(query2: "Query", monkeypatch):
 
 def test_celery_no_worker(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = False
-    assert report.status == "Not scheduled"
+    assert report.task_status == "Not scheduled"
     report.queue()
-    assert report.status == "QUEUED"
+    assert report.task_status == "QUEUED"
     report.terminate()
-    assert report.status == "CANCELED"
+    assert report.task_status == "Not scheduled"
 
 
 def test_report_refresh(db, settings, report: "ReportConfiguration") -> None:

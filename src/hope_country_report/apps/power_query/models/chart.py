@@ -21,7 +21,7 @@ class ChartPage(models.Model):
     class Tenant:
         tenant_filter_field = "country_office"
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         if not self.country_office_id:
             self.country_office = self.query.country_office
         if self.query and self.country_office != self.query.country_office:

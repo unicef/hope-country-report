@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import json
 
@@ -38,7 +38,7 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LocationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
-    def list(self, request: "AnyRequest", *args: Tuple[Any], **kwargs: Dict[str, str]) -> Response:
+    def list(self, request: "AnyRequest", *args: tuple[Any], **kwargs: dict[str, str]) -> Response:
         return Response({})
 
     @action(detail=False)

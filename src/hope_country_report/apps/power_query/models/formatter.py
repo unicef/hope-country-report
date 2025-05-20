@@ -15,7 +15,7 @@ from ._base import MIMETYPES
 from .report_template import ReportTemplate
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
+    from typing import Any
 
     from collections.abc import Iterable
 
@@ -63,7 +63,7 @@ class Formatter(models.Model):
             raise ValidationError("You cannot set both 'template' and 'code'")
         self.processor.validate()
 
-    def render(self, context: "Dict[str, Any]") -> bytearray:
+    def render(self, context: "dict[str, Any]") -> bytearray:
         ret = bytearray()
         if self.type == TYPE_LIST:
             ret.extend(self.processor.process(context))

@@ -17,9 +17,7 @@ class ChartListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[Chart
     model = ChartPage
 
     def get_queryset(self) -> QuerySet[ChartPage]:
-        """
-        Filter the queryset to return only ChartPages related to the selected CountryOffice.
-        """
+        """Filter the queryset to return only ChartPages related to the selected CountryOffice."""
         queryset = super().get_queryset()
         return queryset.filter(country_office=self.selected_office)
 

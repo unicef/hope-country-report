@@ -1,6 +1,9 @@
+from typing import TYPE_CHECKING
+
 from testutils.factories import CountryFactory
 
-from hope_country_report.apps.core.models import CountryOffice
+if TYPE_CHECKING:
+    from hope_country_report.apps.core.models import CountryOffice
 
 
 def test_ba_m2m(afghanistan: "CountryOffice"):

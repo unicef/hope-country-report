@@ -1,8 +1,7 @@
-from typing import Tuple
+from typing import TYPE_CHECKING
 
 import logging
 import mimetypes
-from collections.abc import Iterable
 from pathlib import Path
 
 from django.conf import settings
@@ -15,6 +14,9 @@ from django_cleanup import cleanup
 
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.power_query.utils import is_valid_template
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ class ReportTemplate(models.Model):
         tenant_filter_field = "country_office"
 
     @cached_property
-    def content_type(self) -> Tuple[str | None, str | None]:
+    def content_type(self) -> tuple[str | None, str | None]:
         return mimetypes.guess_type(self.doc.name)
 
     @classmethod

@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
@@ -27,7 +26,7 @@ from .base import SelectedOfficeMixin
 
 if TYPE_CHECKING:
     from django.core.paginator import _SupportsPagination
-    from django.db.models import QuerySet
+    from django.db.models import Model, QuerySet
     from django.views.generic.edit import _ModelFormT
 
     _M = TypeVar("_M", bound=Model, covariant=True)
@@ -133,16 +132,14 @@ class OfficeUserListView(SelectedOfficeMixin, ListView[User]):
     template_name = "web/office/users.html"
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        qs = User.objects.filter(roles__country_office=self.selected_office)
-        return qs
+        return User.objects.filter(roles__country_office=self.selected_office)
 
 
 class OfficePageListView(SelectedOfficeMixin, ListView[User]):
     template_name = "web/office/pages.html"
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        qs = User.objects.filter(roles__country_office=self.selected_office)
-        return qs
+        return User.objects.filter(roles__country_office=self.selected_office)
 
 
 @login_required
@@ -161,10 +158,9 @@ def select_tenant(request: "HttpRequest") -> "HttpResponse":
                 resolver = resolve(urlparse(request.META.get("HTTP_REFERER", "/")).path)
                 if list(resolver.kwargs.keys()) == ["co"]:
                     return HttpResponseRedirect(reverse(resolver.url_name, args=[office.slug]))
-                else:
-                    raise Exception(resolver)
+                raise Exception(resolver)
             except Exception:
                 pass
             return HttpResponseRedirect(reverse("office-index", args=[office.slug]))
-    else:
-        return render(request, "select_tenant.html", {"tenant_form": SelectTenantForm(request=request)})
+        return None
+    return render(request, "select_tenant.html", {"tenant_form": SelectTenantForm(request=request)})

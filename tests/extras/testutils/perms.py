@@ -109,8 +109,7 @@ class user_grant_role(ContextDecorator):  # noqa
 
     def start(self):
         """Activate a patch, returning any created mock."""
-        result = self.__enter__()
-        return result
+        return self.__enter__()
 
     def stop(self):
         """Stop an active patch."""
@@ -161,8 +160,7 @@ class user_grant_permissions(ContextDecorator):  # noqa
 
     def start(self):
         """Activate a patch, returning any created mock."""
-        result = self.__enter__()
-        return result
+        return self.__enter__()
 
     def stop(self):
         """Stop an active patch."""

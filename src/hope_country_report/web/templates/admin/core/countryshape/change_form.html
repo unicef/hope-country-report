@@ -1,5 +1,5 @@
 {% extends "admin/change_form.html" %}
-{% load i18n admin_urls static leaflet_tags %}
+{% load admin_urls i18n leaflet_tags static %}
 
 {% block extrastyle %}
 {{ block.super }}
@@ -9,9 +9,9 @@
    above leaflet tiles (z-index 400)*/
 .leaflet-top{z-index:999;}
 </style>
-{% endblock %}
+{% endblock extrastyle %}
 
 {% block admin_change_form_document_ready %}
 {{ block.super }}
 {% leaflet_js plugins="ALL" %}
-{% endblock %}
+{% endblock admin_change_form_document_ready %}
