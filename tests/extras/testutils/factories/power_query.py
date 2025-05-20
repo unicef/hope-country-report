@@ -51,7 +51,6 @@ class ReportTemplateFactory(AutoRegisterModelFactory):
         django_get_or_create = ("name",)
 
     country_office = factory.SubFactory(CountryOfficeFactory)
-    name = factory.Faker("word")
     file_suffix = ".pdf"
     doc = factory.LazyAttribute(
         lambda _: SimpleUploadedFile("test_template.pdf", b"Test file content", content_type="application/pdf")

@@ -1,20 +1,20 @@
-{% load static i18n %}{% get_current_language_bidi as LANGUAGE_BIDI %}<!DOCTYPE html>
+{% load i18n static %}{% get_current_language_bidi as LANGUAGE_BIDI %}<!DOCTYPE html>
 <html lang="en" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
     <title>{{ title|default_if_none:"HOPE Reporting" }}</title>
     {% block meta %}
         <meta name="view" content="{{ view_name }}"/>
         <meta charset="utf-8">
-    {% endblock %}
+    {% endblock meta %}
     {% block stylesheet %}
         <link rel="stylesheet" href="{% static "power_query.css" %}" type="text/css">
         <link rel="stylesheet" href="{% static "icons.css" %}" type="text/css">
         <link rel="stylesheet" href="{% static "css/styles.css" %}" type="text/css">
-    {% endblock %}
+    {% endblock stylesheet %}
     {% block scripts %}
         <script src="{% static "admin/js/vendor/jquery/jquery.js" %}"></script>
         <script src="{% static "hcr.js" %}"></script>
-    {% endblock %}
+    {% endblock scripts %}
     {% block extrahead %}{% endblock %}
 </head>
 <body class="web">
@@ -46,7 +46,7 @@
                     </svg>
                 </div>
             </div>
-        {% endblock %}
+        {% endblock logo %}
         {% block content-header %}
             <div class="flex flex-1 flex-col">
                 <div class="flex h-16 bg-unicef-gray text-white align-middle">{% block areas %}
@@ -57,29 +57,29 @@
                                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
                             </svg>
                         </div>
-                    </div>{% endblock %}
+                    </div>{% endblock areas %}
                     {% block header %}{% endblock %}</div>
             </div>
-        {% endblock %}
+        {% endblock content-header %}
     </div>
     <div class="flex flex-1">
         {% block sidebar %}
             <div id="sidebar" class="w-52 bg-gray-100 open-show">
                 {% block menu %}{% endblock %}
             </div>
-        {% endblock %}
+        {% endblock sidebar %}
         <div class="overflow-y-auto p-1 bg-gray-200 w-full flex flex-1 flex-col">
             {% block page-top %}{% endblock %}
             {% block content %}{% endblock %}
         </div>
     </div>
-    {#    <div class="flex items-center p-2">#}
-    {#        <div class="m-auto">#}
-    {#            <span>HOPE Reporting</span>#}
-    {#            <span>{{ version }}</span>#}
-    {#            <span>{{ release_date }}</span>#}
-    {#        </div>#}
-    {#    </div>#}
+    {# <div class="flex items-center p-2"> #}
+    {# <div class="m-auto"> #}
+    {# <span>HOPE Reporting</span> #}
+    {# <span>{{ version }}</span> #}
+    {# <span>{{ release_date }}</span> #}
+    {# </div> #}
+    {# </div> #}
 </main>
 </body>
 </html>

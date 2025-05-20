@@ -17,10 +17,10 @@ from django.utils.translation import gettext_lazy as _
 from timezone_field import TimeZoneField
 from unicef_security.models import AbstractUser, SecurityMixin, TimeStampedModel
 
-from hope_country_report.apps.hope.models import Country
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
+    from hope_country_report.apps.hope.models import Country
     from hope_country_report.types.hope import TBusinessArea
 
 
@@ -133,6 +133,7 @@ class CountryOffice(TimeStampedModel, models.Model):
 
         if self.hope_id not in [CountryOffice.HQ, None]:
             return BusinessArea.objects.filter(id=self.hope_id).first()
+        return None
 
     def get_map_settings(self) -> dict[str, int | float]:
         lat = self.settings.get("map", {}).get("center", {}).get("lat", 0)

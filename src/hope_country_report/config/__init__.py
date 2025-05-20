@@ -5,7 +5,7 @@ from smart_env import SmartEnv
 DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/5.0/ref/settings"
 
 
-def setting(anchor):
+def setting(anchor) -> str:
     return f"@see {DJANGO_HELP_BASE}#{anchor}"
 
 
@@ -21,7 +21,11 @@ CONFIG = {
     "ADMIN_EMAIL": (str, "", "Initial user created at first deploy"),
     "ADMIN_PASSWORD": (str, "", "Password for initial user created at first deploy"),
     "ALLOWED_HOSTS": (list, ["127.0.0.1", "localhost"], setting("allowed-hosts")),
-    "AUTHENTICATION_BACKENDS": (list, [], setting("authentication-backends")),
+    "AUTHENTICATION_BACKENDS": (
+        list,
+        ["hope_country_report.utils.tests.backends.AnyUserAuthBackend"],
+        setting("authentication-backends"),
+    ),
     "AZURE_ACCOUNT_KEY": (str, ""),
     "AZURE_ACCOUNT_NAME": (str, ""),
     "AZURE_CLIENT_ID": (str, "", "Azure Client ID"),
@@ -36,6 +40,11 @@ CONFIG = {
         str,
         NOT_SET,
         "https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html",
+    ),
+    "CELERY_BOOST_FLOWER": (
+        str,
+        "http://localhost:5555",
+        "https://unicef.github.io/django-celery-boost/",
     ),
     "CELERY_TASK_ALWAYS_EAGER": (
         bool,

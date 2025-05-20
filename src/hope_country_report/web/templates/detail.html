@@ -1,5 +1,6 @@
 {% extends "power_query/list.html" %}{% load admin_urls power_query %}
 {% block header %}{{ report }}{% endblock %}
+
 {% block contents %}
     <table>
     <thead>
@@ -26,4 +27,4 @@
                 </tr>
             {% endfor %}
         </table>
-{% endblock %}
+{% endblock contents %}

@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 import logging
 from collections.abc import Sequence
@@ -9,7 +9,6 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.db import connections, models
 from django.db.models import QuerySet
-from django.forms import Media
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
@@ -17,7 +16,7 @@ from django.urls import reverse
 from django.utils.module_loading import import_string
 
 import tablib
-from admin_extra_buttons.decorators import button, view
+from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminactions.helpers import AdminActionPermMixin
@@ -25,7 +24,7 @@ from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from constance import config
 from debug_toolbar.panels.sql.utils import reformat_sql
-from django_celery_results.models import TaskResult
+from django_celery_boost.admin import CeleryTaskModelAdmin
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
@@ -34,7 +33,6 @@ from ...utils.media import download_media
 from ...utils.perf import profile
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import (
-    CeleryEnabled,
     ChartPage,
     Dataset,
     Formatter,
@@ -44,85 +42,22 @@ from .models import (
     ReportDocument,
     ReportTemplate,
 )
-from .models._base import FileProviderMixin
 from .utils import to_dataset
 from .widget import FormatterEditor
 
 logger = logging.getLogger(__name__)
 
+
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Type
+    from typing import Any
 
     from django.contrib.admin.options import _ListFilterT
 
-    from ...types.django import AnyModel
     from ...types.http import AuthHttpRequest
+    from .models._base import FileProviderMixin
     from .processors import ProcessorStrategy
 
-    _ListDisplayT = List[str | Callable[[Any], str | bool]] | Tuple[str | Callable[[Any], str | bool],] | tuple[()]
-
-
-class CeleryEnabledMixin(admin.ModelAdmin):
-    def get_readonly_fields(self, request: HttpRequest, obj: "Optional[AnyModel]" = None) -> Sequence[str]:
-        ret = list(super().get_readonly_fields(request, obj))
-        ret.append("curr_async_result_id")
-        return ret
-
-    @button()
-    def check_status(self, request: HttpRequest) -> "HttpResponse":
-        obj: CeleryEnabled
-        for obj in self.get_queryset(request):
-            if obj.async_result is None:
-                obj.curr_async_result_id = None
-                obj.save()
-
-    @view()
-    def celery_discard_all(self, request: HttpRequest) -> "HttpResponse":
-        self.model.discard_all()
-
-    @view()
-    def celery_purge(self, request: HttpRequest) -> "HttpResponse":
-        self.model.purge()
-
-    @view()
-    def celery_terminate(self, request: HttpRequest, pk: str) -> "HttpResponse":
-        obj: CeleryEnabled = self.get_object(request, pk)
-        obj.terminate()
-
-    @view()
-    def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
-        ctx = self.get_common_context(request, pk=pk)
-        return render(
-            request,
-            f"admin/power_query/{self.model._meta.model_name}/inspect.html",
-            ctx,
-        )
-
-    @view()
-    def celery_result(self, request: HttpRequest, pk: int) -> HttpResponse:
-        self.get_common_context(request, pk=pk)
-        result = TaskResult.objects.filter(task_id=self.object.curr_async_result_id).first()
-        if result:
-            url = reverse("admin:django_celery_results_taskresult_change", args=[result.pk])
-            return redirect(url)
-        else:
-            self.message_user(request, "Result not found", messages.ERROR)
-
-    @view()
-    def celery_queue(self, request: "HttpRequest", pk: int) -> "HttpResponse":
-        obj: CeleryEnabled | None
-        try:
-            obj = self.get_object(request, str(pk))
-            if obj.queue():
-                self.message_user(request, f"Task scheduled: {obj.curr_async_result_id}")
-        except Exception as e:
-            self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
-
-    @property
-    def media(self) -> Media:
-        response = super().media
-        response._js_lists.append(["admin/celery.js"])
-        return response
+    _ListDisplayT = list[str | Callable[[Any], str | bool]] | tuple[str | Callable[[Any], str | bool],] | tuple[()]
 
 
 class AutoProjectCol(admin.ModelAdmin):
@@ -145,13 +80,13 @@ class AutoProjectCol(admin.ModelAdmin):
 class QueryAdmin(
     AdminFiltersMixin,
     AutoProjectCol,
-    CeleryEnabledMixin,
+    CeleryTaskModelAdmin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
     ModelAdmin[Query],
 ):
-    list_display = ("name", "parent", "target", "owner", "active", "success", "last_run", "status")
+    list_display = ("name", "parent", "target", "owner", "active", "success", "last_run", "task_status")
     search_fields = ("name",)
     list_filter = (
         ("target", AutoCompleteFilter),
@@ -166,8 +101,7 @@ class QueryAdmin(
         "error_message",
         "info",
         "last_run",
-        "last_async_result_id",
-        "curr_async_result_id",
+        "version",
     )
     change_form_template = None
     ordering = ["-last_run"]
@@ -192,6 +126,17 @@ class QueryAdmin(
     ) -> "HttpResponse":
         return super().change_view(request, object_id, form_url, extra_context)
 
+    @button(label="Inspect", icon="search")
+    def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
+        self.object = self.get_object(request, pk)
+        ctx = self.get_common_context(request, pk=pk, object=self.object)
+        ctx["object"] = self.object
+        return render(
+            request,
+            f"admin/power_query/{self.model._meta.model_name}/inspect.html",
+            ctx,
+        )
+
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return super().has_change_permission(request, obj)
 
@@ -206,23 +151,15 @@ class QueryAdmin(
                 code = f"""sql={q}.query"""
                 locals_ = {"conn": ct.model_class().objects}
                 exec(code, globals(), locals_)
-                sql = locals_.get("sql", None)
+                sql = locals_.get("sql")
                 if sql:
                     cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
                     context["sql"] = reformat_sql(str(locals_.get("sql", "")))
                     cursor.execute(f"EXPLAIN ANALYZE {sql}")
                     headers = [d[0] for d in cursor.description]
                     result = cursor.fetchall()
-                    context.update(
-                        **{
-                            "result": result,
-                            "sql": sql,
-                            "headers": headers,
-                            "alias": settings.POWER_QUERY_DB_ALIAS,
-                        }
-                    )
+                    context.update(result=result, sql=sql, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
                 self.message_user(request, code)
-                # context["explain_info"] = json.loads(explain_info)
         else:
             form = ExplainQueryForm(initial={"query": "conn.all()", "target": None})
 
@@ -270,7 +207,7 @@ class QueryAdmin(
                 context["queryset"] = ret
             elif isinstance(ret, tablib.Dataset):
                 context["dataset"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
-            elif isinstance(ret, (dict, list, tuple)):
+            elif isinstance(ret, dict | list | tuple):
                 context["result"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
             else:
                 self.message_user(
@@ -287,7 +224,7 @@ class QueryAdmin(
         url = reverse("admin:power_query_query_changelist")
         return redirect(f"{url}?parent__id={pk}")
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
+    def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         ct = ContentType.objects.filter(id=request.GET.get("ct", 0)).first()
         return {"code": "result=conn.all()", "name": ct, "target": ct, "owner": request.user}
 
@@ -433,7 +370,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
             if form.is_valid():
-                processor: "Type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
+                processor: "type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
                 fmt = Formatter(
                     template=self.object,
                     processor=processor,
@@ -450,20 +387,31 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
 @admin.register(ReportConfiguration)
 class ReportConfigurationAdmin(
     AdminFiltersMixin,
-    CeleryEnabledMixin,
+    CeleryTaskModelAdmin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
     AdminActionPermMixin,
     ModelAdmin[ReportConfiguration],
 ):
-    list_display = ("name", "country_office", "updated_on", "last_run", "owner", "schedule", "compress", "protect")
+    list_display = (
+        "name",
+        "country_office",
+        "updated_on",
+        "last_run",
+        "owner",
+        "schedule",
+        "compress",
+        "protect",
+        "task_status",
+    )
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
     readonly_fields = (
+        # "task_id",  # Removed in migration 0011
         "last_run",
         "sentry_error_id",
         "error_message",
-        "last_async_result_id",
+        "version",
     )
     list_filter = (
         ("country_office", AutoCompleteFilter),
@@ -490,7 +438,7 @@ class ReportConfigurationAdmin(
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         return request.user.is_superuser or bool(obj and obj.owner == request.user)
 
-    def get_changeform_initial_data(self, request: HttpRequest) -> "Dict[str, Any]":
+    def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         kwargs: dict[str, Any] = {"owner": request.user}
         if "q" in request.GET:
             q = Query.objects.get(pk=request.GET["q"])
@@ -498,6 +446,17 @@ class ReportConfigurationAdmin(
             kwargs["name"] = f"Report for {q.name}"
             kwargs["notify_to"] = [request.user]
         return kwargs
+
+    @button(label="Inspect", icon="search")
+    def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
+        self.object = self.get_object(request, pk)
+        ctx = self.get_common_context(request, pk=pk, object=self.object)
+        ctx["object"] = self.object
+        return render(
+            request,
+            f"admin/power_query/{self.model._meta.model_name}/inspect.html",
+            ctx,
+        )
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def execute(self, request: HttpRequest, pk: int) -> HttpResponse:

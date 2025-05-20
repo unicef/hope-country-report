@@ -7,7 +7,7 @@ from django.contrib import admin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.combo import RelatedFieldComboFilter
 from adminfilters.dates import DateRangeFilter
-from adminfilters.json import JsonFieldFilter
+from adminfilters.json_filter import JsonFieldFilter
 from adminfilters.querystring import QueryStringFilter
 from adminfilters.value import ValueFilter
 

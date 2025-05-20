@@ -1,5 +1,5 @@
 {% extends "web/office/_base.html" %}
-{% load static i18n user_tz colors browser filters %}
+{% load browser colors filters i18n static user_tz %}
 
 {% block content %}
 <div id="output" style="margin: 30px;"></div>
@@ -33,4 +33,4 @@
         });
         {% endif %}
 </script>
-{% endblock %}
+{% endblock content %}

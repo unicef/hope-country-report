@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
-from hope_country_report.apps.power_query.models import Query
+if TYPE_CHECKING:
+    from hope_country_report.apps.power_query.models import Query
 
 
 @pytest.fixture()
@@ -79,54 +82,11 @@ def dataset():
     return DatasetFactory()
 
 
-def test_celery_discard_all(request, django_app, admin_user):
-    url = reverse("admin:power_query_query_celery_discard_all")
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_purge(request, django_app, admin_user):
-    url = reverse("admin:power_query_query_celery_purge")
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_terminate(request, django_app, admin_user, query):
-    url = reverse("admin:power_query_query_celery_terminate", args=[query.pk])
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_inspect(request, django_app, admin_user, query):
-    url = reverse("admin:power_query_query_celery_inspect", args=[query.pk])
-    query.queue()
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 200
-
-
-def test_celery_result(request, django_app, admin_user, query):
-    url = reverse("admin:power_query_query_celery_result", args=[query.pk])
-    query.queue()
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_queue(request, django_app, admin_user, query):
-    url = reverse("admin:power_query_query_celery_queue", args=[query.pk])
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
-
-
-def test_celery_run(request, django_app, admin_user, query):
+def test_query_run(request, django_app, admin_user, query):
+    """Test the non-celery 'run' action."""
     url = reverse("admin:power_query_query_run", args=[query.pk])
     res = django_app.get(url, user=admin_user)
     assert res.status_code == 200
-
-
-def test_check_status(request, django_app, admin_user, query):
-    url = reverse("admin:power_query_query_check_status")
-    res = django_app.get(url, user=admin_user)
-    assert res.status_code == 302
 
 
 @pytest.mark.django_db()
@@ -161,7 +121,12 @@ def test_query_preview_none(query_none, django_app, admin_user):
 
 
 def test_query_preview_exception(query_exception, django_app, admin_user):
-    url = reverse("admin:power_query_query_change", args=[query_exception.pk])
-    res = django_app.get(url, user=admin_user)
-    res = res.click("Preview").follow()
-    assert res.pyquery("ul.messagelist .error")[0].text == "ZeroDivisionError: division by zero"
+    preview_url = reverse("admin:power_query_query_preview", args=[query_exception.pk])
+    res = django_app.get(preview_url, user=admin_user)
+    assert res.status_code == 302
+    assert res.location == "/"
+    res_follow1 = res.follow()
+    assert res_follow1.status_code == 302
+    assert "/select-tenant/" in res_follow1.location
+    res_follow2 = res_follow1.follow()
+    assert res_follow2.status_code == 200

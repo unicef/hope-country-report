@@ -201,8 +201,7 @@ def pending_user(db):
 
     from testutils.factories import UserFactory
 
-    u = UserFactory(username="pending_user", is_staff=False, is_superuser=False, is_active=True)
-    return u
+    return UserFactory(username="pending_user", is_staff=False, is_superuser=False, is_active=True)
 
 
 @pytest.fixture()

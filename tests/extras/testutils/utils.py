@@ -19,7 +19,7 @@ class MutableQueryDict(QueryDict):
         # Transform `{'attributes[]': 'size', 'attributes[]': 'gender'}` into
         # `{'attributes': ['size', 'gender']}`
         def handle_multiple_keys(multidict: QueryDict):
-            data = dict()
+            data = {}
             for k in multidict.keys():
                 values = multidict.getlist(k)
                 values = [handle_multiple_keys(v) if hasattr(v, "keys") else v for v in values]
@@ -49,7 +49,7 @@ class MutableQueryDict(QueryDict):
         # Transform `{'items': {'0': {'plan': 'pro-yearly'}}}` into
         # `{'items': [{'plan': 'pro-yearly'}]}`
         def transform_lists(data):
-            if len(data) > 0 and all([re.match(r"^[0-9]+$", k) for k in data.keys()]):
+            if len(data) > 0 and all(re.match(r"^[0-9]+$", k) for k in data.keys()):
                 new_data = [(int(k), v) for k, v in data.items()]
                 new_data.sort(key=lambda k: int(k[0]))
                 data = []
@@ -59,15 +59,12 @@ class MutableQueryDict(QueryDict):
                     else:
                         data.append(v)
                 return data
-            else:
-                for k in data.keys():
-                    if type(data[k]) is dict:
-                        data[k] = transform_lists(data[k])
-                return data
+            for k in data.keys():
+                if type(data[k]) is dict:
+                    data[k] = transform_lists(data[k])
+            return data
 
-        data = transform_lists(data)
-
-        return data
+        return transform_lists(data)
 
 
 def payload(filename, section=None, merge: dict | None = None):
@@ -125,15 +122,14 @@ def matcher_debugger(return_value=True):
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")
             try:
-                payload = json.loads(request_body)
+                json.loads(request_body)
             except responses.JSONDecodeError:
                 try:
-                    payload = parse_qs(request_body)
+                    parse_qs(request_body)
                 except Exception:
-                    payload = request_body
+                    pass
         except Exception:
             pass
-        print("##### MATCHER_DEBUGGER", payload, return_value)
         return return_value
 
     return debugger
@@ -163,8 +159,7 @@ class set_flag(ContextDecorator):  # noqa
 
     def start(self):
         """Activate a patch, returning any created mock."""
-        result = self.__enter__()
-        return result
+        return self.__enter__()
 
     def stop(self):
         """Stop an active patch."""

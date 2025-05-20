@@ -1,34 +1,36 @@
-{% extends "web/office/_base.html" %}{% load i18n user_tz colors filters %}
+{% extends "web/office/_base.html" %}{% load colors filters i18n user_tz %}
 {% block extrahead %}
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>
     <script src="https://d3js.org/d3-geo.v1.min.js"></script>
     <script src="https://d3js.org/topojson.v2.min.js"></script>
-    {#    <script src="https://bl.ocks.org/mbostock/raw/7ea1dde508cec6d2d95306f92642bc42/6aac691494f752142a67cc43c51a0fd09896dbd4/versor.js"></script>#}
+    {# <script src="https://bl.ocks.org/mbostock/raw/7ea1dde508cec6d2d95306f92642bc42/6aac691494f752142a67cc43c51a0fd09896dbd4/versor.js"></script> #}
     <script src="https://cdn.jsdelivr.net/npm/versor@0.2"></script>
 
     <style>
-        {#html, body {#}
-        {#    margin: 0;#}
-        {#    padding: 0;#}
-        {#    background: #555;#}
-        {# }#}
-        {##}
+        {# html, body { #}
+        {# margin: 0; #}
+        {# padding: 0; #}
+        {# background: #555; #}
+        {# } #}
+        {#  #}
         #globe {
             cursor: pointer;
         }
 
-        {##}
-        {##current {#}
-        {#    position: absolute;#}
-        {#    color: white;#}
-        {#    font-family: sans-serif;#}
-        {#    margin-left: 4%;#}
-        {#    margin-top: 4%;#}
-        {# }#}
+        {#  #}
+        {# #current { #}
+        {# position: absolute; #}
+        {# color: white; #}
+        {# font-family: sans-serif; #}
+        {# margin-left: 4%; #}
+        {# margin-top: 4%; #}
+        {# } #}
     </style>
-{% endblock %}
+{% endblock extrahead %}
+
 {% block page-title %}&nbsp;<span id="current">AAAA</span>{% endblock %}
+
 {% block content %}
     <canvas id="globe"></canvas>
     <script>
@@ -134,13 +136,13 @@
         }
 
         function dragended() {
-            {#startRotation(rotationDelay)#}
+            {# startRotation(rotationDelay) #}
         }
 
         function render() {
-            {#context.clearRect(0, 0, width, height)#}
-            {#fill(water, colorWater)#}
-            {#stroke(graticule, colorGraticule)#}
+            {# context.clearRect(0, 0, width, height) #}
+            {# fill(water, colorWater) #}
+            {# stroke(graticule, colorGraticule) #}
             fill(land, colorLand)
             if (currentCountry) {
                 fill(currentCountry, colorCountry)
@@ -217,16 +219,16 @@
             enter(c)
         }
 
-        {#function getCountry(event) {#}
-        {#    var pos = projection.invert(d3.mouse(event))#}
-        {#    return countries.features.find(function (f) {#}
-        {#        return f.geometry.coordinates.find(function (c1) {#}
-        {#            return polygonContains(c1, pos) || c1.find(function (c2) {#}
-        {#                return polygonContains(c2, pos)#}
-        {#            })#}
-        {#        })#}
-        {#    })#}
-        {# }#}
+        {# function getCountry(event) { #}
+        {# var pos = projection.invert(d3.mouse(event)) #}
+        {# return countries.features.find(function (f) { #}
+        {# return f.geometry.coordinates.find(function (c1) { #}
+        {# return polygonContains(c1, pos) || c1.find(function (c2) { #}
+        {# return polygonContains(c2, pos) #}
+        {# }) #}
+        {# }) #}
+        {# }) #}
+        {# } #}
 
 
         //
@@ -251,9 +253,9 @@
                 return countries.features.find(function (f) {
                     if (("" + f.properties.iso3).toLowerCase() === c.toLowerCase()) {
 
-                        {#console.log(1111, f.properties.name)#}
-                        {#currentCountry = f;#}
-                        {#render()#}
+                        {# console.log(1111, f.properties.name) #}
+                        {# currentCountry = f; #}
+                        {# render() #}
                     }
                 })
             }
@@ -275,18 +277,18 @@
                 })
             })
 
-            {#http://localhost:8000/api/home/offices/#}
-            {#autorotate.stop();#}
-            {#highlight("afg"); // Afg#}
-            {#highlight("ukr"); // Afg#}
-            {#highlight("afg"); // Afg#}
-            {#highlight("afg"); // Afg#}
-            {#enter(112); // Belarus#}
-            {#enter(144); // Sri Lanka#}
-            {#enter(180); // DRC#}
-            {#enter(275);	// Palestinian Territory, Occupied#}
+            {# http://localhost:8000/api/home/offices/ #}
+            {# autorotate.stop(); #}
+            {# highlight("afg"); // Afg #}
+            {# highlight("ukr"); // Afg #}
+            {# highlight("afg"); // Afg #}
+            {# highlight("afg"); // Afg #}
+            {# enter(112); // Belarus #}
+            {# enter(144); // Sri Lanka #}
+            {# enter(180); // DRC #}
+            {# enter(275);	// Palestinian Territory, Occupied #}
         })
 
 
     </script>
-{% endblock %}
+{% endblock content %}

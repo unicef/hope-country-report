@@ -13,11 +13,7 @@ SOURCE_DIR = PACKAGE_DIR.parent.parent  # .../src
 DEBUG = env.bool("DEBUG")
 
 RO_CONN = dict(**env.db("DATABASE_HOPE_URL")).copy()
-RO_CONN.update(
-    **{
-        "OPTIONS": {"options": "-c default_transaction_read_only=on"},
-    }
-)
+RO_CONN.update(OPTIONS={"options": "-c default_transaction_read_only=on"})
 
 DATABASES = {
     "default": env.db(
@@ -41,7 +37,7 @@ MIGRATION_MODULES = {"hope": None}
 
 STORAGES = {
     "default": env.storage("FILE_STORAGE_DEFAULT"),
-    "staticfiles": env.storage("FILE_STORAGE_DEFAULT"),
+    "staticfiles": env.storage("FILE_STORAGE_STATIC"),
     "media": env.storage("FILE_STORAGE_MEDIA"),
     "hope": env.storage("FILE_STORAGE_HOPE"),
 }
@@ -95,6 +91,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "social_django",
     "admin_extra_buttons",
+    "django_celery_boost",
     "adminactions",
     "adminfilters",
     "adminfilters.depot",

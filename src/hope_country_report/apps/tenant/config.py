@@ -1,12 +1,14 @@
 from typing import TYPE_CHECKING
 
+import contextlib
 from functools import cached_property
 
 from django.core.signals import setting_changed
-from django.db.models import Model
 
 if TYPE_CHECKING:
-    from typing import Any, Union
+    from typing import Any
+
+    from django.db.models import Model
 
     from .backend import TenantBackend
 
@@ -26,7 +28,7 @@ class AppSettings:
         "AUTH": "hope_country_report.apps.tenant.backend.TenantBackend",
     }
 
-    def __init__(self, prefix: str):
+    def __init__(self, prefix: str) -> None:
         self.prefix = prefix
         from django.conf import settings
 
@@ -57,7 +59,7 @@ class AppSettings:
         # return import_string(self.AUTH)()  # type: ignore[no-any-return]
 
     @cached_property
-    def tenant_model(self) -> "Union[Model, type]":
+    def tenant_model(self) -> "Model | type":
         from django.apps import apps
 
         if not self.TENANT_MODEL:
@@ -68,10 +70,8 @@ class AppSettings:
         if setting.startswith(self.prefix):
             self._set_attr(setting, value)
         for attr in ["tenant_model", "auth", "strategy"]:
-            try:
+            with contextlib.suppress(AttributeError):
                 delattr(self, attr)
-            except AttributeError:
-                pass
 
 
 conf = AppSettings("TENANT")

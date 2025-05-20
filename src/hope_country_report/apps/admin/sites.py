@@ -2,7 +2,6 @@ from typing import Any, TYPE_CHECKING
 
 import logging
 
-from django.http import HttpRequest
 from django.utils.translation import gettext_lazy
 
 from hope_country_report.apps.tenant.forms import TenantAuthenticationForm
@@ -10,6 +9,7 @@ from hope_country_report.apps.tenant.sites import TenantAdminSite
 from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tenant
 
 if TYPE_CHECKING:
+    from django.http import HttpRequest
     from django.utils.functional import _StrOrPromise
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,6 @@ class HRAdminSite(TenantAdminSite):
 
     def _build_app_dict(self, request: "HttpRequest", label: "_StrOrPromise|None" = None) -> dict[str, Any]:
         app_dict = super()._build_app_dict(request, label)
-        for _k, data in app_dict.items():
+        for data in app_dict.values():
             data["models"] = [m for m in data["models"] if not hasattr(m, "Tenant")]
         return app_dict

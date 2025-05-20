@@ -1,7 +1,8 @@
 {% extends "admin_extra_buttons/change_form.html" %}{% load power_query %}
 {% block breadcrumbs %}
     {{ block.super }}
-{% endblock %}
+{% endblock breadcrumbs %}
+
 {% block after_field_sets2 %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jmespath/0.16.0/jmespath.min.js"></script>
     <textarea id="id_source" style="display:block;width: 100%; height: 300px">{{ parameters|safe }}</textarea>
@@ -36,4 +37,4 @@
 
     </script>
 
-{% endblock %}
+{% endblock after_field_sets2 %}

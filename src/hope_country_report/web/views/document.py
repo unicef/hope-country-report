@@ -3,7 +3,6 @@ from typing import Any, TYPE_CHECKING, TypeVar
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Model
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -24,7 +23,7 @@ from .base import SelectedOfficeMixin
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser
     from django.core.paginator import _SupportsPagination
-    from django.db.models import QuerySet
+    from django.db.models import Model, QuerySet
     from django.views.generic.edit import _ModelFormT
 
     from hope_country_report.types.http import AuthHttpRequest, RedirectOrResponse

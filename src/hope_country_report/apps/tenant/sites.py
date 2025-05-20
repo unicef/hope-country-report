@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from collections.abc import Callable
 from functools import update_wrapper
 
 from django.conf import settings
@@ -18,7 +17,9 @@ from .forms import SelectTenantForm
 from .utils import get_selected_tenant, is_tenant_valid, must_tenant, set_selected_tenant
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
+    from typing import Any
+
+    from collections.abc import Callable
 
     from hope_country_report.types.http import AuthHttpRequest
 
@@ -26,8 +27,6 @@ if TYPE_CHECKING:
 
 
 class TenantAutocompleteJsonView(SmartAutocompleteJsonView):
-    ...
-
     # def get_queryset(self):
     #     qs = super().get_queryset()
     #     qs = qs.filter(self.model_admin.model.objects.)
@@ -56,7 +55,7 @@ class TenantAdminSite(SmartAdminSite):
     # def has_permission(self, request: "AuthHttpRequest") -> bool:
     #     return request.user.is_active
 
-    def each_context(self, request: "AuthHttpRequest") -> "Dict[str, Any]":
+    def each_context(self, request: "AuthHttpRequest") -> "dict[str, Any]":
         ret = super().each_context(request)
         ret["flower_address"] = settings.POWER_QUERY_FLOWER_ADDRESS
         if must_tenant():
@@ -110,15 +109,14 @@ class TenantAdminSite(SmartAdminSite):
         self, request: "HttpRequest", extra_context: "dict[str, Any] | None" = None
     ) -> "HttpResponse|HttpResponseRedirect":
         response = super().login(request, extra_context)
-        if request.method == "POST":
-            if request.user.is_authenticated and not request.user.is_staff:
-                return HttpResponseRedirect(reverse("admin:select_tenant"))
+        if request.method == "POST" and request.user.is_authenticated and not request.user.is_staff:
+            return HttpResponseRedirect(reverse("admin:select_tenant"))
 
         return response
 
     @method_decorator(never_cache)
     def index(
-        self, request: "AuthHttpRequest", extra_context: "Dict[str,Any]|None" = None, **kwargs: "Any"
+        self, request: "AuthHttpRequest", extra_context: "dict[str,Any]|None" = None, **kwargs: "Any"
     ) -> "HttpResponse":
         """
         Display the main admin index page, which lists all of the installed

@@ -30,10 +30,9 @@ class PowerQueryManager(SmartManager["_PowerQueryModel"]):
 
             if tenant_filter_field == "__all__":
                 return Q()
-            else:
-                active_tenant = selected_tenant or get_selected_tenant()
-                if active_tenant:
-                    _filter = Q(**{tenant_filter_field: active_tenant})
+            active_tenant = selected_tenant or get_selected_tenant()
+            if active_tenant:
+                _filter = Q(**{tenant_filter_field: active_tenant})
         return _filter
 
     def get_queryset(self) -> "QuerySet[_PowerQueryModel]":

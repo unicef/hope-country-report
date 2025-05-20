@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 def pytest_generate_tests(metafunc):
     if "pp" in metafunc.fixturenames:
-        m = [p for p in registry]
+        m = list(registry)
         ids = [f"{p.__name__}|{p.file_suffix}" for p in registry]
         metafunc.parametrize("pp", m, ids=ids)
 
@@ -83,7 +83,7 @@ def updated_dataset(dataset, tmp_path):
     Fixture to generate a dataset, add test images, and simulate missing fields.
     """
 
-    data = [row for row in dataset.data.values()]
+    data = list(dataset.data.values())
     test_image_path = tmp_path / "test_image.jpg"
     test_image_path.write_bytes(b"This is a test image")
     image_name = "test_image.jpg"
@@ -230,7 +230,6 @@ def test_processor_pdf_with_missing_image(updated_dataset, tmp_path):
     with fitz.open(output) as document:
         for page in document:
             images = page.get_images(full=True)
-            print(images)
             assert len(images) > 0, "No images found on the page; placeholders were not inserted."
 
 

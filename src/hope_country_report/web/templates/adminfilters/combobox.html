@@ -1,6 +1,6 @@
 {% load i18n %}
 <details data-filter-title="{{ spec.get_title }}" {% include "adminfilters/_attrs.html" with spec=spec %} {% if spec.lookup_val %}open{% endif %}>
-<summary>{% blocktrans with title as filter_title %} By {{ filter_title }} {% endblocktrans %}</summary>
+<summary>{% blocktranslate with filter_title=title %} By {{ filter_title }} {% endblocktranslate %}</summary>
 <ul>
 <select id="filter-{{ spec.field.name }}" onchange="location.href=this.options[selectedIndex].value">
     {% for choice in choices %}

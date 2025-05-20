@@ -1,8 +1,12 @@
 {% extends "web/office/_base.html" %}{% load i18n %}
 {% block logo %}{% endblock %}
+
 {% block user-prefs %}{% endblock %}
-{% block page-title %}{% trans "Request Access" %}{% endblock %}
+
+{% block page-title %}{% translate "Request Access" %}{% endblock %}
+
 {% block sidebar %}{% endblock %}
+
 {% block content %}
     <div class="box">
     <h1>Report: {{ object }}</h1>
@@ -12,10 +16,10 @@
             <table>{{ form }}</table>
             <button class="button primary"
                     type="submit">
-                {% trans "Send" %}
+                {% translate "Send" %}
             </button>
         </form>
     </div>
     </div>
 
-{% endblock %}
+{% endblock content %}
