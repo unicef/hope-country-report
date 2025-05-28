@@ -69,7 +69,7 @@ dependencies = [
   "flower",
   "geojson",
   "hatch>=1.14.1",
-  "htmlmin",
+  "htmlmin2",
   "natural-keys",
   "pathvalidate",
   "pdfkit",
