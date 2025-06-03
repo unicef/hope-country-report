@@ -56,6 +56,12 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
 
     celery_task_name = "hope_country_report.apps.power_query.celery_tasks.run_background_query"
 
+    @property
+    def effective_status(self) -> str:
+        if self.error_message:
+            return self.FAILURE  # From CeleryTaskModel
+        return self.task_status
+
     def __str__(self) -> str:
         if self.abstract:
             return f"[ABSTRACT] {self.name}"
