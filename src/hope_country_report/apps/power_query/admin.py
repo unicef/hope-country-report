@@ -86,7 +86,7 @@ class QueryAdmin(
     AdminActionPermMixin,
     ModelAdmin[Query],
 ):
-    list_display = ("name", "parent", "target", "owner", "active", "success", "last_run", "task_status")
+    list_display = ("name", "parent", "target", "owner", "active", "success", "last_run", "effective_status")
     search_fields = ("name",)
     list_filter = (
         ("target", AutoCompleteFilter),
@@ -96,13 +96,7 @@ class QueryAdmin(
     )
     linked_objects_template = None
     autocomplete_fields = ("target", "owner", "target")
-    readonly_fields = (
-        "sentry_error_id",
-        "error_message",
-        "info",
-        "last_run",
-        "version",
-    )
+    readonly_fields = ("sentry_error_id", "error_message", "info", "last_run", "version", "effective_status")
     change_form_template = None
     ordering = ["-last_run"]
     form = QueryForm
@@ -402,7 +396,7 @@ class ReportConfigurationAdmin(
         "schedule",
         "compress",
         "protect",
-        "task_status",
+        "effective_status",
     )
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
@@ -412,6 +406,7 @@ class ReportConfigurationAdmin(
         "sentry_error_id",
         "error_message",
         "version",
+        "effective_status",
     )
     list_filter = (
         ("country_office", AutoCompleteFilter),
