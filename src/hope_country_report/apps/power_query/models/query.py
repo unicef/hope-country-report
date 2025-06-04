@@ -59,7 +59,7 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
     @property
     def effective_status(self) -> str:
         if self.error_message:
-            return self.FAILURE  # From CeleryTaskModel
+            return self.FAILURE
         return self.task_status
 
     def __str__(self) -> str:
