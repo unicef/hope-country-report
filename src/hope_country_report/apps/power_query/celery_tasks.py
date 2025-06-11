@@ -42,7 +42,7 @@ rds = StrictRedis(settings.REDIS_URL, decode_responses=True)
 class AbstractPowerQueryTask(AbortableTask):
     model: "type[Query] | type[ReportConfiguration]"
     cache = caches[getattr(settings, "CELERY_TASK_LOCK_CACHE", "default")]
-    lock_expiration = 60 * 60 * 24  # 1 day
+    lock_expiration = 60 * 60 * 24
     model_name: str = ""
     abstract = True
 
@@ -62,17 +62,23 @@ class AbstractPowerQueryTask(AbortableTask):
         self, exc: Exception, task_id: str, args: tuple, kwargs: dict[str, str], einfo: ExceptionInfo
     ) -> None:
         try:
-            obj_id = args[0]
-            instance = self.model.objects.filter(pk=obj_id).first()
-            if instance:
-                instance.error_message = str(exc)
-                sentry_id = getattr(einfo, "sentry_event_id", None) or capture_exception(exc)
-                instance.sentry_error_id = str(sentry_id) if sentry_id else None
-                instance.save(update_fields=["error_message", "sentry_error_id"])
+            if args and self.model_name:
+                obj_id = args[0]
+                instance = self.model.objects.filter(pk=obj_id).first()
+                if instance:
+                    instance.error_message = str(exc)
+                    sentry_id = getattr(einfo, "sentry_event_id", None) or capture_exception(exc)
+                    instance.sentry_error_id = str(sentry_id) if sentry_id else None
+                    instance.save(update_fields=["error_message", "sentry_error_id"])
+            else:
+                logger.error(
+                    f"Task {task_id} (type {self.__class__.__name__}) failed. Original exception: {exc!r}",
+                    exc_info=True,
+                )
         except DjangoDbError as e:
-            logger.error(f"DB error saving failure details for task {task_id}: {e}")
+            logger.error(f"DB error while attempting to save failure details for task {task_id}: {e}", exc_info=True)
         except Exception as e:
-            logger.error(f"Unexpected error saving failure details for task {task_id}: {e}")
+            logger.error(f"Unexpected error in on_failure handler for task {task_id}: {e}", exc_info=True)
 
         rds.eval(REMOVE_ONLY_IF_OWNER_SCRIPT, 1, self.lock_key, self.lock_signature)
         super().on_failure(exc, task_id, args, kwargs, einfo)
@@ -181,10 +187,16 @@ def refresh_report(self: PowerQueryTask, report_id: int, version: int = 0) -> "R
 @sentry_tags
 def reports_refresh(self: AbortableTask, **kwargs: dict[str, Any]) -> Any:
     result: Any = {}
-    if periodic_task_name := (getattr(self.request, "properties", {}) or {}).get("periodic_task_name"):
-        periodic_task = PeriodicTask.objects.get(name=periodic_task_name)
+    periodic_task_name = self.request.periodic_task_name
+    if periodic_task_name:
+        try:
+            periodic_task = PeriodicTask.objects.get(name=periodic_task_name)
+        except PeriodicTask.DoesNotExist:
+            logger.error(f"PeriodicTask with name '{periodic_task_name}' not found for task {self.request.id}.")
+            return result
+
         grp = [
-            refresh_report.subtask([report.pk, report.version]) for report in periodic_task.reports.filter(active=True)
+            refresh_report.subtask((report.pk, report.version)) for report in periodic_task.reports.filter(active=True)
         ]
 
         if grp:

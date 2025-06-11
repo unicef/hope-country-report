@@ -92,6 +92,12 @@ class ReportConfiguration(
     tags = TaggableManager(blank=True)
     celery_task_name = "hope_country_report.apps.power_query.celery_tasks.refresh_report"
 
+    @property
+    def effective_status(self) -> str:
+        if self.error_message:
+            return self.FAILURE  # From CeleryTaskModel
+        return self.task_status
+
     class Tenant:
         tenant_filter_field = "country_office"
 

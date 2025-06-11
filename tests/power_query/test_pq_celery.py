@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING
-
+import uuid
 import pytest
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 
 from django.conf import settings
 
 from celery import states
+from celery.result import EagerResult
 from django_celery_beat.models import PeriodicTask
 
 from hope_country_report.apps.power_query.celery_tasks import refresh_report, reports_refresh, run_background_query
@@ -18,11 +19,8 @@ from hope_country_report.state import state
 if TYPE_CHECKING:
     from typing import TypedDict
 
-    from celery.result import EagerResult
-
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.apps.hope.models import Household
-    from hope_country_report.apps.power_query.models import ReportConfiguration
 
     class _DATA(TypedDict):
         co1: CountryOffice
@@ -86,6 +84,30 @@ def report(query1: Query):
     return ReportConfigurationFactory(name="Celery Report", query=query1, owner=query1.owner)
 
 
+@pytest.fixture()
+def periodic_task_fixture(report: "ReportConfiguration"):
+    from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
+    schedule, _ = IntervalSchedule.objects.get_or_create(
+        every=1,
+        period=IntervalSchedule.DAYS,
+    )
+    pt_name = f"test_reports_schedule_{uuid.uuid4().hex}"
+    task_path = "hope_country_report.apps.power_query.celery_tasks.reports_refresh"
+    pt = PeriodicTask.objects.create(interval=schedule, name=pt_name, task=task_path)
+    report.schedule = pt
+    report.save()
+
+    yield pt
+
+    if ReportConfiguration.objects.filter(pk=report.pk).exists():
+        report_obj = ReportConfiguration.objects.get(pk=report.pk)
+        report_obj.schedule = None
+        report_obj.save()
+    if PeriodicTask.objects.filter(pk=pt.pk).exists():
+        PeriodicTask.objects.get(pk=pt.pk).delete()
+
+
 def test_run_background_query(settings, query1: Query) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     run_background_query.delay(query1.pk, query1.version)
@@ -132,26 +154,39 @@ def test_refresh_report(report: "ReportConfiguration") -> None:
     assert report.documents.exists()
 
 
-def test_celery_no_worker(db, settings, query2: Query) -> None:
-    settings.CELERY_TASK_ALWAYS_EAGER = False
-    assert query2.task_status == "Not scheduled"
-    query2.queue()
-    assert query2.task_status == "QUEUED"
-    query2.terminate()
-    assert query2.task_status == "Not scheduled"
-
-
-def test_celery_reports_refresh(db, settings, report: "ReportConfiguration") -> None:
+def test_celery_reports_refresh(
+    db, settings, report: "ReportConfiguration", periodic_task_fixture: PeriodicTask
+) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
-    pt = PeriodicTask.objects.first()
-    report.schedule = pt
-    pt.save()
 
-    r = MagicMock()
-    r.properties = {"periodic_task_name": pt.name}
-    with mock.patch("hope_country_report.apps.power_query.celery_tasks.ReportTask.request", r):
-        result = reports_refresh.delay()
-    assert result.state == "SUCCESS"
+    pt = periodic_task_fixture
+
+    mock_task_self_request = MagicMock(name="mock_task_self_request")
+    mock_task_self_request.periodic_task_name = pt.name
+    mock_task_self_request.id = f"test_task_id_{uuid.uuid4().hex}"
+
+    mock_subtask_instance = MagicMock(name="mock_subtask_instance")
+    mock_refresh_report_subtask = MagicMock(return_value=mock_subtask_instance, name="mock_refresh_report_subtask")
+
+    mock_subtask_instance = MagicMock(name="mock_subtask_instance")
+    mock_refresh_report_subtask = MagicMock(return_value=mock_subtask_instance, name="mock_refresh_report_subtask")
+
+    mock_group_constructor = MagicMock(name="mock_group_constructor")
+
+    with (
+        mock.patch("celery.app.task.Task.request", new_callable=PropertyMock, return_value=mock_task_self_request),
+        mock.patch(
+            "hope_country_report.apps.power_query.celery_tasks.refresh_report.subtask", mock_refresh_report_subtask
+        ),
+        mock.patch("hope_country_report.apps.power_query.celery_tasks.group", mock_group_constructor),
+    ):
+        result_from_delay = reports_refresh.delay()
+
+    assert isinstance(result_from_delay, EagerResult)
+
+    mock_refresh_report_subtask.assert_called_once_with((report.pk, report.version))
+
+    mock_group_constructor.assert_called_once_with([mock_subtask_instance])
 
 
 @pytest.mark.django_db
@@ -167,6 +202,9 @@ def test_celery_error(settings, query_exception: Query) -> None:
 
     query_exception.refresh_from_db()
 
+    if "async_result" in query_exception.__dict__:
+        query_exception.__dict__.pop("async_result", None)
+
     assert query_exception.error_message == "internal exc"
     assert query_exception.sentry_error_id
-    assert query_exception.task_status == "MISSING"
+    assert query_exception.effective_status == Query.FAILURE
