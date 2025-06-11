@@ -1079,7 +1079,6 @@ class Household(HopeModel):
     unhcr_id = models.CharField(max_length=250, null=True)
     internal_data = models.JSONField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
-    registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     program_registration_id = models.TextField(unique=True, blank=True, null=True)  # This field type is a guess.
     total_cash_received_usd = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
     total_cash_received = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
@@ -1091,7 +1090,6 @@ class Household(HopeModel):
     kobo_submission_uuid = models.UUIDField(blank=True, null=True)
     kobo_submission_time = models.DateTimeField(blank=True, null=True)
     enumerator_rec_id = models.IntegerField(blank=True, null=True)
-    mis_unicef_id = models.CharField(max_length=255, blank=True, null=True)
     flex_registrations_record_id = models.IntegerField(blank=True, null=True)
     admin1 = models.ForeignKey(
         Area, on_delete=models.DO_NOTHING, related_name="household_admin1", blank=True, null=True
@@ -1130,9 +1128,7 @@ class Household(HopeModel):
         blank=True,
         null=True,
     )
-    program = models.ForeignKey(
-        "Program", on_delete=models.DO_NOTHING, related_name="household_program", blank=True, null=True
-    )
+    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="household_program", null=True)
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
         on_delete=models.DO_NOTHING,
@@ -1148,23 +1144,6 @@ class Household(HopeModel):
     class Meta:
         managed = False
         db_table = "household_household"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class HouseholdPrograms(HopeModel):
-    id = models.BigAutoField(primary_key=True)
-    household = models.ForeignKey(
-        Household, on_delete=models.DO_NOTHING, related_name="householdprograms_household", null=True
-    )
-    program = models.ForeignKey(
-        "Program", on_delete=models.DO_NOTHING, related_name="householdprograms_program", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "household_household_programs"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -1220,7 +1199,6 @@ class Individual(HopeModel):
     flex_fields = models.JSONField(null=True)
     internal_data = models.JSONField(null=True)
     enrolled_in_nutrition_programme = models.BooleanField(blank=True, null=True)
-    administration_of_rutf = models.BooleanField(blank=True, null=True)
     deduplication_golden_record_status = models.CharField(max_length=50, null=True)
     deduplication_batch_status = models.CharField(max_length=50, null=True)
     deduplication_golden_record_results = models.JSONField(null=True)
@@ -1243,7 +1221,6 @@ class Individual(HopeModel):
     fchild_hoh = models.BooleanField(null=True)
     child_hoh = models.BooleanField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
-    registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     program_registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
     preferred_language = models.CharField(max_length=6, blank=True, null=True)
     relationship_confirmed = models.BooleanField(null=True)
@@ -1254,7 +1231,6 @@ class Individual(HopeModel):
     origin_unicef_id = models.CharField(max_length=100, blank=True, null=True)
     is_migration_handled = models.BooleanField(null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
-    mis_unicef_id = models.CharField(max_length=255, blank=True, null=True)
     vector_column = models.TextField(blank=True, null=True)  # This field type is a guess.
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="individual_business_area", null=True
@@ -1272,9 +1248,7 @@ class Individual(HopeModel):
         blank=True,
         null=True,
     )
-    program = models.ForeignKey(
-        "Program", on_delete=models.DO_NOTHING, related_name="individual_program", blank=True, null=True
-    )
+    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="individual_program", null=True)
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
         on_delete=models.DO_NOTHING,
@@ -1477,11 +1451,11 @@ class Deliverymechanism(HopeModel):
     payment_gateway_id = models.CharField(unique=True, max_length=255, blank=True, null=True)
     code = models.CharField(unique=True, max_length=255, null=True)
     name = models.CharField(unique=True, max_length=255, null=True)
-    optional_fields = models.TextField(null=True)  # This field type is a guess.
-    required_fields = models.TextField(null=True)  # This field type is a guess.
-    unique_fields = models.TextField(null=True)  # This field type is a guess.
     is_active = models.BooleanField(null=True)
     transfer_type = models.CharField(max_length=255, null=True)
+    account_type = models.ForeignKey(
+        Accounttype, on_delete=models.DO_NOTHING, related_name="deliverymechanism_account_type", blank=True, null=True
+    )
 
     class Meta:
         managed = False
@@ -1522,11 +1496,8 @@ class Deliverymechanismperpaymentplan(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    sent_date = models.DateTimeField(null=True)
-    status = models.CharField(max_length=50, null=True)
     delivery_mechanism_order = models.IntegerField(null=True)
     sent_to_payment_gateway = models.BooleanField(null=True)
-    chosen_configuration = models.CharField(max_length=50, blank=True, null=True)
     delivery_mechanism = models.ForeignKey(
         Deliverymechanism,
         on_delete=models.DO_NOTHING,
@@ -1541,7 +1512,7 @@ class Deliverymechanismperpaymentplan(HopeModel):
         blank=True,
         null=True,
     )
-    payment_plan = models.ForeignKey(
+    payment_plan = models.OneToOneField(
         "PaymentPlan",
         on_delete=models.DO_NOTHING,
         related_name="deliverymechanismperpaymentplan_payment_plan",
@@ -1696,6 +1667,23 @@ class Financialserviceproviderxlsxtemplate(HopeModel):
         return str(self.name)
 
 
+class Fspnamemapping(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    external_name = models.CharField(max_length=255, null=True)
+    hope_name = models.CharField(max_length=255, null=True)
+    source = models.CharField(max_length=30, null=True)
+    fsp = models.ForeignKey(
+        Financialserviceprovider, on_delete=models.DO_NOTHING, related_name="fspnamemapping_fsp", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "payment_fspnamemapping"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
 class Fspxlsxtemplateperdeliverymechanism(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -1784,6 +1772,10 @@ class Payment(HopeModel):
     is_cash_assist = models.BooleanField(null=True)
     internal_data = models.JSONField(null=True)
     vulnerability_score = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
+    has_valid_wallet = models.BooleanField(null=True)
+    parent_split = models.ForeignKey(
+        "Paymentplansplit", on_delete=models.DO_NOTHING, related_name="payment_parent_split", blank=True, null=True
+    )
 
     class Meta:
         managed = False
@@ -1844,8 +1836,8 @@ class PaymentPlan(HopeModel):
     imported_file_date = models.DateTimeField(blank=True, null=True)
     steficon_applied_date = models.DateTimeField(blank=True, null=True)
     is_follow_up = models.BooleanField(null=True)
-    exclusion_reason = models.TextField(null=True)
-    exclude_household_error = models.TextField(null=True)
+    exclusion_reason = models.TextField(blank=True, null=True)
+    exclude_household_error = models.TextField(blank=True, null=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="paymentplan_business_area", null=True
@@ -1860,13 +1852,27 @@ class PaymentPlan(HopeModel):
     is_cash_assist = models.BooleanField(null=True)
     build_status = models.CharField(max_length=50, blank=True, null=True)
     built_at = models.DateTimeField(blank=True, null=True)
-    excluded_ids = models.TextField(null=True)
+    excluded_ids = models.TextField(blank=True, null=True)
     steficon_targeting_applied_date = models.DateTimeField(blank=True, null=True)
     targeting_criteria = models.OneToOneField(
         "Targetingcriteria", on_delete=models.DO_NOTHING, related_name="paymentplan_targeting_criteria", null=True
     )
     vulnerability_score_max = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
     vulnerability_score_min = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
+    delivery_mechanism = models.ForeignKey(
+        Deliverymechanism,
+        on_delete=models.DO_NOTHING,
+        related_name="paymentplan_delivery_mechanism",
+        blank=True,
+        null=True,
+    )
+    financial_service_provider = models.ForeignKey(
+        Financialserviceprovider,
+        on_delete=models.DO_NOTHING,
+        related_name="paymentplan_financial_service_provider",
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         managed = False
@@ -2292,7 +2298,6 @@ class DataRegistrationdataimport(HopeModel):
     excluded = models.BooleanField(null=True)
     erased = models.BooleanField(null=True)
     refuse_reason = models.CharField(max_length=100, blank=True, null=True)
-    allow_delivery_mechanisms_validation_errors = models.BooleanField(null=True)
     deduplication_engine_status = models.CharField(max_length=255, blank=True, null=True)
     business_area = models.ForeignKey(
         BusinessArea,
