@@ -1,46 +1,31 @@
 {% load admin_urls tz %}
-<div id="celery-status" class="{{ original.status }}">
+
+<div id="celery-status" class="status-{{ original.effective_status|slugify }}">
     {% if original.pk %}
-        Status: <b>{{ original.status }}</b>
-        {% if original.status == "Not scheduled" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+        Status: <b>{{ original.effective_status }}</b>
+        {% if original.effective_status == "Not scheduled" %}
+            {# <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a> #}
         {% endif %}
-        {% if original.status == "QUEUED" %}
+        {% if original.effective_status == "QUEUED" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_terminate' original.pk %}">Cancel</a>
             <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
-            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
         {% endif %}
-        {% if original.status == "PENDING" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
-            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
-        {% endif %}
-        {% if original.status == "REVOKED" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
-        {% endif %}
-        {% if original.status == "INTERRUPTED" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+        {% if original.effective_status == "MISSING" %}
+            {# <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a> #}
             <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
-
         {% endif %}
-        {% if original.status == "CANCELED" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+        {% if original.effective_status == "REVOKED" %}
+            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
         {% endif %}
-        {% if original.status == "STARTED" %}
+        {% if original.effective_status == "STARTED" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_terminate' original.pk %}">Terminate</a>
             <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
-            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
         {% endif %}
-        {% if original.status == "SUCCESS" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+        {% if original.effective_status == "SUCCESS" %}
             <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
-            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
-            {# <a class="button" href="{% url opts|admin_urlname:'celery_result' original.pk %}">Result</a> #} {# This URL does not exist #}
         {% endif %}
-        {% if original.status == "FAILURE" %}
-            <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a>
+        {% if original.effective_status == "FAILURE" %}
             <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
-            <a class="button" href="{% url opts|admin_urlname:'celery_inspect' original.pk %}">Inspect</a>
-            {# <a class="button" href="{% url opts|admin_urlname:'celery_result' original.pk %}">Result</a> #} {# This URL does not exist #}
         {% endif %}
     {% endif %}
 

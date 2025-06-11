@@ -79,19 +79,60 @@ body.tenant {
 
 #celery-status {
   padding: 10px 40px;
-  background-color: #1f2937;
-  &.STARTED{
+  &.status-started{
     background-color: #37b0f8;
   }
-  &.FAILURE{
+  &.status-failure {
     background-color: rgba(255, 37, 37, 0.65);
   }
-  &.INTERRUPTED{
+  &.status-interrupted {
     background-color: rgb(255, 196, 0);
     color: black;
   }
-  &.SUCCESS{
+  &.status-success {
     background-color: rgba(0, 255, 13, 0.57);
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-pending {
+    background-color: lightyellow;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-queued {
+    background-color: lightgoldenrodyellow;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-revoked {
+    background-color: lightgrey;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-canceled {
+    background-color: lightslategrey;
+    color: white;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-interrupted {
+    background-color: lightpink;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-retry {
+    background-color: lightsalmon;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-not-scheduled {
+    background-color: whitesmoke;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-missing {
+    background-color: lightgrey;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-received {
+    background-color: lightcyan;
+    padding: 5px; border-radius: 3px;
+  }
+  &.status-rejected {
+    background-color: lightcoral;
+    padding: 5px; border-radius: 3px;
   }
   .popup{
     position: absolute;

@@ -7,10 +7,9 @@ license = { text = "MIT" }
 authors = [
   { name = "sax", email = "s.apostolico@gmail.com" },
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
 dynamic = [ "version" ]
@@ -70,7 +69,7 @@ dependencies = [
   "flower",
   "geojson",
   "hatch>=1.14.1",
-  "htmlmin",
+  "htmlmin2",
   "natural-keys",
   "pathvalidate",
   "pdfkit",
