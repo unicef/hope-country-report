@@ -84,6 +84,10 @@ def notify_report_completion(report: "ReportConfiguration") -> int:
     if state.request:
         url = state.request.build_absolute_uri(url)
 
+    docs_url = report.get_documents_url()
+    if state.request:
+        docs_url = state.request.build_absolute_uri(docs_url)
+
     if config.CATCH_ALL_EMAIL:
         recipient_list = [config.CATCH_ALL_EMAIL]
     else:
@@ -101,7 +105,7 @@ def notify_report_completion(report: "ReportConfiguration") -> int:
 
 Report {report.title} has been successfully updated/created.
 
-you can view see/download produced documents at {report.get_documents_url()}
+You can view/download produced documents at {docs_url}
 
 
 Kind regards,
@@ -114,6 +118,7 @@ The HOPE Team
         "report": {
             "title": report.title,
             "url": url,
+            "documents_url": docs_url,
         },
     }
     return message.send()
