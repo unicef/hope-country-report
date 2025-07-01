@@ -132,7 +132,9 @@ class RequestAccessView(SelectedOfficeMixin, FormView[Any]):
         return ReportConfiguration.objects.get(country_office=self.selected_office, pk=self.kwargs["id"])
 
     def form_valid(self, form: "_ModelFormT") -> "HttpResponse":
-        res = send_request_access(self.request.user, self.get_object(), message=form.cleaned_data["message"])
+        res = send_request_access(
+            self.request.user, self.get_object(), message=form.cleaned_data["message"], request=self.request
+        )
         if res == 1:
             messages.success(self.request, _("Request sent."))
         return super().form_valid(form)
