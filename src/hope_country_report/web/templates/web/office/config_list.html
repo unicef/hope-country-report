@@ -1,4 +1,5 @@
-{% extends "web/office/_base.html" %}{% load colors filters i18n user_tz %}
+{% extends "web/office/_base.html" %}
+{% load colors filters i18n user_tz %}
 
 {% block content %}
     {% if request.GET %}
@@ -10,13 +11,12 @@
                                 class="tag {{ request.GET.tag|color }} ">{{ request.GET.tag }}</span></a>
                     {% endif %}
                     {% if request.GET.report %}
-                        <a href="{% build_filter_url "report" %}">{{ request.GET.report }}</a>
+                        <a href="{% build_filter_url "report" %}"><span class="tag grey">{{ report_filter_title|default:request.GET.report }}</span></a>
                     {% endif %}
                     {% if request.GET.active %}
-                        {% with status=request.GET.active|parse_bool|yesno:"t,f" %}
-                            <a href="{% build_filter_url "active" %}">
-                            <span class="tag blue">{{ status|parse_bool|yesno:"active, not active" }}</span></a>
-                        {% endwith %}
+                        <a href="{% build_filter_url "active" %}">
+                            <span class="tag blue">{{ request.GET.active|parse_bool|yesno:"active,not active" }}</span>
+                        </a>
                     {% endif %}
                 </div>
                 <div class="flex-shrink">
@@ -27,48 +27,134 @@
             </div>
         </div>
     {% endif %}
-
+    {% csrf_token %}
     <div class="box">
-        <table class="table-auto">
+        <table class="table-auto w-full">
             <thead class="text-left border-b  text-xs">
             <tr class="my-4 h-16">
-                <th>{% translate "Name" %}</th>
-                <th>{% translate "Active" %}</th>
-                <th>{% translate "Parametrized" %}</th>
-                <th>{% translate "Refreshed On" %}</th>
-                <th>{% translate "Scheduling" %}</th>
-                <th>{% translate "Restricted" %}</th>
-                <th>{% translate "Compress" %}</th>
-                <th>{% translate "Protected" %}</th>
+                <th><a class="hover:underline" href="?{{ sort_urls.title }}">{% translate "Name" %}</a></th>
+                <th><a class="hover:underline" href="?{{ sort_urls.active }}">{% translate "Active" %}</a></th>
+                <th><a class="hover:underline" href="?{{ sort_urls.parametrized }}">{% translate "Parametrized" %}</a></th>
+                <th><a class="hover:underline" href="?{{ sort_urls.last_run }}">{% translate "Refreshed On" %}</a></th>
+                <th><a class="hover:underline" href="?{{ sort_urls.schedule }}">{% translate "Scheduling" %}</a></th>
+                <th><a class="hover:underline" href="?{{ sort_urls.restricted }}">{% translate "Restricted" %}</a></th>
+                <th><a class="hover:underline" href="?{{ sort_urls.compress }}">{% translate "Compress" %}</a></th>
+                <th><a class="hover:underline" href="?{{ sort_urls.protect }}">{% translate "Protected" %}</a></th>
+                <th>{% translate "Status" %}</th>
                 <th>{% translate "Tags" %}</th>
+                <th>{% translate "Actions" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for report in reportconfiguration_list %}
                 <tr class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100 ">
                     <td><a class="underline"
-                           href="{% url "office-config" selected_office.slug report.pk %}">{{ report.title }}</a></td>
+                           href="?{% build_filter_url "report" report.name %}">{{ report.title }}</a></td>
                     <td>
                         {% with status=report.active|yesno:"t,f" %}
-                            <a href="{% build_filter_url "active" status %}">
+                            <a href="?{% build_filter_url "active" status %}">
                                 {{ report.active|as_bool_icon }}
                             </a>
                         {% endwith %}
                     </td>
                     <td>{{ report.query.parametrizer|as_bool_icon }}</td>
-                    <td>{{ updated_on|userdatetime:"-" }}</td>
+                    <td>{{ report.last_run|userdatetime:"-" }}</td>
                     <td>{{ report.schedule|as_icon:"icon-stop-watch,text-green," }}</td>
                     <td>{{ report.limit_access_to.count|as_group_icon }}</td>
                     <td>{{ report.compress|as_zip_icon }}</td>
                     <td>{{ report.protect|as_lock_icon }}</td>
+                    <td>
+                        <span class="tag {{ report.effective_status|lower|color }}">{{ report.effective_status|default:"-" }}</span>
+                    </td>
                     <td>{% for t in report.tags.all %}
-                        <a href="{% build_filter_url "tag" t.name %}"><span
+                        <a href="?{% build_filter_url "tag" t.name %}"><span
                                 class="tag {{ t.name|color }}">{{ t }}</span></a>
                     {% endfor %}
+                    </td>
+                    <td class="flex items-center space-x-2">
+                        <a href="{{ report.get_absolute_url }}">{% translate "View" %}</a>
+                        <button
+                           class="run-report-btn flex items-center space-x-1 px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                           data-url="{{ report.get_run_url }}"
+                           title="{% translate 'Run Report' %}"
+                           {% if report.is_running %}disabled{% endif %}>
+                           <div class="icon icon-refresh"></div>
+                           <span class="btn-text">{% if report.is_running %}{% translate "Running..." %}{% else %}{% translate "Run" %}{% endif %}</span>
+                        </button>
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+        {% if is_paginated %}
+            <div class="flex justify-center py-4">
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a class="px-2 py-1 border rounded" href="?page=1&{{ page_params }}">&laquo; {% translate "first" %}</a>
+                            <a class="px-2 py-1 border rounded" href="?page={{ page_obj.previous_page_number }}&{{ page_params }}">{% translate "previous" %}</a>
+                        {% endif %}
+
+                        <span class="current px-2 py-1">
+                            {% blocktranslate %}Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.{% endblocktranslate %}
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a class="px-2 py-1 border rounded" href="?page={{ page_obj.next_page_number }}&{{ page_params }}">{% translate "next" %}</a>
+                            <a class="px-2 py-1 border rounded" href="?page={{ page_obj.paginator.num_pages }}&{{ page_params }}">{% translate "last" %} &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        {% endif %}
     </div>
 {% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    document.querySelectorAll('.run-report-btn').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            const btn = this;
+            const url = btn.dataset.url;
+            const btnText = btn.querySelector('.btn-text');
+
+            if (window.confirm("{% translate 'Are you sure you want to run this report? This may take a while.' %}")) {
+                btn.disabled = true;
+                if(btnText) btnText.textContent = '{% translate "Queuing..." %}';
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.message || '{% translate "Failed to start task." %}') });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'ok') {
+                        if(btnText) btnText.textContent = '{% translate "Running..." %}';
+                    } else {
+                        throw new Error(data.message || '{% translate "An unknown error occurred." %}');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error: ' + error.message);
+                    btn.disabled = false;
+                    if(btnText) btnText.textContent = '{% translate "Run" %}';
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock extra_js %}

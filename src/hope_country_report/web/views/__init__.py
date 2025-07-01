@@ -15,5 +15,5 @@ from .generic import (  # noqa
     OfficePreferencesView,
     select_tenant,
 )
-from .report import OfficeConfigurationDetailView, OfficeConfigurationListView  # noqa
+from .report import OfficeConfigurationDetailView, OfficeConfigurationListView, OfficeConfigurationRunView  # noqa
 from .user import UserProfileView  # noqa
