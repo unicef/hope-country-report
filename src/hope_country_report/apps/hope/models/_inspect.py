@@ -1536,6 +1536,7 @@ class Financialinstitution(HopeModel):
     country = models.ForeignKey(
         Country, on_delete=models.DO_NOTHING, related_name="financialinstitution_country", blank=True, null=True
     )
+    swift_code = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
