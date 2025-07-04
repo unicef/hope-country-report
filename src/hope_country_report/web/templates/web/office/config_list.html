@@ -7,14 +7,14 @@
             <div class="flex items-center py-3">
                 <div class="flex-grow">
                     {% if request.GET.tag %}
-                        <a href="{% build_filter_url "tag" %}"><span
+                        <a href="?{% build_filter_url "tag" %}"><span
                                 class="tag {{ request.GET.tag|color }} ">{{ request.GET.tag }}</span></a>
                     {% endif %}
                     {% if request.GET.report %}
-                        <a href="{% build_filter_url "report" %}"><span class="tag grey">{{ report_filter_title|default:request.GET.report }}</span></a>
+                        <a href="?{% build_filter_url "report" %}"><span class="tag grey">{{ report_filter_title|default:request.GET.report }}</span></a>
                     {% endif %}
                     {% if request.GET.active %}
-                        <a href="{% build_filter_url "active" %}">
+                        <a href="?{% build_filter_url "active" %}">
                             <span class="tag blue">{{ request.GET.active|parse_bool|yesno:"active,not active" }}</span>
                         </a>
                     {% endif %}
@@ -76,10 +76,10 @@
                         <button
                            class="run-report-btn flex items-center space-x-1 px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
                            data-url="{{ report.get_run_url }}"
-                           title="{% translate 'Run Report' %}"
+                           title="{% translate 'Queue Report' %}"
                            {% if report.is_running %}disabled{% endif %}>
                            <div class="icon icon-refresh"></div>
-                           <span class="btn-text">{% if report.is_running %}{% translate "Running..." %}{% else %}{% translate "Run" %}{% endif %}</span>
+                           <span class="btn-text">{% if report.is_running %}{% translate "Running..." %}{% else %}{% translate "Queue" %}{% endif %}</span>
                         </button>
                     </td>
                 </tr>
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const url = btn.dataset.url;
             const btnText = btn.querySelector('.btn-text');
 
-            if (window.confirm("{% translate 'Are you sure you want to run this report? This may take a while.' %}")) {
+            if (window.confirm("{% translate 'Are you sure you want to queue this report for generation? This may take a while.' %}")) {
                 btn.disabled = true;
                 if(btnText) btnText.textContent = '{% translate "Queuing..." %}';
 
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.error('Error:', error);
                     alert('Error: ' + error.message);
                     btn.disabled = false;
-                    if(btnText) btnText.textContent = '{% translate "Run" %}';
+                    if(btnText) btnText.textContent = '{% translate "Queue" %}';
                 });
             }
         });
