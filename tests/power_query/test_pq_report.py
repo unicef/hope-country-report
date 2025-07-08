@@ -95,18 +95,19 @@ def query2(afg_user):
 
 @pytest.fixture()
 def report(query2: "Query", monkeypatch):
-    from testutils.factories import ReportConfigurationFactory
+    from testutils.factories import FormatterFactory, ReportConfigurationFactory
 
+    formatter = FormatterFactory()
     with mock.patch("hope_country_report.apps.power_query.models.report.notify_report_completion", Mock()):
-        return ReportConfigurationFactory(name="Celery Report", query=query2, owner=query2.owner)
+        report = ReportConfigurationFactory(name="Celery Report", query=query2, owner=query2.owner)
+        report.formatters.add(formatter)
+        return report
 
 
 @pytest.fixture()
-def report_with_co(report: "ReportConfiguration") -> "ReportConfiguration":
-    from testutils.factories import CountryOfficeFactory
-
+def report_with_co(report: "ReportConfiguration", afghanistan: "CountryOffice") -> "ReportConfiguration":
     if not report.country_office:
-        report.country_office = CountryOfficeFactory()
+        report.country_office = afghanistan
         report.save()
     if not report.query.country_office:
         report.query.country_office = report.country_office
@@ -244,34 +245,29 @@ def test_report_abstract(db, query_impl: "Query") -> None:
 
 @pytest.mark.django_db
 def test_report_queue_view(client, report_with_co: "ReportConfiguration") -> None:
-    from django.contrib.auth.models import ContentType, Permission
     from django.urls import reverse
 
     from hope_country_report.apps.power_query.models import ReportConfiguration
 
     user = report_with_co.owner
-    ct = ContentType.objects.get_for_model(ReportConfiguration)
-    permission = Permission.objects.get(codename="change_reportconfiguration", content_type=ct)
-    user.user_permissions.add(permission)
-
     client.force_login(user)
 
     url = reverse("office-config-run", args=[report_with_co.country_office.slug, report_with_co.pk])
 
-    with mock.patch.object(ReportConfiguration, "apply_async") as mock_apply_async:
-        response = client.post(url)
-        assert response.status_code == 200
-        assert response.json() == {"status": "ok", "message": "Report task queued."}
-        mock_apply_async.assert_called_once()
+    response = client.post(url)
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "message": "Report task queued."}
 
     report_with_co.refresh_from_db()
+    assert report_with_co.task_status == report_with_co.SUCCESS
+
     with mock.patch.object(ReportConfiguration, "is_running", new_callable=mock.PropertyMock) as mock_is_running:
         mock_is_running.return_value = True
         response = client.post(url)
         assert response.status_code == 409
         assert response.json() == {"status": "error", "message": "Report is already running."}
 
-    user.user_permissions.remove(permission)
+    user.groups.clear()
     client.force_login(user)
     response = client.post(url)
     assert response.status_code == 403
