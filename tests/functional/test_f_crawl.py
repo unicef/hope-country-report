@@ -5,11 +5,11 @@ import pytest
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from testutils.selenium import SmartDriver
 
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
-    from testutils.selenium import SmartDriver
     from hope_country_report.apps.core.models import CountryOffice, User
     from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument
 
@@ -56,7 +56,7 @@ def report_document(afghanistan, afg_user):
 
 
 @pytest.mark.selenium
-def test_no_co_available(browser: "SmartDriver", no_roles_user):
+def test_no_co_available(browser: SmartDriver, no_roles_user):
     """user without any roles will not have any CO available"""
     browser.go("/")
 
@@ -70,7 +70,7 @@ def test_no_co_available(browser: "SmartDriver", no_roles_user):
 
 
 @pytest.mark.selenium
-def test_login(browser: "SmartDriver", afg_user):
+def test_login(browser: SmartDriver, afg_user):
     """user can access only allows CO"""
     browser.go("/")
 
@@ -115,7 +115,7 @@ def test_report_list(browser: "SmartDriver", report_document: "ReportDocument"):
 
 
 @pytest.mark.selenium
-def test_report_config(browser: "SmartDriver", report_document: "ReportDocument"):
+def test_report_config(browser: SmartDriver, report_document: "ReportDocument"):
     config: ReportConfiguration = report_document.report
     user: User = config.owner
     # browser.go("/")
