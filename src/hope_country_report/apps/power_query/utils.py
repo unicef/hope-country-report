@@ -149,10 +149,10 @@ def sentry_tags(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-def load_font_for_language(language: str, font_size: int = 12):
+def load_font_for_language(language: str, font_size: int = 12) -> ImageFont.FreeTypeFont:
     """Returns the appropriate font for the given language."""
     # Base directory for fonts
-    base_font_path = Path(settings.PACKAGE_DIR) / "web" / "static" / "fonts"
+    base_font_path = Path(settings.STATIC_ROOT) / "fonts"
     font_files = {
         "arabic": base_font_path / "NotoNaskhArabic-Bold.ttf",
         "cyrillic": base_font_path / "FreeSansBold.ttf",
@@ -272,17 +272,15 @@ def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fi
 def apply_exif_orientation(image: Image.Image) -> Image.Image:
     """Adjusts the image based on EXIF orientation metadata."""
     try:
-        exif = image._getexif()
+        exif = image.getexif()
         if exif is not None:
-            for tag, value in exif.items():
-                if ExifTags.TAGS.get(tag) == "Orientation":
-                    if value == 3:  # Upside down
-                        image = image.rotate(180, expand=True)
-                    elif value == 6:  # Rotated 90° counterclockwise
-                        image = image.rotate(270, expand=True)
-                    elif value == 8:  # Rotated 90° clockwise
-                        image = image.rotate(90, expand=True)
-                    break
+            orientation = exif.get(ExifTags.TAGS.get("Orientation"))
+            if orientation == 3:
+                image = image.rotate(180, expand=True)
+            elif orientation == 6:
+                image = image.rotate(270, expand=True)
+            elif orientation == 8:
+                image = image.rotate(90, expand=True)
     except Exception as e:
         logger.warning(f"Failed to apply EXIF orientation: {e}")
         capture_exception(e)
