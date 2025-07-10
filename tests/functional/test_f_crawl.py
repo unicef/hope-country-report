@@ -10,7 +10,6 @@ from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from testutils.selenium import SmartDriver
-
     from hope_country_report.apps.core.models import CountryOffice, User
     from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument
 
