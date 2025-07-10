@@ -19,8 +19,3 @@ logs/
 *.swp
 *.swo
 .venv/
-.cache/
-.mypy_cache/
-.ruff_cache/
-.tox/
-.pytest_cache/
