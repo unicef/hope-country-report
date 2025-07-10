@@ -28,31 +28,30 @@ permissions:
 
 
 jobs:
-  changes:
-    if: (github.event_name != 'pull_request'
-            || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
-            || github.event_name == 'create'
-    runs-on: ubuntu-latest
-    timeout-minutes: 1
-    defaults:
-      run:
-        shell: bash
-    outputs:
-      run_tests: ${{ steps.changes.outputs.run_tests }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - id: changes
-        name: Check for file changes
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
-        with:
-          base: ${{ github.ref }}
-          token: ${{ github.token }}
-          filters: .github/file-filters.yml
-
+#  changes:
+#    if: (github.event_name != 'pull_request'
+#            || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
+#            || github.event_name == 'create'
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 1
+#    defaults:
+#      run:
+#        shell: bash
+#    outputs:
+#      run_tests: ${{ steps.changes.outputs.run_tests }}
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#      - id: changes
+#        name: Check for file changes
+#        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+#        with:
+#          base: ${{ github.ref }}
+#          token: ${{ github.token }}
+#          filters: .github/file-filters.yml
   test:
-    needs: [ changes ]
-    if: needs.changes.outputs.run_tests == 'true'
+#    needs: [ changes ]
+#    if: needs.changes.outputs.run_tests == 'true'
     runs-on: ubuntu-latest
     outputs:
       image: ${{ env.IMAGE }}
@@ -130,9 +129,9 @@ jobs:
         shell: bash
         run: |
           set -x
-          LOCK_SHA=$(sha1sum uv.lock docker/bin/* docker/conf/* docker/Dockerfile | sha1sum | awk '{print $1}' | cut -c 1-8)
+          pip install "hatch[vcs]"
+          echo "VERSION=$(hatch version)" >> $GITHUB_ENV
           IMAGE=$(echo '${{env.DOCKER_METADATA_OUTPUT_JSON}}' | jq '.tags[0]')
-          echo "checksum=$LOCK_SHA" >> "$GITHUB_ENV"
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date +"%Y-%m-%d %H:%M" )" >> $GITHUB_ENV
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
@@ -141,6 +140,7 @@ jobs:
         run: |
              docker build \
                 --target tests \
+                --build-arg "VERSION=${{env.VERSION}}" \
                 -t ${{env.IMAGE}} \
                 --cache-from "type=gha" \
                 --cache-to "type=gha,mode=max" \
@@ -148,21 +148,32 @@ jobs:
 
       - name: Run Test suite
         run: |
-            mkdir output
+            mkdir output latest_logs
             docker run --rm \
               --network host \
-              -e PYTHONPATH=/app/src \
               -e DATABASE_URL=${DATABASE_URL} \
-              -e CELERY_BROKER_URL=redis://localhost:6379/1 \
-              -e CACHE_URL=redis://localhost:6379/2 \
+              -e CELERY_BROKER_URL=${CELERY_BROKER_URL} \
+              -e CACHE_URL=${CACHE_URL} \
+              -e DJANGO_ADMIN_URL=admin \
+              -e GITHUB_ACTIONS=1 \
               -e SECRET_KEY=super-secret-key-just-for-testing \
               -e DATABASE_HOPE_URL=${DATABASE_HOPE_URL} \
               -v "./output/:/app/output" \
+              -v "./latest_logs/:/app/latest_logs" \
               -v "./src/:/app/src" \
               -v "./tests:/app/tests" \
               -v "./pytest.ini:/app/pytest.ini" \
               -t ${{env.IMAGE}} \
-              pytest tests/ --create-db -n auto -v --maxfail=5 --migrations --cov-report xml:./output/coverage.xml
+              tox -e d52-py313
+
+      - name: Archive selenium results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selenium-log-report
+          path: latest_logs
+          retention-days: 5
+
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -174,3 +185,29 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: false
           name: codecov-${{env.GITHUB_REF_NAME}}
+
+  release:
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: DockerHub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build Distro
+        run: |
+            docker build \
+                --target dist \
+                --cache-from "type=gha" \
+                --cache-to "type=gha,mode=max" \
+                --build-arg "VERSION=${{needs.test.outputs.commit}}" \
+                --build-arg "BUILD_DATE=${{needs.test.outputs.build_date}}" \
+                --build-arg "BRANCH=${{needs.test.outputs.branch}}" \
+                -t ${{needs.test.outputs.image}} \
+                -f docker/Dockerfile .
+            docker push ${{needs.test.outputs.image}}
+            docker inspect ${{needs.test.outputs.image}} | jq -r '.[0].Config.Labels'
+            echo "::notice::✅ Image ${{needs.test.outputs.image}} built and pushed"

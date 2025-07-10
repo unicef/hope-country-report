@@ -67,6 +67,7 @@ RUN pip install uv uwsgi
 # ------- tests -------
 FROM builder AS tests
 ARG BUILD_DATE
+ARG VERSION
 ARG GIT_SHA
 
 LABEL distro="tests"
@@ -79,24 +80,24 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
-    UWSGI_PROCESSES=4
+    UWSGI_PROCESSES=4 \
+    HATCH_BUILD_HOOKS_VCS_AFFECTED_PROJECTS="unicef-hope-country-report" \
+    HATCH_BUILD_HOOKS_VCS_VERSION=${VERSION:-"0.1.0.dev0+local"} \
+    SETUPTOOLS_SCM_PRETEND_VERSION_FOR_UNICEF_HOPE_COUNTRY_REPORT=${VERSION:-"0.1.0.dev0+local"}
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
 COPY --chown=hope:unicef . /app/
 
 RUN --mount=type=cache,target=/root/.uv-cache \
-    find ../src -name 'node_modules' -prune \
-        -o -name *.py -o -name *.html -o -name *.js -o -name *.css \
-        -type f \
-        -exec ls -l "{}" \;  | sha1sum | awk '{print $1}' > CODE_CHECKSUM \
-    && uv sync --cache-dir=/root/.uv-cache \
+    uv sync --cache-dir=/root/.uv-cache \
         --python=/usr/local/bin/python \
         --python-preference=system \
         --frozen
 
 # ------- production only deps-------
 FROM builder AS production
+ARG VERSION
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     PYTHONUNBUFFERED=1 \
@@ -104,7 +105,10 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
     UWSGI_PROCESSES=4 \
-    VERSION="${VERSION}"
+    VERSION="${VERSION}" \
+    HATCH_BUILD_HOOKS_VCS_AFFECTED_PROJECTS="unicef-hope-country-report" \
+    HATCH_BUILD_HOOKS_VCS_VERSION=${VERSION:-"0.1.0.dev0+local"} \
+    SETUPTOOLS_SCM_PRETEND_VERSION_FOR_UNICEF_HOPE_COUNTRY_REPORT=${VERSION:-"0.1.0.dev0+local"}
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
@@ -121,6 +125,7 @@ RUN --mount=type=cache,target=/root/.uv-cache \
 # ------- dist -------
 FROM base_os AS dist
 ARG BUILD_DATE
+ARG VERSION
 ARG GIT_SHA
 ARG BRANCH
 
@@ -137,7 +142,10 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     PGSSLCERT="/tmp/postgresql.crt" \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
-    UWSGI_PROCESSES=4
+    UWSGI_PROCESSES=4 \
+    HATCH_BUILD_HOOKS_VCS_AFFECTED_PROJECTS="unicef-hope-country-report" \
+    HATCH_BUILD_HOOKS_VCS_VERSION=${VERSION:-"0.1.0.dev0+local"} \
+    SETUPTOOLS_SCM_PRETEND_VERSION_FOR_UNICEF_HOPE_COUNTRY_REPORT=${VERSION:-"0.1.0.dev0+local"}
 
 RUN <<EOF cat> /RELEASE
 {"version": "$VERSION",
@@ -164,7 +172,6 @@ CMD ["run"]
 
 LABEL distro="final"
 LABEL maintainer="hope@unicef.org"
-LABEL cheksum="$CHECKSUM"
 
 LABEL org.opencontainers.image.authors="hope@unicef.org"
 LABEL org.opencontainers.image.description="Hope Country Report"
