@@ -94,6 +94,9 @@ RUN --mount=type=cache,target=/root/.uv-cache \
         --python=/usr/local/bin/python \
         --python-preference=system \
         --frozen
+RUN django-admin collectstatic --noinput
+COPY docker/bin/* /usr/local/bin/
+ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
 
 # ------- production only deps-------
 FROM builder AS production
