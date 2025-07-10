@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: tests
-    command: pytest tests/ -n auto -v --maxfail=5 --migrations --cov-report xml:./output/coverage.xml --cov-report term-missing --cov=hope_country_report
+    command: run_tests
     environment:
       - ALLOWED_HOSTS=*
       - AZURE_TENANT_ID=
@@ -23,7 +23,7 @@ services:
       - EMAIL_USE_TLS=
       - EMAIL_USE_SSL=
       - FILE_STORAGE_DEFAULT=django.contrib.staticfiles.storage.StaticFilesStorage
-      - FILE_STORAGE_HOPE=django.core.files.storage.FileSystemStorage
+      - FILE_STORAGE_HOPE=django.contrib.staticfiles.storage.StaticFilesStorage
       - FILE_STORAGE_MEDIA=django.contrib.staticfiles.storage.StaticFilesStorage
       - FILE_STORAGE_STATIC=django.contrib.staticfiles.storage.StaticFilesStorage
       - MAILJET_API_KEY=
@@ -35,7 +35,7 @@ services:
       - SESSION_COOKIE_NAME=hcr_session
       - SESSION_COOKIE_PATH=/
       - SESSION_COOKIE_SECURE=False
-      - STATIC_ROOT=/
+      - STATIC_ROOT=/var/run/app/static
       - STATIC_URL=/static/
       - SECURE_SSL_REDIRECT=False
       - SECRET_KEY=secret-key
