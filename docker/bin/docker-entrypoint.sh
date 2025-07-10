@@ -52,6 +52,7 @@ case "$1" in
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery flower
         ;;
     run_tests)
+        django-admin collectstatic --noinput
         exec tini -- gosu hope:unicef pytest
         ;;
     *)
