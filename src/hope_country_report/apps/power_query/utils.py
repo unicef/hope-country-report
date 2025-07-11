@@ -11,15 +11,18 @@ from collections.abc import Callable, Iterable
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
 import fitz
 import qrcode
+import requests
 import tablib
 from constance import config
 from PIL import ExifTags, Image, ImageDraw, ImageFont
@@ -149,20 +152,37 @@ def sentry_tags(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
+def get_font_url(font_filename: str) -> str:
+    """Constructs an absolute URL for a given font file."""
+    font_path = f"fonts/{font_filename}"
+    font_url = staticfiles_storage.url(font_path)
+    if not font_url.startswith(("http://", "https://")):
+        font_url = urljoin(settings.HOST, font_url)
+    return font_url
+
+
 def load_font_for_language(language: str, font_size: int = 12) -> ImageFont.FreeTypeFont:
-    """Returns the appropriate font for the given language."""
-    # Base directory for fonts
-    base_font_path = Path(settings.STATIC_ROOT) / "fonts"
-    font_files = {
-        "arabic": base_font_path / "NotoNaskhArabic-Bold.ttf",
-        "cyrillic": base_font_path / "FreeSansBold.ttf",
-        "bengali": base_font_path / "NotoSansBengali-Bold.ttf",
-        "burmese": base_font_path / "NotoSerifMyanmar-Bold.ttf",
+    """Returns the appropriate font for the given language by fetching it from its static URL."""
+    font_filenames = {
+        "arabic": "NotoNaskhArabic-Bold.ttf",
+        "cyrillic": "FreeSansBold.ttf",
+        "bengali": "NotoSansBengali-Bold.ttf",
+        "burmese": "NotoSerifMyanmar-Bold.ttf",
     }
 
-    default_font = base_font_path / "FreeSansBold.ttf"
-    font_path = font_files.get(language, default_font)
-    return ImageFont.truetype(str(font_path), size=font_size)
+    default_font_filename = "FreeSansBold.ttf"
+    font_filename = font_filenames.get(language, default_font_filename)
+    font_url = get_font_url(font_filename)
+
+    try:
+        response = requests.get(font_url, timeout=10)
+        response.raise_for_status()
+        font_data = BytesIO(response.content)
+        return ImageFont.truetype(font_data, size=font_size)
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to fetch font from {font_url}: {e}")
+        capture_exception(e)
+        raise
 
 
 def get_field_rect(document: fitz.Document, field_name: str) -> tuple[fitz.Rect, int] | None:

@@ -21,6 +21,7 @@ from hope_country_report.apps.power_query.utils import (
     convert_pdf_to_image_pdf,
     dict_hash,
     get_field_rect,
+    get_font_url,
     get_sentry_url,
     insert_qr_code,
     insert_special_image,
@@ -203,7 +204,20 @@ def test_get_field_rect(sample_pdf: fitz.Document) -> None:
     assert page_index == 0
 
 
-def test_insert_special_language_image():
+def test_insert_special_language_image(mocked_responses):
+    expected_font_name = "NotoNaskhArabic-Bold.ttf"
+    font_url = get_font_url(expected_font_name)
+
+    font_file_path = resource_path(f"web/static/fonts/{expected_font_name}")
+    with open(font_file_path, "rb") as f:
+        font_content = f.read()
+
+    mocked_responses.add(
+        "GET",
+        font_url,
+        body=font_content,
+        status=200,
+    )
     text = "الافترايفكتس و البريمير و الافد ميدا كومبوزر"
     rect = fitz.Rect(0, 0, 200, 200)
     language = "arabic"
@@ -219,7 +233,20 @@ def test_convert_pdf_to_image_pdf(sample_pdf):
     assert len(new_pdf) == 1
 
 
-def test_insert_special_image(sample_pdf: fitz.Document) -> None:
+def test_insert_special_image(mocked_responses, sample_pdf: fitz.Document) -> None:
+    expected_font_name = "NotoNaskhArabic-Bold.ttf"
+    font_url = get_font_url(expected_font_name)
+
+    font_file_path = resource_path(f"web/static/fonts/{expected_font_name}")
+    with open(font_file_path, "rb") as f:
+        font_content = f.read()
+
+    mocked_responses.add(
+        "GET",
+        font_url,
+        body=font_content,
+        status=200,
+    )
     text_info = {"value": "الافترايفكتس و البريمير و الافد ميدا كومبوزر", "language": "arabic"}
     field_name = "Cognome_ar"
     page = sample_pdf[0]
@@ -263,9 +290,24 @@ def test_dict_hash():
         ("unknown_language", "FreeSansBold.ttf"),
     ],
 )
-def test_load_font_for_language(language, expected_font_name):
+def test_load_font_for_language(mocked_responses, language, expected_font_name):
+    font_url = get_font_url(expected_font_name)
+
+    font_file_path = resource_path(f"web/static/fonts/{expected_font_name}")
+    with open(font_file_path, "rb") as f:
+        font_content = f.read()
+
+    mocked_responses.add(
+        "GET",
+        font_url,
+        body=font_content,
+        status=200,
+    )
+
     font = load_font_for_language(language)
-    assert Path(font.path).name == expected_font_name
+    assert font is not None
+    assert len(mocked_responses.calls) == 1
+    assert mocked_responses.calls[0].request.url == font_url
 
 
 @pytest.mark.parametrize(
