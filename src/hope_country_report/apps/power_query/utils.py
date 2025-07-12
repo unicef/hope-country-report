@@ -159,7 +159,7 @@ def load_font_for_language(language: str, font_size: int = 12) -> ImageFont.Free
         "burmese": base_font_path / "NotoSerifMyanmar-Bold.ttf",
     }
 
-    default_font_filename = "FreeSansBold.ttf"
+    default_font_filename = base_font_path / "FreeSansBold.ttf"
     font_filename = font_filenames.get(language, default_font_filename)
 
     return ImageFont.truetype(str(font_filename), size=font_size)
