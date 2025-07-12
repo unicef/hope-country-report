@@ -1,9 +1,9 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 import json
 
 from django.core.serializers import serialize
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import HttpRequest, JsonResponse, StreamingHttpResponse
 
 from django_filters import rest_framework as filters
 from rest_framework import permissions, viewsets
@@ -24,9 +24,6 @@ from .serializers import (
     ReportDocumentSerializer,
 )
 
-if TYPE_CHECKING:
-    from ..types.http import AnyRequest
-
 
 class SelectedOfficeViewSet(viewsets.ReadOnlyModelViewSet):
     def selected_office(self) -> CountryOffice:
@@ -38,12 +35,12 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LocationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
-    def list(self, request: "AnyRequest", *args: tuple[Any], **kwargs: dict[str, str]) -> Response:
+    def list(self, request: HttpRequest, *args: tuple[Any], **kwargs: dict[str, str]) -> Response:
         return Response({})
 
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
-    def topology(self, request: "AnyRequest") -> JsonResponse:
+    def topology(self, request: HttpRequest) -> JsonResponse:
         from pytopojson import topology
 
         topology_ = topology.Topology()
@@ -64,13 +61,13 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     # @method_decorator(cache_page(60*60*2))
-    def boundaries(self, request: "AnyRequest") -> JsonResponse:
+    def boundaries(self, request: HttpRequest) -> JsonResponse:
         qs = CountryShape.objects.all()
         ser = BoundarySerializer(qs, many=True)
         return JsonResponse(ser.data, content_type="application/json")
 
     @action(detail=False)
-    def offices(self, request: "AnyRequest") -> JsonResponse:
+    def offices(self, request: HttpRequest) -> JsonResponse:
         qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name", "active")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
 
@@ -131,7 +128,7 @@ class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOn
     @action(detail=True)
     def download(
         self,
-        request: "AnyRequest",
+        request: HttpRequest,
         parent_lookup_report__country_office__slug: str,
         parent_lookup_report__id: str,
         pk: str,

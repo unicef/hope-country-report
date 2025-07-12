@@ -1,76 +1,73 @@
 FROM python:3.13-slim-bookworm AS base_os
+
+# Common arguments
 ARG GOSU_VERSION=1.17
 ARG GOSU_SHA256=bbc4136d03ab138b1ad66fa4fc051bafc6cc7ffae632b069a53657279a450de3
 ARG BUILD_DATE
 ARG VERSION
 ARG GIT_SHA
 
-RUN set -x \
-  && runtimeDeps=" \
-    libgdal-dev \
-    libmagic1 \
-    libxml2 \
-    wkhtmltopdf \
-    tini \
-  " \
-  && buildDeps=" \
-wget \
-" \
-  && apt-get update && apt-get install -y --no-install-recommends ${buildDeps} ${runtimeDeps} \
-  && rm -rf /var/lib/apt/lists/* \
-  && wget --quiet -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64" \
-  && echo "$GOSU_SHA256 /usr/local/bin/gosu" | sha256sum --check --status \
-  && chmod +x /usr/local/bin/gosu \
-  && apt-get purge -y --auto-remove $buildDeps
+# Install runtime dependencies and gosu
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgdal-dev libmagic1 libxml2 wkhtmltopdf tini wget && \
+    wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64" && \
+    echo "$GOSU_SHA256 /usr/local/bin/gosu" | sha256sum --check --status && \
+    chmod +x /usr/local/bin/gosu && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN groupadd --gid 1024 unicef \
-    && adduser --disabled-login --disabled-password --no-create-home --ingroup unicef -q hope
+# Create application user
+RUN groupadd --gid 1024 unicef && \
+    adduser --disabled-login --disabled-password --no-create-home --ingroup unicef -q hope
 
-
-# ------- builder -------
+# ======= BUILDER =======
 FROM base_os AS builder
-RUN set -x \
-    && buildDeps="build-essential \
-cmake \
-curl \
-gcc \
-git \
-libfontconfig1 \
-libgconf-2-4 \
-libglib2.0-0 \
-libnss3 \
-libssl-dev \
-libxml2-dev  \
-python3-dev \
-zlib1g-dev  \
-" \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends $buildDeps \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gnupg wget curl unzip && \
+# Install build tools and Chrome
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake curl gcc git libfontconfig1 libgconf-2-4 \
+    libglib2.0-0 libnss3 libssl-dev libxml2-dev python3-dev zlib1g-dev \
+    gnupg unzip && \
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list && \
-    apt-get update -y && \
-    apt-get install -y --no-install-recommends google-chrome-stable && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt/* && \
+    apt-get update && apt-get install -y google-chrome-stable && \
     CHROME_VERSION=$(google-chrome --product-version) && \
-    wget -q --continue -P /chromedriver "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROME_VERSION/linux64/chromedriver-linux64.zip" && \
+    wget -q -P /chromedriver "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/$CHROME_VERSION/linux64/chromedriver-linux64.zip" && \
     unzip /chromedriver/chromedriver* -d /usr/local/bin/ && \
-    rm -rf /chromedriver
+    rm -rf /var/lib/apt/lists/* /chromedriver
 
-RUN pip install uv uwsgi
+# Install build tools
+RUN pip install uv uwsgi && \
+    python -m venv /venv
 
-# ------- tests -------
+# ======= PRODUCTION =======
+FROM builder AS production
+WORKDIR /app
+COPY pyproject.toml uv.lock README.md ./
+COPY src ./src
+COPY .git /app/.git/
+
+ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
+    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT=/venv \
+    VIRTUAL_ENV=/venv \
+    UWSGI_PROCESSES=4
+
+
+RUN --mount=type=cache,target=/root/.uv-cache \
+    uv sync --cache-dir=/root/.uv-cache \
+        --python=/venv/bin/python \
+        --python-preference=system \
+        --no-dev --no-editable --frozen
+
+RUN rm -rf /app/.git
+
+# ======= TESTS =======
 FROM builder AS tests
-ARG BUILD_DATE
-ARG VERSION
-ARG GIT_SHA
+WORKDIR /app
+COPY --chown=hope:unicef . .
 
-LABEL distro="tests"
 LABEL org.opencontainers.image.created="$BUILD_DATE"
 LABEL org.opencontainers.image.version="$VERSION"
 
@@ -81,106 +78,53 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
     UWSGI_PROCESSES=4 \
-    HATCH_BUILD_HOOKS_VCS_AFFECTED_PROJECTS="unicef-hope-country-report" \
-    HATCH_BUILD_HOOKS_VCS_VERSION=${VERSION:-"0.1.0.dev0+local"} \
-    SETUPTOOLS_SCM_PRETEND_VERSION_FOR_UNICEF_HOPE_COUNTRY_REPORT=${VERSION:-"0.1.0.dev0+local"}
-
-WORKDIR /app
-COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
-COPY --chown=hope:unicef . /app/
+    TOX_WORKDIR=/app/.tox
 
 RUN --mount=type=cache,target=/root/.uv-cache \
     uv sync --cache-dir=/root/.uv-cache \
-        --python=/usr/local/bin/python \
+        --python=/venv/bin/python \
         --python-preference=system \
         --frozen
 
-# ------- production only deps-------
-FROM builder AS production
-ARG VERSION
-ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
-    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    UV_PROJECT_ENVIRONMENT=/venv \
-    VIRTUAL_ENV=/venv \
-    UWSGI_PROCESSES=4 \
-    VERSION="${VERSION}" \
-    HATCH_BUILD_HOOKS_VCS_AFFECTED_PROJECTS="unicef-hope-country-report" \
-    HATCH_BUILD_HOOKS_VCS_VERSION=${VERSION:-"0.1.0.dev0+local"} \
-    SETUPTOOLS_SCM_PRETEND_VERSION_FOR_UNICEF_HOPE_COUNTRY_REPORT=${VERSION:-"0.1.0.dev0+local"}
+COPY docker/bin/* /usr/local/bin/
+ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
 
-WORKDIR /app
-COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
-COPY src /app/src/
-
-RUN --mount=type=cache,target=/root/.uv-cache \
-    uv sync --cache-dir=/root/.uv-cache \
-        --python=/usr/local/bin/python \
-        --python-preference=system \
-        --no-dev --frozen
-
-
-
-# ------- dist -------
+# ======= FINAL DIST =======
 FROM base_os AS dist
 ARG BUILD_DATE
 ARG VERSION
 ARG GIT_SHA
 ARG BRANCH
 
-ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
-    DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
-    BUILD_DATE=$BUILD_DATE \
-    GIT_SHA=$GIT_SHA \
-    VERSION=$VERSION \
-    BRANCH=$BRANCH \
+# Environment setup
+ENV PATH="/venv/bin:/usr/local/bin/:/usr/bin:/bin:$PATH" \
+    DJANGO_SETTINGS_MODULE="hope_country_report.config.settings" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    STATIC_URL="/static/" \
-    PYTHONPATH=""\
-    PGSSLCERT="/tmp/postgresql.crt" \
-    UV_PROJECT_ENVIRONMENT=/venv \
-    VIRTUAL_ENV=/venv \
-    UWSGI_PROCESSES=4 \
-    HATCH_BUILD_HOOKS_VCS_AFFECTED_PROJECTS="unicef-hope-country-report" \
-    HATCH_BUILD_HOOKS_VCS_VERSION=${VERSION:-"0.1.0.dev0+local"} \
-    SETUPTOOLS_SCM_PRETEND_VERSION_FOR_UNICEF_HOPE_COUNTRY_REPORT=${VERSION:-"0.1.0.dev0+local"}
+    UWSGI_PROCESSES=4
 
-RUN <<EOF cat> /RELEASE
-{"version": "$VERSION",
- "commit": "$GIT_SHA",
- "date": "$BUILD_DATE",
-}
-EOF
 WORKDIR /app
+
+# Copy application files
 COPY docker/conf /conf/
 COPY docker/bin/* /usr/local/bin/
-
-COPY --chown=hope:unicef . /app/
-
-COPY --chown=hope:unicef --from=production /venv /venv
+COPY --from=production /venv /venv
 COPY --from=builder /usr/local/bin/uwsgi /usr/local/bin/uv /usr/local/bin/
-RUN --mount=type=cache,target=/root/.uv-cache \
-    uv --cache-dir=/root/.uv-cache  pip install --no-deps . \
-    && rm -fr /app/*
+COPY pyproject.toml uv.lock README.md ./
+COPY src ./src
+
+# Labels
+LABEL distro="final" \
+      maintainer="hope@unicef.org" \
+      org.opencontainers.image.authors="hope@unicef.org" \
+      org.opencontainers.image.description="Hope Country Report" \
+      org.opencontainers.image.documentation="https://github.com/unicef/hope-country-report/" \
+      org.opencontainers.image.title="Hope Country Report" \
+      org.opencontainers.image.revision="$GIT_SHA" \
+      org.opencontainers.image.vendor="UNICEF" \
+      org.opencontainers.image.created="$BUILD_DATE" \
+      org.opencontainers.image.version="$VERSION"
 
 EXPOSE 8000
-ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["run"]
-
-
-LABEL distro="final"
-LABEL maintainer="hope@unicef.org"
-
-LABEL org.opencontainers.image.authors="hope@unicef.org"
-LABEL org.opencontainers.image.description="Hope Country Report"
-LABEL org.opencontainers.image.documentation="https://github.com/unicef/hope-country-report/"
-LABEL org.opencontainers.image.title="Hope Payment Gateway"
-LABEL org.opencontainers.image.licenses="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${GIT_SHA:-master}/LICENSE"
-LABEL org.opencontainers.image.revision=$GIT_SHA
-LABEL org.opencontainers.image.source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/${GIT_SHA:-master}/"
-LABEL org.opencontainers.image.url="https://hub.docker.com/repository/docker/unicef/hope-country-report/tags/"
-LABEL org.opencontainers.image.vendor="UNICEF"
-LABEL org.opencontainers.image.created="$BUILD_DATE"
-LABEL org.opencontainers.image.version="$VERSION"

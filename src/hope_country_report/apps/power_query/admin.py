@@ -77,7 +77,7 @@ class AutoProjectCol(admin.ModelAdmin):
 
 
 @admin.register(Query)
-class QueryAdmin(
+class QueryAdmin(  # type: ignore[misc]
     AdminFiltersMixin,
     AutoProjectCol,
     CeleryTaskModelAdmin,
@@ -113,7 +113,7 @@ class QueryAdmin(
     def success(self, obj: Query) -> bool:
         return not bool(obj.error_message)
 
-    success.boolean = True
+    success.boolean = True  # type: ignore[attr-defined]
 
     def change_view(
         self, request: "HttpRequest", object_id: str, form_url: str = "", extra_context: "dict[str, Any] | None" = None
@@ -122,8 +122,8 @@ class QueryAdmin(
 
     @button(label="Inspect", icon="search")
     def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
-        self.object = self.get_object(request, pk)
-        ctx = self.get_common_context(request, pk=pk, object=self.object)
+        self.object = self.get_object(request, str(pk))
+        ctx = self.get_common_context(request, pk=str(pk), object=self.object)
         ctx["object"] = self.object
         return render(
             request,
@@ -136,14 +136,14 @@ class QueryAdmin(
 
     @button()
     def explain(self, request: HttpRequest, pk: int) -> HttpResponse:
-        context = self.get_common_context(request, pk)
+        context = self.get_common_context(request, str(pk))
         if request.method == "POST":
             form = ExplainQueryForm(request.POST)
             if form.is_valid():
                 q = form.cleaned_data["query"]
                 ct: ContentType = form.cleaned_data["target"]
                 code = f"""sql={q}.query"""
-                locals_ = {"conn": ct.model_class().objects}
+                locals_ = {"conn": ct.model_class().objects}  # type: ignore
                 exec(code, globals(), locals_)
                 sql = locals_.get("sql")
                 if sql:
@@ -168,10 +168,11 @@ class QueryAdmin(
             return HttpResponseRedirect(f"{url}?query__exact={obj.pk}")
         except Exception as e:  # pragma: no cover
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
+            return HttpResponseRedirectToReferrer(request)
 
     @button(visible=settings.DEBUG)
     def run(self, request: HttpRequest, pk: int) -> HttpResponse:
-        ctx = self.get_common_context(request, pk, title="Run results")
+        ctx = self.get_common_context(request, str(pk), title="Run results")
         query = self.get_object(request, str(pk))
         results = query.execute_matrix(persist=True)
         self.message_user(request, "Done", messages.SUCCESS)
@@ -182,7 +183,7 @@ class QueryAdmin(
     def preview(self, request: HttpRequest, pk: int) -> HttpResponse | HttpResponseRedirect:
         obj: Query = self.get_object(request, str(pk))
         try:
-            context = self.get_common_context(request, pk, title="Results")
+            context = self.get_common_context(request, str(pk), title="Results")
             if obj.parametrizer:
                 args = obj.parametrizer.get_matrix()[0]
             else:
@@ -239,10 +240,12 @@ class FileProviderAdmin(admin.ModelAdmin):
     @button()
     def _check_files(self, request: HttpRequest) -> HttpResponse:
         self.check_files(request, self.model.objects.all())
+        self.message_user(request, "File check complete")
+        return HttpResponseRedirectToReferrer(request)
 
 
 @admin.register(Dataset)
-class DatasetAdmin(
+class DatasetAdmin(  # type: ignore[misc]
     AdminFiltersMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
@@ -290,14 +293,14 @@ class DatasetAdmin(
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def analyze(self, request: HttpRequest, pk: int) -> HttpResponse:
-        context = self.get_common_context(request, pk, title="Results")
+        context = self.get_common_context(request, str(pk), title="Results")
         return render(request, "admin/power_query/query/analyze.html", context)
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def preview(self, request: HttpRequest, pk: int) -> HttpResponse:
         obj = self.get_object(request, str(pk))
         try:
-            context = self.get_common_context(request, pk, title="Results")
+            context = self.get_common_context(request, str(pk), title="Results")
             data = obj.data
             with profile() as timing:
                 context["dataset"] = to_dataset(data)
@@ -306,10 +309,11 @@ class DatasetAdmin(
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
+        return HttpResponseRedirectToReferrer(request)
 
 
 @admin.register(Formatter)
-class FormatterAdmin(
+class FormatterAdmin(  # type: ignore[misc]
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
@@ -330,13 +334,13 @@ class FormatterAdmin(
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def test(self, request: HttpRequest, pk: int) -> HttpResponse:
-        context = self.get_common_context(request, pk)
+        context = self.get_common_context(request, str(pk))
         form = FormatterTestForm()
         try:
             if request.method == "POST":
                 form = FormatterTestForm(request.POST)
                 if form.is_valid():
-                    fmt: Formatter = self.object
+                    fmt: Formatter = self.object  # type: ignore[assignment]
                     dataset: Dataset = form.cleaned_data["dataset"]
                     results = fmt.render({"dataset": dataset})
                     return HttpResponse(results, content_type=fmt.content_type)
@@ -348,7 +352,9 @@ class FormatterAdmin(
 
 
 @admin.register(ReportTemplate)
-class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin[ReportTemplate]):
+class ReportTemplateAdmin(  # type: ignore[misc]
+    AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin[ReportTemplate]
+):
     list_display = (
         "name",
         "doc",
@@ -360,13 +366,13 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
 
     @button()
     def preview(self, request: "HttpRequest", pk: int) -> HttpResponse:
-        context = self.get_common_context(request, pk)
+        context = self.get_common_context(request, str(pk))
         if request.method == "POST":
             form = SelectDatasetForm(request.POST)
             if form.is_valid():
                 processor: "type[ProcessorStrategy]" = import_string(form.cleaned_data["processor"])
                 fmt = Formatter(
-                    template=self.object,
+                    template=self.object,  # type: ignore[arg-type]
                     processor=processor,
                     code="",
                 )
@@ -379,7 +385,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
 
 
 @admin.register(ReportConfiguration)
-class ReportConfigurationAdmin(
+class ReportConfigurationAdmin(  # type: ignore[misc]
     AdminFiltersMixin,
     CeleryTaskModelAdmin,
     LinkedObjectsMixin,
@@ -444,8 +450,8 @@ class ReportConfigurationAdmin(
 
     @button(label="Inspect", icon="search")
     def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
-        self.object = self.get_object(request, pk)
-        ctx = self.get_common_context(request, pk=pk, object=self.object)
+        self.object = self.get_object(request, str(pk))
+        ctx = self.get_common_context(request, pk=str(pk), object=self.object)
         ctx["object"] = self.object
         return render(
             request,
@@ -455,12 +461,13 @@ class ReportConfigurationAdmin(
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def execute(self, request: HttpRequest, pk: int) -> HttpResponse:
-        ctx = self.get_common_context(request, pk, title="Execution results")
+        ctx = self.get_common_context(request, str(pk), title="Execution results")
         try:
+            self.object = self.get_object(request, str(pk))
             results = self.object.execute(run_query=True)
             errors = [r[1] for r in results if isinstance(r[1], Exception)]
             if len(results) == 1 and isinstance(results[0][0], BaseException):
-                self.message_user(request, results[0][1], messages.ERROR)
+                self.message_user(request, str(results[0][1]), messages.ERROR)
                 results = []
             elif len(errors) == 0:
                 self.message_user(request, "Documents creation success", messages.SUCCESS)
@@ -473,10 +480,11 @@ class ReportConfigurationAdmin(
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
+            return HttpResponseRedirectToReferrer(request)
 
 
 @admin.register(Parametrizer)
-class QueryArgsAdmin(
+class QueryArgsAdmin(  # type: ignore[misc]
     AdminFiltersMixin,
     AutoProjectCol,
     LinkedObjectsMixin,
@@ -492,17 +500,19 @@ class QueryArgsAdmin(
 
     @button()
     def preview(self, request: HttpRequest, pk: int) -> TemplateResponse:
-        context = self.get_common_context(request, pk, title="Execution Plan")
+        context = self.get_common_context(request, str(pk), title="Execution Plan")
         return TemplateResponse(request, "admin/power_query/queryargs/preview.html", context)
 
     @button()
-    def refresh(self, request: HttpRequest, pk: int) -> None:
+    def refresh(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
         obj = self.get_object(request, str(pk))
         obj.refresh()
+        self.message_user(request, "Refreshed")
+        return HttpResponseRedirectToReferrer(request)
 
 
 @admin.register(ReportDocument)
-class ReportDocumentAdmin(
+class ReportDocumentAdmin(  # type: ignore[misc]
     AdminFiltersMixin,
     LinkedObjectsMixin,
     FileProviderAdmin,
@@ -539,10 +549,11 @@ class ReportDocumentAdmin(
         obj: ReportDocument = self.get_object(request, pk)
         s = send_document_password(request.user, obj)
         self.message_user(request, f"{s}")
+        return HttpResponseRedirectToReferrer(request)
 
 
 @admin.register(ChartPage)
-class ChartPageAdmin(
+class ChartPageAdmin(  # type: ignore[misc]
     AdminFiltersMixin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,

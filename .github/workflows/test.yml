@@ -58,6 +58,7 @@ jobs:
       commit: ${{env.sha_short}}
       build_date: ${{env.BUILD_DATE}}
       branch: ${{env.BRANCH}}
+      version: ${{ steps.calc.outputs.version }}
     services:
       redis:
         image: redis:7.4.0
@@ -100,6 +101,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Hack container for local development
         if: ${{ env.ACT }}
         run: |
@@ -130,50 +133,40 @@ jobs:
         run: |
           set -x
           pip install "hatch[vcs]"
-          echo "VERSION=$(hatch version)" >> $GITHUB_ENV
+          VERSION=$(hatch version)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           IMAGE=$(echo '${{env.DOCKER_METADATA_OUTPUT_JSON}}' | jq '.tags[0]')
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date +"%Y-%m-%d %H:%M" )" >> $GITHUB_ENV
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      - name: Build Test Image
-        run: |
-             docker build \
-                --target tests \
-                --build-arg "VERSION=${{env.VERSION}}" \
-                -t ${{env.IMAGE}} \
-                --cache-from "type=gha" \
-                --cache-to "type=gha,mode=max" \
-                -f docker/Dockerfile .
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          python-version: '3.13'
+
+      - name: Restore cached vEnv
+        id: cache-venv-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Save vEnv
+        id: cache-venv-save
+        uses: actions/cache/save@v4
+        with:
+          path: .venv
+          key: ${{ steps.cache-venv-restore.outputs.cache-primary-key || format('{0}-venv-{1}', runner.os, hashFiles('**/uv.lock')) }}
+        if: steps.cache-venv-restore.outputs.cache-hit != 'true'
 
       - name: Run Test suite
         run: |
-            mkdir output latest_logs
-            docker run --rm \
-              --network host \
-              -e DATABASE_URL=${DATABASE_URL} \
-              -e CELERY_BROKER_URL=${CELERY_BROKER_URL} \
-              -e CACHE_URL=${CACHE_URL} \
-              -e DJANGO_ADMIN_URL=admin \
-              -e GITHUB_ACTIONS=1 \
-              -e SECRET_KEY=super-secret-key-just-for-testing \
-              -e DATABASE_HOPE_URL=${DATABASE_HOPE_URL} \
-              -v "./output/:/app/output" \
-              -v "./latest_logs/:/app/latest_logs" \
-              -v "./src/:/app/src" \
-              -v "./tests:/app/tests" \
-              -v "./pytest.ini:/app/pytest.ini" \
-              -t ${{env.IMAGE}} \
-              tox -e d52-py313
-
-      - name: Archive selenium results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: selenium-log-report
-          path: latest_logs
-          retention-days: 5
-
+          uv run tox -e d52-py313
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -203,7 +196,7 @@ jobs:
                 --target dist \
                 --cache-from "type=gha" \
                 --cache-to "type=gha,mode=max" \
-                --build-arg "VERSION=${{needs.test.outputs.commit}}" \
+                --build-arg "VERSION=${{needs.test.outputs.version}}" \
                 --build-arg "BUILD_DATE=${{needs.test.outputs.build_date}}" \
                 --build-arg "BRANCH=${{needs.test.outputs.branch}}" \
                 -t ${{needs.test.outputs.image}} \

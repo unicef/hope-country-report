@@ -74,5 +74,4 @@ line-ending = "auto"
 
 [lint.per-file-ignores]
 "tests/**.py" = ["S101", "PLR2004", "S", "SIM117", "D", "UP", "PLR0913", "ANN", "N999"]
-"src/**/versioning/**.py" = ["N999", ]
-"src/**/one_time_scripts/**.py" = ["T201", ]
+"src/**/hope_country_report/__init__.py" = ["F401", ]

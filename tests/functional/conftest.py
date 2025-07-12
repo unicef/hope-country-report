@@ -67,6 +67,11 @@ def chrome_options(request, chrome_options):
     chrome_options.add_argument("--proxy-server='direct://'")
     chrome_options.add_argument("--proxy-bypass-list=*")
 
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+    if worker_id:
+        user_data_dir = f"/tmp/{worker_id}"
+        chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+
     prefs = {"profile.default_content_setting_values.notifications": 1}  # explicitly allow notifications
     chrome_options.add_experimental_option("prefs", prefs)
 

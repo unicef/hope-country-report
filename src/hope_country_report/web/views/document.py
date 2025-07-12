@@ -22,7 +22,6 @@ from .base import SelectedOfficeMixin
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser
-    from django.core.paginator import _SupportsPagination
     from django.db.models import Model, QuerySet
     from django.views.generic.edit import _ModelFormT
 
@@ -31,14 +30,14 @@ if TYPE_CHECKING:
     _M = TypeVar("_M", bound=Model, covariant=True)
 
 
-class OfficeReportDocumentListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[ReportDocument]):
+class OfficeReportDocumentListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[ReportDocument]):  # type: ignore[misc]
     template_name = "web/office/document_list.html"
     permission_required = ["power_query.view_reportdocument"]
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(title=_("Available Reports"), **kwargs)
 
-    def get_queryset(self) -> "_SupportsPagination[_M]":
+    def get_queryset(self) -> "QuerySet[ReportDocument]":
         qs = ReportDocument.objects.filter(report__country_office=self.selected_office)
         if tag := self.request.GET.get("tag", None):
             qs = qs.filter(report__tags__name=tag)
@@ -49,14 +48,14 @@ class OfficeReportDocumentListView(SelectedOfficeMixin, PermissionRequiredMixin,
         return qs.distinct("report", "dataset")
 
 
-class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
+class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):  # type: ignore[misc]
     template_name = "web/office/document.html"
     permission_required = ["power_query.view_reportdocument"]
     context_object_name = "doc"
 
     def handle_no_permission(self) -> HttpResponseRedirect:
         if not self.has_permission():
-            raise RequestablePermissionDenied(self.get_object().report)
+            raise RequestablePermissionDenied(self.get_object().report)  # type: ignore[attr-defined]
         return super().handle_no_permission()
 
     def has_permission(self) -> bool:
@@ -70,7 +69,7 @@ class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixi
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(title=self.object.title, **kwargs)
 
-    def get_object(self, queryset: "QuerySet[_M]|None" = None) -> "_M":
+    def get_object(self, queryset: "QuerySet[ReportDocument]|None" = None) -> "ReportDocument":
         return get_object_or_404(
             ReportDocument.objects.select_related("report"),
             report__country_office=self.selected_office,
@@ -82,7 +81,7 @@ class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixi
 class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
     permission_required = ["power_query.view_reportconfiguration"]
 
-    def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
+    def get_object(self, queryset: "QuerySet[ReportDocument] | None" = None) -> "ReportDocument":
         return ReportDocument.objects.get(
             report__country_office=self.selected_office, id=self.kwargs["pk"], report__visible=True
         )
@@ -101,7 +100,7 @@ class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, De
 class OfficeDocumentDownloadView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
     permission_required = ["power_query.download_reportdocument"]
 
-    def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
+    def get_object(self, queryset: "QuerySet[ReportDocument] | None" = None) -> "ReportDocument":
         return ReportDocument.objects.get(report__country_office=self.selected_office, id=self.kwargs["pk"])
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> "RedirectOrResponse":  # type: ignore[override]
@@ -117,7 +116,7 @@ class OfficeDocumentDownloadView(SelectedOfficeMixin, PermissionRequiredMixin, D
             return HttpResponseRedirectToReferrer(request)
 
 
-class RequestAccessView(SelectedOfficeMixin, FormView[Any]):
+class RequestAccessView(SelectedOfficeMixin, FormView[Any]):  # type: ignore[misc]
     form_class = RequestAccessForm
     template_name = "web/office/request_access.html"
     request: "AuthHttpRequest"

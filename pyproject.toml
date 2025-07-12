@@ -215,7 +215,6 @@ packages = [
 ]
 exclude = [
   "~*",
-  "src/aurora/web*/theme/static_src/*.*",
 ]
 
 [tool.isort]
