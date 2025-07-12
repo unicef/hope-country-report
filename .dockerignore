@@ -1,4 +1,3 @@
-.git
 ~*
 db
 docs
@@ -19,3 +18,4 @@ logs/
 *.swp
 *.swo
 .venv/
+.tox/

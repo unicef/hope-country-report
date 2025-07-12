@@ -67,6 +67,7 @@ jobs:
           echo "Build ... unicef/hope-country-report:${{ steps.meta.outputs.version }}-${{ env.version }}"
           docker build \
              --target dist \
+             --build-arg "VERSION=${{ steps.meta.outputs.version }}" \
              -t "unicef/hope-country-report:${{ steps.meta.outputs.version }}" \
              --cache-from "type=gha" \
              --cache-to "type=gha,mode=max" \

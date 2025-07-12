@@ -41,6 +41,7 @@ jobs:
           IMAGE_TAG="${{ needs.prepare-version.outputs.version }}"
           docker buildx create --use
           docker buildx build \
+            --build-arg VERSION=$IMAGE_TAG \
             --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-develop \
             --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \
             --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \

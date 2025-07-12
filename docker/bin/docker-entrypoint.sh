@@ -13,7 +13,7 @@ if [ -d "${STATIC_ROOT}" ]; then
   chown -R hope:unicef "${STATIC_ROOT}"
 fi
 
-mkdir -p /app/
+mkdir -p /app/ /home/hope/.cache /app/.tox
 chown -R hope:unicef /app
 cd /app
 
@@ -50,9 +50,10 @@ case "$1" in
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery flower
         ;;
     run_tests)
-        exec tini -- gosu hope:unicef env HOME=/tmp pytest tests/ --create-db -n auto -v --maxfail=5 --migrations
---cov-config=tests/.coveragerc --cov-report xml:output/coverage.xml
-
+        chown -R hope:unicef /home/hope/.cache /app/.tox
+        chmod -R 750 /home/hope/.cache
+        chmod -R 775 /app/.tox
+        exec tini -- gosu hope:unicef tox
         ;;
     *)
         echo "Unknown command: $1"
