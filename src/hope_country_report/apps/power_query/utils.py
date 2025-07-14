@@ -158,6 +158,7 @@ def get_font_url(font_filename: str) -> str:
     font_url = staticfiles_storage.url(font_path)
     if not font_url.startswith(("http://", "https://")):
         font_url = urljoin(settings.HOST, font_url)
+    logger.info(f"Font URL: {font_url}")
     return font_url
 
 
