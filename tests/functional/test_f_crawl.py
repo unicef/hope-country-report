@@ -136,6 +136,6 @@ def test_report_config(browser: SmartDriver, report_document: "ReportDocument"):
     browser.wait_for(By.LINK_TEXT, "tag1").click()
     browser.wait_for(By.ID, "remove-filter").click()
 
-    browser.wait_for(By.LINK_TEXT, config.title).click()
+    browser.wait_for(By.CSS_SELECTOR, f"a[href*='/configuration/{config.pk}/']").click()
     browser.wait_for_url(f"/afghanistan/configuration/{config.pk}/")
     assert browser.find_element(By.XPATH, "//div[@class='box']/h1").text == config.title

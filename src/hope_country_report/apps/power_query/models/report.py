@@ -98,6 +98,10 @@ class ReportConfiguration(
             return self.FAILURE  # From CeleryTaskModel
         return self.task_status
 
+    @property
+    def is_running(self) -> bool:
+        return self.effective_status in self.ACTIVE_STATUSES
+
     class Tenant:
         tenant_filter_field = "country_office"
 
@@ -183,6 +187,9 @@ class ReportConfiguration(
 
     def get_absolute_url(self):
         return reverse("office-config", args=[self.country_office.slug, self.pk])
+
+    def get_run_url(self):
+        return reverse("office-config-run", args=[self.country_office.slug, self.pk])
 
     def get_documents_url(self) -> str:
         base = reverse("office-doc-list", args=[self.country_office.slug])
