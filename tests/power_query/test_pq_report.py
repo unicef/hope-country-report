@@ -99,7 +99,9 @@ def report(query2: "Query", monkeypatch):
 
     formatter = FormatterFactory()
     with mock.patch("hope_country_report.apps.power_query.models.report.notify_report_completion", Mock()):
-        report = ReportConfigurationFactory(name="Celery Report", query=query2, owner=query2.owner)
+        report = ReportConfigurationFactory(
+            name="Celery Report", query=query2, owner=query2.owner, country_office=query2.owner._afghanistan
+        )
         report.formatters.add(formatter)
         return report
 
@@ -149,7 +151,7 @@ def test_report_zip(db, settings, report: "ReportConfiguration", mailoutbox) -> 
     assert doc.content_type == "application/x-zip-compressed"
 
     # Use pyzipper to read the AES-encrypted ZIP file
-    with pyzipper.AESZipFile(doc.file.path, "r") as archive:
+    with pyzipper.AESZipFile(doc.file, "r") as archive:
         assert len(archive.namelist()) == 1
         page_document = archive.open(archive.namelist()[0])
         assert PurePath(page_document.name).suffix == doc.formatter.file_suffix
@@ -190,7 +192,7 @@ def test_report_zip_protected(transactional_db, rf, settings, report: "ReportCon
     assert doc.file
     assert doc.content_type == "application/x-zip-compressed"
 
-    with pyzipper.AESZipFile(doc.file.path, "r") as archive:
+    with pyzipper.AESZipFile(doc.file, "r") as archive:
         with pytest.raises(RuntimeError):
             archive.open(archive.namelist()[0])
 
@@ -246,6 +248,7 @@ def test_report_abstract(db, query_impl: "Query") -> None:
 @pytest.mark.django_db
 def test_report_queue_view(client, report_with_co: "ReportConfiguration") -> None:
     from django.urls import reverse
+    from testutils.factories import UserFactory
 
     from hope_country_report.apps.power_query.models import ReportConfiguration
 
@@ -254,20 +257,24 @@ def test_report_queue_view(client, report_with_co: "ReportConfiguration") -> Non
 
     url = reverse("office-config-run", args=[report_with_co.country_office.slug, report_with_co.pk])
 
-    response = client.post(url)
+    with state.activate_tenant(report_with_co.country_office):
+        with state.set(must_tenant=False):
+            response = client.post(url)
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "message": "Report task queued."}
 
     report_with_co.refresh_from_db()
-    assert report_with_co.task_status == report_with_co.SUCCESS
+    assert report_with_co.task_status == report_with_co.MISSING
 
     with mock.patch.object(ReportConfiguration, "is_running", new_callable=mock.PropertyMock) as mock_is_running:
         mock_is_running.return_value = True
-        response = client.post(url)
+        with state.activate_tenant(report_with_co.country_office):
+            response = client.post(url)
         assert response.status_code == 409
         assert response.json() == {"status": "error", "message": "Report is already running."}
 
-    user.groups.clear()
-    client.force_login(user)
-    response = client.post(url)
+    other_user = UserFactory()
+    client.force_login(other_user)
+    with state.activate_tenant(report_with_co.country_office):
+        response = client.post(url)
     assert response.status_code == 403

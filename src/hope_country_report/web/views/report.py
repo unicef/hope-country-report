@@ -130,5 +130,5 @@ class OfficeConfigurationRunView(SelectedOfficeMixin, PermissionRequiredMixin, V
                 {"status": "error", "message": _("Report is already running.")},
                 status=409,  # Conflict
             )
-        report.apply_async()
+        report.queue()
         return JsonResponse({"status": "ok", "message": _("Report task queued.")})
