@@ -162,7 +162,6 @@ def get_font_url(font_filename: str) -> str:
     font_url = staticfiles_storage.url(font_path)
     if not font_url.startswith(("http://", "https://")):
         font_url = urljoin(settings.HOST, font_url)
-    logger.info(f"Font URL: {font_url}")
     return font_url
 
 
@@ -300,16 +299,15 @@ def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fi
 def apply_exif_orientation(image: Image.Image) -> Image.Image:
     """Adjusts the image based on EXIF orientation metadata."""
     try:
-        exif = image._getexif()
+        exif = image.getexif()
         if exif is not None:
-            for tag, value in exif.items():
-                if ExifTags.TAGS.get(tag) == "Orientation":
-                    if value == 3:
-                        image = image.rotate(180, expand=True)
-                    elif value == 6:
-                        image = image.rotate(270, expand=True)
-                    elif value == 8:
-                        image = image.rotate(90, expand=True)
+            orientation = exif.get(ExifTags.TAGS.get("Orientation"))
+            if orientation == 3:
+                image = image.rotate(180, expand=True)
+            elif orientation == 6:
+                image = image.rotate(270, expand=True)
+            elif orientation == 8:
+                image = image.rotate(90, expand=True)
     except Exception as e:
         logger.warning(f"Failed to apply EXIF orientation: {e}")
         capture_exception(e)
