@@ -12,18 +12,22 @@ from django.utils import timezone
 
 import fitz
 import tablib
-from PIL import Image
+from PIL import ExifTags, Image
 from pytz import utc
 
 from hope_country_report.apps.power_query.utils import (
+    apply_exif_orientation,
     basicauth,
     convert_pdf_to_image_pdf,
+    dict_hash,
     get_field_rect,
+    get_font_url,
     get_sentry_url,
     insert_qr_code,
     insert_special_image,
     insert_special_language_image,
     is_valid_template,
+    load_font_for_language,
     sentry_tags,
     sizeof,
     to_dataset,
@@ -200,7 +204,20 @@ def test_get_field_rect(sample_pdf: fitz.Document) -> None:
     assert page_index == 0
 
 
-def test_insert_special_language_image():
+def test_insert_special_language_image(mocked_responses):
+    expected_font_name = "NotoNaskhArabic-Bold.ttf"
+    font_url = get_font_url(expected_font_name)
+
+    font_file_path = resource_path(f"web/static/fonts/{expected_font_name}")
+    with open(font_file_path, "rb") as f:
+        font_content = f.read()
+
+    mocked_responses.add(
+        "GET",
+        font_url,
+        body=font_content,
+        status=200,
+    )
     text = "الافترايفكتس و البريمير و الافد ميدا كومبوزر"
     rect = fitz.Rect(0, 0, 200, 200)
     language = "arabic"
@@ -216,7 +233,20 @@ def test_convert_pdf_to_image_pdf(sample_pdf):
     assert len(new_pdf) == 1
 
 
-def test_insert_special_image(sample_pdf: fitz.Document) -> None:
+def test_insert_special_image(mocked_responses, sample_pdf: fitz.Document) -> None:
+    expected_font_name = "NotoNaskhArabic-Bold.ttf"
+    font_url = get_font_url(expected_font_name)
+
+    font_file_path = resource_path(f"web/static/fonts/{expected_font_name}")
+    with open(font_file_path, "rb") as f:
+        font_content = f.read()
+
+    mocked_responses.add(
+        "GET",
+        font_url,
+        body=font_content,
+        status=200,
+    )
     text_info = {"value": "الافترايفكتس و البريمير و الافد ميدا كومبوزر", "language": "arabic"}
     field_name = "Cognome_ar"
     page = sample_pdf[0]
@@ -240,3 +270,66 @@ def test_insert_qr_code(sample_pdf):
         assert len(images) > 0, "No images found on the page, QR code insertion failed"
     else:
         pytest.fail("No valid rectangle or page index found for the field.")
+
+
+def test_dict_hash():
+    d1 = {"a": 1, "b": 2}
+    d2 = {"b": 2, "a": 1}
+    d3 = {"a": 1, "b": 3}
+    assert dict_hash(d1) == dict_hash(d2)
+    assert dict_hash(d1) != dict_hash(d3)
+
+
+@pytest.mark.parametrize(
+    "language, expected_font_name",
+    [
+        ("arabic", "NotoNaskhArabic-Bold.ttf"),
+        ("cyrillic", "FreeSansBold.ttf"),
+        ("bengali", "NotoSansBengali-Bold.ttf"),
+        ("burmese", "NotoSerifMyanmar-Bold.ttf"),
+        ("unknown_language", "FreeSansBold.ttf"),
+    ],
+)
+def test_load_font_for_language(mocked_responses, language, expected_font_name):
+    font_url = get_font_url(expected_font_name)
+
+    font_file_path = resource_path(f"web/static/fonts/{expected_font_name}")
+    with open(font_file_path, "rb") as f:
+        font_content = f.read()
+
+    mocked_responses.add(
+        "GET",
+        font_url,
+        body=font_content,
+        status=200,
+    )
+
+    font = load_font_for_language(language)
+    assert font is not None
+    assert len(mocked_responses.calls) == 1
+    assert mocked_responses.calls[0].request.url == font_url
+
+
+@pytest.mark.parametrize(
+    "orientation, original_size, new_size",
+    [
+        (1, (100, 200), (100, 200)),  # No rotation
+        (3, (100, 200), (100, 200)),  # 180 rotation
+        (6, (100, 200), (200, 100)),  # 90 CW rotation
+        (8, (100, 200), (200, 100)),  # 270 CW rotation
+    ],
+)
+def test_apply_exif_orientation(orientation, original_size, new_size):
+    image = Image.new("RGB", original_size, "white")
+    exif = image.getexif()
+    exif[ExifTags.TAGS.get("Orientation")] = orientation
+    image.getexif = lambda: exif
+
+    oriented_image = apply_exif_orientation(image)
+    assert oriented_image.size == new_size
+
+
+def test_apply_exif_orientation_no_exif():
+    image = Image.new("RGB", (100, 200), "white")
+    oriented_image = apply_exif_orientation(image)
+    assert oriented_image.size == (100, 200)
