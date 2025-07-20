@@ -205,21 +205,30 @@ def pending_user(db):
 
 
 @pytest.fixture()
-def afg_user(user, afghanistan):
-    from testutils.perms import user_grant_permissions
+def afg_user(user, afghanistan, reporters):
+    from django.contrib.auth.models import Permission
+    from testutils.factories import UserRoleFactory
 
-    grant = user_grant_permissions(
-        user,
-        [
-            "power_query.view_reportconfiguration",
-            "power_query.view_reportdocument",
+    UserRoleFactory(country_office=afghanistan, group=reporters, user=user)
+    user.groups.add(reporters)
+
+    perms_to_add = Permission.objects.filter(
+        codename__in=[
+            "view_reportconfiguration",
+            "change_reportconfiguration",
+            "view_reportdocument",
         ],
-        afghanistan,
+        content_type__app_label="power_query",
     )
-    grant.start()
+
+    original_permissions = list(reporters.permissions.all())
+    reporters.permissions.add(*perms_to_add)
+
     user._afghanistan = afghanistan
     yield user
-    grant.stop()
+
+    reporters.permissions.set(original_permissions)
+    user.groups.remove(reporters)
 
 
 @pytest.fixture()

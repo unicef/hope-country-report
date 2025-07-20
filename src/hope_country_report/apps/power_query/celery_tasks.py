@@ -201,6 +201,6 @@ def reports_refresh(self: AbortableTask, **kwargs: dict[str, Any]) -> Any:
 
         if grp:
             job = group(grp)
-            result = job.apply_async()
+            result = job.queue()
 
     return result

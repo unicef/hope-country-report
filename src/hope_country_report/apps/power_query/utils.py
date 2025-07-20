@@ -8,7 +8,7 @@ import io
 import json
 import logging
 from collections.abc import Callable, Iterable
-from functools import wraps
+from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import urljoin
@@ -33,6 +33,9 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+_font_cache: dict[str, bytes] = {}
 
 
 def is_valid_template(filename: Path) -> bool:
@@ -152,6 +155,7 @@ def sentry_tags(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
+@lru_cache
 def get_font_url(font_filename: str) -> str:
     """Constructs an absolute URL for a given font file."""
     font_path = f"fonts/{font_filename}"
@@ -172,17 +176,20 @@ def load_font_for_language(language: str, font_size: int = 12) -> ImageFont.Free
 
     default_font_filename = "FreeSansBold.ttf"
     font_filename = font_filenames.get(language, default_font_filename)
-    font_url = get_font_url(font_filename)
 
-    try:
-        response = requests.get(font_url, timeout=10)
-        response.raise_for_status()
-        font_data = BytesIO(response.content)
-        return ImageFont.truetype(font_data, size=font_size)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to fetch font from {font_url}: {e}")
-        capture_exception(e)
-        raise
+    if font_filename not in _font_cache:
+        font_url = get_font_url(font_filename)
+        try:
+            response = requests.get(font_url, timeout=10)
+            response.raise_for_status()
+            _font_cache[font_filename] = response.content
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch font from {font_url}: {e}")
+            capture_exception(e)
+            raise
+
+    font_data = BytesIO(_font_cache[font_filename])
+    return ImageFont.truetype(font_data, size=font_size)
 
 
 def get_field_rect(document: fitz.Document, field_name: str) -> tuple[fitz.Rect, int] | None:
