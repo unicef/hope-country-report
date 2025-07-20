@@ -11,20 +11,20 @@ from collections.abc import Callable, Iterable
 from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.utils.safestring import mark_safe
 
 import fitz
 import qrcode
+import requests
 import tablib
 from constance import config
-import requests
-from django.contrib.staticfiles.storage import staticfiles_storage
-from urllib.parse import urljoin
 from PIL import ExifTags, Image, ImageDraw, ImageFont
 from sentry_sdk import capture_exception, configure_scope
 
