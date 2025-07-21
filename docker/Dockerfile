@@ -12,6 +12,7 @@ RUN set -x \
     libxml2 \
     wkhtmltopdf \
     tini \
+    libraqm0 \
   " \
   && buildDeps=" \
 wget \
@@ -43,6 +44,7 @@ libssl-dev \
 libxml2-dev  \
 python3-dev \
 zlib1g-dev  \
+libraqm-dev \
 " \
     && apt-get update \
     && apt-get install -y --no-install-recommends $buildDeps \
