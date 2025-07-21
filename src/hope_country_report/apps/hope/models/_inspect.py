@@ -1271,6 +1271,7 @@ class Individual(HopeModel):
     biometric_deduplication_batch_status = models.CharField(max_length=50, null=True)
     biometric_deduplication_golden_record_results = models.JSONField(null=True)
     biometric_deduplication_golden_record_status = models.CharField(max_length=50, null=True)
+    identification_key = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
