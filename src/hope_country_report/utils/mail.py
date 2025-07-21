@@ -13,6 +13,18 @@ if TYPE_CHECKING:
     from hope_country_report.types.http import AuthHttpRequest
 
 
+def build_absolute_uri(url_path: str, request: "AuthHttpRequest | None" = None) -> str:
+    if request:
+        return request.build_absolute_uri(url_path)
+    try:
+        domain = Site.objects.get_current().domain
+        scheme = "https" if not settings.DEBUG else "http"
+        return f"{scheme}://{domain}{url_path}"
+    except Exception as e:
+        capture_exception(e)
+    return url_path
+
+
 def send_document_password(user: "User", document: "ReportDocument", request: "AuthHttpRequest | None" = None) -> int:
     if config.CATCH_ALL_EMAIL:
         recipient_list = [config.CATCH_ALL_EMAIL]
@@ -20,16 +32,7 @@ def send_document_password(user: "User", document: "ReportDocument", request: "A
         recipient_list = [user.email]
     if not recipient_list:
         return 0
-    url = document.get_absolute_url()
-    if request:
-        url = request.build_absolute_uri(url)
-    else:
-        try:
-            domain = Site.objects.get_current().domain
-            scheme = "https" if not settings.DEBUG else "http"
-            url = f"{scheme}://{domain}{url}"
-        except Exception as e:
-            capture_exception(e)
+    url = build_absolute_uri(document.get_absolute_url(), request)
 
     message = EmailMessage(to=recipient_list, from_email=settings.DEFAULT_FROM_EMAIL)
 
@@ -57,16 +60,7 @@ def send_document_password(user: "User", document: "ReportDocument", request: "A
 def send_request_access(
     sender: "User", report: "ReportConfiguration", message: str = "", request: "AuthHttpRequest | None" = None
 ) -> int:
-    url = report.get_absolute_url()
-    if request:
-        url = request.build_absolute_uri(url)
-    else:
-        try:
-            domain = Site.objects.get_current().domain
-            scheme = "https" if not settings.DEBUG else "http"
-            url = f"{scheme}://{domain}{url}"
-        except Exception as e:
-            capture_exception(e)
+    url = build_absolute_uri(report.get_absolute_url(), request)
 
     if config.CATCH_ALL_EMAIL:
         recipient_list = [config.CATCH_ALL_EMAIL]
@@ -97,20 +91,8 @@ Requesting access to: {report.title}
 
 
 def notify_report_completion(report: "ReportConfiguration", request: "AuthHttpRequest | None" = None) -> int:
-    url = report.get_absolute_url()
-    docs_url = report.get_documents_url()
-
-    if request:
-        url = request.build_absolute_uri(url)
-        docs_url = request.build_absolute_uri(docs_url)
-    else:
-        try:
-            domain = Site.objects.get_current().domain
-            scheme = "https" if not settings.DEBUG else "http"
-            url = f"{scheme}://{domain}{url}"
-            docs_url = f"{scheme}://{domain}{docs_url}"
-        except Exception as e:
-            capture_exception(e)
+    url = build_absolute_uri(report.get_absolute_url(), request)
+    docs_url = build_absolute_uri(report.get_documents_url(), request)
 
     if config.CATCH_ALL_EMAIL:
         recipient_list = [config.CATCH_ALL_EMAIL]

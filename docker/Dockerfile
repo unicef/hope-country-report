@@ -68,6 +68,7 @@ RUN pip install uv uwsgi
 FROM builder AS tests
 ARG BUILD_DATE
 ARG GIT_SHA
+ARG VERSION
 
 LABEL distro="tests"
 LABEL org.opencontainers.image.created="$BUILD_DATE"
@@ -79,7 +80,8 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
-    UWSGI_PROCESSES=4
+    UWSGI_PROCESSES=4 \
+    HATCH_VCS_VERSION="${VERSION}"
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
@@ -100,6 +102,7 @@ ENTRYPOINT exec docker-entrypoint.sh "$0" "$@"
 
 # ------- production only deps-------
 FROM builder AS production
+ARG VERSION
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
     PYTHONUNBUFFERED=1 \
@@ -107,7 +110,8 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     UV_PROJECT_ENVIRONMENT=/venv \
     VIRTUAL_ENV=/venv \
     UWSGI_PROCESSES=4 \
-    VERSION="${VERSION}"
+    VERSION="${VERSION}" \
+    HATCH_VCS_VERSION="${VERSION}"
 
 WORKDIR /app
 COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
