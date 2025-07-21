@@ -53,6 +53,9 @@ jobs:
           IMAGE_TAG="${{ needs.prepare-docker.outputs.docker_image_tag }}"
           docker buildx create --use
           docker buildx build \
+            --build-arg VERSION=1.0.0 \
+            --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+            --build-arg SOURCE_COMMIT=$(git rev-parse HEAD) \
             --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-develop \
             --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \
             --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \
