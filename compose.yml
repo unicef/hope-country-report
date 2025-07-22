@@ -2,6 +2,12 @@ volumes:
   postgres_data:
   hope_postgres_data:
 
+x-build: &build
+  context: .
+  dockerfile: docker/Dockerfile
+  args:
+    - VERSION=${VERSION:-`git describe --tags --always`}
+
 x-django-env: &django-env
   - ALLOWED_HOSTS=backend,localhost
   - AZURE_TENANT_ID=
@@ -37,8 +43,7 @@ x-django-env: &django-env
 services:
   backend:
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      <<: *build
       target: dist
     command: run
     environment: *django-env
@@ -106,8 +111,7 @@ services:
 
   celery_worker:
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      <<: *build
       target: dist
     command: worker
     environment: *django-env
@@ -122,8 +126,7 @@ services:
 
   celery_beat:
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      <<: *build
       target: dist
     command: beat
     environment: *django-env
@@ -138,8 +141,7 @@ services:
 
   flower:
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      <<: *build
       target: dist
     command: flower
     environment: *django-env

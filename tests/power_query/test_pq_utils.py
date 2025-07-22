@@ -205,6 +205,9 @@ def test_get_field_rect(sample_pdf: fitz.Document) -> None:
 
 
 def test_insert_special_language_image(mocked_responses):
+    from hope_country_report.apps.power_query import utils
+
+    utils._font_cache.clear()
     expected_font_name = "NotoNaskhArabic-Bold.ttf"
     font_url = get_font_url(expected_font_name)
 
@@ -234,6 +237,9 @@ def test_convert_pdf_to_image_pdf(sample_pdf):
 
 
 def test_insert_special_image(mocked_responses, sample_pdf: fitz.Document) -> None:
+    from hope_country_report.apps.power_query import utils
+
+    utils._font_cache.clear()
     expected_font_name = "NotoNaskhArabic-Bold.ttf"
     font_url = get_font_url(expected_font_name)
 
@@ -291,6 +297,9 @@ def test_dict_hash():
     ],
 )
 def test_load_font_for_language(mocked_responses, language, expected_font_name):
+    from hope_country_report.apps.power_query import utils
+
+    utils._font_cache.clear()
     font_url = get_font_url(expected_font_name)
 
     font_file_path = resource_path(f"web/static/fonts/{expected_font_name}")
