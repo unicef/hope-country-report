@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: tests
+      args:
+        - VERSION=${VERSION:-`git describe --tags --always`}
     command: run_tests
     environment:
       - ALLOWED_HOSTS=*
