@@ -1,3 +1,8 @@
+[build-system]
+build-backend = "hatchling.build"
+
+requires = [ "hatchling" ]
+
 [project]
 name = "hcr"
 description = "Hope Country Report for displaying Hope data"
@@ -203,6 +208,16 @@ skip_glob = [ "**/migrations/**" ]
 
 [tool.uv]
 package = true
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/hope_country_report/**/*.*",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/hope_country_report",
+]
 
 [tool.nitpick]
 style = [
