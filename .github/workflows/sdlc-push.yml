@@ -74,7 +74,7 @@ jobs:
           docker buildx build \
             --build-arg VERSION="${{ steps.config.outputs.version }}" \
             --build-arg BUILD_DATE="${{ steps.config.outputs.build_date }}" \
-            --build-arg GIT_SHA=${{ steps.config.outputs.commit_sha }} \
+            --build-arg SOURCE_COMMIT=${{ steps.config.outputs.commit_sha }} \
             --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-develop \
             --cache-from ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \
             --cache-to ${{ vars.DOCKERHUB_ORGANIZATION }}/${{ vars.DOCKERHUB_REPOSITORY }}:cache-$IMAGE_TAG \
