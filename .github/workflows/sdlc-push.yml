@@ -51,7 +51,7 @@ jobs:
       - name: Set target input
         id: config
         run: |
-          version="1.0.0"
+          version=$(hatch version)
           COMMIT_SHA=$(git rev-parse "$GITHUB_SHA")
 
           git_reference="${{ github.event.inputs.git_reference }}"
