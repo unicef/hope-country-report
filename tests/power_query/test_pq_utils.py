@@ -323,9 +323,9 @@ def test_load_font_for_language(mocked_responses, language, expected_font_name):
     "orientation, original_size, new_size",
     [
         (1, (100, 200), (100, 200)),  # No rotation
-        (3, (100, 200), (100, 200)),  # 180 rotation
-        (6, (100, 200), (200, 100)),  # 90 CW rotation
-        (8, (100, 200), (200, 100)),  # 270 CW rotation
+        (3, (100, 200), (100, 200)),  # 180° rotation (no size change)
+        (6, (100, 200), (200, 100)),  # 90° CCW rotation (swap dimensions)
+        (8, (100, 200), (200, 100)),  # 270° CCW rotation (swap dimensions)
     ],
 )
 def test_apply_exif_orientation(orientation, original_size, new_size):
@@ -342,3 +342,28 @@ def test_apply_exif_orientation_no_exif():
     image = Image.new("RGB", (100, 200), "white")
     oriented_image = apply_exif_orientation(image)
     assert oriented_image.size == (100, 200)
+
+
+def test_pdf_insertion_with_rotated_image(tmp_path):
+    doc = fitz.open()
+    page = doc.new_page()
+    rect = fitz.Rect(50, 50, 150, 250)  # Field dimensions (100x200)
+    image = Image.new("RGB", (100, 200), "red")
+    exif = image.getexif()
+    exif[ExifTags.TAGS.get("Orientation")] = 6  # 90° CCW
+    image.getexif = lambda: exif
+    image = apply_exif_orientation(image)  # Should rotate to 270° CW (90° CCW)
+    output_stream = BytesIO()
+    image.save(output_stream, format="PNG")
+    output_stream.seek(0)
+    page.insert_image(rect, stream=output_stream, keep_proportion=True)
+    pdf_path = tmp_path / "test.pdf"
+    doc.save(pdf_path)
+    doc.close()
+    doc = fitz.open(pdf_path)
+    page = doc[0]
+    images = page.get_images()
+    assert len(images) == 1  # Ensure image was inserted
+    img_info = doc.extract_image(images[0][0])
+    img = Image.open(BytesIO(img_info["image"]))
+    assert img.size == (200, 100)  # Swapped dimensions
