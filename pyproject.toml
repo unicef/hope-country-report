@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "hatchling.build"
 
-requires = [ "hatchling" ]
+requires = [ "hatch-vcs", "hatchling" ]
 
 [project]
 name = "hcr"
@@ -191,6 +191,19 @@ mypy = [
   "types-requests",
 ]
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/hope_country_report/**/*.*",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/hope_country_report",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
 [tool.isort]
 combine_as_imports = true
 default_section = "THIRDPARTY"
@@ -208,16 +221,6 @@ skip_glob = [ "**/migrations/**" ]
 
 [tool.uv]
 package = true
-
-[tool.hatch.build.targets.sdist]
-include = [
-  "src/hope_country_report/**/*.*",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = [
-  "src/hope_country_report",
-]
 
 [tool.nitpick]
 style = [
