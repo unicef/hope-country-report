@@ -11,10 +11,10 @@
                                 class="tag {{ request.GET.tag|color }} ">{{ request.GET.tag }}</span></a>
                     {% endif %}
                     {% if request.GET.report %}
-                        <a href="?{% build_filter_url "report" %}"><span class="tag grey">{{ report_filter_title|default:request.GET.report }}</span></a>
+                        <a href="{% build_filter_url "report" %}"><span class="tag grey">{{ report_filter_title|default:request.GET.report }}</span></a>
                     {% endif %}
                     {% if request.GET.active %}
-                        <a href="?{% build_filter_url "active" %}">
+                        <a href="{% build_filter_url "active" %}">
                             <span class="tag blue">{{ request.GET.active|parse_bool|yesno:"active,not active" }}</span>
                         </a>
                     {% endif %}
@@ -49,7 +49,7 @@
             {% for report in reportconfiguration_list %}
                 <tr class="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100 ">
                     <td><a class="underline"
-                           href="?{% build_filter_url "report" report.name %}">{{ report.title }}</a></td>
+                           href="{{ report.get_absolute_url }}">{{ report.title }}</a></td>
                     <td>
                         {% with status=report.active|yesno:"t,f" %}
                             <a href="?{% build_filter_url "active" status %}">
@@ -71,14 +71,13 @@
                                 class="tag {{ t.name|color }}">{{ t }}</span></a>
                     {% endfor %}
                     </td>
-                    <td class="flex items-center space-x-2">
-                        <a href="{{ report.get_absolute_url }}">{% translate "View" %}</a>
-                        <button
-                           class="run-report-btn flex items-center space-x-1 px-2 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    <td class="flex items-center space-x-4">
+                        <button type="button"
+                           class="run-report-btn flex items-center space-x-1 text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed"
                            data-url="{{ report.get_run_url }}"
                            title="{% translate 'Queue Report' %}"
                            {% if report.is_running %}disabled{% endif %}>
-                           <div class="icon icon-refresh"></div>
+                           <span class="icon icon-loop"></span>
                            <span class="btn-text">{% if report.is_running %}{% translate "Running..." %}{% else %}{% translate "Queue" %}{% endif %}</span>
                         </button>
                     </td>
@@ -110,51 +109,55 @@
     </div>
 {% endblock content %}
 
-{% block extra_js %}
+{% block extrahead %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    document.querySelectorAll('.run-report-btn').forEach(button => {
-        button.addEventListener('click', function (event) {
-            event.preventDefault();
-            const btn = this;
-            const url = btn.dataset.url;
-            const btnText = btn.querySelector('.btn-text');
+    document.body.addEventListener('click', function(event) {
+        const btn = event.target.closest('.run-report-btn');
+        if (!btn || btn.disabled) {
+            return;
+        }
+        event.preventDefault();
 
-            if (window.confirm("{% translate 'Are you sure you want to queue this report for generation? This may take a while.' %}")) {
-                btn.disabled = true;
-                if(btnText) btnText.textContent = '{% translate "Queuing..." %}';
+        const url = btn.dataset.url;
+        const btnText = btn.querySelector('.btn-text');
 
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrftoken,
-                        'Content-Type': 'application/json'
-                    },
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => { throw new Error(err.message || '{% translate "Failed to start task." %}') });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'ok') {
-                        if(btnText) btnText.textContent = '{% translate "Running..." %}';
-                    } else {
-                        throw new Error(data.message || '{% translate "An unknown error occurred." %}');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error: ' + error.message);
-                    btn.disabled = false;
-                    if(btnText) btnText.textContent = '{% translate "Queue" %}';
-                });
-            }
-        });
+        if (window.confirm("{% translate 'Are you sure you want to queue this report for generation? This may take a while.' %}")) {
+            const originalText = btnText.textContent;
+            btn.disabled = true;
+            btnText.textContent = '{% translate "Queuing..." %}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({}),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || '{% translate "Failed to start task." %}') });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'ok') {
+                    btnText.textContent = '{% translate "Running..." %}';
+                } else {
+                    throw new Error(data.message || '{% translate "An unknown error occurred." %}');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+                btn.disabled = false;
+                btnText.textContent = originalText;
+            });
+        }
     });
 });
 </script>
-{% endblock extra_js %}
+{% endblock extrahead %}

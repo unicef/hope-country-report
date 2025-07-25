@@ -38,7 +38,6 @@ class BusinessArea(HopeModel):
     deduplication_batch_duplicates_allowed = models.IntegerField(null=True)
     deduplication_golden_record_duplicates_percentage = models.IntegerField(null=True)
     deduplication_golden_record_duplicates_allowed = models.IntegerField(null=True)
-    screen_beneficiary = models.BooleanField(null=True)
     deduplication_ignore_withdraw = models.BooleanField(null=True)
     biometric_deduplication_threshold = models.FloatField(null=True)
     is_accountability_applicable = models.BooleanField(null=True)
@@ -46,6 +45,9 @@ class BusinessArea(HopeModel):
     enable_email_notification = models.BooleanField(null=True)
     parent = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="businessarea_parent", blank=True, null=True
+    )
+    office_country = models.ForeignKey(
+        "Country", on_delete=models.DO_NOTHING, related_name="businessarea_office_country", blank=True, null=True
     )
 
     class Meta:
@@ -71,6 +73,23 @@ class BusinessareaCountries(HopeModel):
     class Meta:
         managed = False
         db_table = "core_businessarea_countries"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class BusinessareaPaymentCountries(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    businessarea = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareapaymentcountries_businessarea", null=True
+    )
+    country = models.ForeignKey(
+        "Country", on_delete=models.DO_NOTHING, related_name="businessareapaymentcountries_country", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "core_businessarea_payment_countries"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -890,35 +909,6 @@ class Ticketsystemflaggingdetails(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class BankaccountInfo(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    rdi_merge_status = models.CharField(max_length=10, null=True)
-    is_original = models.BooleanField(null=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    is_removed = models.BooleanField(null=True)
-    removed_date = models.DateTimeField(blank=True, null=True)
-    last_sync_at = models.DateTimeField(blank=True, null=True)
-    bank_name = models.CharField(max_length=255, null=True)
-    bank_account_number = models.CharField(max_length=64, null=True)
-    debit_card_number = models.CharField(max_length=255, null=True)
-    bank_branch_name = models.CharField(max_length=255, null=True)
-    account_holder_name = models.CharField(max_length=255, null=True)
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="bankaccountinfo_copied_from", blank=True, null=True
-    )
-    individual = models.ForeignKey(
-        "Individual", on_delete=models.DO_NOTHING, related_name="bankaccountinfo_individual", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "household_bankaccountinfo"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
 class Document(HopeModel):
     id = models.UUIDField(primary_key=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
@@ -1140,10 +1130,32 @@ class Household(HopeModel):
     unknown_sex_group_count = models.IntegerField(blank=True, null=True)
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
+    collision_flag = models.BooleanField(null=True)
+    identification_key = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = "household_household"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class HouseholdExtraRdis(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    household = models.ForeignKey(
+        Household, on_delete=models.DO_NOTHING, related_name="householdextrardis_household", null=True
+    )
+    registrationdataimport = models.ForeignKey(
+        "DataRegistrationdataimport",
+        on_delete=models.DO_NOTHING,
+        related_name="householdextrardis_registrationdataimport",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "household_household_extra_rdis"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -1259,6 +1271,7 @@ class Individual(HopeModel):
     biometric_deduplication_batch_status = models.CharField(max_length=50, null=True)
     biometric_deduplication_golden_record_results = models.JSONField(null=True)
     biometric_deduplication_golden_record_status = models.CharField(max_length=50, null=True)
+    identification_key = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1369,7 +1382,7 @@ class Account(HopeModel):
     )
     is_unique = models.BooleanField(null=True)
     account_type = models.ForeignKey(
-        "Accounttype", on_delete=models.DO_NOTHING, related_name="account_account_type", blank=True, null=True
+        "Accounttype", on_delete=models.DO_NOTHING, related_name="account_account_type", null=True
     )
     number = models.CharField(max_length=256, blank=True, null=True)
     financial_institution = models.ForeignKey(
@@ -2090,6 +2103,8 @@ class Program(HopeModel):
     beneficiary_group = models.ForeignKey(
         Beneficiarygroup, on_delete=models.DO_NOTHING, related_name="program_beneficiary_group", null=True
     )
+    collision_detection_enabled = models.BooleanField(null=True)
+    collision_detector = models.CharField(max_length=200, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2112,6 +2127,20 @@ class ProgramAdminAreas(HopeModel):
     class Meta:
         managed = False
         db_table = "program_program_admin_areas"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class ProgramSanctionLists(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    program = models.ForeignKey(
+        Program, on_delete=models.DO_NOTHING, related_name="programsanctionlists_program", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "program_program_sanction_lists"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
