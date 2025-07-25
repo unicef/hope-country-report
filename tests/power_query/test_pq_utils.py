@@ -323,9 +323,9 @@ def test_load_font_for_language(mocked_responses, language, expected_font_name):
     "orientation, original_size, new_size",
     [
         (1, (100, 200), (100, 200)),  # No rotation
-        (3, (100, 200), (100, 200)),  # 180° rotation (no size change)
-        (6, (100, 200), (200, 100)),  # 90° CCW rotation (swap dimensions)
-        (8, (100, 200), (200, 100)),  # 270° CCW rotation (swap dimensions)
+        (3, (100, 200), (100, 200)),  # 180 rotation
+        (6, (100, 200), (200, 100)),  # 90 CW rotation
+        (8, (100, 200), (200, 100)),  # 270 CW rotation
     ],
 )
 def test_apply_exif_orientation(orientation, original_size, new_size):
