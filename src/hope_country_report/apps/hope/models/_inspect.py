@@ -1868,9 +1868,6 @@ class PaymentPlan(HopeModel):
     built_at = models.DateTimeField(blank=True, null=True)
     excluded_ids = models.TextField(blank=True, null=True)
     steficon_targeting_applied_date = models.DateTimeField(blank=True, null=True)
-    targeting_criteria = models.OneToOneField(
-        "Targetingcriteria", on_delete=models.DO_NOTHING, related_name="paymentplan_targeting_criteria", null=True
-    )
     vulnerability_score_max = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
     vulnerability_score_min = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
     delivery_mechanism = models.ForeignKey(
@@ -1887,6 +1884,8 @@ class PaymentPlan(HopeModel):
         blank=True,
         null=True,
     )
+    flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
+    flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -2456,6 +2455,13 @@ class Targetingcriteriarule(HopeModel):
     )
     household_ids = models.TextField(null=True)
     individual_ids = models.TextField(null=True)
+    payment_plan = models.ForeignKey(
+        PaymentPlan,
+        on_delete=models.DO_NOTHING,
+        related_name="targetingcriteriarule_payment_plan",
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         managed = False
