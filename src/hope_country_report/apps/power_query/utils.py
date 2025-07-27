@@ -305,9 +305,9 @@ def apply_exif_orientation(image: Image.Image) -> Image.Image:
             if orientation == 3:
                 image = image.rotate(180, expand=True)
             elif orientation == 6:
-                image = image.rotate(270, expand=True)
-            elif orientation == 8:
                 image = image.rotate(90, expand=True)
+            elif orientation == 8:
+                image = image.rotate(270, expand=True)
     except Exception as e:
         logger.warning(f"Failed to apply EXIF orientation: {e}")
         capture_exception(e)
