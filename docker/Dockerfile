@@ -152,7 +152,7 @@ ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
 RUN <<EOF cat> /RELEASE
 {"version": "$VERSION",
  "commit": "$SOURCE_COMMIT",
- "date": "$BUILD_DATE",
+ "date": "$BUILD_DATE"
 }
 EOF
 WORKDIR /app

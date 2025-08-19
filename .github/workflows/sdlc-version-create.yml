@@ -49,7 +49,7 @@ jobs:
         id: config
         run: |
           version=$(uvx --with hatch-vcs hatchling metadata version)
-          COMMIT_SHA=$(git rev-parse "$GITHUB_SHA")
+          COMMIT_SHA=$(git rev-parse --short "$GITHUB_SHA")
 
           git_reference="${{ github.event.inputs.git_reference }}"
           tag="${{ github.event.inputs.tag }}"
