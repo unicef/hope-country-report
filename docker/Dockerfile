@@ -132,6 +132,7 @@ FROM base_os AS dist
 ARG BUILD_DATE
 ARG SOURCE_COMMIT
 ARG BRANCH
+ARG VERSION
 
 ENV PATH=/venv/bin:/usr/local/bin/:/usr/bin:/bin \
     DJANGO_SETTINGS_MODULE=hope_country_report.config.settings \
