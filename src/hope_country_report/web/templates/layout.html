@@ -73,13 +73,9 @@
             {% block content %}{% endblock %}
         </div>
     </div>
-    {# <div class="flex items-center p-2"> #}
-    {# <div class="m-auto"> #}
-    {# <span>HOPE Reporting</span> #}
-    {# <span>{{ version }}</span> #}
-    {# <span>{{ release_date }}</span> #}
-    {# </div> #}
-    {# </div> #}
+    <div class="flex justify-center text-xs footer m-auto pt-1 pb-2 border-t-2 text-gray-400 border-gray-400">
+        Hope Country Report {{ project.version }} - {{ project.build_date }} - {{ project.commit }} - {{ LANGUAGE_CODE }}
+    </div>
 </main>
 </body>
 </html>

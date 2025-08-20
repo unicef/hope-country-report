@@ -28,7 +28,7 @@ jobs:
       docs: ${{ steps.changed_files.outputs.docs }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - id: changed_files
         name: Check for file changes
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
@@ -44,7 +44,7 @@ jobs:
     env:
       PYTHONPATH: src/
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: yezz123/setup-uv@v4
 
       - uses: actions/cache/restore@v4
