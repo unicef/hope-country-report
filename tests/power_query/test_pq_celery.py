@@ -165,28 +165,13 @@ def test_celery_reports_refresh(
     mock_task_self_request.periodic_task_name = pt.name
     mock_task_self_request.id = f"test_task_id_{uuid.uuid4().hex}"
 
-    mock_subtask_instance = MagicMock(name="mock_subtask_instance")
-    mock_refresh_report_subtask = MagicMock(return_value=mock_subtask_instance, name="mock_refresh_report_subtask")
-
-    mock_subtask_instance = MagicMock(name="mock_subtask_instance")
-    mock_refresh_report_subtask = MagicMock(return_value=mock_subtask_instance, name="mock_refresh_report_subtask")
-
-    mock_group_constructor = MagicMock(name="mock_group_constructor")
-
-    with (
-        mock.patch("celery.app.task.Task.request", new_callable=PropertyMock, return_value=mock_task_self_request),
-        mock.patch(
-            "hope_country_report.apps.power_query.celery_tasks.refresh_report.subtask", mock_refresh_report_subtask
-        ),
-        mock.patch("hope_country_report.apps.power_query.celery_tasks.group", mock_group_constructor),
-    ):
+    with mock.patch("celery.app.task.Task.request", new_callable=PropertyMock, return_value=mock_task_self_request):
         result_from_delay = reports_refresh.delay()
 
     assert isinstance(result_from_delay, EagerResult)
-
-    mock_refresh_report_subtask.assert_called_once_with((report.pk, report.version))
-
-    mock_group_constructor.assert_called_once_with([mock_subtask_instance])
+    assert result_from_delay.successful()
+    report.refresh_from_db()
+    assert report.documents.exists()
 
 
 @pytest.mark.django_db

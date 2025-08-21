@@ -755,8 +755,8 @@ class Ticketpaymentverificationdetails(HopeModel):
     updated_at = models.DateTimeField(null=True)
     payment_verification_status = models.CharField(max_length=50, null=True)
     new_status = models.CharField(max_length=50, blank=True, null=True)
-    old_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    new_received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    old_received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    new_received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     approve_status = models.BooleanField(null=True)
     payment_verification = models.ForeignKey(
         "Paymentverification",
@@ -1740,10 +1740,10 @@ class Payment(HopeModel):
     status = models.CharField(max_length=255, null=True)
     status_date = models.DateTimeField(null=True)
     currency = models.CharField(max_length=4, blank=True, null=True)
-    entitlement_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    entitlement_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    delivered_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    delivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    entitlement_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    entitlement_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    delivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    delivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     delivery_date = models.DateTimeField(blank=True, null=True)
     transaction_reference_id = models.CharField(max_length=255, blank=True, null=True)
     transaction_status_blockchain_link = models.CharField(max_length=255, blank=True, null=True)
@@ -1827,15 +1827,15 @@ class PaymentPlan(HopeModel):
     status_date = models.DateTimeField(null=True)
     start_date = models.DateTimeField(blank=True, null=True)
     end_date = models.DateTimeField(blank=True, null=True)
-    exchange_rate = models.DecimalField(max_digits=14, decimal_places=8, blank=True, null=True)
-    total_entitled_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_entitled_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_entitled_quantity_revised = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_entitled_quantity_revised_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_delivered_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_delivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_undelivered_quantity = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    total_undelivered_quantity_usd = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    exchange_rate = models.DecimalField(max_digits=15, decimal_places=8, blank=True, null=True)
+    total_entitled_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_entitled_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_entitled_quantity_revised = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_entitled_quantity_revised_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_delivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_delivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_undelivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_undelivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=50, null=True)
     background_action_status = models.CharField(max_length=50, blank=True, null=True)
     currency = models.CharField(max_length=4, blank=True, null=True)
@@ -1868,9 +1868,6 @@ class PaymentPlan(HopeModel):
     built_at = models.DateTimeField(blank=True, null=True)
     excluded_ids = models.TextField(blank=True, null=True)
     steficon_targeting_applied_date = models.DateTimeField(blank=True, null=True)
-    targeting_criteria = models.OneToOneField(
-        "Targetingcriteria", on_delete=models.DO_NOTHING, related_name="paymentplan_targeting_criteria", null=True
-    )
     vulnerability_score_max = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
     vulnerability_score_min = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
     delivery_mechanism = models.ForeignKey(
@@ -1887,6 +1884,8 @@ class PaymentPlan(HopeModel):
         blank=True,
         null=True,
     )
+    flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
+    flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -1965,7 +1964,7 @@ class Paymentverification(HopeModel):
     version = models.BigIntegerField(null=True)
     status = models.CharField(max_length=50, null=True)
     status_date = models.DateTimeField(blank=True, null=True)
-    received_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     sent_to_rapid_pro = models.BooleanField(null=True)
     payment_verification_plan = models.ForeignKey(
         "Paymentverificationplan",
@@ -2429,33 +2428,15 @@ class Targetingcollectorrulefilterblock(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class Targetingcriteria(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
-    flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
-
-    class Meta:
-        managed = False
-        db_table = "targeting_targetingcriteria"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
 class Targetingcriteriarule(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    targeting_criteria = models.ForeignKey(
-        Targetingcriteria,
-        on_delete=models.DO_NOTHING,
-        related_name="targetingcriteriarule_targeting_criteria",
-        null=True,
-    )
     household_ids = models.TextField(null=True)
     individual_ids = models.TextField(null=True)
+    payment_plan = models.ForeignKey(
+        PaymentPlan, on_delete=models.DO_NOTHING, related_name="targetingcriteriarule_payment_plan", null=True
+    )
 
     class Meta:
         managed = False

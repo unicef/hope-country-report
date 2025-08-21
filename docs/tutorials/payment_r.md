@@ -1,6 +1,6 @@
 # Generate Payment Plans Report from a template
 
-1\. Navigate to <https://reporting-hope-dev.unitst.org/admin/>
+1\. Navigate to [https://reporting-hope-dev.unitst.org/admin/](https://reporting-hope-dev.unitst.org/admin/)
 
 
 2\. Add a query
@@ -8,7 +8,7 @@
 ![Image](../_screenshots/ascreenshot55.jpeg)
 
 
-3\. In the **Parent** field, you have to chose the report template that you want to use. It has to be using the Parameters so that you can substitute new ones. The target and code fields _must be empty_ but the country  and Parent fields must be all set.
+3\. In the **Parent** field, you have to choose the report template that you want to use. It must use Parameters so that you can substitute new ones. The target and code fields _must be empty_, but the "Country" and "Parent" fields must be set.
 
 ![Image](../_screenshots/ascreenshot56.jpeg)
 
@@ -18,22 +18,22 @@
 ![Image](../_screenshots/ascreenshot57.jpeg)
 
 
-5\. Click this dropdown for the parametrizer.
+5\. Click the "Parametrizer" dropdown.
 
 ![Image](../_screenshots/ascreenshot58.jpeg)
 
 
-6\. You can chose any parameter or create one by clicking on the "+" sign.
+6\. You can choose any parameter or create one by clicking on the "+" sign.
 
 ![Image](../_screenshots/ascreenshot59.jpeg)
 
 
-7\. Chose a name and a country.
+7\. Choose a name and a country.
 
 ![Image](../_screenshots/ascreenshot60.jpeg)
 
 
-8\. Fill the value field with the correct json information:
+8\. Fill the "Value" field with the correct JSON information:
 
 ```json
 {"payment_plan": ["PP-4140-24-00000056", "PP-4140-24-00000055", "PP-4140-24-00000049", "PP-4140-24-00000046"], "business_area": ["syria"]}
@@ -77,12 +77,12 @@
 ![Image](../_screenshots/ascreenshot68.jpeg)
 
 
-16\. Chose the report to be available as Excel and html file
+16\. Choose for the report to be available as an Excel and HTML file.
 
 ![Image](../_screenshots/ascreenshot69.jpeg)
 
 
-17\. you can chose to limit access to or notify  "[dzzzdzzzz@unicef.org](mailto:dzzzzzzzz@unicef.org)"
+17\. You can choose to limit access to or notify "[dzzzdzzzz@unicef.org](mailto:dzzzzzzzz@unicef.org)".
 
 ![Image](../_screenshots/ascreenshot70.jpeg)
 

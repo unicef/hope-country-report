@@ -162,5 +162,6 @@ def select_tenant(request: "HttpRequest") -> "HttpResponse":
             except Exception:
                 pass
             return HttpResponseRedirect(reverse("office-index", args=[office.slug]))
-        return None
-    return render(request, "select_tenant.html", {"tenant_form": SelectTenantForm(request=request)})
+    else:
+        form = SelectTenantForm(request=request)
+    return render(request, "select_tenant.html", {"tenant_form": form})
