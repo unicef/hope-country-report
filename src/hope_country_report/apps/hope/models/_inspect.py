@@ -1884,6 +1884,8 @@ class PaymentPlan(HopeModel):
         blank=True,
         null=True,
     )
+    flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
+    flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
 
     class Meta:
         managed = False
