@@ -69,11 +69,9 @@ dependencies = [
   "docutils",
   "docx2pdf",
   "docxtpl",
-  "drf-api-checker",
   "drf-extensions",
   "flower",
   "geojson",
-  "hatch>=1.14.1",
   "htmlmin2",
   "natural-keys",
   "pathvalidate",
@@ -84,14 +82,12 @@ dependencies = [
   "pyhtml2pdf",
   "pymupdf",
   "pypdf",
-  "pytest-xdist",
   "python-pptx",
   "pytopojson",
   "pytz",
   "pyzipper",
   "qrcode",
   "redis",
-  "ruff",
   "sentry-sdk",
   "shapely",
   "social-auth-app-django",
@@ -102,23 +98,14 @@ dependencies = [
   "unicef-security",
   "watchdog[watchmedo]",
 ]
-
-urls.Documentation = "https://unicef.github.io/hope-country-report"
-urls.Issues = "https://github.com/unicef/hope-country-report/issues"
-urls.Source = "https://github.com/unicef/hope-country-report"
-
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
-  "black",
-  "django-stubs",
-  "django-stubs-ext",
+  "ruff",
   "django-webtest",
   "drf-api-checker",
   "factory-boy",
-  "flake8",
   "freezegun",
   "fs",
-  "isort",
   "mypy",
   "pdbpp",
   "pre-commit",
@@ -131,7 +118,7 @@ dev = [
   "pytest-django",
   "pytest-echo",
   "pytest-selenium",
-  "pyupgrade",
+  "pytest-xdist",
   "responses",
   "selenium",
   "tox",
@@ -142,7 +129,6 @@ dev = [
   "types-requests",
   "types-setuptools",
 ]
-
 docs = [
   "cairosvg>=2.7.1",
   "markupsafe>=2.1.5",
@@ -169,12 +155,9 @@ docs = [
   "mkdocstrings-python",
   "pymdown-extensions>=10.7.1",
 ]
-
-types-decorator = [
-  "types-six>=1.16.21.20241105",
-]
-
 mypy = [
+  "django-stubs",
+  "django-stubs-ext",
   "djangorestframework-stubs",
   "lxml-stubs",
   "mypy",
@@ -190,6 +173,14 @@ mypy = [
   "types-qrcode",
   "types-requests",
 ]
+types-decorator = [
+  "types-six>=1.16.21.20241105",
+]
+
+[project.urls]
+Documentation = "https://unicef.github.io/hope-country-report"
+Issues = "https://github.com/unicef/hope-country-report/issues"
+Source = "https://github.com/unicef/hope-country-report"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -204,21 +195,6 @@ packages = [
 [tool.hatch.version]
 source = "vcs"
 fallback-version = "2.0.0"
-
-[tool.isort]
-combine_as_imports = true
-default_section = "THIRDPARTY"
-include_trailing_comma = true
-known_django = "django"
-known_typing = [ "typing" ]
-known_tests = [ "unittest", "pytest" ]
-known_app = "hope_country_report"
-sections = [ "FUTURE", 'TYPING', 'STDLIB', "TESTS", 'DJANGO', 'THIRDPARTY', 'APP', 'LOCALFOLDER' ]
-multi_line_output = 3
-line_length = 120
-balanced_wrapping = true
-order_by_type = false
-skip_glob = [ "**/migrations/**" ]
 
 [tool.uv]
 package = true
