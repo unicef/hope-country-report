@@ -15,12 +15,12 @@
 ![Image](../_screenshots/ascreenshot1.jpeg)
 
 
-4\. Click here.
+4\. Click the "Country office" dropdown.
 
 ![Image](../_screenshots/ascreenshot.jpeg)
 
 
-5\. Right-click "Afghanistan"
+5\. Select "Afghanistan".
 
 ![Image](../_screenshots/ascreenshot2.jpeg)
 
@@ -33,17 +33,17 @@
 7\. Type the name of the query e.g "Afghan query for all households"
 
 
-8\. Click the "**Target**" drop-down menu. It designate which table you are going to be using to query the database. For our case we will use the **Household** table.
+8\. Click the "**Target**" drop-down menu. It designates the table you will query from the database. In our case, we will use the **Household** table.
 
 ![Image](../_screenshots/ascreenshot4.jpeg)
 
 
-Alert: The list of tables available in the Hope project can be viewed on this [link](https://github.com/unicef/hope-country-report/blob/develop/src/hope_country_report/apps/hope/models/%5C_inspect.py). The link between different tables and how to retrieve information from one table to another is part of the [Django documentation](https://www.djangoproject.com/).
+Alert: The list of tables available in the Hope project can be viewed at this [link](https://github.com/unicef/hope-country-report/blob/develop/src/hope_country_report/apps/hope/models/_inspect.py). Information about relationships between tables can be found in the [Django documentation](https://www.djangoproject.com/).
 
 ![Image](../_screenshots/Pasted_image1.png)
 
 
-9\. Start typing the code for the query. Remember, here **conn** represent ***conn=Household.objects***. Please refer to [Django](https://www.djangoproject.com/).
+9\. Start typing the code for the query. Remember, here **conn** represents `conn=Household.objects`. Please refer to [Django](https://www.djangoproject.com/).
 
 ![Image](../_screenshots/ascreenshot5.jpeg)
 
@@ -53,7 +53,7 @@ Alert: The list of tables available in the Hope project can be viewed on this [l
 result = list(conn.filter(withdrawn=False, first_registration_date__year__gte=2024).values("unicef_id", "admin1__name"))
 ```
 
-Here we will query the list of households which are not withdrawn and were registered in 2024 or above. We will only retrieve their **unicef_id** and **Admin1** area name. The query must return data that we must assign to the **result** environment variable.
+Here we will query the list of households which are not withdrawn and were registered in 2024 or above. We will only retrieve their **unicef_id** and **Admin1** area name. The query must return data that we must assign to the **result** variable.
 
 
 11\. We then save and continue editing
@@ -76,7 +76,7 @@ Here we will query the list of households which are not withdrawn and were regis
 ![Image](../_screenshots/ascreenshot10.jpeg)
 
 
-15\. And preview "PREVIEW". You should see that your report is OK.
+15\. Click "PREVIEW" to see the results. You should see that your query is working correctly.
 
 ![Image](../_screenshots/ascreenshot11.jpeg)
 
@@ -91,17 +91,17 @@ Here we will query the list of households which are not withdrawn and were regis
 ![Image](../_screenshots/ascreenshot13.jpeg)
 
 
-18\. Click this drop-down and chose which country office the report will bellong to.
+18\. Click this drop-down and choose which country office the report will belong to.
 
 ![Image](../_screenshots/ascreenshot14.jpeg)
 
 
-19\. Fill in the "Report Title:" field. "Repport on Afghan households in 2024"
+19\. Fill in the "Report Title:" field. "Report on Afghan households in 2024"
 
 ![Image](../_screenshots/ascreenshot15.jpeg)
 
 
-20\. Click here.
+20\. Click the "Query" field.
 
 ![Image](../_screenshots/ascreenshot16.jpeg)
 

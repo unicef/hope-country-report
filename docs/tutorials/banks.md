@@ -14,12 +14,12 @@
 ![Image](../_screenshots/ascreenshot36.jpeg)
 
 
-4\. Add "Belarus" to country office field
+4\. Add "Belarus" to the "Country office" field.
 
 ![Image](../_screenshots/ascreenshot37.jpeg)
 
 
-5\. Fill in the name of the query "Template for a bank"
+5\. Fill in the "Name" field with "Template for a bank".
 
 
 6\. Paste this code in order to get the required information.
@@ -52,12 +52,12 @@ for household in households:
     address_no_spaces = household["household__address"].replace(" ", "")
     household["locality"] = address_no_spaces[:29]
     household["street_name"] = address_no_spaces[30:59]
-result.append(household)
+    result.append(household)
 ```
 ![Image](../_screenshots/ascreenshot38.jpeg)
 
 
-7\. We will produce a report based on the Payments made recently in Belarus. So, we chose the **Payment**, table as target of our report.
+7\. We will produce a report based on the Payments made recently in Belarus. So, we choose the **Payment** table as the target for our report.
 
 ![Image](../_screenshots/ascreenshot39.jpeg)
 
@@ -77,7 +77,7 @@ result.append(household)
 ![Image](../_screenshots/ascreenshot42.jpeg)
 
 
-11\. We now need to create a formater as requested by the bank. This will allow us to produce a text file that ressemble the one we required by our bank. Navigate to ***Home>Power*** Query and slick "**Add**" on the formater row
+11\. We now need to create a formatter as requested by the bank. This will allow us to produce a text file that resembles the one required by the bank. Navigate to ***Home > Power Query*** and click "**Add**" on the "Formatters" row.
 
 ![Image](../_screenshots/ascreenshot43.jpeg)
 
@@ -85,7 +85,7 @@ result.append(household)
 12\. Give the template a name "Template for a bank in Belarus"
 
 
-13\. Click here.
+13\. Click the "Code" area.
 
 ![Image](../_screenshots/ascreenshot44.jpeg)
 
@@ -96,7 +96,7 @@ result.append(household)
 ```
 
 
-15\. Select the "text/html" option for the hile type since we want a simple html file. Save.
+15\. Select the "text/html" option for the file type since we want a simple html file. Save.
 
 ![Image](../_screenshots/ascreenshot45.jpeg)
 
@@ -106,7 +106,7 @@ result.append(household)
 ![Image](../_screenshots/ascreenshot46.jpeg)
 
 
-17\. Don't forget to chose the country office the report belongs to. Chose the report title and the appropriate query.
+17\. Don't forget to choose the country office the report belongs to. Choose the report title and the appropriate query.
 
 ![Image](../_screenshots/ascreenshot47.jpeg)
 
