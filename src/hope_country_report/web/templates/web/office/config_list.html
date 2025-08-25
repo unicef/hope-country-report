@@ -7,7 +7,7 @@
             <div class="flex items-center py-3">
                 <div class="flex-grow">
                     {% if request.GET.tag %}
-                        <a href="{% build_filter_url "tag" %}"><span
+                        <a href="?{% build_filter_url "tag" %}"><span
                                 class="tag {{ request.GET.tag|color }} ">{{ request.GET.tag }}</span></a>
                     {% endif %}
                     {% if request.GET.report %}
@@ -52,7 +52,7 @@
                            href="{{ report.get_absolute_url }}">{{ report.title }}</a></td>
                     <td>
                         {% with status=report.active|yesno:"t,f" %}
-                            <a href="{% build_filter_url "active" status %}">
+                            <a href="?{% build_filter_url "active" status %}">
                                 {{ report.active|as_bool_icon }}
                             </a>
                         {% endwith %}
@@ -67,7 +67,7 @@
                         <span class="tag {{ report.effective_status|lower|color }}">{{ report.effective_status|default:"-" }}</span>
                     </td>
                     <td>{% for t in report.tags.all %}
-                        <a href="{% build_filter_url "tag" t.name %}"><span
+                        <a href="?{% build_filter_url "tag" t.name %}"><span
                                 class="tag {{ t.name|color }}">{{ t }}</span></a>
                     {% endfor %}
                     </td>
