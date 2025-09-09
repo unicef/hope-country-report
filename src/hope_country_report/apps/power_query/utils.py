@@ -25,7 +25,7 @@ import qrcode
 import requests
 import tablib
 from constance import config
-from PIL import ExifTags, Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from sentry_sdk import capture_exception, configure_scope
 
 if TYPE_CHECKING:
@@ -299,16 +299,8 @@ def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fi
 def apply_exif_orientation(image: Image.Image) -> Image.Image:
     """Adjusts the image based on EXIF orientation metadata."""
     try:
-        exif = image.getexif()
-        if exif is not None:
-            orientation = exif.get(ExifTags.TAGS.get("Orientation"))
-            if orientation == 3:
-                image = image.rotate(180, expand=True)
-            elif orientation == 6:
-                image = image.rotate(90, expand=True)
-            elif orientation == 8:
-                image = image.rotate(270, expand=True)
+        return ImageOps.exif_transpose(image)
     except Exception as e:
         logger.warning(f"Failed to apply EXIF orientation: {e}")
         capture_exception(e)
-    return image
+        return image
