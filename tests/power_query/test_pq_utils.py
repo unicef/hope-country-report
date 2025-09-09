@@ -34,6 +34,32 @@ from hope_country_report.apps.power_query.utils import (
 )
 from hope_country_report.utils.media import resource_path
 
+
+@pytest.fixture
+def create_image_with_orientation():
+    """Creates an in-memory JPEG image with specified EXIF orientation."""
+
+    def _create_image_with_orientation(size, orientation):
+        image = Image.new("RGB", size, "white")
+        exif = Image.Exif()
+        exif[ExifTags.Base.Orientation] = orientation
+
+        with BytesIO() as tiff_buffer:
+            image.save(tiff_buffer, format="tiff", exif=exif)
+            tiff_buffer.seek(0)
+            tiff_image = Image.open(tiff_buffer)
+            exif_bytes = tiff_image.getexif().tobytes()
+
+        with BytesIO() as jpeg_buffer:
+            image.save(jpeg_buffer, format="jpeg", exif=exif_bytes)
+            jpeg_buffer.seek(0)
+            image = Image.open(jpeg_buffer)
+            image.load()
+            return image
+
+    return _create_image_with_orientation
+
+
 TEST_PDF = resource_path("apps/power_query/doc_templates/program_receipt.pdf")
 
 
@@ -328,12 +354,8 @@ def test_load_font_for_language(mocked_responses, language, expected_font_name):
         (8, (100, 200), (200, 100)),  # 270 CW rotation
     ],
 )
-def test_apply_exif_orientation(orientation, original_size, new_size):
-    image = Image.new("RGB", original_size, "white")
-    exif = image.getexif()
-    exif[ExifTags.TAGS.get("Orientation")] = orientation
-    image.getexif = lambda: exif
-
+def test_apply_exif_orientation(orientation, original_size, new_size, create_image_with_orientation):
+    image = create_image_with_orientation(original_size, orientation)
     oriented_image = apply_exif_orientation(image)
     assert oriented_image.size == new_size
 
@@ -344,14 +366,11 @@ def test_apply_exif_orientation_no_exif():
     assert oriented_image.size == (100, 200)
 
 
-def test_pdf_insertion_with_rotated_image(tmp_path):
+def test_pdf_insertion_with_rotated_image(tmp_path, create_image_with_orientation):
     doc = fitz.open()
     page = doc.new_page()
     rect = fitz.Rect(50, 50, 150, 250)  # Field dimensions (100x200)
-    image = Image.new("RGB", (100, 200), "red")
-    exif = image.getexif()
-    exif[ExifTags.TAGS.get("Orientation")] = 6  # 90° CCW
-    image.getexif = lambda: exif
+    image = create_image_with_orientation((100, 200), 6)  # 90° CCW
     image = apply_exif_orientation(image)  # Should rotate to 270° CW (90° CCW)
     output_stream = BytesIO()
     image.save(output_stream, format="PNG")
