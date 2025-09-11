@@ -897,6 +897,12 @@ class Ticketsystemflaggingdetails(HopeModel):
         related_name="ticketsystemflaggingdetails_golden_records_individual",
         null=True,
     )
+    sanction_list_individual = models.ForeignKey(
+        "ListSanctionlistindividual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketsystemflaggingdetails_sanction_list_individual",
+        null=True,
+    )
     ticket = models.OneToOneField(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketsystemflaggingdetails_ticket", null=True
     )
@@ -2045,6 +2051,63 @@ class Paymentverificationsummary(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
+class Westernunioninvoice(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "payment_westernunioninvoice"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Westernunioninvoicepayment(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    transaction_status = models.CharField(max_length=1, null=True)
+    payment = models.ForeignKey(
+        Payment, on_delete=models.DO_NOTHING, related_name="westernunioninvoicepayment_payment", null=True
+    )
+    western_union_invoice = models.ForeignKey(
+        Westernunioninvoice,
+        on_delete=models.DO_NOTHING,
+        related_name="westernunioninvoicepayment_western_union_invoice",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "payment_westernunioninvoicepayment"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Westernunionpaymentplanreport(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    sent = models.BooleanField(null=True)
+    payment_plan = models.ForeignKey(
+        PaymentPlan, on_delete=models.DO_NOTHING, related_name="westernunionpaymentplanreport_payment_plan", null=True
+    )
+    qcf_file = models.ForeignKey(
+        Westernunioninvoice,
+        on_delete=models.DO_NOTHING,
+        related_name="westernunionpaymentplanreport_qcf_file",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "payment_westernunionpaymentplanreport"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
 class Beneficiarygroup(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -2135,6 +2198,9 @@ class ProgramSanctionLists(HopeModel):
     id = models.BigAutoField(primary_key=True)
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="programsanctionlists_program", null=True
+    )
+    sanctionlist = models.ForeignKey(
+        "ListSanctionlist", on_delete=models.DO_NOTHING, related_name="programsanctionlists_sanctionlist", null=True
     )
 
     class Meta:
@@ -2384,6 +2450,233 @@ class DataRegistrationdataimportdatahub(HopeModel):
 
     def __str__(self) -> str:
         return str(self.name)
+
+
+class ListSanctionlist(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    config = models.JSONField(null=True)
+    strategy = models.CharField(unique=True, max_length=200, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_sanctionlist"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class ListSanctionlistindividual(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    data_id = models.IntegerField(null=True)
+    version_num = models.IntegerField(null=True)
+    first_name = models.CharField(max_length=85, null=True)
+    second_name = models.CharField(max_length=85, null=True)
+    third_name = models.CharField(max_length=85, null=True)
+    fourth_name = models.CharField(max_length=85, null=True)
+    full_name = models.CharField(max_length=255, null=True)
+    name_original_script = models.CharField(max_length=255, null=True)
+    un_list_type = models.CharField(max_length=100, null=True)
+    reference_number = models.CharField(max_length=50, null=True)
+    listed_on = models.DateTimeField(blank=True, null=True)
+    comments = models.TextField(null=True)
+    designation = models.TextField(null=True)
+    list_type = models.CharField(max_length=50, null=True)
+    street = models.CharField(max_length=255, null=True)
+    city = models.CharField(max_length=255, null=True)
+    state_province = models.CharField(max_length=255, null=True)
+    address_note = models.CharField(max_length=255, null=True)
+    active = models.BooleanField(null=True)
+    country_of_birth = models.ForeignKey(
+        Country,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividual_country_of_birth",
+        blank=True,
+        null=True,
+    )
+    sanction_list = models.ForeignKey(
+        ListSanctionlist,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividual_sanction_list",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_sanctionlistindividual"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class ListSanctionlistindividualaliasname(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    individual = models.ForeignKey(
+        ListSanctionlistindividual,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualaliasname_individual",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_sanctionlistindividualaliasname"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class ListSanctionlistindividualcountries(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualcountries_country",
+        blank=True,
+        null=True,
+    )
+    individual = models.ForeignKey(
+        ListSanctionlistindividual,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualcountries_individual",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_sanctionlistindividualcountries"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class ListSanctionlistindividualdateofbirth(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    date = models.DateField(null=True)
+    individual = models.ForeignKey(
+        ListSanctionlistindividual,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualdateofbirth_individual",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_sanctionlistindividualdateofbirth"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class ListSanctionlistindividualdocument(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    document_number = models.CharField(max_length=255, null=True)
+    type_of_document = models.CharField(max_length=255, null=True)
+    date_of_issue = models.CharField(max_length=255, blank=True, null=True)
+    note = models.CharField(max_length=255, null=True)
+    individual = models.ForeignKey(
+        ListSanctionlistindividual,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualdocument_individual",
+        null=True,
+    )
+    issuing_country = models.ForeignKey(
+        Country,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualdocument_issuing_country",
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_sanctionlistindividualdocument"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class ListSanctionlistindividualnationalities(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    individual = models.ForeignKey(
+        ListSanctionlistindividual,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualnationalities_individual",
+        null=True,
+    )
+    nationality = models.ForeignKey(
+        Country,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualnationalities_nationality",
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_sanctionlistindividualnationalities"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class ListUploadedxlsxfile(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    file = models.CharField(max_length=100, null=True)
+    associated_email = models.CharField(max_length=254, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_uploadedxlsxfile"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class ListUploadedxlsxfileSelectedLists(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    uploadedxlsxfile = models.ForeignKey(
+        ListUploadedxlsxfile,
+        on_delete=models.DO_NOTHING,
+        related_name="listuploadedxlsxfileselectedlists_uploadedxlsxfile",
+        null=True,
+    )
+    sanctionlist = models.ForeignKey(
+        ListSanctionlist,
+        on_delete=models.DO_NOTHING,
+        related_name="listuploadedxlsxfileselectedlists_sanctionlist",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "sanction_list_uploadedxlsxfile_selected_lists"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
 
 
 class Targetingcollectorblockrulefilter(HopeModel):
