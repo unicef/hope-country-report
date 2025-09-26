@@ -37,6 +37,7 @@ WANTED_TABLES = IRegexList(
         "targeting.*",
         "registration_data.*",
         "grievance.*",
+        "sanction_list.*",
     ]
 )
 
