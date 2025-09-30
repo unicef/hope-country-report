@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.tenant",
     "hope_country_report.apps.power_query",
     "hope_country_report.apps.core",
+    "hope_country_report.apps.stream",
     "django.contrib.contenttypes",
     # "smart_admin.apps.SmartTemplateConfig",  # templates
     # "smart_admin",  # use this instead of 'django.contrib.admin'
@@ -229,12 +230,25 @@ TEMPLATES = [
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {"format": "%(levelname)s %(name)s - %(message)s"},
+    },
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "level": "INFO"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "simple",
+        },
+        "null": {"class": "logging.NullHandler", "level": "INFO"},
     },
     "root": {
         "handlers": ["console"],
-        "level": "WARNING",
+        "level": env("LOGGING_LEVEL"),
+    },
+    "loggers": {
+        "hope_country_report.apps.stream": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
+        "streaming": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
+        "pika": {"handlers": ["console"], "level": "CRITICAL", "propagate": False},
     },
 }
 
@@ -275,5 +289,9 @@ from .fragments.smart_admin import *  # noqa
 from .fragments.social_auth import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
+from .fragments.streaming import *  # noqa
 
 django_stubs_ext.monkeypatch()
+
+GDAL_LIBRARY_PATH = env("GDAL_LIBRARY_PATH")
+GEOS_LIBRARY_PATH = env("GEOS_LIBRARY_PATH")

@@ -27,6 +27,9 @@ import tablib
 from constance import config
 from PIL import ExifTags, Image, ImageDraw, ImageFont
 from sentry_sdk import capture_exception, configure_scope
+import sys
+from collections.abc import Container
+
 
 if TYPE_CHECKING:
     from hope_country_report.types.django import AnyModel
@@ -36,6 +39,29 @@ logger = logging.getLogger(__name__)
 
 
 _font_cache: dict[str, bytes] = {}
+
+
+def size_of(obj: Any, seen: set | None = None):
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    seen.add(obj_id)
+
+    if isinstance(obj, dict):
+        size += sum([size_of(k, seen) + size_of(v, seen) for k, v in obj.items()])
+    elif isinstance(obj, list | tuple | set | frozenset):
+        size += sum([size_of(i, seen) for i in obj])
+    elif isinstance(obj, Container) and not isinstance(obj, str | bytes | bytearray):
+        try:
+            size += sum([size_of(i, seen) for i in obj])
+        except Exception:
+            pass
+
+    return size
 
 
 def is_valid_template(filename: Path) -> bool:
@@ -74,6 +100,8 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
             logger.exception(e)
             raise
             # raise ValueError(f"Results can't be rendered as a tablib Dataset: {e}")
+    elif isinstance(result, int | str):
+        data = tablib.Dataset([result])
     elif isinstance(result, list | tuple):
         data = tablib.Dataset()
         fields = set().union(*(d.keys() for d in list(result)))

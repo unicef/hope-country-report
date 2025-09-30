@@ -58,6 +58,7 @@ dependencies = [
   "django-smart-env",
   "django-storages[azure]",
   "django-strategy-field",
+  "django-streaming>=0.4",
   "django-stubs-ext",
   "django-taggit",
   "django-tailwind",
@@ -204,3 +205,14 @@ style = [
   "github://unicef/hope-code-conventions@main/django/django.toml",
 ]
 cache = "1 day"
+
+[dependency-groups]
+dev = [
+    "pdbpp>=0.11.7",
+    "pre-commit>=4.2.0",
+    "tox>=4.28.0",
+]
+
+[tool.uv.sources]
+django-streaming = { path = "../django-streaming", editable = true }
+django-online-issues = { path = "../../saxix/django-issues", editable = true }

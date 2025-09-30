@@ -1014,7 +1014,7 @@ class EntitlementCard(HopeModel):
 class Household(HopeModel):
     id = models.UUIDField(primary_key=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
-    is_original = models.BooleanField(null=True)
+    #    is_original = models.BooleanField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     is_removed = models.BooleanField(null=True)
