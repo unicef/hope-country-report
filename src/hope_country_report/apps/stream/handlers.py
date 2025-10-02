@@ -27,7 +27,7 @@ def aaa(sender: type[Dataset], instance: Dataset, created: bool, **kwargs: dict[
                     data = ds
                 else:
                     raise TypeError("Dataset must be a Dataset or dict")
-                event = make_event(event="hcr.dataset.save", message={"data": data})
+                event = make_event(key="hcr.dataset.save", message={"data": data})
                 engine = initialize_engine()
                 logger.debug("Stream notification 'hcr.dataset.save'")
                 if not engine.notify("hcr.dataset.save", event):

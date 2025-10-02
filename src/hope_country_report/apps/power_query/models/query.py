@@ -217,7 +217,7 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                     else:
                         dataset = Dataset(query=self, hash=signature, **defaults)
 
-                    return_value = dataset, extra
+                    return_value = dataset, info
         except Exception:
             raise
         return return_value
