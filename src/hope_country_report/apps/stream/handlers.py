@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+import tablib
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from hope_country_report.apps.power_query.utils import to_dataset
@@ -21,7 +22,7 @@ def aaa(sender: type[Dataset], instance: Dataset, created: bool, **kwargs: dict[
                 from streaming.manager import initialize_engine
 
                 ds = to_dataset(instance.data)
-                if isinstance(ds, Dataset):
+                if isinstance(ds, tablib.Dataset):
                     data = ds.export("json")
                 elif isinstance(ds, dict):
                     data = ds
