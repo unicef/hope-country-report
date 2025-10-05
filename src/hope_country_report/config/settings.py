@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-import django_stubs_ext
 
 from . import env
 
@@ -242,13 +241,13 @@ LOGGING = {
         "null": {"class": "logging.NullHandler", "level": "INFO"},
     },
     "root": {
-        "handlers": ["console"],
+        "handlers": ["null"],
         "level": env("LOGGING_LEVEL"),
     },
     "loggers": {
-        "hope_country_report.apps.stream": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
+        "hope_country_report": {"handlers": ["null"], "level": env("LOGGING_LEVEL"), "propagate": False},
         "streaming": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
-        "pika": {"handlers": ["console"], "level": "CRITICAL", "propagate": False},
+        # "pika": {"handlers": ["console"], "level": "CRITICAL", "propagate": False},
     },
 }
 
@@ -291,7 +290,6 @@ from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
 from .fragments.streaming import *  # noqa
 
-django_stubs_ext.monkeypatch()
 
 GDAL_LIBRARY_PATH = env("GDAL_LIBRARY_PATH")
 GEOS_LIBRARY_PATH = env("GEOS_LIBRARY_PATH")

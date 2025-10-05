@@ -187,6 +187,7 @@ def test_query_parametrizer(query_parametrizer: "Query"):
 
 
 def test_query_silk(query: "Query", data):
+    query.datasets.all().delete()
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
     uid = str(data["hh1"][0].business_area.pk)

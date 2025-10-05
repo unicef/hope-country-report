@@ -22,7 +22,7 @@ from hope_country_report.utils.perf import profile
 
 from ..exceptions import QueryRunCanceled, QueryRunTerminated
 from ..json import PQJSONEncoder
-from ..utils import dict_hash, to_dataset, size_of
+from ..utils import dict_hash, to_dataset
 from ._base import AdminReversable, PowerQueryCeleryFields, PowerQueryModel
 from .arguments import Parametrizer
 
@@ -166,58 +166,60 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                 return self.aborted or running_task.is_aborted()
 
             self.is_aborted = types.MethodType(is_aborted, self)
-            fp = tempfile.TemporaryFile()
-            locals_ = {
-                "conn": model._default_manager.using(settings.POWER_QUERY_DB_ALIAS),
-                "self": self,
-                "args": arguments,
-                "arguments": arguments,
-                "to_dataset": to_dataset,
-                "invoke": self._invoke,
-                "debug": lambda *a: debug.append((timezone.now().strftime("%H:%M:%S"), *a)),
-                "task": running_task,
-                "fp": fp,
-                **kwargs,
-                **connections,
-            }
-            signature = dict_hash({"query": self.pk, **(arguments if arguments else {})})
-            if not preview and use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
-                return_value = ds, ds.extra
-            else:
-                with state.set(preview=preview, tenant=self.country_office):
-                    try:
-                        with profile() as perfs:
+            with profile() as perfs:
+                fp = tempfile.TemporaryFile()
+                locals_ = {
+                    "conn": model._default_manager.using(settings.POWER_QUERY_DB_ALIAS),
+                    "self": self,
+                    "args": arguments,
+                    "arguments": arguments,
+                    "to_dataset": to_dataset,
+                    "invoke": self._invoke,
+                    "debug": lambda *a: debug.append((timezone.now().strftime("%H:%M:%S"), *a)),
+                    "task": running_task,
+                    "fp": fp,
+                    **kwargs,
+                    **connections,
+                }
+                signature = dict_hash({"query": self.pk, **(arguments if arguments else {})})
+                if not preview and use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
+                    return_value = ds, ds.extra
+                else:
+                    with state.set(preview=preview, tenant=self.country_office):
+                        try:
                             code = self.get_code()
                             exec(code, globals(), locals_)
-                        result = locals_.get("result")
-                        extra = locals_.get("extra")
-                    except Exception:
-                        self.info = {
+                            result = locals_.get("result")
+                            extra = locals_.get("extra")
+                        except Exception:
+                            self.info = {
+                                "debug": debug,
+                            }
+                            self.save()
+                            raise
+                        info = {
+                            "type": type(result).__name__,
+                            "arguments": arguments,
+                            "perfs": perfs,
                             "debug": debug,
+                            "extra": extra,
                         }
-                        self.save()
-                        raise
-                    info = {
-                        "type": type(result).__name__,
-                        "arguments": arguments,
-                        "perfs": perfs,
-                        "debug": debug,
-                        "extra": extra,
-                    }
-                    h = hashlib.md5(str(arguments).encode()).hexdigest()
+                        h = hashlib.md5(str(arguments).encode()).hexdigest()
 
-                    defaults = {
-                        "size": size_of(result),
-                        "info": info,
-                        "last_run": timezone.now(),
-                        "file": ContentFile(Dataset.marshall(result), name=f"{self.pk}_{h}.pkl"),
-                    }
-                    if persist:
-                        dataset, __ = Dataset.objects.update_or_create(query=self, hash=signature, defaults=defaults)
-                    else:
-                        dataset = Dataset(query=self, hash=signature, **defaults)
+                        defaults = {
+                            "size": len(result) if result else 0,
+                            "info": info,
+                            "last_run": timezone.now(),
+                            "file": ContentFile(Dataset.marshall(result), name=f"{self.pk}_{h}.pkl"),
+                        }
+                        if persist:
+                            dataset, __ = Dataset.objects.update_or_create(
+                                query=self, hash=signature, defaults=defaults
+                            )
+                        else:
+                            dataset = Dataset(query=self, hash=signature, **defaults)
 
-                    return_value = dataset, info
+                        return_value = dataset, extra
         except Exception:
             raise
         return return_value

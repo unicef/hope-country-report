@@ -212,9 +212,7 @@ class QueryAdmin(
             context["title"] = f"Result of {obj.name} ({type(ret).__name__})"
             context["timing"] = timing
             try:
-                if ret is None:
-                    context["result"] = None
-                elif isinstance(ret, QuerySet):
+                if isinstance(ret, QuerySet):
                     ret = ret[: config.PQ_SAMPLE_PAGE_SIZE]
                     context["queryset"] = ret
                 elif isinstance(ret, str | int):

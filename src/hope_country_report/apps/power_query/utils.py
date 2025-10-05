@@ -100,8 +100,6 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
             logger.exception(e)
             raise
             # raise ValueError(f"Results can't be rendered as a tablib Dataset: {e}")
-    elif isinstance(result, int | str):
-        data = tablib.Dataset([result])
     elif isinstance(result, list | tuple):
         data = tablib.Dataset()
         fields = set().union(*(d.keys() for d in list(result)))
