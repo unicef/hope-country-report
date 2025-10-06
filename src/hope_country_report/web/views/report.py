@@ -1,13 +1,12 @@
-from typing import Any, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
+from adminfilters.utils import parse_bool
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView, ListView
-
-from adminfilters.utils import parse_bool
 
 from hope_country_report.apps.power_query.models import ReportConfiguration
 

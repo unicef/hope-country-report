@@ -1,8 +1,5 @@
-from typing import TYPE_CHECKING
-
 from collections.abc import Sequence
-
-from django.contrib import admin
+from typing import TYPE_CHECKING
 
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.combo import RelatedFieldComboFilter
@@ -10,6 +7,7 @@ from adminfilters.dates import DateRangeFilter
 from adminfilters.json_filter import JsonFieldFilter
 from adminfilters.querystring import QueryStringFilter
 from adminfilters.value import ValueFilter
+from django.contrib import admin
 
 from .. import models
 from ._base import HopeModelAdmin

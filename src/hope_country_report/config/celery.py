@@ -1,11 +1,9 @@
-from typing import Any
-
 import os
-
-from django.conf import settings
+from typing import Any
 
 import sentry_sdk
 from celery import Celery, signals
+from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hope_country_report.config.settings")
 app = Celery("hcr")

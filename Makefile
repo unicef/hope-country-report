@@ -18,6 +18,9 @@ export PRINT_HELP_PYSCRIPT
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
+clean:  ## clean working folder
+	@rm -f ./~build dist
+
 .init-db:
 	psql -h ${DATABASE_HOST} -p ${DATABASE_PORT} -U ${DATABASE_USER} -c "DROP DATABASE IF EXISTS test_${DATABASE_NAME}"
 	psql -h ${DATABASE_HOST} -p ${DATABASE_PORT} -U ${DATABASE_USER} -c "DROP DATABASE IF EXISTS ${DATABASE_NAME}"
@@ -29,11 +32,6 @@ bootstrap:
 i18n:
 	./manage.py makemessages --locale es --locale fr --locale ar --locale pt --ignore '~*'
 	./manage.py compilemessages
-
-test:
-	docker compose -f compose.test.yml down
-	docker compose -f compose.test.yml build
-	docker compose -f compose.test.yml up --build --exit-code-from backend
 
 
 reset-migrations: ## reset django migrations

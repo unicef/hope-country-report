@@ -1,11 +1,9 @@
 from typing import Any
-
 from urllib.parse import urlencode
 
+from adminfilters.utils import parse_bool
 from django.template import Library
 from django.utils.safestring import mark_safe
-
-from adminfilters.utils import parse_bool
 
 register = Library()
 

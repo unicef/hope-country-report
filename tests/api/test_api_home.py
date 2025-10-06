@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING
-
-import pytest
 from unittest import mock
 from unittest.mock import Mock
 
+import pytest
 from rest_framework.test import APIClient
 from testutils.factories import QueryFactory, ReportConfigurationFactory
 

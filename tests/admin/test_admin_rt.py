@@ -1,7 +1,5 @@
 import pytest
-
 from django.urls import reverse
-
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query.processors import ToHTML

@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING
-
 import contextlib
+from typing import TYPE_CHECKING
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Keys

@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING
 
+from dateutil.utils import today
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
 from django.db.models import Q, QuerySet
-
-from dateutil.utils import today
 
 from hope_country_report.apps.tenant.utils import get_selected_tenant
 from hope_country_report.state import state

@@ -1,16 +1,14 @@
-from typing import TYPE_CHECKING
-
 import contextlib
 import resource
 import time
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import connections
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from collections.abc import Iterator
+    from typing import Any
 
 
 class DBMetrics:
@@ -36,7 +34,7 @@ class DBMetrics:
 def profile() -> "Iterator[Any]":
     time_start = time.perf_counter()
     mem_start = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0 / 1024.0
-    info: "dict[str,Any]" = {"time_start": time_start}
+    info: "dict[str,Any]" = {"time_start": time_start, "time_end": "N/A"}
     metrics1 = DBMetrics("default")
     metrics2 = DBMetrics(settings.POWER_QUERY_DB_ALIAS)
     with connections["default"].execute_wrapper(metrics1):

@@ -1,6 +1,6 @@
 from django.db.models.fields import UUIDField
 
-from .base import AutoRegisterModelFactory, factories_registry, HopeAutoRegisterModelFactory, TAutoRegisterModelFactory
+from .base import AutoRegisterModelFactory, HopeAutoRegisterModelFactory, TAutoRegisterModelFactory, factories_registry
 
 # isort: split
 from .adv_filters import AdvancedFilterFactory as AdvancedFilterFactory

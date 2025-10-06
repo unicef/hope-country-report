@@ -1,9 +1,8 @@
 import uuid
 
-from django.utils.text import slugify
-
 import factory
 import pytz
+from django.utils.text import slugify
 from factory import fuzzy, post_generation
 from faker import Faker
 from testutils.factories import AutoRegisterModelFactory, HopeAutoRegisterModelFactory

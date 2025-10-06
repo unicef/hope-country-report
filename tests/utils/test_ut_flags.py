@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING
-
-import pytest
 from unittest import mock
 
+import pytest
 from django.core.exceptions import ValidationError
 
 from hope_country_report.utils.flags import debug, hostname, server_ip, superuser, validate_bool

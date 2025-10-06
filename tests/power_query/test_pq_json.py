@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-
 from django.utils import timezone
 
 from hope_country_report.apps.core.models import User

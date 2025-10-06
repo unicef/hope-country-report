@@ -1,6 +1,5 @@
-from django.contrib.auth.models import Group, Permission
-
 import factory
+from django.contrib.auth.models import Group, Permission
 
 from .base import AutoRegisterModelFactory
 from .contenttypes import ContentTypeFactory

@@ -1,13 +1,10 @@
 from typing import TYPE_CHECKING
-
+from unittest import mock
+from unittest.mock import Mock
 from urllib.parse import urlencode
 
 import pytest
-from unittest import mock
-from unittest.mock import Mock
-
 from django.urls import reverse
-
 from testutils.factories import UserFactory
 from testutils.perms import user_grant_permissions
 

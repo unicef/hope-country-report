@@ -1,16 +1,14 @@
-from typing import Any, AnyStr, List
-
 import io
 import keyword
 import os
 import re
 from collections import OrderedDict
 from pathlib import Path
+from typing import Any, AnyStr, List
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
 from django.db.models.constants import LOOKUP_SEP
-
 from django_regex.exceptions import InvalidPattern
 from django_regex.utils import Regex, RegexList
 

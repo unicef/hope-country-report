@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 import responses
 
 here = Path(__file__).parent
@@ -132,7 +131,7 @@ def pytest_configure(config):
     os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
     os.makedirs(settings.STATIC_ROOT, exist_ok=True)
 
-    from django.core.management import call_command, CommandError
+    from django.core.management import CommandError, call_command
 
     try:
         call_command("env", check=True)

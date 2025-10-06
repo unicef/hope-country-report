@@ -1,19 +1,6 @@
-from typing import Callable, TYPE_CHECKING
-
 import logging
 from collections.abc import Sequence
-
-from django.conf import settings
-from django.contrib import admin, messages
-from django.contrib.admin import ModelAdmin
-from django.contrib.contenttypes.models import ContentType
-from django.db import connections, models
-from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
-from django.shortcuts import redirect, render
-from django.template.response import TemplateResponse
-from django.urls import reverse
-from django.utils.module_loading import import_string
+from typing import TYPE_CHECKING, Callable
 
 import tablib
 from admin_extra_buttons.decorators import button
@@ -24,10 +11,23 @@ from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from constance import config
 from debug_toolbar.panels.sql.utils import reformat_sql
+from django.conf import settings
+from django.contrib import admin, messages
+from django.contrib.admin import ModelAdmin
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import connections, models
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.shortcuts import redirect, render
+from django.template.response import TemplateResponse
+from django.urls import reverse
+from django.utils.module_loading import import_string
 from django_celery_boost.admin import CeleryTaskModelAdmin
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
+from ...utils.language import can_slice
 from ...utils.mail import send_document_password
 from ...utils.media import download_media
 from ...utils.perf import profile
@@ -135,24 +135,37 @@ class QueryAdmin(
         return super().has_change_permission(request, obj)
 
     @button()
+    def notification(self, request: HttpRequest, pk: str) -> HttpResponse:
+        obj = self.get_object(request, pk)
+        try:
+            url = reverse("admin:stream_event_change", args=[obj.event.pk])
+        except ObjectDoesNotExist:
+            url = reverse("admin:stream_event_add")
+            url += f"?query={obj.pk}&office={obj.country_office_id}"
+        return HttpResponseRedirect(url)
+
+    @button()
     def explain(self, request: HttpRequest, pk: int) -> HttpResponse:
         context = self.get_common_context(request, pk)
         if request.method == "POST":
             form = ExplainQueryForm(request.POST)
             if form.is_valid():
                 q = form.cleaned_data["query"]
-                ct: ContentType = form.cleaned_data["target"]
-                code = f"""sql={q}.query"""
-                locals_ = {"conn": ct.model_class().objects}
-                exec(code, globals(), locals_)
-                sql = locals_.get("sql")
-                if sql:
-                    cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
-                    context["sql"] = reformat_sql(str(locals_.get("sql", "")))
-                    cursor.execute(f"EXPLAIN ANALYZE {sql}")
-                    headers = [d[0] for d in cursor.description]
-                    result = cursor.fetchall()
-                    context.update(result=result, sql=sql, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
+                try:
+                    ct: ContentType = form.cleaned_data["target"]
+                    code = f"""sql={q}.query"""
+                    locals_ = {"conn": ct.model_class().objects}
+                    exec(code, globals(), locals_)
+                    sql = locals_.get("sql")
+                    if sql:
+                        cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
+                        context["sql"] = reformat_sql(str(locals_.get("sql", "")))
+                        cursor.execute(f"EXPLAIN ANALYZE {sql}")
+                        headers = [d[0] for d in cursor.description]
+                        result = cursor.fetchall()
+                        context.update(result=result, sql=sql, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
+                except Exception as e:
+                    self.message_error_to_user(request, e)
                 self.message_user(request, code)
         else:
             form = ExplainQueryForm(initial={"query": "conn.all()", "target": None})
@@ -196,18 +209,26 @@ class QueryAdmin(
             context["info"] = extra
             context["title"] = f"Result of {obj.name} ({type(ret).__name__})"
             context["timing"] = timing
-            if isinstance(ret, QuerySet):
-                ret = ret[: config.PQ_SAMPLE_PAGE_SIZE]
-                context["queryset"] = ret
-            elif isinstance(ret, tablib.Dataset):
-                context["dataset"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
-            elif isinstance(ret, dict | list | tuple):
-                context["result"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
-            else:
-                self.message_user(
-                    request, f"Query does not returns a valid result. It returned {type(ret)}", messages.WARNING
-                )
-            return render(request, "admin/power_query/query/preview.html", context)
+            try:
+                if isinstance(ret, QuerySet):
+                    ret = ret[: config.PQ_SAMPLE_PAGE_SIZE]
+                    context["queryset"] = ret
+                elif isinstance(ret, str | int):
+                    context["result"] = str(ret)
+                elif isinstance(ret, dict):
+                    context["result"] = ret
+                elif isinstance(ret, tablib.Dataset):
+                    context["dataset"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
+                elif can_slice(ret):
+                    context["result"] = ret[: config.PQ_SAMPLE_PAGE_SIZE]
+                else:
+                    self.message_user(
+                        request, f"Query does not returns a valid result. It returned {type(ret)}", messages.WARNING
+                    )
+                return render(request, "admin/power_query/query/preview.html", context)
+            except Exception as e:
+                logger.exception(e)
+                self.message_user(request, f"Error {e.__class__.__name__} processing {ret}: {e}", messages.ERROR)
         except Exception as e:
             logger.exception(e)
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
@@ -537,7 +558,7 @@ class ReportDocumentAdmin(
     @button()
     def resend_password(self, request: "AuthHttpRequest", pk: str) -> HttpResponse:
         obj: ReportDocument = self.get_object(request, pk)
-        s = send_document_password(request.user, obj)
+        s = send_document_password(request.user, obj.report)
         self.message_user(request, f"{s}")
 
 

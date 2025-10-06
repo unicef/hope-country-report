@@ -1,6 +1,5 @@
-from typing import Any, TYPE_CHECKING
-
 import datetime
+from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -13,7 +12,6 @@ from django.utils import dateformat
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-
 from timezone_field import TimeZoneField
 from unicef_security.models import AbstractUser, SecurityMixin, TimeStampedModel
 

@@ -1,11 +1,9 @@
 from contextlib import ContextDecorator
 from random import choice
-
 from unittest.mock import Mock
 
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
-
 from faker import Faker
 
 from hope_country_report.apps.core.models import UserRole

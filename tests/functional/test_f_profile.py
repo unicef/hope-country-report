@@ -1,10 +1,8 @@
 from typing import TYPE_CHECKING
 
 import pytest
-
 from django.db import transaction
 from django.urls import reverse
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 

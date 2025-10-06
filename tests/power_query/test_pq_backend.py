@@ -1,13 +1,10 @@
+from collections import namedtuple
 from typing import TYPE_CHECKING
 
-from collections import namedtuple
-
 import pytest
-
 from django.apps import apps
 from django.contrib.auth.models import AnonymousUser
-
-from testutils.factories import get_factory_for_model, UserFactory
+from testutils.factories import UserFactory, get_factory_for_model
 from testutils.perms import user_grant_permissions
 
 from hope_country_report.apps.power_query.backends import PowerQueryBackend

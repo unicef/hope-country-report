@@ -1,9 +1,8 @@
-from typing import Iterable, TYPE_CHECKING
-
 import hashlib
 import logging
 import tempfile
 import types
+from typing import TYPE_CHECKING, Iterable
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -12,7 +11,6 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import JSONField, Q
 from django.utils import timezone
-
 from django_celery_boost.models import CeleryTaskModel
 from sentry_sdk import capture_exception, configure_scope
 

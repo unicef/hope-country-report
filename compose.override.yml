@@ -1,0 +1,114 @@
+volumes:
+  postgres_data:
+  hope_postgres_data:
+
+x-build: &build
+  context: .
+  dockerfile: docker/Dockerfile
+  args:
+    - VERSION=${VERSION:-`git describe --tags --always`}
+
+x-django-env: &django-env
+  - ALLOWED_HOSTS=backend,localhost
+  - AZURE_TENANT_ID=
+  - AZURE_CLIENT_KEY=
+  - CACHE_URL=redis://redis:16379/1
+  - CELERY_BROKER_URL=redis://redis:16379/0
+  - DATABASE_URL=postgis://postgres:postgres@db:15432/hcr
+  - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:15432/hopedb
+  - DEBUG=True
+  - FILE_STORAGE_DEFAULT=django.core.files.storage.FileSystemStorage
+  - FILE_STORAGE_MEDIA=django.core.files.storage.FileSystemStorage
+  - FILE_STORAGE_STATIC=django.contrib.staticfiles.storage.StaticFilesStorage
+  - FILE_STORAGE_HOPE=django.core.files.storage.FileSystemStorage
+  - FLOWER_URL=http://flower:5555
+  - EMAIL_BACKEND=
+  - EMAIL_HOST=
+  - EMAIL_PORT=
+  - EMAIL_USE_TLS=
+  - EMAIL_USE_SSL=
+  - MAILJET_API_KEY=
+  - MAILJET_SECRET_KEY=
+  - MEDIA_ROOT=/var/run/app/media
+  - MEDIA_URL=/media/
+  - POWER_QUERY_FLOWER_ADDRESS=http://flower:5555
+  - REDIS_URL=redis://redis:6379/0
+  - SECURE_SSL_REDIRECT=False
+  - SECRET_KEY=secret-key
+  - SENTRY_ENVIRONMENT=local
+  - STATIC_ROOT=/var/run/app/static
+  - STATIC_URL=/static/
+  - WP_PRIVATE_KEY=
+
+services:
+  backend:
+    build:
+      <<: *build
+      target: dist
+    command: run
+    environment: *django-env
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://backend:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  celery_worker:
+    build:
+      <<: *build
+      target: dist
+    command: worker
+    environment: *django-env
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build:
+      <<: *build
+      target: dist
+    command: beat
+    environment: *django-env
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  flower:
+    build:
+      <<: *build
+      target: dist
+    command: flower
+    environment: *django-env
+    restart: unless-stopped
+    ports:
+      - 5555:5555
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://flower:5555/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,13 +1,12 @@
 from typing import TYPE_CHECKING
 
-from django.contrib import admin
-from django.contrib.admin import ListFilter
-from django.db import models
-
 from admin_cursor_paginator import CursorPaginatorAdmin
 from admin_extra_buttons.api import ExtraButtonsMixin
 from adminfilters import filters as extra_filters
 from adminfilters.mixin import AdminFiltersMixin
+from django.contrib import admin
+from django.contrib.admin import ListFilter
+from django.db import models
 from smart_admin.mixins import DisplayAllMixin
 
 if TYPE_CHECKING:

@@ -1,15 +1,13 @@
-from typing import TYPE_CHECKING
-
 from functools import update_wrapper
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
-from django.urls import reverse, URLPattern, URLResolver
+from django.urls import URLPattern, URLResolver, reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-
 from smart_admin.autocomplete import SmartAutocompleteJsonView
 from smart_admin.site import SmartAdminSite
 
@@ -17,9 +15,8 @@ from .forms import SelectTenantForm
 from .utils import get_selected_tenant, is_tenant_valid, must_tenant, set_selected_tenant
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from collections.abc import Callable
+    from typing import Any
 
     from hope_country_report.types.http import AuthHttpRequest
 

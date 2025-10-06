@@ -1,44 +1,43 @@
 volumes:
   postgres_data:
   hope_postgres_data:
+  backend-static:
+
 
 x-build: &build
   context: .
   dockerfile: docker/Dockerfile
   args:
     - VERSION=${VERSION:-`git describe --tags --always`}
+  platforms:
+    - "linux/amd64"
+
 
 x-django-env: &django-env
-  - ALLOWED_HOSTS=backend,localhost
-  - AZURE_TENANT_ID=
-  - AZURE_CLIENT_KEY=
-  - CACHE_URL=redis://redis:6379/1
-  - CELERY_BROKER_URL=redis://redis:6379/0
+  - ALLOWED_HOSTS=*
+  - SECRET_KEY=secret-key
   - DATABASE_URL=postgis://postgres:postgres@db:5432/hcr
   - DATABASE_HOPE_URL=postgis://postgres:postgres@hopedb:5432/hopedb
-  - DEBUG=True
-  - FILE_STORAGE_DEFAULT=django.core.files.storage.FileSystemStorage
-  - FILE_STORAGE_MEDIA=django.core.files.storage.FileSystemStorage
-  - FILE_STORAGE_STATIC=django.contrib.staticfiles.storage.StaticFilesStorage
-  - FILE_STORAGE_HOPE=django.core.files.storage.FileSystemStorage
-  - FLOWER_URL=http://flower:5555
+  - REDIS_URL=redis://redis:16379/0
+  - ALLOWED_HOSTS=backend,localhost
+  - STATIC_ROOT=/static
+  - STATIC_URL=/static/
   - EMAIL_BACKEND=
   - EMAIL_HOST=
   - EMAIL_PORT=
   - EMAIL_USE_TLS=
   - EMAIL_USE_SSL=
+  - CELERY_BROKER_URL=redis://redis:16379/0
   - MAILJET_API_KEY=
   - MAILJET_SECRET_KEY=
-  - MEDIA_ROOT=/var/run/app/media
-  - MEDIA_URL=/media/
-  - POWER_QUERY_FLOWER_ADDRESS=http://flower:5555
-  - REDIS_URL=redis://redis:6379/0
-  - SECURE_SSL_REDIRECT=False
-  - SECRET_KEY=secret-key
-  - SENTRY_ENVIRONMENT=local
-  - STATIC_ROOT=/var/run/app/static
-  - STATIC_URL=/static/
   - WP_PRIVATE_KEY=
+  - SECURE_SSL_REDIRECT=False
+  - AZURE_TENANT_ID=
+  - AZURE_CLIENT_KEY=
+  - MAILJET_TEMPLATE_REPORT_READY=
+  - MAILJET_TEMPLATE_ZIP_PASSWORD=
+  - SENTRY_ENVIRONMENT=local
+
 
 services:
   backend:
@@ -46,14 +45,20 @@ services:
       <<: *build
       target: dist
     command: run
+
+#    build:
+#      context: .
+#      dockerfile: docker/Dockerfile
+#      target: prd
+#      platforms:
+#        - "linux/amd64/v2"
+#    command: sh -c "entrypoint.sh ./docker/wait-for-it.sh db:5432 && entrypoint.sh ./docker/wait-for-it.sh hopedb:5432 && entrypoint.sh prd"
     environment: *django-env
     ports:
       - 8000:8000
     volumes:
-      - .:/app
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
+      - .:/code
+      - backend-static:/static
     depends_on:
       db:
         condition: service_healthy
@@ -75,7 +80,7 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     restart: always
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-p", "15432"]
       start_period: 5s
       interval: 5s
       timeout: 4s
@@ -91,7 +96,7 @@ services:
       - hope_postgres_data:/var/lib/postgresql/data/
     restart: always
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-p", "15432"]
       start_period: 5s
       interval: 5s
       timeout: 4s
@@ -100,7 +105,7 @@ services:
   redis:
     image: redis:7.2
     ports:
-      - 6379:6379
+      - 16379:6379
     restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -113,10 +118,17 @@ services:
     build:
       <<: *build
       target: dist
-    command: worker
+    command: celery_worker
+
+#    build:
+#      context: .
+#      dockerfile: docker/Dockerfile
+#      target: prd
+#    command: celery_worker
     environment: *django-env
     volumes:
-      - .:/app
+      - .:/code
+      - backend-static:/static
     restart: unless-stopped
     depends_on:
       db:
@@ -128,10 +140,17 @@ services:
     build:
       <<: *build
       target: dist
-    command: beat
+    command: celery_beat
+
+#    build:
+#      context: .
+#      dockerfile: docker/Dockerfile
+#      target: prd
+#    command: celery_beat
     environment: *django-env
     volumes:
-      - .:/app
+      - .:/code
+      - backend-static:/static
     restart: unless-stopped
     depends_on:
       db:
@@ -139,11 +158,30 @@ services:
       redis:
         condition: service_healthy
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "10000:5672"
+      - "10001:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   flower:
     build:
       <<: *build
       target: dist
     command: flower
+#    build:
+#      context: .
+#      dockerfile: docker/Dockerfile
+#      target: dev
+#    command: celery_flower
     environment: *django-env
     restart: unless-stopped
     ports:

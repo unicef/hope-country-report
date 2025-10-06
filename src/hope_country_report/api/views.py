@@ -1,10 +1,8 @@
-from typing import Any, TYPE_CHECKING
-
 import json
+from typing import TYPE_CHECKING, Any
 
 from django.core.serializers import serialize
 from django.http import JsonResponse, StreamingHttpResponse
-
 from django_filters import rest_framework as filters
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action

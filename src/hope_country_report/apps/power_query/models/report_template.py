@@ -1,15 +1,13 @@
-from typing import TYPE_CHECKING
-
 import logging
 import mimetypes
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.core.files import File
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-
 from django_cleanup import cleanup
 
 from hope_country_report.apps.core.models import CountryOffice

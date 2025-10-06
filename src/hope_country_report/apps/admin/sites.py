@@ -1,6 +1,5 @@
-from typing import Any, TYPE_CHECKING
-
 import logging
+from typing import TYPE_CHECKING, Any
 
 from django.utils.translation import gettext_lazy
 

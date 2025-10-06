@@ -1,21 +1,35 @@
 {% extends "admin_extra_buttons/action_page.html" %}{% load power_query %}
 {% block action-content %}
-    <h3>Arguments</h3>
-    <table>{% for args, value in results.items %}
-        <tr>
-            <td>{{ args }}</td>
-            <td>{{ value }}</td>
-        </tr>
-    {% endfor %}</table>
+{# <h3>Arguments</h3> #}
+{# <table> #}
+{# {% for args, value in results.items %} #}
+{# <tr> #}
+{# <td>{{ args }}</td> #}
+{# <td>{{ value }}</td> #}
+{# </tr> #}
+{# {% endfor %}</table> #}
 
-    <h3>Results</h3>
-    <table>{% for dataset in original.datasets.all %}
+    <h3>Datasets</h3>
+    <table>
+        <thead>
+        <tr>
+            <td>Dataset pk</td>
+            <td>Dataset</td>
+            <td>Size</td>
+            <td>Elapsed time</td>
+            <td>Memory</td>
+            <td>Arguments</td>
+        </tr>
+
+        </thead>
+        {% for dataset in original.datasets.all %}
         <tr>
             <td><a href="{% url "admin:power_query_dataset_change" dataset.pk %}"> {{ dataset.pk }}</a></td>
             <td><a href="{% url "admin:power_query_dataset_change" dataset.pk %}"> {{ dataset }}</a></td>
             <td>{{ dataset.size|fmt_size }}</td>
-            <td>{{ dataset.info.timing.time_elapsed }}</td>
-            <td>{{ dataset.info.timing.memory }}</td>
+            <td>{{ dataset.info.perfs.time_elapsed|elapsed }}</td>
+            <td>{{ dataset.info.perfs.memory }}</td>
+            <td>{{ dataset.info.arguments }}</td>
         </tr>
     {% endfor %}</table>
 {% endblock action-content %}

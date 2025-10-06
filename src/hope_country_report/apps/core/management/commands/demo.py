@@ -1,7 +1,6 @@
-from typing import Any
-
 import logging
 import random
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -17,7 +16,6 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **options: Any) -> None:
         from django.contrib.contenttypes.models import ContentType
         from django.contrib.sites.models import Site
-
         from flags.models import FlagState
 
         from hope_country_report.apps.core.models import CountryOffice, User

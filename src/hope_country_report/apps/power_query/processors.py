@@ -1,18 +1,16 @@
-from typing import Any, TYPE_CHECKING
-
 import io
 import logging
 import mimetypes
 import re
 from collections.abc import Callable
 from io import BytesIO
-
-from django.core.files.temp import NamedTemporaryFile
-from django.template import Context, Template
-from django.utils.functional import classproperty
+from typing import TYPE_CHECKING, Any
 
 import fitz
 import pdfkit
+from django.core.files.temp import NamedTemporaryFile
+from django.template import Context, Template
+from django.utils.functional import classproperty
 from PIL import Image
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import AnnotationDictionaryAttributes, FieldDictionaryAttributes, FieldFlag

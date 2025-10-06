@@ -3,7 +3,7 @@ from pathlib import Path
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
-from django.core.files.storage import default_storage, Storage
+from django.core.files.storage import Storage, default_storage
 from django.http import Http404, HttpResponse, StreamingHttpResponse
 
 THttpResponse = type[StreamingHttpResponse | HttpResponse]

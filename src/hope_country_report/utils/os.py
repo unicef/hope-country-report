@@ -1,8 +1,7 @@
-from typing import Iterator
-
 import os
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 
 @contextmanager

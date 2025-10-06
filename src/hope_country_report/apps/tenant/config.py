@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING
-
 import contextlib
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 from django.core.signals import setting_changed
 

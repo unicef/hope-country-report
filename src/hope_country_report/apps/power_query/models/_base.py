@@ -1,14 +1,12 @@
-from typing import TYPE_CHECKING
-
 import logging
 import os
 import pickle
+from typing import TYPE_CHECKING
 
+from concurrency.fields import AutoIncVersionField
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.db import models
 from django.urls import reverse
-
-from concurrency.fields import AutoIncVersionField
 
 from ...core.utils import SmartManager
 from ..manager import PowerQueryManager

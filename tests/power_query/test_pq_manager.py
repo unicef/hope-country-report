@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING
-
-import pytest
 from unittest import mock
 
+import pytest
 from django.db.models import Q
 
 from hope_country_report.apps.power_query.manager import PowerQueryManager

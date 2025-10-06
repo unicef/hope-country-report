@@ -1,9 +1,8 @@
 import zoneinfo
 
+import freezegun
 from django.contrib.auth.models import AnonymousUser
 from django.utils.timezone import now
-
-import freezegun
 from testutils.perms import set_current_user
 
 from hope_country_report.web.templatetags.user_tz import userdatetime
