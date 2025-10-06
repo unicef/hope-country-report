@@ -1,18 +1,15 @@
+import contextlib
 from typing import TYPE_CHECKING
 
-import contextlib
-
+from adminfilters.utils import parse_bool
 from django.conf import settings
 from django.core.exceptions import ValidationError
-
-from adminfilters.utils import parse_bool
 from flags import state as flag_state
 from flags.conditions import conditions
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from collections.abc import Iterator
+    from typing import Any
 
     from django.http import HttpRequest
 

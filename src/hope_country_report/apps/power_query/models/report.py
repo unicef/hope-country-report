@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING
-
 import logging
+from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -9,7 +8,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-
 from django_celery_beat.models import PeriodicTask
 from django_celery_boost.models import CeleryTaskModel
 from taggit.managers import TaggableManager

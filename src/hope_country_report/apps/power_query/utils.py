@@ -1,5 +1,3 @@
-from typing import Any, Dict, TYPE_CHECKING
-
 import base64
 import binascii
 import datetime
@@ -7,29 +5,27 @@ import hashlib
 import io
 import json
 import logging
-from collections.abc import Callable, Iterable
+import sys
+from collections.abc import Callable, Container, Iterable
 from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict
 from urllib.parse import urljoin
-
-from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.staticfiles.storage import staticfiles_storage
-from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse
-from django.utils.safestring import mark_safe
 
 import fitz
 import qrcode
 import requests
 import tablib
 from constance import config
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse
+from django.utils.safestring import mark_safe
 from PIL import ExifTags, Image, ImageDraw, ImageFont
 from sentry_sdk import capture_exception, configure_scope
-import sys
-from collections.abc import Container
-
 
 if TYPE_CHECKING:
     from hope_country_report.types.django import AnyModel

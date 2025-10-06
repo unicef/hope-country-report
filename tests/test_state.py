@@ -1,5 +1,4 @@
 import pytest
-
 from django.core.signing import get_cookie_signer
 from django.http import HttpResponse
 

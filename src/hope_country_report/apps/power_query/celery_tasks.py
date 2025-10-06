@@ -1,21 +1,20 @@
-from typing import Any, NoReturn, TYPE_CHECKING
-
 import logging
 import signal
 import uuid
-
-from django.apps import apps
-from django.conf import settings
-from django.core.cache import caches
-from django.db import connection, Error as DjangoDbError
-from django.db.models import Model
-from django.utils.functional import cached_property
+from typing import TYPE_CHECKING, Any, NoReturn
 
 from billiard.einfo import ExceptionInfo
 from celery import group
 from celery.contrib.abortable import AbortableTask
 from celery.exceptions import Ignore, Reject, Retry
 from concurrency.exceptions import RecordModifiedError
+from django.apps import apps
+from django.conf import settings
+from django.core.cache import caches
+from django.db import Error as DjangoDbError
+from django.db import connection
+from django.db.models import Model
+from django.utils.functional import cached_property
 from django_celery_beat.models import PeriodicTask
 from redis import StrictRedis
 from sentry_sdk import capture_exception

@@ -2,11 +2,17 @@ from enum import Enum
 
 from smart_env import SmartEnv
 
-DJANGO_HELP_BASE = "https://docs.djangoproject.com/en/5.0/ref/settings"
-
 
 def setting(anchor) -> str:
-    return f"@see {DJANGO_HELP_BASE}#{anchor}"
+    return f"@see https://docs.djangoproject.com/en/5.0/ref/settings#{anchor}"
+
+
+def doc_environ(anchor) -> str:
+    return f"@see https://django-environ.readthedocs.io/en/latest/types.html#{anchor}"
+
+
+def doc_celery(anchor) -> str:
+    return f"@see https://docs.celeryq.dev/en/stable/userguide/configuration.html#{anchor}"
 
 
 class Group(Enum):
@@ -21,11 +27,7 @@ CONFIG = {
     "ADMIN_EMAIL": (str, "", "Initial user created at first deploy"),
     "ADMIN_PASSWORD": (str, "", "Password for initial user created at first deploy"),
     "ALLOWED_HOSTS": (list, ["127.0.0.1", "localhost"], setting("allowed-hosts")),
-    "AUTHENTICATION_BACKENDS": (
-        list,
-        ["hope_country_report.utils.tests.backends.AnyUserAuthBackend"],
-        setting("authentication-backends"),
-    ),
+    "AUTHENTICATION_BACKENDS": (list, [], setting("authentication-backends")),
     "AZURE_ACCOUNT_KEY": (str, ""),
     "AZURE_ACCOUNT_NAME": (str, ""),
     "AZURE_CLIENT_ID": (str, "", "Azure Client ID"),
@@ -36,65 +38,17 @@ CONFIG = {
     "AZURE_TENANT_KEY": (str, ""),
     "CACHE_URL": (str, "redis://localhost:6379/0"),
     "CATCH_ALL_EMAIL": (str, ""),
-    "CELERY_BROKER_URL": (
-        str,
-        NOT_SET,
-        "https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html",
-    ),
-    "CELERY_BOOST_FLOWER": (
-        str,
-        "http://localhost:5555",
-        "https://unicef.github.io/django-celery-boost/",
-    ),
-    "CELERY_TASK_ALWAYS_EAGER": (
-        bool,
-        False,
-        "https://docs.celeryq.dev/en/stable/userguide/configuration.html#std-setting-task_always_eager",
-    ),
-    "CELERY_TASK_EAGER_PROPAGATES": (
-        bool,
-        True,
-        "https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-eager-propagates",
-    ),
-    "CELERY_VISIBILITY_TIMEOUT": (
-        int,
-        1800,
-        "https://docs.celeryq.dev/en/stable/userguide/configuration.html#broker-transport-options",
-    ),
+    "CELERY_BOOST_FLOWER": (str, "", "", False, "https://unicef.github.io/django-celery-boost/"),
+    "CELERY_BROKER_URL": (str, NOT_SET, doc_celery("")),
+    "CELERY_TASK_ALWAYS_EAGER": (bool, False, doc_celery("std-setting-task_always_eager")),
+    "CELERY_TASK_EAGER_PROPAGATES": (bool, True, doc_celery("task-eager-propagates")),
+    "CELERY_VISIBILITY_TIMEOUT": (int, 1800, doc_celery("broker-transport-options")),
     "CORS_ORIGIN_ALLOW_ALL": (bool, False),
     "CSRF_COOKIE_SECURE": (bool, True, setting("csrf-cookie-secure")),
-    "DATABASE_HOPE_URL": (
-        str,
-        "postgis://postgres:postgres@hopedb:5432/hopedb",
-        "HOPE database connection url (forced to be readonly)",
-    ),
-    "DATABASE_URL": (
-        str,
-        "postgis://postgres:postgres@db:5432/hcr",
-        "https://django-environ.readthedocs.io/en/latest/types.html#environ-env-db-url",
-    ),
+    "DATABASE_HOPE_URL": (str, "", "", True, "HOPE database connection url (forced to be readonly)"),
+    "DATABASE_URL": (str, "", "", True, doc_environ("environ-env-db-url")),
     "DEBUG": (bool, False, setting("debug")),
     "DEFAULT_FROM_EMAIL": (str, ""),
-    "FILE_STORAGE_DEFAULT": (
-        str,
-        "django.core.files.storage.FileSystemStorage",
-        setting("storages"),
-    ),
-    "FILE_STORAGE_MEDIA": (
-        str,
-        "django.core.files.storage.FileSystemStorage",
-        setting("storages"),
-    ),
-    "FILE_STORAGE_STATIC": (
-        str,
-        "django.contrib.staticfiles.storage.StaticFilesStorage",
-        setting("storages"),
-    ),
-    "FILE_STORAGE_HOPE": (
-        str,
-        "storages.backends.azure_storage.AzureStorage",
-        setting("storages"),
-    ),
     "EMAIL_BACKEND": (str, "anymail.backends.mailjet.EmailBackend", "Do not change in prod"),
     "EMAIL_HOST": (str, ""),
     "EMAIL_HOST_PASSWORD": (str, ""),
@@ -102,10 +56,14 @@ CONFIG = {
     "EMAIL_PORT": (str, ""),
     "EMAIL_USE_SSL": (str, ""),
     "EMAIL_USE_TLS": (str, ""),
+    "FILE_STORAGE_DEFAULT": (str, "django.core.files.storage.FileSystemStorage", setting("storages")),
+    "FILE_STORAGE_HOPE": (str, "storages.backends.azure_storage.AzureStorage", setting("storages")),
+    "FILE_STORAGE_MEDIA": (str, "django.core.files.storage.FileSystemStorage", setting("storages")),
+    "FILE_STORAGE_STATIC": (str, "django.contrib.staticfiles.storage.StaticFilesStorage", setting("storages")),
     "GDAL_LIBRARY_PATH": (str, None),
     "GEOS_LIBRARY_PATH": (str, None),
-    "HOPE_AZURE_ACCOUNT_NAME": (str, ""),
     "HOPE_AZURE_ACCOUNT_KEY": (str, ""),
+    "HOPE_AZURE_ACCOUNT_NAME": (str, ""),
     "HOPE_AZURE_AZURE_CONTAINER": (str, ""),
     "HOPE_AZURE_SAS_TOKEN": (str, ""),
     "HOST": (str, "http://localhost:8000"),
@@ -114,8 +72,8 @@ CONFIG = {
     "MAILJET_SECRET_KEY": (str, NOT_SET),
     "MAILJET_TEMPLATE_REPORT_READY": (str, NOT_SET),
     "MAILJET_TEMPLATE_ZIP_PASSWORD": (str, NOT_SET),
-    "MEDIA_AZURE_ACCOUNT_NAME": (str, ""),
     "MEDIA_AZURE_ACCOUNT_KEY": (str, ""),
+    "MEDIA_AZURE_ACCOUNT_NAME": (str, ""),
     "MEDIA_AZURE_AZURE_CONTAINER": (str, ""),
     "MEDIA_AZURE_SAS_TOKEN": (str, ""),
     "MEDIA_ROOT": (str, "/tmp/media/", setting("media-root")),

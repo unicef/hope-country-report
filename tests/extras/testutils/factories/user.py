@@ -1,13 +1,12 @@
 from uuid import uuid4
 
+import factory
 from django.contrib.admin.models import LogEntry
 from django.utils.text import slugify
-
-import factory
 from social_django.models import UserSocialAuth
 from testutils.factories.base import AutoRegisterModelFactory
 
-from hope_country_report.apps.core.models import CountryOffice, CountryShape, DATE_FORMATS, TIME_FORMATS, User, UserRole
+from hope_country_report.apps.core.models import DATE_FORMATS, TIME_FORMATS, CountryOffice, CountryShape, User, UserRole
 from hope_country_report.state import state
 
 from .django_auth import GroupFactory

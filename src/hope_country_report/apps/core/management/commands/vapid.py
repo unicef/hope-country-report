@@ -1,9 +1,8 @@
 from typing import Any
 
+from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.core.management.base import BaseCommand
-
-from cryptography.hazmat.primitives import serialization
 
 
 def clean_key(value: str) -> str:

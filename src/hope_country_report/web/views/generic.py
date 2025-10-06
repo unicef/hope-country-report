@@ -1,6 +1,5 @@
-from typing import Any, TYPE_CHECKING, TypeVar
-
 import datetime
+from typing import TYPE_CHECKING, Any, TypeVar
 from urllib.parse import urlparse
 
 from django.contrib import messages
@@ -13,7 +12,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import ListView, TemplateView, UpdateView
-
 from djgeojson.templatetags.geojson_tags import geojsonfeature
 
 from hope_country_report.apps.core.forms import CountryOfficeForm

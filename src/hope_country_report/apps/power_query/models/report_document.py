@@ -1,18 +1,16 @@
-from typing import TYPE_CHECKING
-
 import logging
 from functools import partial
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING
 
+import pyzipper
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.functional import cached_property
-
-import pyzipper
 from pathvalidate import sanitize_filename
 from sentry_sdk import capture_exception
 

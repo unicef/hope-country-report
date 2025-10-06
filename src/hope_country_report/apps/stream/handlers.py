@@ -4,11 +4,11 @@ from typing import Any
 import tablib
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from hope_country_report.apps.power_query.utils import to_dataset
 from sentry_sdk import capture_exception
 from streaming.utils import make_event
 
 from hope_country_report.apps.power_query.models import Dataset
+from hope_country_report.apps.power_query.utils import to_dataset
 
 logger = logging.getLogger(__name__)
 

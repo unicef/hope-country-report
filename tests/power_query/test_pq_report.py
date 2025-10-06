@@ -1,16 +1,13 @@
-from typing import TYPE_CHECKING
-
 from pathlib import Path, PurePath
 from tempfile import TemporaryDirectory
-
-import pytest
+from typing import TYPE_CHECKING
 from unittest import mock
 from unittest.mock import Mock
 
-from django.conf import settings
-
+import pytest
 import pyzipper
 from constance.test import override_config
+from django.conf import settings
 from extras.testutils.factories import ReportConfigurationFactory
 
 from hope_country_report.apps.power_query.models import ReportConfiguration

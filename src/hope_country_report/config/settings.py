@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-
 from . import env
 
 SETTINGS_DIR = Path(__file__).parent  # .../src/hope_country_report/config

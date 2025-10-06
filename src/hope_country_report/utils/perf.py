@@ -1,16 +1,14 @@
-from typing import TYPE_CHECKING
-
 import contextlib
 import resource
 import time
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import connections
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from collections.abc import Iterator
+    from typing import Any
 
 
 class DBMetrics:

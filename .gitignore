@@ -19,6 +19,7 @@ coverage.xml
 !.pre-commit-config.yaml
 .cache
 pdm.toml
+junit.xml
 .coverage
 .env
 .envrc

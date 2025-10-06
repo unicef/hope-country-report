@@ -6,7 +6,6 @@ from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand, CommandError, CommandParser
 
-
 from ...models import Dataset
 from ...models import Query as PowerQuery
 

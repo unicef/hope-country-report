@@ -2,16 +2,14 @@ import datetime
 from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
-
-import pytest
 from unittest.mock import MagicMock
 
+import fitz
+import pytest
+import tablib
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.utils import timezone
-
-import fitz
-import tablib
 from PIL import ExifTags, Image
 from pytz import utc
 

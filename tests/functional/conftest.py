@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from testutils.selenium import SmartDriver
 
 

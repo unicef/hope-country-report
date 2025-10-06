@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import pytest
-from unittest import mock
 
 from hope_country_report.apps.tenant.db import TenantManager
 from hope_country_report.apps.tenant.exceptions import InvalidTenantError

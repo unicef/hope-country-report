@@ -1,11 +1,10 @@
-from typing import TYPE_CHECKING
-
 import logging
+from typing import TYPE_CHECKING
 
 from django.core.signing import get_cookie_signer
 
 from hope_country_report.apps.tenant.config import conf
-from hope_country_report.state import state, State
+from hope_country_report.state import State, state
 
 if TYPE_CHECKING:
     from django.http import HttpResponse

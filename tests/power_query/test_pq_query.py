@@ -1,11 +1,8 @@
 from typing import TYPE_CHECKING
-
 from uuid import UUID
 
 import pytest
-
 from django.conf import settings
-
 from freezegun import freeze_time
 
 from hope_country_report.apps.tenant.config import conf

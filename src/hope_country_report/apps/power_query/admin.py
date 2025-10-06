@@ -1,8 +1,16 @@
-from typing import Callable, TYPE_CHECKING
-
 import logging
 from collections.abc import Sequence
+from typing import TYPE_CHECKING, Callable
 
+import tablib
+from admin_extra_buttons.decorators import button
+from admin_extra_buttons.mixins import ExtraButtonsMixin
+from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
+from adminactions.helpers import AdminActionPermMixin
+from adminfilters.autocomplete import AutoCompleteFilter
+from adminfilters.mixin import AdminFiltersMixin
+from constance import config
+from debug_toolbar.panels.sql.utils import reformat_sql
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
@@ -15,24 +23,14 @@ from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.module_loading import import_string
-
-import tablib
-from admin_extra_buttons.decorators import button
-from admin_extra_buttons.mixins import ExtraButtonsMixin
-from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
-from adminactions.helpers import AdminActionPermMixin
-from adminfilters.autocomplete import AutoCompleteFilter
-from adminfilters.mixin import AdminFiltersMixin
-from constance import config
-from debug_toolbar.panels.sql.utils import reformat_sql
 from django_celery_boost.admin import CeleryTaskModelAdmin
 from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 
 from ...state import state
+from ...utils.language import can_slice
 from ...utils.mail import send_document_password
 from ...utils.media import download_media
 from ...utils.perf import profile
-from ...utils.language import can_slice
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import (
     ChartPage,

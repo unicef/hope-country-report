@@ -1,12 +1,11 @@
+from datetime import timedelta
 from typing import Any
 
 from django import template
 from django.utils.safestring import mark_safe
-
 from strategy_field.utils import get_attr
 
 from hope_country_report.apps.power_query.utils import get_sentry_url, sizeof
-from datetime import timedelta
 
 register = template.Library()
 
@@ -34,9 +33,12 @@ def link_to_sentry(event_id: Any, href: bool = False) -> str:
 
 @register.filter()
 def elapsed(result):
-    seconds = int(result)
-    microseconds = (result * 1000000) % 1000000
-    return timedelta(0, seconds, microseconds)
+    try:
+        seconds = int(result)
+        microseconds = (result * 1000000) % 1000000
+        return timedelta(0, seconds, microseconds)
+    except ValueError:
+        return 0
 
 
 @register.filter()
