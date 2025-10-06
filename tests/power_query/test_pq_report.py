@@ -91,7 +91,7 @@ def query2(afg_user):
 
 
 @pytest.fixture()
-def report(query2: "Query", monkeypatch):
+def report(query2: "Query"):
     from testutils.factories import FormatterFactory, ReportConfigurationFactory
 
     formatter = FormatterFactory()
@@ -100,7 +100,7 @@ def report(query2: "Query", monkeypatch):
             name="Celery Report", query=query2, owner=query2.owner, country_office=query2.owner._afghanistan
         )
         report.formatters.add(formatter)
-        return report
+        yield report
 
 
 @pytest.fixture()
@@ -137,6 +137,7 @@ def test_report_refresh(db, settings, report: "ReportConfiguration") -> None:
 def test_report_zip(db, settings, report: "ReportConfiguration", mailoutbox) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     report.compress = True
+    report.save()
     assert report.owner
     assert report.owner.email
 
@@ -161,11 +162,14 @@ def test_report_zip_protected_notify_email(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     report.compress = True
     report.protect = True
+    report.notify_to.add(report.owner)
+    report.save()
     request = rf.get("/")
     request.user = report.owner
 
-    with state.set(request=request, must_tenant=False):
-        report.execute(True)
+    with mock.patch("django.db.transaction.on_commit", lambda f: f()):
+        with state.set(request=request, must_tenant=False):
+            report.execute(True)
 
     assert len(mailoutbox) == 1, [m.to for m in mailoutbox]
     assert [m.to for m in mailoutbox] == [[report.owner.email]]
@@ -177,6 +181,7 @@ def test_report_zip_protected(transactional_db, rf, settings, report: "ReportCon
     settings.CELERY_TASK_ALWAYS_EAGER = True
     report.compress = True
     report.protect = True
+    report.save()
     request = rf.get("/")
     request.user = report.owner
     assert not report.pwd

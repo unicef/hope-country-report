@@ -145,8 +145,9 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                 result = doc.pk, doc.file.name
 
                 if notify and email_password:
-                    send_mail_on_commit = partial(send_document_password, report.owner, doc)
-                    transaction.on_commit(send_mail_on_commit)
+                    for user in report.notify_to.all():
+                        send_mail_on_commit = partial(send_document_password, user, doc)
+                        transaction.on_commit(send_mail_on_commit)
 
             except Exception as exc:
                 sid = capture_exception(exc)
