@@ -12,7 +12,7 @@ from django_celery_beat.models import PeriodicTask
 from django_celery_boost.models import CeleryTaskModel
 from taggit.managers import TaggableManager
 
-from ....utils.mail import notify_report_completion
+from ....utils.mail import notify_report_completion, send_document_password
 from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
 from ..processors import mimetype_map
@@ -165,16 +165,21 @@ class ReportConfiguration(
         else:
             if self.protect:
                 self.pwd = "".join(secrets.choice(alphabet) for i in range(12))
-                self.save()
+                self.save(update_fields=["pwd"])
+            self.refresh_from_db()
             for dataset in query.datasets.all():
                 for formatter in self.formatters.all():
                     res = ReportDocument.process(self, dataset, formatter, notify=notify)
                     result.append(res)
-            self.refresh_from_db()
             self.last_run = timezone.now()
             self.save()
         if notify and self.documents.exists():
-            notify_report_completion(self)
+            fresh_self = type(self).objects.get(pk=self.pk)
+            if fresh_self.protect:
+                for user in fresh_self.notify_to.all():
+                    send_document_password(user, fresh_self)
+            else:
+                notify_report_completion(fresh_self)
         return result
 
     def __str__(self) -> str:

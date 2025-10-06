@@ -1,5 +1,4 @@
 import logging
-from functools import partial
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -7,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pyzipper
 from django.core.files.base import ContentFile
-from django.db import models, transaction
+from django.db import models
 from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.functional import cached_property
@@ -15,7 +14,6 @@ from pathvalidate import sanitize_filename
 from sentry_sdk import capture_exception
 
 from ....state import state
-from ....utils.mail import send_document_password
 from ....utils.os import pushd
 from ....utils.perf import profile
 from ..json import PQJSONEncoder
@@ -95,7 +93,6 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                                     }
                                 )
                 filename = f"r{report.pk}_ds{dataset.pk}_fmt{formatter.pk}{formatter.file_suffix}"
-                email_password = False
                 values = {
                     "title": title,
                     "info": {"perf": perfs},
@@ -107,7 +104,6 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                         "file_suffix": formatter.file_suffix,
                     }
                     if report.protect:
-                        email_password = True
                         with TemporaryDirectory(prefix="___") as tdir, pushd(tdir):
                             source_file = Path(filename)
                             source_file.write_bytes(output)
@@ -143,11 +139,6 @@ class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.
                 else:
                     doc = ReportDocument.objects.create(**key, file=content, **values)
                 result = doc.pk, doc.file.name
-
-                if notify and email_password:
-                    for user in report.notify_to.all():
-                        send_mail_on_commit = partial(send_document_password, user, doc)
-                        transaction.on_commit(send_mail_on_commit)
 
             except Exception as exc:
                 sid = capture_exception(exc)

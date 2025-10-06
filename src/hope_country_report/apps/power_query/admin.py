@@ -558,7 +558,7 @@ class ReportDocumentAdmin(
     @button()
     def resend_password(self, request: "AuthHttpRequest", pk: str) -> HttpResponse:
         obj: ReportDocument = self.get_object(request, pk)
-        s = send_document_password(request.user, obj)
+        s = send_document_password(request.user, obj.report)
         self.message_user(request, f"{s}")
 
 

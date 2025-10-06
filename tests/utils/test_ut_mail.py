@@ -56,10 +56,10 @@ def test_send_request_access(cfg, expected, mocked_responses, user, report, mail
 def test_send_document_password(cfg, expected, mocked_responses, user, report_document: "ReportDocument", mailoutbox):
     with override_config(CATCH_ALL_EMAIL=cfg["CATCH_ALL_EMAIL"]):
         with state.set(request=cfg["request"]):
-            res = send_document_password(report_document.report.owner, report_document)
+            res = send_document_password(report_document.report.owner, report_document.report)
             assert res == 1
             assert len(mailoutbox) == 1
-            assert mailoutbox[0].bcc == [expected]
+            assert mailoutbox[0].to == [expected]
 
 
 @pytest.mark.parametrize(

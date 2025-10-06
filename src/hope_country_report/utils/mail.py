@@ -8,7 +8,7 @@ from sentry_sdk import capture_exception
 
 if TYPE_CHECKING:
     from hope_country_report.apps.core.models import User
-    from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument
+    from hope_country_report.apps.power_query.models import ReportConfiguration
     from hope_country_report.types.http import AuthHttpRequest
 
 
@@ -24,25 +24,26 @@ def build_absolute_uri(url_path: str, request: "AuthHttpRequest | None" = None) 
     return url_path
 
 
-def send_document_password(user: "User", document: "ReportDocument", request: "AuthHttpRequest | None" = None) -> int:
+def send_document_password(
+    user: "User", report: "ReportConfiguration", request: "AuthHttpRequest | None" = None
+) -> int:
     if config.CATCH_ALL_EMAIL:
         recipient_list = [config.CATCH_ALL_EMAIL]
     else:
         recipient_list = [user.email]
     if not recipient_list:
         return 0
-    url = build_absolute_uri(document.get_absolute_url(), request)
+    url = build_absolute_uri(report.get_documents_url(), request)
 
-    message = EmailMessage(bcc=recipient_list, from_email=settings.DEFAULT_FROM_EMAIL)
+    message = EmailMessage(to=recipient_list, from_email=settings.DEFAULT_FROM_EMAIL)
 
     message.template_id = config.MAILJET_TEMPLATE_REPORT_READY  # Mailjet numeric template id
-    message.subject = f"Your password for {document.title}"
+    message.subject = f"Your password for {report.title}"
 
     message.merge_global_data = {
         "document": {
-            "name": document.title,
-            "password": document.report.pwd,
-            "file": document.file.name,
+            "name": report.title,
+            "password": report.pwd,
             "url": url,
         },
         "user": {
