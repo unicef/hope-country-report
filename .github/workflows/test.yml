@@ -60,6 +60,11 @@ jobs:
       build_date: ${{env.BUILD_DATE}}
       branch: ${{env.BRANCH}}
     services:
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 10000:5672
+          - 10001:15672
       redis:
         image: redis:7.4.0
         ports:
@@ -97,6 +102,7 @@ jobs:
       DATABASE_HOPE_URL: postgis://postgres:postgres@localhost:5432/hopedb
       CELERY_BROKER_URL: redis://localhost:6379/1
       CACHE_URL: redis://localhost:6379/2
+      STREAMING_BROKER_URL: rabbit://guest:guest@localhost:10000?exchange=hope_live
       DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout code
