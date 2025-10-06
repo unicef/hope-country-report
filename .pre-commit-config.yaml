@@ -29,7 +29,60 @@ repos:
     hooks:
       - id: djade
         args: [ --target-version, "5.1" ]  # Replace with Django version
+
   - repo: meta
     hooks:
       - id: check-hooks-apply
       - id: check-useless-excludes
+
+  - repo: https://github.com/saxix/pch
+    rev: '79b0c0e'
+    hooks:
+
+      - id: check-missed-migrations
+        args:
+          - src
+        stages: [ pre-commit ]
+        additional_dependencies: [ setuptools ]
+
+      - id: check-untracked
+        args:
+          - src
+          - tests
+        stages: [ pre-push ]
+
+      - id: check-forbidden
+        args:
+          - -i
+          - "pyproject.toml"
+          - -p
+          - "/\\[tool.uv.sources\\]/"
+        stages: [ pre-push ]
+
+      - id: check-tailwind
+        name: check tailwind CSS ready for production
+        files: src/hope_live/theme/static_src/src/styles.scss
+        args:
+          - -o
+          - src/hope_country_report/web/theme/static/css/styles.css
+
+      - id: check-minimized
+        name: check missing minimized javascript
+        files: (\.js)$
+        exclude: (\.min\.js)$
+        args:
+          - -i
+          - "src/hope_country_report/apps/power_query/static/admin/power_query/codemirror/*.js"
+          - -i
+          - docs/**/*.js
+          - -i
+          - src/hope_country_report/web/theme/static_src/*.js
+
+
+      - id: check-forbidden
+        name: check pyproject to avoid editable sources/deps
+        files: pyproject.toml
+        language: python
+        args:
+          - -p
+          - /\[tool\.uv\.sources\]\s/s

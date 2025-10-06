@@ -205,8 +205,3 @@ style = [
   "github://unicef/hope-code-conventions@main/django/django.toml",
 ]
 cache = "1 day"
-
-
-[tool.uv.sources]
-django-streaming = { path = "../django-streaming", editable = true }
-django-online-issues = { path = "../../saxix/django-issues", editable = true }
