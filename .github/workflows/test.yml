@@ -148,7 +148,7 @@ jobs:
 
       - name: Run Test suite
         run: |
-            mkdir output
+            mkdir -p output
             docker run --rm \
               --network host \
               -e PYTHONPATH=/app/src \
@@ -162,7 +162,7 @@ jobs:
               -v "./tests:/app/tests" \
               -v "./pytest.ini:/app/pytest.ini" \
               -t ${{env.IMAGE}} \
-              /app/.venv/bin/tox
+              tox
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
