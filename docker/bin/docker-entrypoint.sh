@@ -50,6 +50,7 @@ case "$1" in
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery flower
         ;;
     run_tests)
+        chown -R hope:unicef /venv
         exec tini -- gosu hope:unicef tox -e d52
         ;;
     *)
