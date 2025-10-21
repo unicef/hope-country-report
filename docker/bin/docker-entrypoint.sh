@@ -49,13 +49,7 @@ case "$1" in
         export DATABASE_URL="sqlite://:memory:"
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery flower
         ;;
-    run_tests)
-        exec tini -- gosu hope:unicef env HOME=/tmp pytest tests/ --create-db -n auto -v --maxfail=5 --migrations
---cov-config=tests/.coveragerc --cov-report xml:output/coverage.xml
-
-        ;;
     *)
-        echo "Unknown command: $1"
-        exit 1
+        exec "$@"
         ;;
 esac

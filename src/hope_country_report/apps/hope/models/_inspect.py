@@ -11,6 +11,177 @@ from hope_country_report.apps.hope.models._base import HopeModel
 from hope_country_report.apps.core.storage import get_hope_storage
 
 
+class Feedback(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    issue_type = models.CharField(max_length=20, null=True)
+    description = models.TextField(null=True)
+    comments = models.TextField(blank=True, null=True)
+    area = models.CharField(max_length=250, null=True)
+    language = models.TextField(null=True)
+    consent = models.BooleanField(null=True)
+    admin2 = models.ForeignKey(
+        "Area", on_delete=models.DO_NOTHING, related_name="feedback_admin2", blank=True, null=True
+    )
+    business_area = models.ForeignKey(
+        "BusinessArea", on_delete=models.DO_NOTHING, related_name="feedback_business_area", null=True
+    )
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="feedback_copied_from", blank=True, null=True
+    )
+    household_lookup = models.ForeignKey(
+        "Household", on_delete=models.DO_NOTHING, related_name="feedback_household_lookup", blank=True, null=True
+    )
+    individual_lookup = models.ForeignKey(
+        "Individual", on_delete=models.DO_NOTHING, related_name="feedback_individual_lookup", blank=True, null=True
+    )
+    linked_grievance = models.OneToOneField(
+        "Grievanceticket", on_delete=models.DO_NOTHING, related_name="feedback_linked_grievance", blank=True, null=True
+    )
+    program = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="feedback_program", blank=True, null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "accountability_feedback"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.description)
+
+
+class Feedbackmessage(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    description = models.TextField(null=True)
+    feedback = models.ForeignKey(
+        Feedback, on_delete=models.DO_NOTHING, related_name="feedbackmessage_feedback", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "accountability_feedbackmessage"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.description)
+
+
+class Message(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=60, null=True)
+    body = models.TextField(null=True)
+    number_of_recipients = models.IntegerField(null=True)
+    sampling_type = models.CharField(max_length=50, null=True)
+    full_list_arguments = models.JSONField(blank=True, null=True)
+    random_sampling_arguments = models.JSONField(blank=True, null=True)
+    sample_size = models.IntegerField(null=True)
+    business_area = models.ForeignKey(
+        "BusinessArea", on_delete=models.DO_NOTHING, related_name="message_business_area", null=True
+    )
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="message_copied_from", blank=True, null=True
+    )
+    program = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="message_program", blank=True, null=True
+    )
+    registration_data_import = models.ForeignKey(
+        "DataRegistrationdataimport",
+        on_delete=models.DO_NOTHING,
+        related_name="message_registration_data_import",
+        blank=True,
+        null=True,
+    )
+    payment_plan = models.ForeignKey(
+        "PaymentPlan", on_delete=models.DO_NOTHING, related_name="message_payment_plan", blank=True, null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "accountability_message"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class MessageHouseholds(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    message = models.ForeignKey(
+        Message, on_delete=models.DO_NOTHING, related_name="messagehouseholds_message", null=True
+    )
+    household = models.ForeignKey(
+        "Household", on_delete=models.DO_NOTHING, related_name="messagehouseholds_household", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "accountability_message_households"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Survey(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=60, null=True)
+    body = models.TextField(null=True)
+    category = models.CharField(max_length=16, null=True)
+    number_of_recipients = models.IntegerField(null=True)
+    sample_file = models.CharField(max_length=100, blank=True, null=True)
+    sample_file_generated_at = models.DateTimeField(blank=True, null=True)
+    sampling_type = models.CharField(max_length=50, null=True)
+    full_list_arguments = models.JSONField(null=True)
+    random_sampling_arguments = models.JSONField(null=True)
+    sample_size = models.IntegerField(null=True)
+    flow_id = models.CharField(max_length=255, blank=True, null=True)
+    successful_rapid_pro_calls = models.TextField(null=True)  # This field type is a guess.
+    business_area = models.ForeignKey(
+        "BusinessArea", on_delete=models.DO_NOTHING, related_name="survey_business_area", null=True
+    )
+    program = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="survey_program", blank=True, null=True
+    )
+    payment_plan = models.ForeignKey(
+        "PaymentPlan", on_delete=models.DO_NOTHING, related_name="survey_payment_plan", blank=True, null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "accountability_survey"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class SurveyRecipients(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    survey = models.ForeignKey(Survey, on_delete=models.DO_NOTHING, related_name="surveyrecipients_survey", null=True)
+    household = models.ForeignKey(
+        "Household", on_delete=models.DO_NOTHING, related_name="surveyrecipients_household", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "accountability_survey_recipients"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
 class BusinessArea(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -217,6 +388,7 @@ class Periodicfielddata(HopeModel):
     subtype = models.CharField(max_length=16, null=True)
     number_of_rounds = models.IntegerField(null=True)
     rounds_names = models.TextField(null=True)  # This field type is a guess.
+    rounds_covered = models.SmallIntegerField(null=True)
 
     class Meta:
         managed = False
@@ -366,9 +538,6 @@ class Grievanceticket(HopeModel):
     priority = models.IntegerField(null=True)
     urgency = models.IntegerField(null=True)
     comments = models.TextField(blank=True, null=True)
-    is_original = models.BooleanField(null=True)
-    is_migration_handled = models.BooleanField(null=True)
-    migrated_at = models.DateTimeField(blank=True, null=True)
     admin2 = models.ForeignKey(
         Area, on_delete=models.DO_NOTHING, related_name="grievanceticket_admin2", blank=True, null=True
     )
@@ -919,7 +1088,6 @@ class Document(HopeModel):
     id = models.UUIDField(primary_key=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
     is_removed = models.BooleanField(null=True)
-    is_original = models.BooleanField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     last_sync_at = models.DateTimeField(blank=True, null=True)
@@ -930,7 +1098,6 @@ class Document(HopeModel):
     cleared_date = models.DateTimeField(null=True)
     issuance_date = models.DateTimeField(blank=True, null=True)
     expiry_date = models.DateTimeField(blank=True, null=True)
-    is_migration_handled = models.BooleanField(null=True)
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="document_copied_from", blank=True, null=True
     )
@@ -944,6 +1111,7 @@ class Document(HopeModel):
         "Program", on_delete=models.DO_NOTHING, related_name="document_program", blank=True, null=True
     )
     type = models.ForeignKey("DocumentType", on_delete=models.DO_NOTHING, related_name="document_type", null=True)
+    removed_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -998,7 +1166,6 @@ class EntitlementCard(HopeModel):
     current_card_size = models.CharField(max_length=255, null=True)
     card_custodian = models.CharField(max_length=255, null=True)
     service_provider = models.CharField(max_length=255, null=True)
-    is_original = models.BooleanField(null=True)
     household = models.ForeignKey(
         "Household", on_delete=models.DO_NOTHING, related_name="entitlementcard_household", blank=True, null=True
     )
@@ -1014,7 +1181,6 @@ class EntitlementCard(HopeModel):
 class Household(HopeModel):
     id = models.UUIDField(primary_key=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
-    is_original = models.BooleanField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     is_removed = models.BooleanField(null=True)
@@ -1099,9 +1265,6 @@ class Household(HopeModel):
     admin4 = models.ForeignKey(
         Area, on_delete=models.DO_NOTHING, related_name="household_admin4", blank=True, null=True
     )
-    admin_area = models.ForeignKey(
-        Area, on_delete=models.DO_NOTHING, related_name="household_admin_area", blank=True, null=True
-    )
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="household_business_area", null=True
     )
@@ -1182,7 +1345,6 @@ class HouseholdCollection(HopeModel):
 class Individual(HopeModel):
     id = models.UUIDField(primary_key=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
-    is_original = models.BooleanField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     is_removed = models.BooleanField(null=True)
@@ -1305,9 +1467,7 @@ class Individualidentity(HopeModel):
     modified = models.DateTimeField(null=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
     is_removed = models.BooleanField(null=True)
-    is_original = models.BooleanField(null=True)
     number = models.CharField(max_length=255, null=True)
-    is_migration_handled = models.BooleanField(null=True)
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="individualidentity_copied_from", blank=True, null=True
     )
@@ -1317,6 +1477,7 @@ class Individualidentity(HopeModel):
     individual = models.ForeignKey(
         Individual, on_delete=models.DO_NOTHING, related_name="individualidentity_individual", null=True
     )
+    removed_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1330,13 +1491,10 @@ class Individualroleinhousehold(HopeModel):
     id = models.UUIDField(primary_key=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
     is_removed = models.BooleanField(null=True)
-    is_original = models.BooleanField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     last_sync_at = models.DateTimeField(blank=True, null=True)
     role = models.CharField(max_length=255, null=True)
-    is_migration_handled = models.BooleanField(null=True)
-    migrated_at = models.DateTimeField(blank=True, null=True)
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_copied_from", blank=True, null=True
     )
@@ -1346,6 +1504,7 @@ class Individualroleinhousehold(HopeModel):
     individual = models.ForeignKey(
         Individual, on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_individual", null=True
     )
+    removed_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2167,6 +2326,10 @@ class Program(HopeModel):
     )
     collision_detection_enabled = models.BooleanField(null=True)
     collision_detector = models.CharField(max_length=200, blank=True, null=True)
+    slug = models.CharField(max_length=4, null=True)
+    reconciliation_window_in_days = models.IntegerField(null=True)
+    send_reconciliation_window_expiry_notifications = models.BooleanField(null=True)
+    status_rank = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2412,6 +2575,7 @@ class DataRegistrationdataimport(HopeModel):
         Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", blank=True, null=True
     )
     import_from_ids = models.TextField(blank=True, null=True)
+    exclude_external_collectors = models.BooleanField(null=True)
 
     class Meta:
         managed = False
