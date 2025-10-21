@@ -14,12 +14,12 @@ jobs:
     name: labels pull requests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.1
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Check for file changes
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@v3
         id: changes
         with:
           token: ${{ github.token }}
