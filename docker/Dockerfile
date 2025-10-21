@@ -97,6 +97,7 @@ RUN --mount=type=cache,target=/root/.uv-cache \
     && uv sync --cache-dir=/root/.uv-cache \
         --python=/usr/local/bin/python \
         --python-preference=system \
+        --all-extras \
         --frozen
 RUN django-admin collectstatic --noinput
 COPY docker/bin/* /usr/local/bin/
