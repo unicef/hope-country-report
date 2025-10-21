@@ -162,7 +162,7 @@ jobs:
               -v "./tests:/app/tests" \
               -v "./pytest.ini:/app/pytest.ini" \
               -t ${{env.IMAGE}} \
-              tini tox -e d52
+              tox -e d52
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
