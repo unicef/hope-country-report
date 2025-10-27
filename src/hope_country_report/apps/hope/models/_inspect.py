@@ -2969,3 +2969,135 @@ class Targetingindividualrulefilterblock(HopeModel):
 
     class Tenant:
         tenant_filter_field: str = "__all__"
+
+
+class Downpayment(HopeModel):
+    rec_serial_number = models.IntegerField(primary_key=True)
+    business_area = models.CharField(max_length=4, null=True)
+    down_payment_reference = models.CharField(max_length=20, null=True)
+    document_type = models.CharField(max_length=10, null=True)
+    consumed_fc_number = models.CharField(max_length=10, null=True)
+    consumed_fc_item_number = models.CharField(max_length=3, blank=True, null=True)
+    total_down_payment_amount_local = models.DecimalField(max_digits=15, decimal_places=2, null=True)
+    total_down_payment_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    currency_code = models.CharField(max_length=5, blank=True, null=True)
+    posting_date = models.DateField(blank=True, null=True)
+    doc_year = models.IntegerField(blank=True, null=True)
+    doc_number = models.CharField(max_length=10, blank=True, null=True)
+    doc_item_number = models.CharField(max_length=3, blank=True, null=True)
+    create_date = models.DateTimeField(blank=True, null=True)
+    created_by = models.CharField(max_length=20, blank=True, null=True)
+    update_date = models.DateTimeField(blank=True, null=True)
+    updated_by = models.CharField(max_length=20, blank=True, null=True)
+    office = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="downpayment_office", blank=True, null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "vision_downpayment"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Fundscommitment(HopeModel):
+    rec_serial_number = models.IntegerField(primary_key=True)
+    business_area = models.CharField(max_length=4, blank=True, null=True)
+    funds_commitment_number = models.CharField(max_length=10, blank=True, null=True)
+    document_type = models.CharField(max_length=2, blank=True, null=True)
+    document_text = models.CharField(max_length=50, blank=True, null=True)
+    currency_code = models.CharField(max_length=5, blank=True, null=True)
+    gl_account = models.CharField(max_length=10, blank=True, null=True)
+    commitment_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    commitment_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_open_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_open_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    vendor_id = models.CharField(max_length=10, blank=True, null=True)
+    posting_date = models.DateField(blank=True, null=True)
+    vision_approval = models.CharField(max_length=1, blank=True, null=True)
+    document_reference = models.CharField(max_length=16, blank=True, null=True)
+    fc_status = models.CharField(max_length=1, blank=True, null=True)
+    funds_commitment_item = models.CharField(max_length=3, blank=True, null=True)
+    wbs_element = models.CharField(max_length=24, blank=True, null=True)
+    grant_number = models.CharField(max_length=20, blank=True, null=True)
+    create_date = models.DateTimeField(blank=True, null=True)
+    created_by = models.CharField(max_length=20, blank=True, null=True)
+    update_date = models.DateTimeField(blank=True, null=True)
+    updated_by = models.CharField(max_length=20, blank=True, null=True)
+    sponsor = models.CharField(max_length=10, blank=True, null=True)
+    sponsor_name = models.CharField(max_length=100, blank=True, null=True)
+    fund = models.CharField(max_length=10, blank=True, null=True)
+    funds_center = models.CharField(max_length=16, blank=True, null=True)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    office = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="fundscommitment_office", blank=True, null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "vision_fundscommitment"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Fundscommitmentgroup(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    funds_commitment_number = models.CharField(max_length=10, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "vision_fundscommitmentgroup"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Fundscommitmentitem(HopeModel):
+    funds_commitment_item = models.CharField(max_length=3, null=True)
+    rec_serial_number = models.IntegerField(primary_key=True)
+    vendor_id = models.CharField(max_length=10, blank=True, null=True)
+    business_area = models.CharField(max_length=4, blank=True, null=True)
+    posting_date = models.DateField(blank=True, null=True)
+    vision_approval = models.CharField(max_length=1, blank=True, null=True)
+    document_reference = models.CharField(max_length=16, blank=True, null=True)
+    fc_status = models.CharField(max_length=1, blank=True, null=True)
+    wbs_element = models.CharField(max_length=24, blank=True, null=True)
+    grant_number = models.CharField(max_length=20, blank=True, null=True)
+    document_type = models.CharField(max_length=2, blank=True, null=True)
+    document_text = models.CharField(max_length=50, blank=True, null=True)
+    currency_code = models.CharField(max_length=5, blank=True, null=True)
+    gl_account = models.CharField(max_length=10, blank=True, null=True)
+    commitment_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    commitment_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_open_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    total_open_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    sponsor = models.CharField(max_length=10, blank=True, null=True)
+    sponsor_name = models.CharField(max_length=100, blank=True, null=True)
+    fund = models.CharField(max_length=10, blank=True, null=True)
+    funds_center = models.CharField(max_length=16, blank=True, null=True)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    create_date = models.DateTimeField(blank=True, null=True)
+    created_by = models.CharField(max_length=20, blank=True, null=True)
+    update_date = models.DateTimeField(blank=True, null=True)
+    updated_by = models.CharField(max_length=20, blank=True, null=True)
+    funds_commitment_group = models.ForeignKey(
+        Fundscommitmentgroup,
+        on_delete=models.DO_NOTHING,
+        related_name="fundscommitmentitem_funds_commitment_group",
+        null=True,
+    )
+    office = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="fundscommitmentitem_office", blank=True, null=True
+    )
+    payment_plan = models.ForeignKey(
+        PaymentPlan, on_delete=models.DO_NOTHING, related_name="fundscommitmentitem_payment_plan", blank=True, null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "vision_fundscommitmentitem"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
