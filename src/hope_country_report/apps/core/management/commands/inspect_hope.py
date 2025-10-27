@@ -29,16 +29,17 @@ class IRegexList(RegexList):
 
 WANTED_TABLES = IRegexList(
     [
-        "core.*",
-        "household.*",
-        "program.*",
-        "geo.*",
-        "payment.*",
-        "targeting.*",
-        "registration_data.*",
-        "grievance.*",
-        "sanction_list.*",
         "accountability.*",
+        "core.*",
+        "grievance.*",
+        "geo.*",
+        "household.*",
+        "payment.*",
+        "program.*",
+        "registration_data.*",
+        "sanction_list.*",
+        "targeting.*",
+        "vision.*",
     ]
 )
 
