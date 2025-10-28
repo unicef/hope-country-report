@@ -18,6 +18,6 @@ def random_color() -> str:
 @register.filter()
 def color(value: str) -> str:
     h = hashlib.md5(value.encode()).hexdigest()
-    c = str(bin(int(h, 16))[2:])
+    c = f"{int(h, 16):b}"
     ci = sum(int(x) for x in c)
     return COLORS[ci % len(COLORS)]
