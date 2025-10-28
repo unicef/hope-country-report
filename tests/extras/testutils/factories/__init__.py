@@ -1,4 +1,6 @@
-from django.db.models.fields import UUIDField
+import factory
+from django.core.exceptions import FieldDoesNotExist
+from django.db.models import UUIDField
 
 from .base import AutoRegisterModelFactory, factories_registry, HopeAutoRegisterModelFactory, TAutoRegisterModelFactory
 
@@ -16,10 +18,20 @@ def get_factory_for_model(_model) -> type[TAutoRegisterModelFactory]:
     class Meta:
         model = _model
 
+    factory_attrs = {"Meta": Meta}
     bases = (AutoRegisterModelFactory,)
     if _model in factories_registry:
         return factories_registry[_model]
-    if _model._meta.app_label in ["hope"] and isinstance(_model._meta.get_field("id"), UUIDField):
+    try:
+        has_uuid_id = isinstance(_model._meta.get_field("id"), UUIDField)
+    except FieldDoesNotExist:
+        has_uuid_id = False
+
+    if _model._meta.app_label in ["hope"] and has_uuid_id:
         bases = (HopeAutoRegisterModelFactory,)
 
-    return type(f"{_model._meta.model_name}Factory", bases, {"Meta": Meta})
+    pk = _model._meta.pk
+    if pk and not pk.auto_created and pk.get_internal_type() == "IntegerField":
+        factory_attrs[pk.name] = factory.Sequence(lambda n: n + 1)
+
+    return type(f"{_model._meta.model_name}Factory", bases, factory_attrs)

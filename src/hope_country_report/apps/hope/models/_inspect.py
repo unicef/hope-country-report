@@ -433,7 +433,7 @@ class Areatype(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     original_id = models.UUIDField(blank=True, null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
+    name = models.CharField(max_length=255, null=True)
     area_level = models.IntegerField(null=True)
     valid_from = models.DateTimeField(blank=True, null=True)
     valid_until = models.DateTimeField(blank=True, null=True)
@@ -463,8 +463,8 @@ class Country(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     original_id = models.UUIDField(blank=True, null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
-    short_name = models.TextField(null=True)  # This field type is a guess.
+    name = models.CharField(max_length=255, null=True)
+    short_name = models.CharField(max_length=255, null=True)
     iso_code2 = models.CharField(unique=True, max_length=2, null=True)
     iso_code3 = models.CharField(unique=True, max_length=3, null=True)
     iso_num = models.CharField(unique=True, max_length=4, null=True)
@@ -1194,7 +1194,7 @@ class Household(HopeModel):
     consent = models.BooleanField(blank=True, null=True)
     consent_sharing = models.CharField(max_length=63, null=True)
     residence_status = models.CharField(max_length=254, null=True)
-    address = models.TextField(null=True)  # This field type is a guess.
+    address = models.CharField(max_length=1024, null=True)
     zip_code = models.CharField(max_length=12, blank=True, null=True)
     size = models.IntegerField(blank=True, null=True)
     female_age_group_0_5_count = models.IntegerField(blank=True, null=True)
@@ -1241,7 +1241,7 @@ class Household(HopeModel):
     unhcr_id = models.CharField(max_length=250, null=True)
     internal_data = models.JSONField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
-    program_registration_id = models.TextField(unique=True, blank=True, null=True)  # This field type is a guess.
+    program_registration_id = models.CharField(unique=True, max_length=100, blank=True, null=True)
     total_cash_received_usd = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
     total_cash_received = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
     family_id = models.CharField(max_length=100, blank=True, null=True)
@@ -1358,10 +1358,10 @@ class Individual(HopeModel):
     withdrawn_date = models.DateTimeField(blank=True, null=True)
     individual_id = models.CharField(max_length=255, null=True)
     photo = models.ImageField(storage=get_hope_storage(), null=True)
-    full_name = models.TextField(null=True)  # This field type is a guess.
-    given_name = models.TextField(null=True)  # This field type is a guess.
-    middle_name = models.TextField(null=True)  # This field type is a guess.
-    family_name = models.TextField(null=True)  # This field type is a guess.
+    full_name = models.CharField(max_length=255, null=True)
+    given_name = models.CharField(max_length=85, null=True)
+    middle_name = models.CharField(max_length=85, null=True)
+    family_name = models.CharField(max_length=85, null=True)
     sex = models.CharField(max_length=255, null=True)
     birth_date = models.DateField(null=True)
     estimated_birth_date = models.BooleanField(null=True)
@@ -1401,7 +1401,7 @@ class Individual(HopeModel):
     fchild_hoh = models.BooleanField(null=True)
     child_hoh = models.BooleanField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
-    program_registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
+    program_registration_id = models.CharField(max_length=100, blank=True, null=True)
     preferred_language = models.CharField(max_length=6, blank=True, null=True)
     relationship_confirmed = models.BooleanField(null=True)
     age_at_registration = models.SmallIntegerField(blank=True, null=True)
@@ -2296,7 +2296,7 @@ class Program(HopeModel):
     updated_at = models.DateTimeField(null=True)
     last_sync_at = models.DateTimeField(blank=True, null=True)
     version = models.BigIntegerField(null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
+    name = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=10, null=True)
     start_date = models.DateField(null=True)
     end_date = models.DateField(blank=True, null=True)
@@ -2535,7 +2535,7 @@ class DataRegistrationdataimport(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     version = models.BigIntegerField(null=True)
-    name = models.TextField(unique=True, null=True)  # This field type is a guess.
+    name = models.CharField(unique=True, max_length=255, null=True)
     status = models.CharField(max_length=255, null=True)
     import_date = models.DateTimeField(null=True)
     data_source = models.CharField(max_length=255, null=True)
