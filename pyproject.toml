@@ -123,6 +123,7 @@ dev = [
   "responses",
   "selenium",
   "tox",
+  "tox-uv",
   "types-freezegun",
   "types-python-dateutil",
   "types-pytz",

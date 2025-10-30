@@ -177,7 +177,6 @@ class HouseholdFactory(AutoRegisterModelFactory):
     copied_from = None
     country = None
     country_origin = None
-    admin_area = None
     admin1 = None
     admin2 = None
     admin3 = None
