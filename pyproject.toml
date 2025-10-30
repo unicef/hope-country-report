@@ -58,7 +58,7 @@ dependencies = [
   "django-smart-env",
   "django-storages[azure]",
   "django-strategy-field",
-  "django-streaming>=0.7",
+  "django-streaming>=0.8.0",
   "django-stubs-ext",
   "django-taggit",
   "django-tailwind",
@@ -99,7 +99,7 @@ dependencies = [
   "unicef-security",
   "watchdog[watchmedo]",
 ]
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
   "ruff",
   "django-webtest",
