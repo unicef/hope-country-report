@@ -58,6 +58,7 @@ dependencies = [
   "django-smart-env",
   "django-storages[azure]",
   "django-strategy-field",
+  "django-streaming>=0.8.0",
   "django-stubs-ext",
   "django-taggit",
   "django-tailwind",

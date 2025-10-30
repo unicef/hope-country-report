@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING
 
+import factory
 from django.apps import apps
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
-
-import factory
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query.models import (

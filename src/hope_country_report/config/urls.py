@@ -1,8 +1,7 @@
+import debug_toolbar
 from django.conf.urls import include
 from django.contrib import admin
 from django.urls import path
-
-import debug_toolbar
 
 urlpatterns = [
     path("api/", include("hope_country_report.api.urls", namespace="api")),

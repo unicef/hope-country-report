@@ -1,12 +1,13 @@
+from pathlib import Path
 from typing import Any
 
-from pathlib import Path
-
+import tablib
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand, CommandError, CommandParser
 
-from hope_country_report.apps.power_query.models import Query as PowerQuery
+from ...models import Dataset
+from ...models import Query as PowerQuery
 
 
 class Command(BaseCommand):
@@ -21,11 +22,7 @@ class Command(BaseCommand):
 
         execute = subparsers.add_parser("execute")
         execute.add_argument("id")
-        execute.add_argument(
-            "--persist",
-            action="store_true",
-            default=False,
-        )
+        execute.add_argument("--persist", action="store_true", default=False)
         queue = subparsers.add_parser("queue")
         queue.add_argument("id")
 
@@ -34,18 +31,9 @@ class Command(BaseCommand):
 
         run = subparsers.add_parser("run")
         run.add_argument("id")
-        run.add_argument(
-            "--persist",
-            action="store_true",
-            default=False,
-        )
-        run.add_argument(
-            "--arguments",
-            "-a",
-            action="store",
-            nargs="+",
-            default=[],
-        )
+        run.add_argument("--persist", action="store_true", default=False)
+        run.add_argument("--info", action="store_true", default=False)
+        run.add_argument("--arguments", "-a", action="store", nargs="+", default=[])
 
         subparsers.add_parser("list")
 
@@ -55,7 +43,7 @@ class Command(BaseCommand):
         line = "#{id:>5}   {name:<32} {status:<25} {last_run} "
         self.stdout.write(line.format(id="id", name="name", status="status", last_run="last run"))
         for q in PowerQuery.objects.all():
-            self.stdout.write(line.format(id=q.id, name=q.name[:30], status=q.status, last_run=q.last_run))
+            self.stdout.write(line.format(id=q.id, name=q.name[:30], status=q.task_status, last_run=q.last_run))
 
     def _test(self, *args: Any, **options: Any) -> None:
         code = Path(options["filename"]).read_text()
@@ -77,18 +65,28 @@ class Command(BaseCommand):
 
     def _run(self, *args: Any, **options: Any) -> None:
         query_args: dict[str, str] = {}
+        result: Dataset
         try:
             for a in options["arguments"]:
                 k, v = a.split("=")
                 query_args[k] = v
             pq = PowerQuery.objects.get(pk=options["id"])
             result, info = pq.run(persist=options["persist"], arguments=query_args)
-            for k, v in info.items():
-                self.stdout.write(f"{k}: {v}")
-            self.stdout.write("=" * 80)
-            for entry in result:
-                self.stdout.write(str(entry))
+            if options["info"]:
+                for k, v in info.items():
+                    self.stdout.write(f"{k}: {v}")
+                self.stdout.write("=" * 80)
+            if isinstance(result.data, tablib.Dataset):
+                for entry in result.data:
+                    self.stdout.write(str(entry))
+            elif isinstance(result.data, dict):
+                for k, v in result.data.items():
+                    self.stdout.write(f"{k:<20}: {v}")
+            else:
+                self.stdout.write(str(result.data))
+
         except Exception as e:
+            raise
             self.stdout.write(f"Error: {e.__class__.__name__}")
             self.stdout.write(str(e))
 

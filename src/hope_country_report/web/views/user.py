@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from django.conf import settings
 from django.contrib import messages

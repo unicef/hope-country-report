@@ -1,7 +1,6 @@
-from typing import Any, TYPE_CHECKING
-
 import logging
 from functools import partial, partialmethod
+from typing import TYPE_CHECKING, Any
 
 from django.apps import AppConfig, apps
 from django.db import models

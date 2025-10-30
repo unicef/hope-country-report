@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING
-
 import logging
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, HttpResponseRedirect

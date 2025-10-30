@@ -1,9 +1,7 @@
 from typing import TYPE_CHECKING
 
 import pytest
-
 from django.db import IntegrityError
-
 from extras.testutils.factories import ContentTypeFactory, QueryFactory
 
 if TYPE_CHECKING:

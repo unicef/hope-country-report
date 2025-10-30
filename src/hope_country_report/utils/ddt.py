@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING
 
+from debug_toolbar.panels import Panel
 from django.template import Context, Template
 from django.utils.translation import gettext_lazy as _
-
-from debug_toolbar.panels import Panel
 
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.utils import get_selected_tenant, must_tenant

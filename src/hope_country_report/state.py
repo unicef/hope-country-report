@@ -1,13 +1,11 @@
-from typing import TYPE_CHECKING
-
 import contextlib
 from copy import copy
 from threading import local
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from collections.abc import Iterator
+    from typing import Any
 
     from hope_country_report.apps.core.models import CountryOffice
     from hope_country_report.types.http import AnyRequest, AnyResponse

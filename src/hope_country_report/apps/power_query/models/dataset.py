@@ -1,11 +1,9 @@
-from typing import TYPE_CHECKING
-
 import logging
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import JSONField
 from django.utils.functional import cached_property
-
 from django_cleanup import cleanup
 
 from ._base import FileProviderMixin, PowerQueryModel, TimeStampMixin

@@ -1,7 +1,6 @@
-from typing import Any, TYPE_CHECKING
-
 import json
 import logging
+from typing import TYPE_CHECKING, Any
 
 from django.core.management import BaseCommand
 
