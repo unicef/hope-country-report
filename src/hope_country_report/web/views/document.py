@@ -1,5 +1,7 @@
-from typing import Any, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
+from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
+from adminfilters.utils import parse_bool
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -9,9 +11,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import FormView
-
-from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
-from adminfilters.utils import parse_bool
 
 from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied
 from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument

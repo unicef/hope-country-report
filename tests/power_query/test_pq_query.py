@@ -1,11 +1,8 @@
 from typing import TYPE_CHECKING
-
 from uuid import UUID
 
 import pytest
-
 from django.conf import settings
-
 from freezegun import freeze_time
 
 from hope_country_report.apps.tenant.config import conf
@@ -187,6 +184,7 @@ def test_query_parametrizer(query_parametrizer: "Query"):
 
 
 def test_query_silk(query: "Query", data):
+    query.datasets.all().delete()
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
     uid = str(data["hh1"][0].business_area.pk)

@@ -1,8 +1,8 @@
+from datetime import timedelta
 from typing import Any
 
 from django import template
 from django.utils.safestring import mark_safe
-
 from strategy_field.utils import get_attr
 
 from hope_country_report.apps.power_query.utils import get_sentry_url, sizeof
@@ -29,6 +29,16 @@ def link_to_sentry(event_id: Any, href: bool = False) -> str:
 # def dataset_to_json(value: Any) -> str:
 #     return json.dump(value)  # type: ignore # FIXME: json.dump needs a second argument (fp)
 #
+
+
+@register.filter()
+def elapsed(result):
+    try:
+        seconds = int(result)
+        microseconds = (result * 1000000) % 1000000
+        return timedelta(0, seconds, microseconds)
+    except ValueError:
+        return 0
 
 
 @register.filter()

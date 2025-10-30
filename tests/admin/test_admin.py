@@ -1,15 +1,13 @@
-from typing import Callable, TYPE_CHECKING
-
-import pytest
-import responses
+from typing import TYPE_CHECKING, Callable
 from unittest import mock
 from unittest.mock import Mock
 
+import pytest
+import responses
+from admin_extra_buttons.handlers import ChoiceHandler
 from django.contrib.admin.sites import site
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.urls import reverse
-
-from admin_extra_buttons.handlers import ChoiceHandler
 from django_regex.utils import RegexList as _RegexList
 
 from hope_country_report.apps.power_query.models import ReportConfiguration
@@ -189,17 +187,19 @@ def test_admin_changeform(app, modeladmin, record):
 
 @pytest.mark.skip_models(
     "constance.Config",
-    "djstripe.WebhookEndpoint",
     "advanced_filters.AdvancedFilter",
+    "django_celery_beat.CrontabSchedule",
+    "django_celery_results.TaskResult",
 )
 def test_admin_add(app, modeladmin):
     url = reverse(admin_urlname(modeladmin.model._meta, "add"))
     if modeladmin.has_add_permission(Mock(user=app._user)):
         res = app.get(url)
         res = res.forms[1].submit()
-        assert res.status_code in [200, 302], log_submit_error(res)
+        assert res.status_code in [200], log_submit_error(res)
     else:
-        pytest.skip("No 'add' permission")
+        res = app.get(url, expect_errors=True)
+        assert res.status_code in [403], log_submit_error(res)
 
 
 @pytest.mark.skip_models(

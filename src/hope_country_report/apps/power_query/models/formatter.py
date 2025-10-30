@@ -1,23 +1,20 @@
-from typing import TYPE_CHECKING
-
 import logging
 from itertools import islice
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db import models
-
 from strategy_field.fields import StrategyField
 from strategy_field.utils import fqn
 
 from ...core.models import CountryOffice
-from ..processors import mimetype_map, ProcessorStrategy, registry, ToHTML, TYPE_DETAIL, TYPE_LIST, TYPES
+from ..processors import TYPE_DETAIL, TYPE_LIST, TYPES, ProcessorStrategy, ToHTML, mimetype_map, registry
 from ._base import MIMETYPES
 from .report_template import ReportTemplate
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from collections.abc import Iterable
+    from typing import Any
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,7 @@
+import uuid
 from typing import TYPE_CHECKING
 
-import uuid
-
 import pytest
-
 from strategy_field.utils import fqn
 
 from hope_country_report.apps.power_query import processors

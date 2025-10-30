@@ -1,3 +1,5 @@
+@tailwind base;
+
 .box {
   @apply mb-2 bg-white drop-shadow-md rounded p-4 ;
   h3 {
@@ -173,7 +175,6 @@ body.api {
 }
 
 
-@tailwind base;
 @tailwind utilities;
 /*
 //@tailwind components;
