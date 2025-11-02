@@ -108,6 +108,10 @@ def pytest_configure(config):
     settings.STATIC_ROOT = "/tmp/static"
     settings.SIGNING_BACKEND = "django.core.signing.TimestampSigner"
     settings.WP_PRIVATE_KEY = ""
+    settings.STREAMING = {
+        "BROKER_URL": os.environ.get("STREAMING_BROKER_URL", "console://"),
+        "MANAGER_CLASS": "streaming.manager.ChangeManager",
+    }
     if not config.option.with_sentry:
         os.environ["SENTRY_DSN"] = ""
     else:
