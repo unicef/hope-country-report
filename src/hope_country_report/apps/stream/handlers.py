@@ -1,3 +1,27 @@
+"""
+Handles streaming events for dataset changes.
+
+The streaming workflow is as follows:
+
+1. A `Query` is marked for streaming by ensuring its related `event`
+   object exists and its `enabled` field is set to `True`. This `event`
+   object is expected to be found at `query.event`.
+
+2. A `ReportConfiguration` is created and run, which executes the `Query`.
+   The result of the execution is saved as a `Dataset` model instance.
+
+3. The `post_save` signal on the `Dataset` model triggers the
+   `on_dataset_save_publish_event` handler in this module.
+
+4. The handler checks if `instance.query.event.enabled` is `True`. If it is,
+   it converts the `Dataset` data to JSON, creates a streaming `Event`, and
+   publishes it with the routing key 'event.routing_key'.
+
+5. Listeners subscribed to routing keys matching 'hcr.*.*' (like the
+   'country_report' queue) will receive the broadcast message containing the
+   full JSON data of the updated `Dataset`.
+"""
+
 import logging
 from typing import Any
 
@@ -14,10 +38,13 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=Dataset)
-def aaa(sender: type[Dataset], instance: Dataset, created: bool, **kwargs: dict[str, Any]) -> None:
+def on_dataset_save_publish_event(
+    sender: type[Dataset], instance: Dataset, created: bool, **kwargs: dict[str, Any]
+) -> None:
     if hasattr(instance.query, "event"):
         try:
             event = instance.query.event
+            routing_key = event.get_routing_key()
             if event.enabled:
                 from streaming.manager import initialize_engine
 
@@ -28,13 +55,12 @@ def aaa(sender: type[Dataset], instance: Dataset, created: bool, **kwargs: dict[
                     data = ds
                 else:
                     raise TypeError("Dataset must be a Dataset or dict")
-                event = make_event(key="hcr.dataset.save", message={"data": data})
+                event = make_event(message={"data": data})
                 engine = initialize_engine()
-                logger.debug("Stream notification 'hcr.dataset.save'")
-                if not engine.notify("hcr.dataset.save", event):
+                if not engine.notify(routing_key, event):
                     logger.error("Event notification failed")
             else:
-                logger.debug("Event disabled")
+                logger.info(f"Streaming is disabled for Query: '{instance.query.name}'")
         except Exception as e:
             logger.exception(e)
             capture_exception(e)

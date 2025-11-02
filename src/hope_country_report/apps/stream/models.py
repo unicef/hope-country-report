@@ -10,3 +10,10 @@ class Event(models.Model):
     office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, null=True, blank=True)
     query = models.OneToOneField(Query, on_delete=models.CASCADE, null=True)
     extras = models.JSONField(default=dict, blank=True)
+    routing_key = models.CharField(max_length=255, default="hcr.dataset.save")
+
+    def __str__(self):
+        return self.name
+
+    def get_routing_key(self) -> str:
+        return self.routing_key or f"hcr.{self.office.code.lower()}.dataset.save"
