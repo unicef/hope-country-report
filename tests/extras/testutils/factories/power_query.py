@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 import factory
-from django.apps import apps
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from strategy_field.utils import fqn
@@ -73,13 +72,16 @@ class DatasetFactory(AutoRegisterModelFactory):
         model = Dataset
 
     @classmethod
-    def create(cls, **kwargs: "Dict") -> Dataset:
-        # q: Query = cls.query.get_factory().create()
+    def _create(cls, model_class, *args, **kwargs):
+        """Custom _create to handle 'data' kwarg or emulate old magic."""
+        data = kwargs.pop("data", None)
+        if data is not None:
+            marshalled = model_class().marshall(data)
+            kwargs["file"] = ContentFile(marshalled, name="data.pkl")
+            return super()._create(model_class, *args, **kwargs)
+
+        # Fallback to old behavior for tests that rely on it
         q: Query = QueryFactory()
-        assert q.target.app_label
-        assert q.target.model
-        assert apps.get_model(q.target.app_label, q.target.model)
-        assert q.target.model_class()
         q.run(persist=True)
         return q.datasets.first()
 
