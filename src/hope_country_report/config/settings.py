@@ -265,6 +265,9 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 EMAIL_USE_SSL = env("EMAIL_USE_SSL")
 
+# for django-streaming we need a rabbitmq broker
+STREAMING_BROKER_URL = env("STREAMING_BROKER_URL", default="console://")
+BROKER_URL = env("BROKER_URL", default="amqp://guest:guest@localhost:5672//")
 
 from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa
