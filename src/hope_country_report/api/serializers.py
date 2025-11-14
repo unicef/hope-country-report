@@ -61,13 +61,17 @@ class QuerySerializer(SelectedOfficeSerializer):
 
 class DatasetSerializer(serializers.ModelSerializer):
     data = serializers.SerializerMethodField()
+    arguments = serializers.DictField(source="info.arguments", read_only=True)
 
     class Meta:
         model = Dataset
-        fields: list[str] = ["hash", "last_run", "data"]
+        fields = ("id", "query", "last_run", "arguments", "data")
 
-    def get_data(self, obj: Dataset) -> str:
-        return to_dataset(obj.data).export("json")
+    def get_data(self, obj: Dataset) -> Any:
+        try:
+            return to_dataset(obj.data).dict
+        except (ValueError, TypeError):
+            return obj.data
 
 
 class ReportConfigurationSerializer(SelectedOfficeSerializer):
