@@ -1,8 +1,10 @@
-from ..settings import env  # type: ignore[attr-defined]
+from .. import env
+
+# This line creates the namespaced setting Celery expects.
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 
 CELERY_ACCEPT_CONTENT = ["pickle", "json", "application/text", "application/json"]
 # CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": int(CELERY_BROKER_VISIBILITY_VAR)}
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 # CELERY_BROKER_VISIBILITY_VAR = env("CELERY_VISIBILITY_TIMEOUT")
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"

@@ -10,7 +10,10 @@ class Event(models.Model):
     office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, null=True, blank=True)
     query = models.OneToOneField(Query, on_delete=models.CASCADE, null=True)
     extras = models.JSONField(default=dict, blank=True)
-    routing_key = models.CharField(max_length=255, default="hcr.dataset.save")
+    routing_key = models.CharField(max_length=255, default="hcr.dataset.save", blank=True)
+    publish_as_url = models.BooleanField(
+        default=False, blank=True, help_text="If true, event will contain a URL to the dataset instead of the data"
+    )
 
     def __str__(self):
         return self.name

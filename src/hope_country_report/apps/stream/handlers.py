@@ -28,11 +28,13 @@ from typing import Any
 import tablib
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.urls import reverse
 from sentry_sdk import capture_exception
 from streaming.utils import make_event
 
 from hope_country_report.apps.power_query.models import Dataset
 from hope_country_report.apps.power_query.utils import to_dataset
+from hope_country_report.utils.mail import build_absolute_uri
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +50,22 @@ def on_dataset_save_publish_event(
             if event.enabled:
                 from streaming.manager import initialize_engine
 
-                ds = to_dataset(instance.data)
-                if isinstance(ds, tablib.Dataset):
-                    data = ds.export("json")
-                elif isinstance(ds, dict):
-                    data = ds
+                if event.publish_as_url:
+                    relative_url = reverse("api:dataset-detail", args=[instance.pk])
+                    absolute_url = build_absolute_uri(relative_url)
+                    message = {"url": absolute_url}
+                    if event.office:
+                        message["office_slug"] = event.office.slug
                 else:
-                    raise TypeError("Dataset must be a Dataset or dict")
-                event = make_event(message={"data": data})
+                    ds = to_dataset(instance.data)
+                    if isinstance(ds, tablib.Dataset):
+                        data = ds.export("json")
+                    elif isinstance(ds, dict):
+                        data = ds
+                    else:
+                        raise TypeError("Dataset must be a Dataset or dict")
+                    message = {"data": data}
+                event = make_event(message=message)
                 engine = initialize_engine()
                 if not engine.notify(routing_key, event):
                     logger.error("Event notification failed")
