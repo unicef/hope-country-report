@@ -265,6 +265,7 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 EMAIL_USE_SSL = env("EMAIL_USE_SSL")
 
+
 from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa
 from .fragments.celery import *  # noqa
@@ -287,6 +288,7 @@ from .fragments.social_auth import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
 from .fragments.streaming import *  # noqa
+
 
 GDAL_LIBRARY_PATH = env("GDAL_LIBRARY_PATH")
 GEOS_LIBRARY_PATH = env("GEOS_LIBRARY_PATH")

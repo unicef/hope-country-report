@@ -14,6 +14,10 @@ router.register("home", views.HCRHomeViewSet, basename="home")
 
 office = router.register(r"offices", views.CountryOfficeViewSet)
 q = office.register(r"queries", views.QueryViewSet, basename="queries", parents_query_lookups=["country_office__slug"])
+d = office.register(
+    r"dataset", views.DatasetViewSet, basename="dataset", parents_query_lookups=["query__country_office__slug", "query"]
+)
+
 report = office.register(
     r"config", views.ReportViewSet, basename="config", parents_query_lookups=["country_office__slug"]
 )
@@ -27,4 +31,11 @@ report.register(
 
 router.register(r"queries", views.QueryViewSet)
 router.register(r"charts", views.ChartViewSet)
-router.register(r"datasets", views.DatasetViewSet, basename="dataset")
+#
+# office_router = routers.ExtendedSimpleRouter()
+#
+# office_router.register(r'tasks', TaskViewSet)
+#           .register(r'comments',
+#                     CommentViewSet,
+#                     'tasks-comment',
+#                     parents_query_lookups=['object_id'])

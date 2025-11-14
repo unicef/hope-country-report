@@ -109,7 +109,7 @@ class ChartViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.DjangoObjectPermissions]
 
 
-class DatasetViewSet(viewsets.ReadOnlyModelViewSet):
+class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Dataset.objects.all().order_by("-pk")
     serializer_class = DatasetSerializer
     permission_classes = [permissions.DjangoObjectPermissions]

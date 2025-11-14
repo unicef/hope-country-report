@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from hope_country_report.apps.core.models import CountryOffice
@@ -20,3 +21,22 @@ class Event(models.Model):
 
     def get_routing_key(self) -> str:
         return self.routing_key or f"hcr.{self.office.code.lower()}.dataset.save"
+
+    def clean(self):
+        """
+        Ensures the Event's office matches the associated Query's country_office.
+        """
+        super().clean()
+        if not self.query:
+            return
+
+        if self.query.country_office and not self.office:
+            self.office = self.query.country_office
+
+        if self.office != self.query.country_office:
+            raise ValidationError(
+                {
+                    "office": f"The office '{self.office}' does not match the query's office "
+                    f"'{self.query.country_office}'. Leave the office field blank to auto-populate it."
+                }
+            )

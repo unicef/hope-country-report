@@ -51,7 +51,18 @@ def on_dataset_save_publish_event(
                 from streaming.manager import initialize_engine
 
                 if event.publish_as_url:
-                    relative_url = reverse("api:dataset-detail", args=[instance.pk])
+                    query = instance.query
+                    if not query or not query.country_office:
+                        logger.warning(
+                            f"Cannot generate URL for Dataset {instance.pk}. It is missing a query or country_office link."
+                        )
+                        return
+
+                    url_kwargs = {
+                        "country_office__slug": event.country_office.slug,
+                        "query": event.query.pk,
+                    }
+                    relative_url = reverse("api:dataset-detail", kwargs=url_kwargs)
                     absolute_url = build_absolute_uri(relative_url)
                     message = {"url": absolute_url}
                     if event.office:
