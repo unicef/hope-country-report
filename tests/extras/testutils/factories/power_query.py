@@ -80,7 +80,6 @@ class DatasetFactory(AutoRegisterModelFactory):
             kwargs["file"] = ContentFile(marshalled, name="data.pkl")
             return super()._create(model_class, *args, **kwargs)
 
-        # Fallback to old behavior for tests that rely on it
         q: Query = QueryFactory()
         q.run(persist=True)
         return q.datasets.first()

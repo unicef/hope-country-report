@@ -8,7 +8,6 @@ class Command(BaseCommand):
     help = "Configures exchanges, queues, and bindings for django-streaming."
 
     def handle(self, *args, **options):
-        # We need to import the Event model to query it.
         from hope_country_report.apps.stream.models import Event
 
         self.stdout.write("Setting up streaming infrastructure from Event models...")
@@ -20,10 +19,8 @@ class Command(BaseCommand):
         try:
             backend.connect(raise_if_error=True)
 
-            exchange_name = "django-streaming-broadcast"  # We'll use the one main exchange
+            exchange_name = "django-streaming-broadcast"
 
-            # 1. Configure the main exchange and its alternate for unrouted messages.
-            # This part is the same as before, ensuring the core infrastructure is solid.
             self.stdout.write(f"Configuring main exchange '{exchange_name}'...")
             alternate_exchange_name = f"{exchange_name}_unrouted"
             backend.channel.exchange_declare(exchange=alternate_exchange_name, exchange_type="fanout", durable=True)
@@ -37,8 +34,6 @@ class Command(BaseCommand):
                 arguments={"alternate-exchange": alternate_exchange_name},
             )
 
-            # 2. Configure queues and bindings based on Event models from the database.
-            # This is the new, dynamic part.
             self.stdout.write("Configuring queues and bindings from database Events...")
             events = Event.objects.filter(enabled=True).select_related("office")
             if not events:
@@ -53,10 +48,8 @@ class Command(BaseCommand):
                     )
                     continue
 
-                # Derive a unique queue name and routing key for this event/office.
                 office_code = event.office.code.lower()
                 queue_name = f"queue_hcr_{office_code}"
-                # We use a wildcard to catch all events for this office, e.g., 'hcr.afghanistan.*'
                 routing_key_pattern = f"hcr.{office_code}.*"
 
                 self.stdout.write(f"  - Declaring queue '{queue_name}'")

@@ -59,7 +59,7 @@ def on_dataset_save_publish_event(
                         return
 
                     url_kwargs = {
-                        "country_office__slug": event.country_office.slug,
+                        "query__country_office__slug": event.country_office.slug,
                         "query": event.query.pk,
                     }
                     relative_url = reverse("api:dataset-detail", kwargs=url_kwargs)

@@ -69,10 +69,8 @@ class DatasetSerializer(serializers.ModelSerializer):
 
     def get_data(self, obj: Dataset) -> Any:
         try:
-            # .dict returns a list of dicts, which is a native structure for JSON
             return to_dataset(obj.data).dict
         except (ValueError, TypeError):
-            # Fallback for non-tabular data (e.g., single values)
             return obj.data
 
 
