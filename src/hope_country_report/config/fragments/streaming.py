@@ -13,7 +13,7 @@ STREAMING = {
         "queue_hcr": {
             "name": "queue_hcr",
             "exchange": "django-streaming-broadcast",
-            "routing_key": "#",
+            "routing": ["#"],
         }
     },
 }

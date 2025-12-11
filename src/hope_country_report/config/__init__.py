@@ -101,8 +101,9 @@ CONFIG = {
     "STATIC_URL": (str, "/static/", setting("static-url")),
     "STREAMING_BROKER_URL": (
         str,
+        "console://",
         "amqp://guest:guest@localhost:5672//",
-        "Broker URL for Streaming. Must be a RabbitMQ URL (amqp://).",
+        "Broker URL for Streaming. Must be a RabbitMQ URL (amqp://) or console://.",
     ),
     "TIME_ZONE": (str, "UTC", setting("std-setting-TIME_ZONE")),
     "WP_APPLICATION_SERVER_KEY": (str, ""),
