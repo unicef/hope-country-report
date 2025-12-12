@@ -220,6 +220,7 @@ class BusinessArea(HopeModel):
     office_country = models.ForeignKey(
         "Country", on_delete=models.DO_NOTHING, related_name="businessarea_office_country", blank=True, null=True
     )
+    rdi_import_xlsx_disabled = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -261,39 +262,6 @@ class BusinessareaPaymentCountries(HopeModel):
     class Meta:
         managed = False
         db_table = "core_businessarea_payment_countries"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Businessareapartnerthrough(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareapartnerthrough_business_area", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "core_businessareapartnerthrough"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class BusinessareapartnerthroughRoles(HopeModel):
-    id = models.BigAutoField(primary_key=True)
-    businessareapartnerthrough = models.ForeignKey(
-        Businessareapartnerthrough,
-        on_delete=models.DO_NOTHING,
-        related_name="businessareapartnerthroughroles_businessareapartnerthrough",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "core_businessareapartnerthrough_roles"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -388,7 +356,6 @@ class Periodicfielddata(HopeModel):
     subtype = models.CharField(max_length=16, null=True)
     number_of_rounds = models.IntegerField(null=True)
     rounds_names = models.TextField(null=True)  # This field type is a guess.
-    rounds_covered = models.SmallIntegerField(null=True)
 
     class Meta:
         managed = False
@@ -433,7 +400,7 @@ class Areatype(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     original_id = models.UUIDField(blank=True, null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
+    name = models.CharField(max_length=255, null=True)
     area_level = models.IntegerField(null=True)
     valid_from = models.DateTimeField(blank=True, null=True)
     valid_until = models.DateTimeField(blank=True, null=True)
@@ -463,8 +430,8 @@ class Country(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     original_id = models.UUIDField(blank=True, null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
-    short_name = models.TextField(null=True)  # This field type is a guess.
+    name = models.CharField(max_length=255, null=True)
+    short_name = models.CharField(max_length=255, null=True)
     iso_code2 = models.CharField(unique=True, max_length=2, null=True)
     iso_code3 = models.CharField(unique=True, max_length=3, null=True)
     iso_num = models.CharField(unique=True, max_length=4, null=True)
@@ -1194,7 +1161,7 @@ class Household(HopeModel):
     consent = models.BooleanField(blank=True, null=True)
     consent_sharing = models.CharField(max_length=63, null=True)
     residence_status = models.CharField(max_length=254, null=True)
-    address = models.TextField(null=True)  # This field type is a guess.
+    address = models.CharField(max_length=1024, null=True)
     zip_code = models.CharField(max_length=12, blank=True, null=True)
     size = models.IntegerField(blank=True, null=True)
     female_age_group_0_5_count = models.IntegerField(blank=True, null=True)
@@ -1241,7 +1208,7 @@ class Household(HopeModel):
     unhcr_id = models.CharField(max_length=250, null=True)
     internal_data = models.JSONField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
-    program_registration_id = models.TextField(unique=True, blank=True, null=True)  # This field type is a guess.
+    program_registration_id = models.CharField(unique=True, max_length=100, blank=True, null=True)
     total_cash_received_usd = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
     total_cash_received = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
     family_id = models.CharField(max_length=100, blank=True, null=True)
@@ -1358,10 +1325,10 @@ class Individual(HopeModel):
     withdrawn_date = models.DateTimeField(blank=True, null=True)
     individual_id = models.CharField(max_length=255, null=True)
     photo = models.ImageField(storage=get_hope_storage(), null=True)
-    full_name = models.TextField(null=True)  # This field type is a guess.
-    given_name = models.TextField(null=True)  # This field type is a guess.
-    middle_name = models.TextField(null=True)  # This field type is a guess.
-    family_name = models.TextField(null=True)  # This field type is a guess.
+    full_name = models.CharField(max_length=255, null=True)
+    given_name = models.CharField(max_length=85, null=True)
+    middle_name = models.CharField(max_length=85, null=True)
+    family_name = models.CharField(max_length=85, null=True)
     sex = models.CharField(max_length=255, null=True)
     birth_date = models.DateField(null=True)
     estimated_birth_date = models.BooleanField(null=True)
@@ -1401,7 +1368,7 @@ class Individual(HopeModel):
     fchild_hoh = models.BooleanField(null=True)
     child_hoh = models.BooleanField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
-    program_registration_id = models.TextField(blank=True, null=True)  # This field type is a guess.
+    program_registration_id = models.CharField(max_length=100, blank=True, null=True)
     preferred_language = models.CharField(max_length=6, blank=True, null=True)
     relationship_confirmed = models.BooleanField(null=True)
     age_at_registration = models.SmallIntegerField(blank=True, null=True)
@@ -1665,41 +1632,6 @@ class Deliverymechanismconfig(HopeModel):
     class Meta:
         managed = False
         db_table = "payment_deliverymechanismconfig"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Deliverymechanismperpaymentplan(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    delivery_mechanism_order = models.IntegerField(null=True)
-    sent_to_payment_gateway = models.BooleanField(null=True)
-    delivery_mechanism = models.ForeignKey(
-        Deliverymechanism,
-        on_delete=models.DO_NOTHING,
-        related_name="deliverymechanismperpaymentplan_delivery_mechanism",
-        blank=True,
-        null=True,
-    )
-    financial_service_provider = models.ForeignKey(
-        "Financialserviceprovider",
-        on_delete=models.DO_NOTHING,
-        related_name="deliverymechanismperpaymentplan_financial_service_provider",
-        blank=True,
-        null=True,
-    )
-    payment_plan = models.OneToOneField(
-        "PaymentPlan",
-        on_delete=models.DO_NOTHING,
-        related_name="deliverymechanismperpaymentplan_payment_plan",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "payment_deliverymechanismperpaymentplan"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -2051,6 +1983,7 @@ class PaymentPlan(HopeModel):
     )
     flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
     flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
+    abort_comment = models.CharField(max_length=255, null=True)
 
     class Meta:
         managed = False
@@ -2296,7 +2229,7 @@ class Program(HopeModel):
     updated_at = models.DateTimeField(null=True)
     last_sync_at = models.DateTimeField(blank=True, null=True)
     version = models.BigIntegerField(null=True)
-    name = models.TextField(null=True)  # This field type is a guess.
+    name = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=10, null=True)
     start_date = models.DateField(null=True)
     end_date = models.DateField(blank=True, null=True)
@@ -2324,12 +2257,10 @@ class Program(HopeModel):
     beneficiary_group = models.ForeignKey(
         Beneficiarygroup, on_delete=models.DO_NOTHING, related_name="program_beneficiary_group", null=True
     )
-    collision_detection_enabled = models.BooleanField(null=True)
-    collision_detector = models.CharField(max_length=200, blank=True, null=True)
+    collision_detector = models.CharField(max_length=200, null=True)
     slug = models.CharField(max_length=4, null=True)
     reconciliation_window_in_days = models.IntegerField(null=True)
     send_reconciliation_window_expiry_notifications = models.BooleanField(null=True)
-    status_rank = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2389,43 +2320,6 @@ class ProgramCycle(HopeModel):
     class Meta:
         managed = False
         db_table = "program_programcycle"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Programpartnerthrough(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    full_area_access = models.BooleanField(null=True)
-    program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="programpartnerthrough_program", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "program_programpartnerthrough"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class ProgrampartnerthroughAreas(HopeModel):
-    id = models.BigAutoField(primary_key=True)
-    programpartnerthrough = models.ForeignKey(
-        Programpartnerthrough,
-        on_delete=models.DO_NOTHING,
-        related_name="programpartnerthroughareas_programpartnerthrough",
-        null=True,
-    )
-    area = models.ForeignKey(
-        Area, on_delete=models.DO_NOTHING, related_name="programpartnerthroughareas_area", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "program_programpartnerthrough_areas"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -2535,7 +2429,7 @@ class DataRegistrationdataimport(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     version = models.BigIntegerField(null=True)
-    name = models.TextField(unique=True, null=True)  # This field type is a guess.
+    name = models.CharField(unique=True, max_length=255, null=True)
     status = models.CharField(max_length=255, null=True)
     import_date = models.DateTimeField(null=True)
     data_source = models.CharField(max_length=255, null=True)
@@ -2838,48 +2732,6 @@ class ListUploadedxlsxfileSelectedLists(HopeModel):
     class Meta:
         managed = False
         db_table = "sanction_list_uploadedxlsxfile_selected_lists"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Targetingcollectorblockrulefilter(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    field_name = models.CharField(max_length=120, null=True)
-    comparison_method = models.CharField(max_length=20, null=True)
-    flex_field_classification = models.CharField(max_length=20, null=True)
-    arguments = models.JSONField(null=True)
-    collector_block_filters = models.ForeignKey(
-        "Targetingcollectorrulefilterblock",
-        on_delete=models.DO_NOTHING,
-        related_name="targetingcollectorblockrulefilter_collector_block_filters",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "targeting_targetingcollectorblockrulefilter"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Targetingcollectorrulefilterblock(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    targeting_criteria_rule = models.ForeignKey(
-        "Targetingcriteriarule",
-        on_delete=models.DO_NOTHING,
-        related_name="targetingcollectorrulefilterblock_targeting_criteria_rule",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "targeting_targetingcollectorrulefilterblock"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
