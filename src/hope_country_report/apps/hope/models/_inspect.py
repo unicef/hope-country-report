@@ -220,6 +220,7 @@ class BusinessArea(HopeModel):
     office_country = models.ForeignKey(
         "Country", on_delete=models.DO_NOTHING, related_name="businessarea_office_country", blank=True, null=True
     )
+    rdi_import_xlsx_disabled = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -261,39 +262,6 @@ class BusinessareaPaymentCountries(HopeModel):
     class Meta:
         managed = False
         db_table = "core_businessarea_payment_countries"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Businessareapartnerthrough(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareapartnerthrough_business_area", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "core_businessareapartnerthrough"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class BusinessareapartnerthroughRoles(HopeModel):
-    id = models.BigAutoField(primary_key=True)
-    businessareapartnerthrough = models.ForeignKey(
-        Businessareapartnerthrough,
-        on_delete=models.DO_NOTHING,
-        related_name="businessareapartnerthroughroles_businessareapartnerthrough",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "core_businessareapartnerthrough_roles"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -388,7 +356,6 @@ class Periodicfielddata(HopeModel):
     subtype = models.CharField(max_length=16, null=True)
     number_of_rounds = models.IntegerField(null=True)
     rounds_names = models.TextField(null=True)  # This field type is a guess.
-    rounds_covered = models.SmallIntegerField(null=True)
 
     class Meta:
         managed = False
@@ -1670,41 +1637,6 @@ class Deliverymechanismconfig(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class Deliverymechanismperpaymentplan(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    delivery_mechanism_order = models.IntegerField(null=True)
-    sent_to_payment_gateway = models.BooleanField(null=True)
-    delivery_mechanism = models.ForeignKey(
-        Deliverymechanism,
-        on_delete=models.DO_NOTHING,
-        related_name="deliverymechanismperpaymentplan_delivery_mechanism",
-        blank=True,
-        null=True,
-    )
-    financial_service_provider = models.ForeignKey(
-        "Financialserviceprovider",
-        on_delete=models.DO_NOTHING,
-        related_name="deliverymechanismperpaymentplan_financial_service_provider",
-        blank=True,
-        null=True,
-    )
-    payment_plan = models.OneToOneField(
-        "PaymentPlan",
-        on_delete=models.DO_NOTHING,
-        related_name="deliverymechanismperpaymentplan_payment_plan",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "payment_deliverymechanismperpaymentplan"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
 class Financialinstitution(HopeModel):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(null=True)
@@ -2051,6 +1983,7 @@ class PaymentPlan(HopeModel):
     )
     flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
     flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
+    abort_comment = models.CharField(max_length=255, null=True)
 
     class Meta:
         managed = False
@@ -2324,12 +2257,10 @@ class Program(HopeModel):
     beneficiary_group = models.ForeignKey(
         Beneficiarygroup, on_delete=models.DO_NOTHING, related_name="program_beneficiary_group", null=True
     )
-    collision_detection_enabled = models.BooleanField(null=True)
-    collision_detector = models.CharField(max_length=200, blank=True, null=True)
+    collision_detector = models.CharField(max_length=200, null=True)
     slug = models.CharField(max_length=4, null=True)
     reconciliation_window_in_days = models.IntegerField(null=True)
     send_reconciliation_window_expiry_notifications = models.BooleanField(null=True)
-    status_rank = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2389,43 +2320,6 @@ class ProgramCycle(HopeModel):
     class Meta:
         managed = False
         db_table = "program_programcycle"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Programpartnerthrough(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    full_area_access = models.BooleanField(null=True)
-    program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="programpartnerthrough_program", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "program_programpartnerthrough"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class ProgrampartnerthroughAreas(HopeModel):
-    id = models.BigAutoField(primary_key=True)
-    programpartnerthrough = models.ForeignKey(
-        Programpartnerthrough,
-        on_delete=models.DO_NOTHING,
-        related_name="programpartnerthroughareas_programpartnerthrough",
-        null=True,
-    )
-    area = models.ForeignKey(
-        Area, on_delete=models.DO_NOTHING, related_name="programpartnerthroughareas_area", null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = "program_programpartnerthrough_areas"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -2838,48 +2732,6 @@ class ListUploadedxlsxfileSelectedLists(HopeModel):
     class Meta:
         managed = False
         db_table = "sanction_list_uploadedxlsxfile_selected_lists"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Targetingcollectorblockrulefilter(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    field_name = models.CharField(max_length=120, null=True)
-    comparison_method = models.CharField(max_length=20, null=True)
-    flex_field_classification = models.CharField(max_length=20, null=True)
-    arguments = models.JSONField(null=True)
-    collector_block_filters = models.ForeignKey(
-        "Targetingcollectorrulefilterblock",
-        on_delete=models.DO_NOTHING,
-        related_name="targetingcollectorblockrulefilter_collector_block_filters",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "targeting_targetingcollectorblockrulefilter"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-
-class Targetingcollectorrulefilterblock(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    targeting_criteria_rule = models.ForeignKey(
-        "Targetingcriteriarule",
-        on_delete=models.DO_NOTHING,
-        related_name="targetingcollectorrulefilterblock_targeting_criteria_rule",
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "targeting_targetingcollectorrulefilterblock"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
