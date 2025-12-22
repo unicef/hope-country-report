@@ -2247,7 +2247,6 @@ class Program(HopeModel):
     programme_code = models.CharField(max_length=4, blank=True, null=True)
     partner_access = models.CharField(max_length=50, null=True)
     biometric_deduplication_enabled = models.BooleanField(null=True)
-    deduplication_set_id = models.UUIDField(blank=True, null=True)
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="program_business_area", null=True
     )
