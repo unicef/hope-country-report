@@ -51,7 +51,7 @@ jobs:
           python-version: '3.13'
       - uses: yezz123/setup-uv@v4
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v5
         id: restore-cache
         with:
           path: .venv
@@ -63,7 +63,7 @@ jobs:
       - name: Build Doc
         run: .venv/bin/mkdocs build -d ./docs-output
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v5
         id: cache
         if: always() && steps.restore-cache.outputs.cache-hit != 'true'
         with:
