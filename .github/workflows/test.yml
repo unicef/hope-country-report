@@ -116,7 +116,7 @@ jobs:
           echo BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5.8.0
+        uses: docker/metadata-action@v5
         with:
           images: "unicef/hope-country-report"
           tags: |
@@ -171,7 +171,7 @@ jobs:
               tox -e d52
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         continue-on-error: true
         with:
           env_vars: OS,PYTHON
