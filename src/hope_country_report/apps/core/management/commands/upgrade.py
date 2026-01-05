@@ -1,9 +1,8 @@
-from typing import Any, TYPE_CHECKING
-
 import logging
 import os
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.gis.utils import LayerMapping
 from django.core.exceptions import ValidationError

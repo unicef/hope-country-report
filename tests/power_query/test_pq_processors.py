@@ -1,19 +1,16 @@
-from typing import NoReturn, Type, TYPE_CHECKING
-
 import pickle
 from pathlib import Path
-
-import pytest
+from typing import TYPE_CHECKING, NoReturn, Type
 from unittest.mock import Mock
 
+import factory
+import fitz
+import pytest
+import tablib
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models.manager import BaseManager
-
-import factory
-import fitz
-import tablib
 from docxtpl import DocxTemplate
 from pypdf import PdfReader
 from strategy_field.utils import fqn

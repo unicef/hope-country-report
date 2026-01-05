@@ -1,8 +1,7 @@
 from typing import TypeVar
 
-from django.http import HttpRequest, HttpResponse, HttpResponseBase, HttpResponseRedirect, StreamingHttpResponse
-
 from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
+from django.http import HttpRequest, HttpResponse, HttpResponseBase, HttpResponseRedirect, StreamingHttpResponse
 
 from hope_country_report.apps.core.models import User
 

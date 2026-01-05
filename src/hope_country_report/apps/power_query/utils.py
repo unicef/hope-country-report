@@ -1,5 +1,3 @@
-from typing import Any, Dict, TYPE_CHECKING
-
 import base64
 import binascii
 import datetime
@@ -7,25 +5,26 @@ import hashlib
 import io
 import json
 import logging
-from collections.abc import Callable, Iterable
+import sys
+from collections.abc import Callable, Container, Iterable
 from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict
 from urllib.parse import urljoin
-
-from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.staticfiles.storage import staticfiles_storage
-from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse
-from django.utils.safestring import mark_safe
 
 import fitz
 import qrcode
 import requests
 import tablib
 from constance import config
-from PIL import ExifTags, Image, ImageDraw, ImageFont
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse
+from django.utils.safestring import mark_safe
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from sentry_sdk import capture_exception, configure_scope
 
 if TYPE_CHECKING:
@@ -36,6 +35,29 @@ logger = logging.getLogger(__name__)
 
 
 _font_cache: dict[str, bytes] = {}
+
+
+def size_of(obj: Any, seen: set | None = None):
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    seen.add(obj_id)
+
+    if isinstance(obj, dict):
+        size += sum([size_of(k, seen) + size_of(v, seen) for k, v in obj.items()])
+    elif isinstance(obj, list | tuple | set | frozenset):
+        size += sum([size_of(i, seen) for i in obj])
+    elif isinstance(obj, Container) and not isinstance(obj, str | bytes | bytearray):
+        try:
+            size += sum([size_of(i, seen) for i in obj])
+        except Exception:
+            pass
+
+    return size
 
 
 def is_valid_template(filename: Path) -> bool:
@@ -299,16 +321,8 @@ def insert_qr_code(document: fitz.Document, field_name: str, data: str, rect: fi
 def apply_exif_orientation(image: Image.Image) -> Image.Image:
     """Adjusts the image based on EXIF orientation metadata."""
     try:
-        exif = image.getexif()
-        if exif is not None:
-            orientation = exif.get(ExifTags.TAGS.get("Orientation"))
-            if orientation == 3:
-                image = image.rotate(180, expand=True)
-            elif orientation == 6:
-                image = image.rotate(90, expand=True)
-            elif orientation == 8:
-                image = image.rotate(270, expand=True)
+        return ImageOps.exif_transpose(image)
     except Exception as e:
         logger.warning(f"Failed to apply EXIF orientation: {e}")
         capture_exception(e)
-    return image
+        return image

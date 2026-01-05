@@ -1,15 +1,14 @@
 from typing import TYPE_CHECKING
 
+from constance import config
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
-
-from constance import config
 from sentry_sdk import capture_exception
 
 if TYPE_CHECKING:
     from hope_country_report.apps.core.models import User
-    from hope_country_report.apps.power_query.models import ReportConfiguration, ReportDocument
+    from hope_country_report.apps.power_query.models import ReportConfiguration
     from hope_country_report.types.http import AuthHttpRequest
 
 
@@ -25,25 +24,26 @@ def build_absolute_uri(url_path: str, request: "AuthHttpRequest | None" = None) 
     return url_path
 
 
-def send_document_password(user: "User", document: "ReportDocument", request: "AuthHttpRequest | None" = None) -> int:
+def send_document_password(
+    user: "User", report: "ReportConfiguration", request: "AuthHttpRequest | None" = None
+) -> int:
     if config.CATCH_ALL_EMAIL:
         recipient_list = [config.CATCH_ALL_EMAIL]
     else:
         recipient_list = [user.email]
     if not recipient_list:
         return 0
-    url = build_absolute_uri(document.get_absolute_url(), request)
+    url = build_absolute_uri(report.get_documents_url(), request)
 
     message = EmailMessage(to=recipient_list, from_email=settings.DEFAULT_FROM_EMAIL)
 
     message.template_id = config.MAILJET_TEMPLATE_REPORT_READY  # Mailjet numeric template id
-    message.subject = f"Your password for {document.title}"
+    message.subject = f"Your password for {report.title}"
 
     message.merge_global_data = {
         "document": {
-            "name": document.title,
-            "password": document.report.pwd,
-            "file": document.file.name,
+            "name": report.title,
+            "password": report.pwd,
             "url": url,
         },
         "user": {
@@ -66,9 +66,8 @@ def send_request_access(
         recipient_list = [config.CATCH_ALL_EMAIL]
     else:
         recipient_list = [report.owner.email]
-
     email = EmailMessage(
-        to=recipient_list,
+        bcc=recipient_list,
         from_email=settings.DEFAULT_FROM_EMAIL,
         subject=f"{sender.full_name} wants to access '{report.title}'",
         body=f"""
@@ -93,18 +92,15 @@ Requesting access to: {report.title}
 def notify_report_completion(report: "ReportConfiguration", request: "AuthHttpRequest | None" = None) -> int:
     url = build_absolute_uri(report.get_absolute_url(), request)
     docs_url = build_absolute_uri(report.get_documents_url(), request)
-
     if config.CATCH_ALL_EMAIL:
         recipient_list = [config.CATCH_ALL_EMAIL]
     else:
         recipient_list = [u.email for u in report.notify_to.all()]
-
     if not recipient_list:
         return 0
 
     message = EmailMessage(
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=recipient_list,
         bcc=recipient_list,
         subject="Report updated/created",
         body=f"""Dear User,

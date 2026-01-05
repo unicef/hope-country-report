@@ -9,27 +9,80 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.1
+    rev: 0.36.0
     hooks:
       - id: check-github-workflows
         args: [ "--verbose" ]
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.7.0"
+    rev: "1.7.1"
     hooks:
       - id: tox-ini-fmt
         args: [ "-p", "lint" ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.0"
+    rev: "v0.14.10"
     hooks:
       - id: ruff-format
       - id: ruff
         args: [ "--fix", "--unsafe-fixes", "--exit-non-zero-on-fix" ]
   - repo: https://github.com/adamchainz/djade-pre-commit
-    rev: "1.6.0"
+    rev: "1.7.0"
     hooks:
       - id: djade
         args: [ --target-version, "5.1" ]  # Replace with Django version
+
   - repo: meta
     hooks:
       - id: check-hooks-apply
       - id: check-useless-excludes
+
+  - repo: https://github.com/saxix/pch
+    rev: '79b0c0e'
+    hooks:
+
+      - id: check-missed-migrations
+        args:
+          - src
+        stages: [ pre-commit ]
+        additional_dependencies: [ setuptools ]
+
+      - id: check-untracked
+        args:
+          - src
+          - tests
+        stages: [ pre-push ]
+
+      - id: check-forbidden
+        args:
+          - -i
+          - "pyproject.toml"
+          - -p
+          - "/\\[tool.uv.sources\\]/"
+        stages: [ pre-push ]
+
+      - id: check-tailwind
+        name: check tailwind CSS ready for production
+        files: src/hope_live/theme/static_src/src/styles.scss
+        args:
+          - -o
+          - src/hope_country_report/web/theme/static/css/styles.css
+
+      - id: check-minimized
+        name: check missing minimized javascript
+        files: (\.js)$
+        exclude: (\.min\.js)$
+        args:
+          - -i
+          - "src/hope_country_report/apps/power_query/static/admin/power_query/codemirror/*.js"
+          - -i
+          - docs/**/*.js
+          - -i
+          - src/hope_country_report/web/theme/static_src/*.js
+
+
+      - id: check-forbidden
+        name: check pyproject to avoid editable sources/deps
+        files: pyproject.toml
+        language: python
+        args:
+          - -p
+          - /\[tool\.uv\.sources\]\s/s

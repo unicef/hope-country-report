@@ -1,9 +1,8 @@
 import uuid
 
-from django.utils.text import slugify
-
 import factory
 import pytz
+from django.utils.text import slugify
 from factory import fuzzy, post_generation
 from faker import Faker
 from testutils.factories import AutoRegisterModelFactory, HopeAutoRegisterModelFactory
@@ -178,7 +177,6 @@ class HouseholdFactory(AutoRegisterModelFactory):
     copied_from = None
     country = None
     country_origin = None
-    admin_area = None
     admin1 = None
     admin2 = None
     admin3 = None

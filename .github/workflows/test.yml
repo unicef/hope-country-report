@@ -41,7 +41,7 @@ jobs:
       run_tests: ${{ steps.changes.outputs.run_tests }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - id: changes
         name: Check for file changes
         uses: dorny/paths-filter@v3
@@ -60,6 +60,11 @@ jobs:
       build_date: ${{env.BUILD_DATE}}
       branch: ${{env.BRANCH}}
     services:
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 10000:5672
+          - 10001:15672
       redis:
         image: redis:7.4.0
         ports:
@@ -97,10 +102,11 @@ jobs:
       DATABASE_HOPE_URL: postgis://postgres:postgres@localhost:5432/hopedb
       CELERY_BROKER_URL: redis://localhost:6379/1
       CACHE_URL: redis://localhost:6379/2
+      STREAMING_BROKER_URL: rabbit://guest:guest@localhost:10000?exchange=hope_live
       DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Hack container for local development
         if: ${{ env.ACT }}
         run: |
@@ -110,7 +116,7 @@ jobs:
           echo BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5.8.0
+        uses: docker/metadata-action@v5
         with:
           images: "unicef/hope-country-report"
           tags: |
@@ -165,7 +171,7 @@ jobs:
               tox -e d52
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         continue-on-error: true
         with:
           env_vars: OS,PYTHON

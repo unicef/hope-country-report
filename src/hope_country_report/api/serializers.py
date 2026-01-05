@@ -1,7 +1,6 @@
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.utils.functional import cached_property
-
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 from rest_framework_gis.fields import GeometrySerializerMethodField
@@ -13,7 +12,6 @@ from hope_country_report.apps.power_query.utils import to_dataset
 
 if TYPE_CHECKING:
     from django.db.models import Model
-
     from djgeojson.fields import MultiPolygonField
 
 

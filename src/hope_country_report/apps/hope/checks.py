@@ -1,7 +1,7 @@
 from typing import Any
 
 from django.apps import AppConfig, apps
-from django.core.checks import Error, register, Warning
+from django.core.checks import Error, Warning, register
 
 
 @register()

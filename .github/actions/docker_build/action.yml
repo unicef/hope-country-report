@@ -58,7 +58,7 @@ runs:
 
     - name: Restore cached regclient
       id: cache-regclient-restore
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: $HOME/.regctl
         key: ${{ runner.os }}-regclient
@@ -67,7 +67,7 @@ runs:
       uses: regclient/actions/regctl-installer@main
     - name: Cache regclient
       id: cache-regclient-save
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         path: $HOME/.regctl
         key: ${{ runner.os }}-regclient
@@ -139,7 +139,7 @@ runs:
         fi
     - name: Set up Docker BuildX
       if: steps.image_status.outputs.updated != 'true' || inputs.rebuild == 'true'
-      uses: docker/setup-buildx-action@v3.3.0
+      uses: docker/setup-buildx-action@v3
       with:
         platforms: linux/amd64
         driver: docker-container

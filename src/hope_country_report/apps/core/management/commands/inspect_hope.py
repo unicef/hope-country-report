@@ -1,16 +1,14 @@
-from typing import Any, AnyStr, List
-
 import io
 import keyword
 import os
 import re
 from collections import OrderedDict
 from pathlib import Path
+from typing import Any, AnyStr, List
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
 from django.db.models.constants import LOOKUP_SEP
-
 from django_regex.exceptions import InvalidPattern
 from django_regex.utils import Regex, RegexList
 
@@ -29,16 +27,17 @@ class IRegexList(RegexList):
 
 WANTED_TABLES = IRegexList(
     [
-        "core.*",
-        "household.*",
-        "program.*",
-        "geo.*",
-        "payment.*",
-        "targeting.*",
-        "registration_data.*",
-        "grievance.*",
-        "sanction_list.*",
         "accountability.*",
+        "core.*",
+        "grievance.*",
+        "geo.*",
+        "household.*",
+        "payment.*",
+        "program.*",
+        "registration_data.*",
+        "sanction_list.*",
+        "targeting.*",
+        "vision.*",
     ]
 )
 

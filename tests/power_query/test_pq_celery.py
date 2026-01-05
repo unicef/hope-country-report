@@ -1,13 +1,12 @@
-from typing import TYPE_CHECKING
 import uuid
-import pytest
+from typing import TYPE_CHECKING
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock
 
-from django.conf import settings
-
+import pytest
 from celery import states
 from celery.result import EagerResult
+from django.conf import settings
 from django_celery_beat.models import PeriodicTask
 
 from hope_country_report.apps.power_query.celery_tasks import refresh_report, reports_refresh, run_background_query

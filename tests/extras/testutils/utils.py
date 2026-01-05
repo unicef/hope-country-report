@@ -4,10 +4,9 @@ from contextlib import ContextDecorator
 from pathlib import Path
 from urllib.parse import parse_qs
 
+import responses
 from django.http import QueryDict
 from django.urls import reverse
-
-import responses
 
 
 class MutableQueryDict(QueryDict):
