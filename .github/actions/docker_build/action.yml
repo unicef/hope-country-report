@@ -95,7 +95,7 @@ runs:
       uses: ./.github/actions/last_commit
     - name: Docker meta
       id: meta
-      uses: docker/metadata-action@v5.8.0
+      uses: docker/metadata-action@v5
       with:
         images: ${{ inputs.image }}
         flavor: |
