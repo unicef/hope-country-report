@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
@@ -24,7 +24,10 @@ class BaseAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: 
 
 @admin.register(User)
 class UserAdmin(_UserAdminPlus):  # type: ignore
-    pass
+    def get_fieldsets(self, request: "AuthHttpRequest", obj: Any | None = None) -> tuple:
+        if not obj:
+            return self.add_fieldsets
+        return self.fieldsets
 
 
 class UserRoleForm(forms.ModelForm):  # type: ignore

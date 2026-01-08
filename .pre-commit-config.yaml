@@ -9,23 +9,23 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.1
+    rev: 0.36.0
     hooks:
       - id: check-github-workflows
         args: [ "--verbose" ]
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.7.0"
+    rev: "1.7.1"
     hooks:
       - id: tox-ini-fmt
         args: [ "-p", "lint" ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.0"
+    rev: "v0.14.10"
     hooks:
       - id: ruff-format
       - id: ruff
         args: [ "--fix", "--unsafe-fixes", "--exit-non-zero-on-fix" ]
   - repo: https://github.com/adamchainz/djade-pre-commit
-    rev: "1.6.0"
+    rev: "1.7.0"
     hooks:
       - id: djade
         args: [ --target-version, "5.1" ]  # Replace with Django version
