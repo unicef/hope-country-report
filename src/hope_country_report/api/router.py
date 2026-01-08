@@ -15,7 +15,7 @@ router.register("home", views.HCRHomeViewSet, basename="home")
 office = router.register(r"offices", views.CountryOfficeViewSet)
 q = office.register(r"queries", views.QueryViewSet, basename="queries", parents_query_lookups=["country_office__slug"])
 d = q.register(
-    r"dataset", views.DatasetViewSet, basename="dataset", parents_query_lookups=["country_office__slug", "query"]
+    r"dataset", views.DatasetViewSet, basename="dataset", parents_query_lookups=["query__country_office__slug", "query"]
 )
 
 report = office.register(
