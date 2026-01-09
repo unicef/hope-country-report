@@ -90,6 +90,7 @@ dependencies = [
   "qrcode",
   "redis",
   "sentry-sdk",
+  "setuptools",
   "shapely",
   "social-auth-app-django",
   "sqlparse",
