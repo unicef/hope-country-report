@@ -1,9 +1,6 @@
-from typing import Any
-
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.forms import Field
 from django.templatetags.static import static
 from strategy_field.forms import StrategyFormField
 
@@ -66,15 +63,6 @@ class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
         exclude = ()
-        # fields = (
-        #     "country_office",
-        #     "name",
-        #     "description",
-        #     "target",
-        #     "parametrizer",
-        #     "code",
-        #     "active"
-        # )
 
     def __init__(self, *args, **kwargs) -> None:
         from django.contrib.contenttypes.models import ContentType
@@ -83,12 +71,9 @@ class QueryForm(forms.ModelForm):
         self.fields["country_office"].queryset = conf.auth.get_allowed_tenants()
         self.fields["target"].queryset = ContentType.objects.filter(app_label="hope").order_by("model")
 
-    def get_initial_for_field(self, field: Field, field_name: str) -> Any:
-        if field_name == "country_office":
-            return get_selected_tenant()
-        if field_name == "owner":
-            return state.request.user
-        return super().get_initial_for_field(field, field_name)
+        if not self.instance or not self.instance.pk:
+            self.initial["country_office"] = get_selected_tenant()
+            self.initial["owner"] = state.request.user
 
     def clean_owner(self):
         if not self.cleaned_data.get("owner"):

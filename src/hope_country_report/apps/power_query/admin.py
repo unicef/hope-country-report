@@ -403,6 +403,7 @@ class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermM
 class ReportConfigurationAdmin(
     AdminFiltersMixin,
     CeleryTaskModelAdmin,
+    AutoProjectCol,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
     AdminActionPermMixin,
@@ -422,7 +423,6 @@ class ReportConfigurationAdmin(
     autocomplete_fields = ("query", "owner")
     filter_horizontal = ["limit_access_to", "formatters", "notify_to"]
     readonly_fields = (
-        # "task_id",  # Removed in migration 0011
         "last_run",
         "sentry_error_id",
         "error_message",
