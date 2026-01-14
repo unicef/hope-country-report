@@ -182,6 +182,38 @@ class SurveyRecipients(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
+class Asyncjob(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    version = models.BigIntegerField(null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    curr_async_result_id = models.CharField(max_length=36, blank=True, null=True)
+    last_async_result_id = models.CharField(max_length=36, blank=True, null=True)
+    datetime_created = models.DateTimeField(null=True)
+    datetime_queued = models.DateTimeField(blank=True, null=True)
+    repeatable = models.BooleanField(null=True)
+    celery_history = models.JSONField(null=True)
+    local_status = models.CharField(max_length=100, blank=True, null=True)
+    group_key = models.CharField(max_length=255, blank=True, null=True)
+    type = models.CharField(max_length=50, null=True)
+    config = models.JSONField(null=True)
+    action = models.CharField(max_length=500, blank=True, null=True)
+    sentry_id = models.CharField(max_length=255, blank=True, null=True)
+    errors = models.JSONField(null=True)
+    program = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="asyncjob_program", blank=True, null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "core_asyncjob"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.description)
+
+
 class BusinessArea(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
