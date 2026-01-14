@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from django.http import HttpResponse
 
 from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied

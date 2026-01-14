@@ -1,13 +1,12 @@
-from typing import TYPE_CHECKING
-
-from django import forms
-from django.contrib import admin
-from django.db.models.fields.json import JSONField
+from typing import TYPE_CHECKING, Any
 
 from admin_extra_buttons.decorators import button
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
+from django import forms
+from django.contrib import admin
+from django.db.models.fields.json import JSONField
 from jsoneditor.forms import JSONEditor
 from leaflet.admin import LeafletGeoAdmin
 from smart_admin.mixins import DisplayAllMixin
@@ -25,7 +24,10 @@ class BaseAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: 
 
 @admin.register(User)
 class UserAdmin(_UserAdminPlus):  # type: ignore
-    pass
+    def get_fieldsets(self, request: "AuthHttpRequest", obj: Any | None = None) -> tuple:
+        if not obj:
+            return self.add_fieldsets
+        return self.fieldsets
 
 
 class UserRoleForm(forms.ModelForm):  # type: ignore

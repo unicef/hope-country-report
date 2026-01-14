@@ -1,5 +1,4 @@
 from typing import Any
-
 from uuid import UUID
 
 from django.core.serializers.json import DjangoJSONEncoder

@@ -1,12 +1,10 @@
-from typing import TYPE_CHECKING
-
 import itertools
 import logging
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
-
 from natural_keys import NaturalKeyModel
 
 from ...core.models import CountryOffice

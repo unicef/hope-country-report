@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.forms import Field
 from django.templatetags.static import static
-
 from strategy_field.forms import StrategyFormField
 
 from ...state import state

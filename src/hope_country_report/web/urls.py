@@ -6,8 +6,6 @@ from django.views.generic import TemplateView
 from .views import (
     ChartDetailView,
     ChartListView,
-    download,
-    index,
     OfficeConfigurationDetailView,
     OfficeConfigurationListView,
     OfficeConfigurationRunView,
@@ -20,8 +18,10 @@ from .views import (
     OfficeReportDocumentDetailView,
     OfficeReportDocumentListView,
     RequestAccessView,
-    select_tenant,
     UserProfileView,
+    download,
+    index,
+    select_tenant,
 )
 from .views.base import OfficeTemplateView
 

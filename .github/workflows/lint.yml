@@ -37,7 +37,7 @@ jobs:
       docker: ${{ steps.changes.outputs.docker_base }}
     steps:
       - run: git config --global --add safe.directory $(realpath .)
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - id: changes
         name: Check for backend file changes
         uses: dorny/paths-filter@v3
@@ -50,8 +50,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false && needs.changes.outputs.lint
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install requirements
