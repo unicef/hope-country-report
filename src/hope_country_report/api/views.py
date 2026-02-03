@@ -125,6 +125,7 @@ class ReportViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = ReportConfiguration.objects.all().order_by("-pk")
     serializer_class = ReportConfigurationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+    filterset_fields = ["name"]
 
 
 class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOnlyModelViewSet):
