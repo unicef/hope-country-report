@@ -8,7 +8,6 @@ from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from hope_country_report.apps.core.models import CountryOffice, CountryShape
 from hope_country_report.apps.power_query.models import ChartPage, Dataset, Query, ReportConfiguration, ReportDocument
-from hope_country_report.apps.power_query.utils import to_dataset
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -64,16 +63,16 @@ class DatasetDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Dataset
-        fields: list[str] = ["hash", "last_run", "data"]
+        fields: list[str] = ["id", "hash", "last_run", "description", "data"]
 
     def get_data(self, obj: Dataset) -> str:
-        return to_dataset(obj.data).export("json")
+        return None
 
 
 class DatasetListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dataset
-        fields: list[str] = ["hash", "last_run"]
+        fields: list[str] = ["id", "hash", "last_run", "description"]
 
 
 class ReportConfigurationSerializer(SelectedOfficeSerializer):

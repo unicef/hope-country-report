@@ -6,7 +6,6 @@ from rest_framework.test import APIClient
 from hope_country_report.apps.power_query.models import Dataset
 from hope_country_report.state import state
 from testutils.factories import (
-    DatasetFactory,
     QueryFactory,
     ReportConfigurationFactory,
     ReportDocumentFactory,
@@ -46,17 +45,11 @@ def authorized_user(afg_user, reporters):
 
 @pytest.fixture
 def dataset(db, query, afghanistan):
-    import pickle
     from hope_country_report.state import state
+    from hope_country_report.apps.power_query.models import Dataset
 
     with state.set(tenant=afghanistan):
-        data = [{"id": 1, "value": "test"}]
-
-        return DatasetFactory(
-            query=query,
-            hash="test_hash",
-            value=pickle.dumps(data),
-        )
+        return Dataset.objects.create(query=query, hash="test_hash", description="Test Dataset", info={"arguments": {}})
 
 
 @pytest.fixture

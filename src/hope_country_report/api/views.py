@@ -115,6 +115,13 @@ class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = DatasetListSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query_id = self.kwargs.get("parent_lookup_query")
+        if query_id:
+            queryset = queryset.filter(query_id=query_id)
+        return queryset
+
     def get_serializer_class(self):
         if self.action == "retrieve":
             return DatasetDetailSerializer
