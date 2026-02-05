@@ -15,7 +15,8 @@ from .serializers import (
     BoundarySerializer,
     ChartPageSerializer,
     CountryOfficeSerializer,
-    DatasetSerializer,
+    DatasetListSerializer,
+    DatasetDetailSerializer,
     LocationSerializer,
     QuerySerializer,
     ReportConfigurationSerializer,
@@ -111,14 +112,27 @@ class ChartViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Dataset.objects.all().order_by("-pk")
-    serializer_class = DatasetSerializer
+    serializer_class = DatasetListSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query_id = self.kwargs.get("parent_lookup_query")
+        if query_id:
+            queryset = queryset.filter(query_id=query_id)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return DatasetDetailSerializer
+        return super().get_serializer_class()
 
 
 class ReportViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = ReportConfiguration.objects.all().order_by("-pk")
     serializer_class = ReportConfigurationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+    filterset_fields = ["name"]
 
 
 class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOnlyModelViewSet):

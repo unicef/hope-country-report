@@ -8,7 +8,6 @@ from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from hope_country_report.apps.core.models import CountryOffice, CountryShape
 from hope_country_report.apps.power_query.models import ChartPage, Dataset, Query, ReportConfiguration, ReportDocument
-from hope_country_report.apps.power_query.utils import to_dataset
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -59,24 +58,31 @@ class QuerySerializer(SelectedOfficeSerializer):
         fields = ["id", "name", "description", "office"]
 
 
-class DatasetSerializer(serializers.ModelSerializer):
+class DatasetDetailSerializer(serializers.ModelSerializer):
     data = serializers.SerializerMethodField()
 
     class Meta:
         model = Dataset
-        fields: list[str] = ["hash", "last_run", "data"]
+        fields: list[str] = ["id", "hash", "last_run", "description", "data"]
 
     def get_data(self, obj: Dataset) -> str:
-        return to_dataset(obj.data).export("json")
+        return None
+
+
+class DatasetListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dataset
+        fields: list[str] = ["id", "hash", "last_run", "description"]
 
 
 class ReportConfigurationSerializer(SelectedOfficeSerializer):
     url = serializers.SerializerMethodField()
     documents = serializers.SerializerMethodField()
+    datasets_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ReportConfiguration
-        fields = ["id", "office", "name", "title", "query", "formatters", "url", "documents"]
+        fields = ["id", "office", "name", "title", "query", "datasets_url", "formatters", "url", "documents"]
 
     def get_url(self, obj: ReportConfiguration) -> str:
         return self.context["request"].build_absolute_uri(
@@ -88,10 +94,16 @@ class ReportConfigurationSerializer(SelectedOfficeSerializer):
             reverse("api:document-list", args=[self.selected_office.slug, obj.pk])
         )
 
+    def get_datasets_url(self, obj: ReportConfiguration) -> str:
+        return self.context["request"].build_absolute_uri(
+            reverse("api:dataset-list", args=[self.selected_office.slug, obj.query.pk])
+        )
+
 
 class ReportDocumentSerializer(SelectedOfficeSerializer):
     url = serializers.SerializerMethodField()
     site_url = serializers.SerializerMethodField()
+    dataset_url = serializers.SerializerMethodField()
     co_key = "parent_lookup_report__country_office__slug"
 
     class Meta:
@@ -102,6 +114,7 @@ class ReportDocumentSerializer(SelectedOfficeSerializer):
             "title",
             "report",
             "dataset",
+            "dataset_url",
             "formatter",
             "filename",
             "office",
@@ -119,6 +132,13 @@ class ReportDocumentSerializer(SelectedOfficeSerializer):
 
     def get_site_url(self, obj: ReportDocument) -> str:
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
+
+    def get_dataset_url(self, obj: ReportDocument) -> str | None:
+        if not obj.dataset:
+            return None
+        return self.context["request"].build_absolute_uri(
+            reverse("api:dataset-detail", args=[self.selected_office.slug, obj.report.query.pk, obj.dataset.pk])
+        )
 
 
 class LocationSerializer(GeoFeatureModelSerializer):

@@ -8,7 +8,7 @@ services:
       - ALLOWED_HOSTS=*
       - AZURE_TENANT_ID=
       - AZURE_CLIENT_KEY=
-      - AUTHENTICATION_BACKENDS=hope_country_report.utils.tests.backends.AnyUserAuthBackend
+      - AUTHENTICATION_BACKENDS=django.contrib.auth.backends.ModelBackend,hope_country_report.apps.power_query.backends.PowerQueryBackend
       - CACHE_URL=redis://redis:6379/1
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CORS_ORIGIN_ALLOW_ALL=True
