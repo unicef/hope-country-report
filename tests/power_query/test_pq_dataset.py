@@ -166,3 +166,45 @@ def test_document_has_dataset_url(api_client, authorized_user, token, afghanista
         assert str(response.data["dataset_url"]).endswith(
             f"/api/offices/{afghanistan.slug}/queries/{query.pk}/dataset/{dataset.pk}/"
         )
+
+
+class DataLibStub:
+    def __init__(self, data):
+        self.data = data
+
+    @property
+    def dict(self):
+        return self.data
+
+
+def test_retrieve_dataset_with_file(api_client, authorized_user, token, afghanistan, query):
+    from django.core.files.base import ContentFile
+    from hope_country_report.state import state
+
+    test_data = {"some": "data", "list": [1, 2, 3]}
+    stub = DataLibStub(test_data)
+
+    with state.set(tenant=afghanistan):
+        dataset = Dataset.objects.create(
+            query=query,
+            hash="test_hash_file",
+            description="Test Dataset File",
+            info={"arguments": {}},
+        )
+        dataset.file.save("test.pkl", ContentFile(Dataset.marshall(stub)))
+        dataset.save()
+
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    url = reverse(
+        "api:dataset-detail",
+        kwargs={
+            "parent_lookup_query__country_office__slug": afghanistan.slug,
+            "parent_lookup_query": query.pk,
+            "pk": dataset.pk,
+        },
+    )
+
+    with state.set(tenant=afghanistan):
+        response = api_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["data"] == test_data

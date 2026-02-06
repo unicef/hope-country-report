@@ -77,7 +77,10 @@ class DatasetDetailSerializer(serializers.ModelSerializer):
         fields: list[str] = ["id", "hash", "last_run", "description", "data"]
 
     def get_data(self, obj: Dataset) -> Any:
-        return obj.data
+        data = obj.data
+        if hasattr(data, "dict"):
+            return data.dict
+        return data
 
 
 class DatasetListSerializer(serializers.ModelSerializer):
