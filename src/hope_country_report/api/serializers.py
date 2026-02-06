@@ -57,6 +57,17 @@ class QuerySerializer(SelectedOfficeSerializer):
         model = Query
         fields = ["id", "name", "description", "office"]
 
+    def get_office(self, obj: Query) -> str | None:
+        co = obj.country_office
+        if not co:
+            try:
+                co = self.selected_office
+            except Exception:
+                pass
+        if co:
+            return self.context["request"].build_absolute_uri(reverse("api:countryoffice-detail", args=[co.slug]))
+        return None
+
 
 class DatasetDetailSerializer(serializers.ModelSerializer):
     data = serializers.SerializerMethodField()
@@ -65,8 +76,8 @@ class DatasetDetailSerializer(serializers.ModelSerializer):
         model = Dataset
         fields: list[str] = ["id", "hash", "last_run", "description", "data"]
 
-    def get_data(self, obj: Dataset) -> str:
-        return None
+    def get_data(self, obj: Dataset) -> Any:
+        return obj.data
 
 
 class DatasetListSerializer(serializers.ModelSerializer):

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 from django.core.serializers import serialize
 from django.http import JsonResponse, StreamingHttpResponse
 from django_filters import rest_framework as filters
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
@@ -41,7 +41,6 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({})
 
     @action(detail=False)
-    # @method_decorator(cache_page(60*60*2))
     def topology(self, request: "AnyRequest") -> JsonResponse:
         from pytopojson import topology
 
@@ -54,15 +53,7 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
         return JsonResponse(topojson, content_type="application/json", safe=False)
 
-    # @action(detail=False)
-    # # @method_decorator(cache_page(60*60*2))
-    # def topology_file(self, request):
-    #     fname = resource_path("apps/charts/datasets/topology.json")
-    #     data = json.load(fname.open("r"))
-    #     return JsonResponse(data, content_type="application/json")
-
     @action(detail=False)
-    # @method_decorator(cache_page(60*60*2))
     def boundaries(self, request: "AnyRequest") -> JsonResponse:
         qs = CountryShape.objects.all()
         ser = BoundarySerializer(qs, many=True)
@@ -72,14 +63,6 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
     def offices(self, request: "AnyRequest") -> JsonResponse:
         qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name", "active")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
-
-    # @action(detail=False)
-    # def country_names(self, request):
-    #     fname = resource_path("apps/charts/data/world-country-names.tsv")
-    #     data = fname.read_bytes()
-    #     # qs = CountryOffice.objects.filter(shape__isnull=True).select_related("shape").order_by("slug")
-    #     # ser = LocationSerializer(qs, many=True)
-    #     return HttpResponse(data, content_type="text/plain")
 
 
 class CountryOfficeFilter(filters.FilterSet):
@@ -93,15 +76,30 @@ class CountryOfficeViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = CountryOfficeFilter
     lookup_field = "slug"
 
-    # @action(detail=True)
-    # def queries(self, **kwargs):
-    #     return HttpResponseRedirect(reverse("api:queries-list", args=[kwargs["slug"]]))
-
 
 class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Query.objects.all().order_by("-pk")
     serializer_class = QuerySerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+
+    @action(detail=True, methods=["get"])
+    def latest_dataset(self, request, *args, **kwargs):
+        """
+        Get the latest dataset for this query, including its data.
+        """
+        query = self.get_object()
+        latest_dataset = query.datasets.order_by("-last_run", "-pk").first()
+
+        if not latest_dataset:
+            return Response({"detail": "No datasets found for this query."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not request.user.has_perm("power_query.view_dataset", latest_dataset):
+            return Response(
+                {"detail": "You do not have permission to access this dataset."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = DatasetDetailSerializer(latest_dataset, context={"request": request})
+        return Response(serializer.data)
 
 
 class ChartViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
