@@ -70,23 +70,32 @@ class QuerySerializer(SelectedOfficeSerializer):
 
 
 class DatasetDetailSerializer(serializers.ModelSerializer):
-    data = serializers.SerializerMethodField()
+    data_url = serializers.SerializerMethodField()
+    arguments = serializers.ReadOnlyField()
 
     class Meta:
         model = Dataset
-        fields: list[str] = ["id", "hash", "last_run", "description", "data"]
+        fields: list[str] = ["id", "hash", "last_run", "description", "data_url", "arguments"]
 
-    def get_data(self, obj: Dataset) -> Any:
-        data = obj.data
-        if hasattr(data, "dict"):
-            return data.dict
-        return data
+    def get_data_url(self, obj: Dataset) -> str:
+        return self.context["request"].build_absolute_uri(
+            reverse(
+                "api:dataset-data",
+                args=[
+                    self.context["view"].kwargs["parent_lookup_query__country_office__slug"],
+                    self.context["view"].kwargs["parent_lookup_query"],
+                    obj.pk,
+                ],
+            )
+        )
 
 
 class DatasetListSerializer(serializers.ModelSerializer):
+    arguments = serializers.ReadOnlyField()
+
     class Meta:
         model = Dataset
-        fields: list[str] = ["id", "hash", "last_run", "description"]
+        fields: list[str] = ["id", "hash", "last_run", "description", "arguments"]
 
 
 class ReportConfigurationSerializer(SelectedOfficeSerializer):

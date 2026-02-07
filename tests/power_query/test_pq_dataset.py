@@ -49,7 +49,9 @@ def dataset(db, query, afghanistan):
     from hope_country_report.apps.power_query.models import Dataset
 
     with state.set(tenant=afghanistan):
-        return Dataset.objects.create(query=query, hash="test_hash", description="Test Dataset", info={"arguments": {}})
+        return Dataset.objects.create(
+            query=query, hash="test_hash", description="Test Dataset", info={"arguments": {}}, size=123
+        )
 
 
 @pytest.fixture
@@ -113,7 +115,9 @@ def test_list_datasets(api_client, authorized_user, token, afghanistan, query, d
         assert len(results) == 1
         item = results[0]
         assert "hash" in item
-        assert "data" not in item
+        assert "data" in item
+        assert item["data"] == 123
+        assert "arguments" in item
 
 
 def test_retrieve_dataset(api_client, authorized_user, token, afghanistan, query, dataset):
@@ -130,7 +134,8 @@ def test_retrieve_dataset(api_client, authorized_user, token, afghanistan, query
     with state.set(tenant=afghanistan):
         response = api_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert "data" in response.data
+        assert "data_url" in response.data
+        assert "arguments" in response.data
 
 
 def test_report_config_has_datasets_url(api_client, authorized_user, token, afghanistan, query, config):
@@ -177,25 +182,26 @@ class DataLibStub:
         return self.data
 
 
-def test_retrieve_dataset_with_file(api_client, authorized_user, token, afghanistan, query):
+def test_retrieve_dataset_data_endpoint(api_client, authorized_user, token, afghanistan, query):
     from django.core.files.base import ContentFile
     from hope_country_report.state import state
 
-    test_data = {"some": "data", "list": [1, 2, 3]}
+    test_data = [{"id": i} for i in range(50)]
     stub = DataLibStub(test_data)
 
     with state.set(tenant=afghanistan):
         dataset = Dataset.objects.create(
             query=query,
-            hash="test_hash_file",
-            description="Test Dataset File",
+            hash="test_hash_data_endpoint",
+            description="Test Dataset Data Endpoint",
             info={"arguments": {}},
         )
         dataset.file.save("test.pkl", ContentFile(Dataset.marshall(stub)))
         dataset.save()
 
     api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-    url = reverse(
+
+    detail_url = reverse(
         "api:dataset-detail",
         kwargs={
             "parent_lookup_query__country_office__slug": afghanistan.slug,
@@ -203,8 +209,41 @@ def test_retrieve_dataset_with_file(api_client, authorized_user, token, afghanis
             "pk": dataset.pk,
         },
     )
+    with state.set(tenant=afghanistan):
+        response = api_client.get(detail_url)
+        data_url = response.data["data_url"]
 
     with state.set(tenant=afghanistan):
-        response = api_client.get(url)
+        response = api_client.get(data_url)
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["data"] == test_data
+        assert response.data["count"] == 50
+        assert len(response.data["results"]) == 50
+
+
+def test_list_datasets_filter(api_client, authorized_user, token, afghanistan, query):
+    from hope_country_report.apps.power_query.models import Dataset
+    from hope_country_report.state import state
+
+    with state.set(tenant=afghanistan):
+        d1 = Dataset.objects.create(query=query, hash="h1", description="D1", info={"arguments": {"year": "2025"}})
+        d2 = Dataset.objects.create(query=query, hash="h2", description="D2", info={"arguments": {"year": "2026"}})
+
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    url = reverse(
+        "api:dataset-list",
+        kwargs={"parent_lookup_query__country_office__slug": afghanistan.slug, "parent_lookup_query": query.pk},
+    )
+
+    with state.set(tenant=afghanistan):
+        response = api_client.get(url, {"year": "2026"})
+        assert response.status_code == status.HTTP_200_OK
+        results = response.data.get("results", response.data) if isinstance(response.data, dict) else response.data
+        assert len(results) == 1
+        assert results[0]["id"] == d2.pk
+        assert results[0]["arguments"]["year"] == "2026"
+
+        response = api_client.get(url, {"year": "2025"})
+        assert response.status_code == status.HTTP_200_OK
+        results = response.data.get("results", response.data) if isinstance(response.data, dict) else response.data
+        assert len(results) == 1
+        assert results[0]["id"] == d1.pk

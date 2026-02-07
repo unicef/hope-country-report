@@ -35,13 +35,16 @@ def test_api_report_filter_by_name(client, data):
     res = client.get(url)
     assert res.status_code == 200
     json_data = res.json()
+    results = json_data.get("results", json_data) if isinstance(json_data, dict) else json_data
 
-    assert len(json_data) == 1
-    assert json_data[0]["name"] == "report-one"
+    assert len(results) == 1
+    assert results[0]["name"] == "report-one"
 
     url = f"/api/offices/{data['co'].slug}/config/?name=report-two"
     res = client.get(url)
     assert res.status_code == 200
     json_data = res.json()
-    assert len(json_data) == 1
-    assert json_data[0]["name"] == "report-two"
+    results = json_data.get("results", json_data) if isinstance(json_data, dict) else json_data
+
+    assert len(results) == 1
+    assert results[0]["name"] == "report-two"

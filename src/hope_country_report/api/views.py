@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 from django.core.serializers import serialize
 from django.http import JsonResponse, StreamingHttpResponse
 from django_filters import rest_framework as filters
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
@@ -118,12 +118,51 @@ class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         query_id = self.kwargs.get("parent_lookup_query")
         if query_id:
             queryset = queryset.filter(query_id=query_id)
+
+        reserved = {"page", "page_size", "format"}
+        filters = {}
+        for key, value in self.request.query_params.items():
+            if key not in reserved:
+                filters[f"info__arguments__{key}"] = value
+
+        if filters:
+            queryset = queryset.filter(**filters)
+
         return queryset
 
     def get_serializer_class(self):
+        if self.action == "list":
+
+            class _DatasetListSerializer(DatasetListSerializer):
+                data = serializers.IntegerField(source="size")
+
+                class Meta(DatasetListSerializer.Meta):
+                    fields = DatasetListSerializer.Meta.fields + ["data"]
+
+            return _DatasetListSerializer
+
         if self.action == "retrieve":
             return DatasetDetailSerializer
         return super().get_serializer_class()
+
+    @action(detail=True)
+    def data(self, request, *args, **kwargs):
+        from rest_framework.pagination import PageNumberPagination
+
+        dataset = self.get_object()
+        data = dataset.data
+        if hasattr(data, "dict"):
+            data = data.dict
+
+        if isinstance(data, list):
+            paginator = PageNumberPagination()
+            paginator.page_size_query_param = "page_size"
+
+            page = paginator.paginate_queryset(data, request, view=self)
+            if page is not None:
+                return paginator.get_paginated_response(page)
+
+        return Response(data)
 
 
 class ReportViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
