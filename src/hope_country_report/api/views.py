@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 from django.core.serializers import serialize
 from django.http import JsonResponse, StreamingHttpResponse
 from django_filters import rest_framework as filters
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
@@ -15,7 +15,8 @@ from .serializers import (
     BoundarySerializer,
     ChartPageSerializer,
     CountryOfficeSerializer,
-    DatasetSerializer,
+    DatasetListSerializer,
+    DatasetDetailSerializer,
     LocationSerializer,
     QuerySerializer,
     ReportConfigurationSerializer,
@@ -40,7 +41,6 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({})
 
     @action(detail=False)
-    # @method_decorator(cache_page(60*60*2))
     def topology(self, request: "AnyRequest") -> JsonResponse:
         from pytopojson import topology
 
@@ -53,15 +53,7 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
         return JsonResponse(topojson, content_type="application/json", safe=False)
 
-    # @action(detail=False)
-    # # @method_decorator(cache_page(60*60*2))
-    # def topology_file(self, request):
-    #     fname = resource_path("apps/charts/datasets/topology.json")
-    #     data = json.load(fname.open("r"))
-    #     return JsonResponse(data, content_type="application/json")
-
     @action(detail=False)
-    # @method_decorator(cache_page(60*60*2))
     def boundaries(self, request: "AnyRequest") -> JsonResponse:
         qs = CountryShape.objects.all()
         ser = BoundarySerializer(qs, many=True)
@@ -71,14 +63,6 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
     def offices(self, request: "AnyRequest") -> JsonResponse:
         qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name", "active")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
-
-    # @action(detail=False)
-    # def country_names(self, request):
-    #     fname = resource_path("apps/charts/data/world-country-names.tsv")
-    #     data = fname.read_bytes()
-    #     # qs = CountryOffice.objects.filter(shape__isnull=True).select_related("shape").order_by("slug")
-    #     # ser = LocationSerializer(qs, many=True)
-    #     return HttpResponse(data, content_type="text/plain")
 
 
 class CountryOfficeFilter(filters.FilterSet):
@@ -92,15 +76,30 @@ class CountryOfficeViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = CountryOfficeFilter
     lookup_field = "slug"
 
-    # @action(detail=True)
-    # def queries(self, **kwargs):
-    #     return HttpResponseRedirect(reverse("api:queries-list", args=[kwargs["slug"]]))
-
 
 class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Query.objects.all().order_by("-pk")
     serializer_class = QuerySerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+
+    @action(detail=True, methods=["get"])
+    def latest_dataset(self, request, *args, **kwargs):
+        """
+        Get the latest dataset for this query, including its data.
+        """
+        query = self.get_object()
+        latest_dataset = query.datasets.order_by("-last_run", "-pk").first()
+
+        if not latest_dataset:
+            return Response({"detail": "No datasets found for this query."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not request.user.has_perm("power_query.view_dataset", latest_dataset):
+            return Response(
+                {"detail": "You do not have permission to access this dataset."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = DatasetDetailSerializer(latest_dataset, context={"request": request})
+        return Response(serializer.data)
 
 
 class ChartViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
@@ -111,14 +110,66 @@ class ChartViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Dataset.objects.all().order_by("-pk")
-    serializer_class = DatasetSerializer
+    serializer_class = DatasetListSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query_id = self.kwargs.get("parent_lookup_query")
+        if query_id:
+            queryset = queryset.filter(query_id=query_id)
+
+        reserved = {"page", "page_size", "format"}
+        filters = {}
+        for key, value in self.request.query_params.items():
+            if key not in reserved:
+                filters[f"info__arguments__{key}"] = value
+
+        if filters:
+            queryset = queryset.filter(**filters)
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+
+            class _DatasetListSerializer(DatasetListSerializer):
+                data = serializers.IntegerField(source="size")
+
+                class Meta(DatasetListSerializer.Meta):
+                    fields = DatasetListSerializer.Meta.fields + ["data"]
+
+            return _DatasetListSerializer
+
+        if self.action == "retrieve":
+            return DatasetDetailSerializer
+        return super().get_serializer_class()
+
+    @action(detail=True)
+    def data(self, request, *args, **kwargs):
+        from rest_framework.pagination import PageNumberPagination
+
+        dataset = self.get_object()
+        data = dataset.data
+        if hasattr(data, "dict"):
+            data = data.dict
+
+        if isinstance(data, list):
+            paginator = PageNumberPagination()
+            paginator.page_size_query_param = "page_size"
+
+            page = paginator.paginate_queryset(data, request, view=self)
+            if page is not None:
+                return paginator.get_paginated_response(page)
+
+        return Response(data)
 
 
 class ReportViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = ReportConfiguration.objects.all().order_by("-pk")
     serializer_class = ReportConfigurationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+    filterset_fields = ["name"]
 
 
 class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOnlyModelViewSet):

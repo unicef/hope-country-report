@@ -22,9 +22,17 @@ class BaseAdmin(DisplayAllMixin, ExtraButtonsMixin, admin.ModelAdmin):  # type: 
     pass
 
 
+def _filter_fieldsets(fieldsets):
+    return tuple(
+        (name, {**opts, "fields": fields})
+        for name, opts in fieldsets
+        if (fields := tuple(f for f in opts.get("fields", []) if f not in ("custom_fields", "azure_id")))
+    )
+
+
 @admin.register(User)
 class UserAdmin(_UserAdminPlus):  # type: ignore
-    pass
+    extra_fieldsets = _filter_fieldsets(_UserAdminPlus.extra_fieldsets)
 
 
 class UserRoleForm(forms.ModelForm):  # type: ignore
