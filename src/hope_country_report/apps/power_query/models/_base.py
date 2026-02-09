@@ -67,6 +67,8 @@ class FileProviderMixin(models.Model):
 
     @property
     def data(self) -> "Any":
+        if not self.file:
+            return None
         with self.file.open("rb") as f:
             return self.unmarshall(f)
 
