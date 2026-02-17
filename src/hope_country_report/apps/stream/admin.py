@@ -5,6 +5,6 @@ from .models import Event
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("name", "office", "query")
+    list_display = ("name", "office", "query", "enabled", "publish_as_url")
     search_fields = ("name",)
-    list_filter = ("office", "query")
+    list_filter = ("office", "query", "enabled", "publish_as_url")
