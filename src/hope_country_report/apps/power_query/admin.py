@@ -120,7 +120,11 @@ class QueryAdmin(
     ) -> "HttpResponse":
         return super().change_view(request, object_id, form_url, extra_context)
 
-    @button(label="Inspect", icon="search")
+    @button(
+        label="Inspect",
+        icon="search",
+        permission=lambda r, o, handler: handler.model_admin.has_queue_permission("inspect", r, o),
+    )
     def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
         self.object = self.get_object(request, pk)
         ctx = self.get_common_context(request, pk=pk, object=self.object)
@@ -132,7 +136,14 @@ class QueryAdmin(
         )
 
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
+        if request.user.is_superuser:
+            return True
+        if obj and obj.owner == request.user:
+            return True
         return super().has_change_permission(request, obj)
+
+    def has_queue_permission(self, perm, request: HttpRequest, o: "Query | None") -> bool:
+        return self.has_change_permission(request, o)
 
     @button()
     def notification(self, request: HttpRequest, pk: str) -> HttpResponse:
@@ -452,7 +463,14 @@ class ReportConfigurationAdmin(
         return qs
 
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
-        return request.user.is_superuser or bool(obj and obj.owner == request.user)
+        if request.user.is_superuser:
+            return True
+        if obj and obj.owner == request.user:
+            return True
+        return super().has_change_permission(request, obj)
+
+    def has_queue_permission(self, perm, request: HttpRequest, o: "ReportConfiguration | None") -> bool:
+        return self.has_change_permission(request, o)
 
     def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         kwargs: dict[str, Any] = {"owner": request.user}
@@ -463,7 +481,11 @@ class ReportConfigurationAdmin(
             kwargs["notify_to"] = [request.user]
         return kwargs
 
-    @button(label="Inspect", icon="search")
+    @button(
+        label="Inspect",
+        icon="search",
+        permission=lambda r, o, handler: handler.model_admin.has_queue_permission("inspect", r, o),
+    )
     def celery_inspect(self, request: HttpRequest, pk: int) -> HttpResponse:
         self.object = self.get_object(request, pk)
         ctx = self.get_common_context(request, pk=pk, object=self.object)
