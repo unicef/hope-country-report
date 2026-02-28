@@ -193,7 +193,10 @@ class QueryAdmin(
         except Exception as e:  # pragma: no cover
             self.message_user(request, f"{e.__class__.__name__}: {e}", messages.ERROR)
 
-    @button(visible=settings.DEBUG)
+    @button(
+        visible=settings.DEBUG,
+        permission=lambda r, o, handler: handler.model_admin.has_queue_permission("run", r, o),
+    )
     def run(self, request: HttpRequest, pk: int) -> HttpResponse:
         ctx = self.get_common_context(request, pk, title="Run results")
         query = self.get_object(request, str(pk))
