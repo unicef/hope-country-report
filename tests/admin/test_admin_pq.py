@@ -166,9 +166,18 @@ def test_query_explain(django_app, admin_user, query: "Query"):
 @pytest.fixture
 def owner_user(db):
     """A staff user who owns the query."""
+    from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
     from testutils.factories import UserFactory
 
-    return UserFactory(username="owner", is_staff=True, is_superuser=False, is_active=True)
+    u = UserFactory(username="owner", is_staff=True, is_superuser=False, is_active=True)
+
+    # Grant model-level change permission for Query model
+    ct = ContentType.objects.get_for_model(Query)
+    perm = Permission.objects.get(content_type=ct, codename="change_query")
+    u.user_permissions.add(perm)
+
+    return u
 
 
 @pytest.fixture
@@ -184,6 +193,9 @@ def role_user(db, afghanistan):
     perm = Permission.objects.get(content_type=ct, codename="change_query")
     g.permissions.add(perm)
     UserRoleFactory(user=u, group=g, country_office=afghanistan)
+
+    # Also grant the user the model-level permission directly
+    u.user_permissions.add(perm)
     return u
 
 
