@@ -200,6 +200,8 @@ class QueryAdmin(
     def run(self, request: HttpRequest, pk: int) -> HttpResponse:
         ctx = self.get_common_context(request, pk, title="Run results")
         query = self.get_object(request, str(pk))
+        if query is None:
+            return self._get_obj_does_not_exist_redirect(request, self.opts, str(pk))
         results = query.execute_matrix(persist=True)
         self.message_user(request, "Done", messages.SUCCESS)
         ctx["results"] = results
