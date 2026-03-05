@@ -25,7 +25,7 @@ dependencies = [
   "django-admin-cursor-paginator",
   "django-admin-extra-buttons",
   "django-adminactions",
-  "django-adminfilters<=2.6",
+  "django-adminfilters<=2.7",
   "django-advanced-filters",
   "django-anymail",
   "django-bitfield",
