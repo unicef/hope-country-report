@@ -110,10 +110,9 @@ class QueryAdmin(
             return qs.filter(country_office=state.tenant)
         return qs
 
+    @admin.display(boolean=True)
     def success(self, obj: Query) -> bool:
         return not bool(obj.error_message)
-
-    success.boolean = True
 
     def change_view(
         self, request: "HttpRequest", object_id: str, form_url: str = "", extra_context: "dict[str, Any] | None" = None
