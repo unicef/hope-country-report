@@ -112,7 +112,12 @@ class ReportConfiguration(
     ) -> None:
         if not self.name:
             self.name = slugify(self.title)
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
         self.update_or_create_children()
 
     def update_or_create_children(self) -> None:

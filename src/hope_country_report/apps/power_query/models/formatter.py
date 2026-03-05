@@ -6,9 +6,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from strategy_field.fields import StrategyField
 from strategy_field.utils import fqn
-
 from ...core.models import CountryOffice
-from ..processors import TYPE_DETAIL, TYPE_LIST, TYPES, ProcessorStrategy, ToHTML, mimetype_map, registry
+from ..processors import TYPE_DETAIL, TYPE_LIST, TYPES, ToHTML, mimetype_map, registry
 from ._base import MIMETYPES
 from .report_template import ReportTemplate
 
@@ -30,8 +29,7 @@ def batched(iterable, n):
 
 
 class Formatter(models.Model):
-    processor: "ProcessorStrategy"
-
+    processor = StrategyField(registry=registry, default=fqn(ToHTML))
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     name = models.CharField(max_length=255, unique=True)
@@ -39,7 +37,6 @@ class Formatter(models.Model):
     template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, blank=True, null=True)
 
     file_suffix = models.CharField(max_length=10, choices=MIMETYPES)
-    processor = StrategyField(registry=registry, default=fqn(ToHTML))
     type = models.IntegerField(choices=TYPES, default=TYPE_LIST)
 
     compress = models.BooleanField(default=False, blank=True)
@@ -88,4 +85,9 @@ class Formatter(models.Model):
     ) -> None:
         if not self.file_suffix:
             self.file_suffix = self.processor.file_suffix
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )

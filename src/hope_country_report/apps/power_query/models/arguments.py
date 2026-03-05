@@ -74,7 +74,12 @@ class Parametrizer(NaturalKeyModel, AdminReversable, models.Model):
     ) -> None:
         if not self.code:
             self.code = slugify(self.name)
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     def refresh(self) -> None:
         if self.source:

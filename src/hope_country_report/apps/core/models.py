@@ -1,6 +1,5 @@
 import datetime
 from typing import TYPE_CHECKING, Any
-from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -156,7 +155,6 @@ TIME_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["h:i a", "H:i"
 
 
 class User(TimeStampedModel, SecurityMixin, AbstractUser):  # type: ignore
-    timezone: ZoneInfo
     timezone = TimeZoneField(verbose_name=_("Timezone"), default="UTC")
     language = models.CharField(verbose_name=_("Language"), max_length=10, choices=settings.LANGUAGES, default="en")
     date_format = models.CharField(
