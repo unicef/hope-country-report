@@ -25,6 +25,6 @@ def test_upgrade(options, verbosity, migrate, monkeypatch):
 
 def test_upgrade_check(mocked_responses):
     out = StringIO()
-    environ = {k: v for k, v in os.environ.items() if k not in ["FERNET_KEYS"]}
+    environ = {k: v for k, v in os.environ.items() if k != "FERNET_KEYS"}
     with mock.patch.dict(os.environ, environ, clear=True):
         call_command("upgrade", stdout=out, check=True)

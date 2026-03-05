@@ -55,7 +55,12 @@ class ReportTemplate(models.Model):
         update_fields: "Iterable[str] | None" = None,
     ) -> None:
         self.file_suffix = Path(self.doc.name).suffix
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     def __str__(self) -> str:
         return str(self.name)

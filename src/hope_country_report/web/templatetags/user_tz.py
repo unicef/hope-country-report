@@ -21,7 +21,7 @@ def get_format_for_user(user: User | AnonymousUser, value: datetime.datetime, fm
         fmt = time_format
     elif fmt in ["date", "d"]:
         fmt = date_format
-    elif fmt in ["-"]:
+    elif fmt == "-":
         today = timezone.now().date()
         if value.date() == today:
             fmt = time_format
