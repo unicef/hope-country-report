@@ -179,7 +179,7 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                     **kwargs,
                     **connections,
                 }
-                signature = dict_hash({"query": self.pk, **(arguments if arguments else {})})
+                signature = dict_hash({"query": self.pk, **(arguments or {})})
                 if not preview and use_existing and (ds := Dataset.objects.filter(query=self, hash=signature).first()):
                     return_value = ds, ds.extra
                 else:

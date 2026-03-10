@@ -153,7 +153,7 @@ def select_tenant(request: "HttpRequest") -> "HttpResponse":
             office = form.cleaned_data["tenant"]
             set_selected_tenant(form.cleaned_data["tenant"])
             try:
-                resolver = resolve(urlparse(request.META.get("HTTP_REFERER", "/")).path)
+                resolver = resolve(urlparse(request.headers.get("referer", "/")).path)
                 if list(resolver.kwargs.keys()) == ["co"]:
                     return HttpResponseRedirect(reverse(resolver.url_name, args=[office.slug]))
                 raise Exception(resolver)

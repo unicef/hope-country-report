@@ -196,10 +196,10 @@ def test_admin_add(app, modeladmin):
     if modeladmin.has_add_permission(Mock(user=app._user)):
         res = app.get(url)
         res = res.forms[1].submit()
-        assert res.status_code in [200], log_submit_error(res)
+        assert res.status_code == 200, log_submit_error(res)
     else:
         res = app.get(url, expect_errors=True)
-        assert res.status_code in [403], log_submit_error(res)
+        assert res.status_code == 403, log_submit_error(res)
 
 
 @pytest.mark.skip_models(

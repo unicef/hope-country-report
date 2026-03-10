@@ -27,7 +27,7 @@ def get_factory_for_model(_model) -> type[TAutoRegisterModelFactory]:
     except FieldDoesNotExist:
         has_uuid_id = False
 
-    if _model._meta.app_label in ["hope"] and has_uuid_id:
+    if _model._meta.app_label == "hope" and has_uuid_id:
         bases = (HopeAutoRegisterModelFactory,)
 
     pk = _model._meta.pk

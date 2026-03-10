@@ -9,7 +9,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.36.0
+    rev: 0.37.0
     hooks:
       - id: check-github-workflows
         args: [ "--verbose" ]
@@ -19,24 +19,28 @@ repos:
       - id: tox-ini-fmt
         args: [ "-p", "lint" ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.10"
+    rev: "v0.15.4"
     hooks:
       - id: ruff-format
       - id: ruff
         args: [ "--fix", "--unsafe-fixes", "--exit-non-zero-on-fix" ]
   - repo: https://github.com/adamchainz/djade-pre-commit
-    rev: "1.7.0"
+    rev: "1.9.0"
     hooks:
       - id: djade
         args: [ --target-version, "5.1" ]  # Replace with Django version
-
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: "1.30.0"  # replace with latest tag on GitHub
+    hooks:
+      - id: django-upgrade
+        args: [--target-version, "5.2"]
   - repo: meta
     hooks:
       - id: check-hooks-apply
       - id: check-useless-excludes
 
   - repo: https://github.com/saxix/pch
-    rev: '79b0c0e'
+    rev: '0.5'
     hooks:
 
       - id: check-missed-migrations
@@ -63,8 +67,8 @@ repos:
         name: check tailwind CSS ready for production
         files: src/hope_live/theme/static_src/src/styles.scss
         args:
-          - -o
-          - src/hope_country_report/web/theme/static/css/styles.css
+          - -d
+          - src/hope_country_report/web/theme/static/css
 
       - id: check-minimized
         name: check missing minimized javascript
