@@ -1869,7 +1869,7 @@ class Payment(HopeModel):
     signature_hash = models.CharField(max_length=40, null=True)
     status = models.CharField(max_length=255, null=True)
     status_date = models.DateTimeField(null=True)
-    currency = models.CharField(max_length=4, blank=True, null=True)
+    currency = models.CharField(max_length=5, blank=True, null=True)
     entitlement_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     entitlement_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     delivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
@@ -1970,7 +1970,7 @@ class PaymentPlan(HopeModel):
     total_undelivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=50, null=True)
     background_action_status = models.CharField(max_length=50, blank=True, null=True)
-    currency = models.CharField(max_length=4, blank=True, null=True)
+    currency = models.CharField(max_length=5, blank=True, null=True)
     dispersion_start_date = models.DateField(blank=True, null=True)
     dispersion_end_date = models.DateField(blank=True, null=True)
     female_children_count = models.IntegerField(null=True)
@@ -2020,6 +2020,7 @@ class PaymentPlan(HopeModel):
     flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
     abort_comment = models.CharField(max_length=255, null=True)
     flat_amount_value = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    custom_exchange_rate = models.BooleanField(null=True)
 
     class Meta:
         managed = False
