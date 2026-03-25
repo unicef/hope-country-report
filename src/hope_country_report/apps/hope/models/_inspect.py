@@ -1298,8 +1298,8 @@ class Household(HopeModel):
     unknown_sex_group_count = models.IntegerField(blank=True, null=True)
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
-    collision_flag = models.BooleanField(null=True)
     identification_key = models.CharField(max_length=255, blank=True, null=True)
+    originating_id = models.CharField(unique=True, max_length=150, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1439,6 +1439,7 @@ class Individual(HopeModel):
     biometric_deduplication_golden_record_results = models.JSONField(null=True)
     biometric_deduplication_golden_record_status = models.CharField(max_length=50, null=True)
     identification_key = models.CharField(max_length=255, blank=True, null=True)
+    originating_id = models.CharField(unique=True, max_length=150, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1868,7 +1869,7 @@ class Payment(HopeModel):
     signature_hash = models.CharField(max_length=40, null=True)
     status = models.CharField(max_length=255, null=True)
     status_date = models.DateTimeField(null=True)
-    currency = models.CharField(max_length=4, blank=True, null=True)
+    currency = models.CharField(max_length=5, blank=True, null=True)
     entitlement_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     entitlement_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     delivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
@@ -1919,6 +1920,8 @@ class Payment(HopeModel):
     parent_split = models.ForeignKey(
         "Paymentplansplit", on_delete=models.DO_NOTHING, related_name="payment_parent_split", blank=True, null=True
     )
+    extras = models.JSONField(null=True)
+    sent_to_fsp_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1967,7 +1970,7 @@ class PaymentPlan(HopeModel):
     total_undelivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=50, null=True)
     background_action_status = models.CharField(max_length=50, blank=True, null=True)
-    currency = models.CharField(max_length=4, blank=True, null=True)
+    currency = models.CharField(max_length=5, blank=True, null=True)
     dispersion_start_date = models.DateField(blank=True, null=True)
     dispersion_end_date = models.DateField(blank=True, null=True)
     female_children_count = models.IntegerField(null=True)
@@ -2016,6 +2019,8 @@ class PaymentPlan(HopeModel):
     flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
     flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
     abort_comment = models.CharField(max_length=255, null=True)
+    flat_amount_value = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    custom_exchange_rate = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -2292,6 +2297,7 @@ class Program(HopeModel):
     slug = models.CharField(max_length=4, null=True)
     reconciliation_window_in_days = models.IntegerField(null=True)
     send_reconciliation_window_expiry_notifications = models.BooleanField(null=True)
+    identification_key_individual_label = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2505,34 +2511,6 @@ class DataRegistrationdataimport(HopeModel):
     class Meta:
         managed = False
         db_table = "registration_data_registrationdataimport"
-
-    class Tenant:
-        tenant_filter_field: str = "__all__"
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class DataRegistrationdataimportdatahub(HopeModel):
-    id = models.UUIDField(primary_key=True)
-    created_at = models.DateTimeField(null=True)
-    updated_at = models.DateTimeField(null=True)
-    name = models.CharField(max_length=255, null=True)
-    import_date = models.DateTimeField(null=True)
-    hct_id = models.UUIDField(blank=True, null=True)
-    import_done = models.CharField(max_length=15, null=True)
-    business_area_slug = models.CharField(max_length=250, null=True)
-    import_data = models.OneToOneField(
-        DataImportdata,
-        on_delete=models.DO_NOTHING,
-        related_name="dataregistrationdataimportdatahub_import_data",
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "registration_data_registrationdataimportdatahub"
 
     class Tenant:
         tenant_filter_field: str = "__all__"

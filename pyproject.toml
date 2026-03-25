@@ -21,7 +21,7 @@ dynamic = [ "version" ]
 dependencies = [
   "azure-devops",
   "celery",
-  "django",
+  "django>=5.1,<5.3",
   "django-admin-cursor-paginator",
   "django-admin-extra-buttons",
   "django-adminactions",

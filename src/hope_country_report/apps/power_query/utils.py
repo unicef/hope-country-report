@@ -124,7 +124,7 @@ def basicauth(view: Callable[..., Callable]) -> Callable[..., Any]:
         if request.user.is_authenticated:
             return view(request, *args, **kwargs)
 
-        if "HTTP_AUTHORIZATION" in request.META:
+        if "authorization" in request.headers:
             try:
                 auth = request.headers["Authorization"].split()
                 if len(auth) == 2 and auth[0].lower() == "basic":

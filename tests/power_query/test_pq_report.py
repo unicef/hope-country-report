@@ -116,11 +116,11 @@ def report_with_co(report: "ReportConfiguration", afghanistan: "CountryOffice") 
 
 def test_celery_no_worker(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = False
-    assert report.task_status == "Not scheduled"
+    assert report.task_status == report.NOT_SCHEDULED
     report.queue()
-    assert report.task_status == "QUEUED"
+    assert report.task_status == report.QUEUED
     report.terminate()
-    assert report.task_status == "Not scheduled"
+    assert report.task_status == report.NOT_SCHEDULED
 
 
 def test_report_refresh(db, settings, report: "ReportConfiguration") -> None:
