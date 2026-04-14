@@ -1177,6 +1177,27 @@ class EntitlementCard(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
+class Facility(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    admin_area = models.ForeignKey(Area, on_delete=models.DO_NOTHING, related_name="facility_admin_area", null=True)
+    business_area = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="facility_business_area", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "household_facility"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
 class Household(HopeModel):
     id = models.UUIDField(primary_key=True)
     rdi_merge_status = models.CharField(max_length=10, null=True)
@@ -1300,6 +1321,9 @@ class Household(HopeModel):
     longitude = models.FloatField(blank=True, null=True)
     identification_key = models.CharField(max_length=255, blank=True, null=True)
     originating_id = models.CharField(unique=True, max_length=150, blank=True, null=True)
+    facility = models.ForeignKey(
+        Facility, on_delete=models.DO_NOTHING, related_name="household_facility", blank=True, null=True
+    )
 
     class Meta:
         managed = False
@@ -1922,6 +1946,7 @@ class Payment(HopeModel):
     )
     extras = models.JSONField(null=True)
     sent_to_fsp_date = models.DateTimeField(blank=True, null=True)
+    collector_type = models.CharField(max_length=120, null=True)
 
     class Meta:
         managed = False
@@ -2281,7 +2306,6 @@ class Program(HopeModel):
     is_visible = models.BooleanField(null=True)
     household_count = models.IntegerField(null=True)
     individual_count = models.IntegerField(null=True)
-    programme_code = models.CharField(max_length=4, blank=True, null=True)
     partner_access = models.CharField(max_length=50, null=True)
     biometric_deduplication_enabled = models.BooleanField(null=True)
     business_area = models.ForeignKey(
@@ -2294,7 +2318,7 @@ class Program(HopeModel):
         Beneficiarygroup, on_delete=models.DO_NOTHING, related_name="program_beneficiary_group", null=True
     )
     collision_detector = models.CharField(max_length=200, null=True)
-    slug = models.CharField(max_length=4, null=True)
+    code = models.CharField(max_length=4, null=True)
     reconciliation_window_in_days = models.IntegerField(null=True)
     send_reconciliation_window_expiry_notifications = models.BooleanField(null=True)
     identification_key_individual_label = models.CharField(max_length=255, blank=True, null=True)
@@ -2755,6 +2779,7 @@ class Targetingcriteriarule(HopeModel):
     payment_plan = models.ForeignKey(
         PaymentPlan, on_delete=models.DO_NOTHING, related_name="targetingcriteriarule_payment_plan", null=True
     )
+    alternative_collectors_ids = models.TextField(null=True)
 
     class Meta:
         managed = False
