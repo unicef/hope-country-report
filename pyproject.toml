@@ -12,10 +12,10 @@ license = { text = "MIT" }
 authors = [
   { name = "sax", email = "s.apostolico@gmail.com" },
 ]
-requires-python = ">=3.13"
+requires-python = "==3.14.*"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dynamic = [ "version" ]
 dependencies = [
