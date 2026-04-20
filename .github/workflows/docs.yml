@@ -70,7 +70,7 @@ jobs:
           path: .venv
           key: ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/uv.lock') }}
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./docs-output
 
