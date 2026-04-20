@@ -144,7 +144,7 @@ docs = [
   "mkdocs-ezglossary-plugin>=1.6.10",
   "mkdocs-ezlinks-plugin>=0.1.14",
   "mkdocs-gen-files>=0.5",
-  "mkdocs-get-deps>=0.2",
+  "mkdocs-get-deps>=0.2.2",
   "mkdocs-gitsnippet-plugin",
   "mkdocs-include-markdown-plugin>=6.2.2",
   "mkdocs-link-marker>=0.1.3",
