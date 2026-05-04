@@ -202,6 +202,8 @@ class Asyncjob(HopeModel):
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="asyncjob_program", blank=True, null=True
     )
+    job_name = models.CharField(max_length=255, blank=True, null=True)
+    object_id = models.CharField(max_length=64, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -312,6 +314,23 @@ class Countrycodemap(HopeModel):
 
     class Tenant:
         tenant_filter_field: str = "__all__"
+
+
+class Currency(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    code = models.CharField(unique=True, max_length=5, null=True)
+    name = models.CharField(max_length=255, null=True)
+    is_crypto = models.BooleanField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "core_currency"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
 
 
 class DataCollectingType(HopeModel):
@@ -1257,7 +1276,7 @@ class Household(HopeModel):
     org_name_enumerator = models.CharField(max_length=250, null=True)
     village = models.CharField(max_length=250, null=True)
     registration_method = models.CharField(max_length=250, null=True)
-    currency = models.CharField(max_length=250, null=True)
+    currency_old = models.CharField(max_length=250, null=True)
     unhcr_id = models.CharField(max_length=250, null=True)
     internal_data = models.JSONField(null=True)
     detail_id = models.CharField(max_length=150, blank=True, null=True)
@@ -1323,6 +1342,9 @@ class Household(HopeModel):
     originating_id = models.CharField(unique=True, max_length=150, blank=True, null=True)
     facility = models.ForeignKey(
         Facility, on_delete=models.DO_NOTHING, related_name="household_facility", blank=True, null=True
+    )
+    currency = models.ForeignKey(
+        Currency, on_delete=models.DO_NOTHING, related_name="household_currency", blank=True, null=True
     )
 
     class Meta:
@@ -1893,7 +1915,7 @@ class Payment(HopeModel):
     signature_hash = models.CharField(max_length=40, null=True)
     status = models.CharField(max_length=255, null=True)
     status_date = models.DateTimeField(null=True)
-    currency = models.CharField(max_length=5, blank=True, null=True)
+    currency_old = models.CharField(max_length=5, blank=True, null=True)
     entitlement_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     entitlement_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     delivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
@@ -1947,6 +1969,9 @@ class Payment(HopeModel):
     extras = models.JSONField(null=True)
     sent_to_fsp_date = models.DateTimeField(blank=True, null=True)
     collector_type = models.CharField(max_length=120, null=True)
+    currency = models.ForeignKey(
+        Currency, on_delete=models.DO_NOTHING, related_name="payment_currency", blank=True, null=True
+    )
 
     class Meta:
         managed = False
@@ -1995,7 +2020,7 @@ class PaymentPlan(HopeModel):
     total_undelivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=50, null=True)
     background_action_status = models.CharField(max_length=50, blank=True, null=True)
-    currency = models.CharField(max_length=5, blank=True, null=True)
+    currency_old = models.CharField(max_length=5, blank=True, null=True)
     dispersion_start_date = models.DateField(blank=True, null=True)
     dispersion_end_date = models.DateField(blank=True, null=True)
     female_children_count = models.IntegerField(null=True)
@@ -2046,6 +2071,9 @@ class PaymentPlan(HopeModel):
     abort_comment = models.CharField(max_length=255, null=True)
     flat_amount_value = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     custom_exchange_rate = models.BooleanField(null=True)
+    currency = models.ForeignKey(
+        Currency, on_delete=models.DO_NOTHING, related_name="paymentplan_currency", blank=True, null=True
+    )
 
     class Meta:
         managed = False
