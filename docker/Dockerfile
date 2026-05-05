@@ -12,6 +12,7 @@ RUN set -x \
     wkhtmltopdf \
     tini \
     libraqm0 \
+    libpq5 \
   " \
   && buildDeps=" \
 wget \
