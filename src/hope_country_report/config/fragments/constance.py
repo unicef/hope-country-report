@@ -5,8 +5,12 @@ CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 
 CONSTANCE_ADDITIONAL_FIELDS = {
     "html_minify_select": [
-        "bitfield.forms.BitFormField",
-        {"initial": 0, "required": False, "choices": (("html", "HTML"), ("line", "NEWLINE"), ("space", "SPACES"))},
+        "django.forms.MultipleChoiceField",
+        {
+            "required": False,
+            "choices": (("html", "HTML"), ("line", "NEWLINE"), ("space", "SPACES")),
+            "widget": "django.forms.CheckboxSelectMultiple",
+        },
     ],
     "email": [
         "django.forms.EmailField",
@@ -20,7 +24,7 @@ ZIP_PASSWORD_EMAIL_BODY = """
 """
 
 CONSTANCE_CONFIG = {
-    "MINIFY_RESPONSE": (0, "select yes or no", "html_minify_select"),
+    "MINIFY_RESPONSE": ([], "select minification modes", "html_minify_select"),
     "MINIFY_IGNORE_PATH": (r"", "regex for ignored path", str),
     "PQ_SAMPLE_PAGE_SIZE": (100, "PowerQuery sample page size", int),
     "MAILJET_TEMPLATE_ZIP_PASSWORD": (

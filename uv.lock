@@ -638,16 +638,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-bitfield"
-version = "2.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1a/fc/872e9c94107a7ed3b9534c76be29cdc6697cc27332075fccc384e8c30b93/django-bitfield-2.2.0.tar.gz", hash = "sha256:1b21262acc4ec0af3f82ed04498a056cd9d5452532ac02771e004835a34e0b1b", size = 17365, upload-time = "2022-07-12T00:36:08.008Z" }
-
-[[package]]
 name = "django-celery-beat"
 version = "2.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1487,7 +1477,6 @@ dependencies = [
     { name = "django-adminfilters" },
     { name = "django-advanced-filters" },
     { name = "django-anymail" },
-    { name = "django-bitfield" },
     { name = "django-celery-beat" },
     { name = "django-celery-boost" },
     { name = "django-celery-results" },
@@ -1651,7 +1640,6 @@ requires-dist = [
     { name = "django-adminfilters", specifier = "<=2.6" },
     { name = "django-advanced-filters" },
     { name = "django-anymail" },
-    { name = "django-bitfield" },
     { name = "django-celery-beat" },
     { name = "django-celery-boost" },
     { name = "django-celery-results" },

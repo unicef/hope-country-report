@@ -28,7 +28,6 @@ dependencies = [
   "django-adminfilters<=2.6",
   "django-advanced-filters",
   "django-anymail",
-  "django-bitfield",
   "django-celery-beat",
   "django-celery-boost",
   "django-celery-results",
