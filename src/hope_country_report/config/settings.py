@@ -16,13 +16,13 @@ RO_CONN.update(OPTIONS={"options": "-c default_transaction_read_only=on"})
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgis://postgres:postgres@db:5432/hcr",
-        engine="django.contrib.gis.db.backends.postgis",
+        default="postgres://postgres:postgres@db:5432/hcr",
+        engine="django.db.backends.postgresql",
     ),
     "hope_ro": env.db(
         "DATABASE_HOPE_URL",
-        default="postgis://postgres:postgres@hopedb:5432/hopedb?options=-c%20default_transaction_read_only=on",
-        engine="django.contrib.gis.db.backends.postgis",
+        default="postgres://postgres:postgres@hopedb:5432/hopedb?options=-c%20default_transaction_read_only=on",
+        engine="django.db.backends.postgresql",
     ),
 }
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.sitemaps",
     "django.contrib.staticfiles",
-    "django.contrib.gis",
     "django.contrib.postgres",
     "hope_country_report.apps.admin",
     "push_notifications",
@@ -288,7 +287,3 @@ from .fragments.social_auth import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
 from .fragments.streaming import *  # noqa
-
-
-GDAL_LIBRARY_PATH = env("GDAL_LIBRARY_PATH")
-GEOS_LIBRARY_PATH = env("GEOS_LIBRARY_PATH")
