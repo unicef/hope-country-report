@@ -12,10 +12,10 @@ license = { text = "MIT" }
 authors = [
   { name = "sax", email = "s.apostolico@gmail.com" },
 ]
-requires-python = ">=3.13"
+requires-python = "==3.14.*"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dynamic = [ "version" ]
 dependencies = [
@@ -28,7 +28,6 @@ dependencies = [
   "django-adminfilters<=2.6",
   "django-advanced-filters",
   "django-anymail",
-  "django-bitfield",
   "django-celery-beat",
   "django-celery-boost",
   "django-celery-results",
@@ -78,7 +77,7 @@ dependencies = [
   "pathvalidate",
   "pdfkit",
   "pillow",
-  "psycopg2-binary<=2.9.10",
+  "psycopg[binary]",
   "py-vapid",
   "pyhtml2pdf",
   "pymupdf",
@@ -169,7 +168,6 @@ mypy = [
   "types-html5lib",
   "types-jmespath",
   "types-markdown",
-  "types-psycopg2",
   "types-pygments",
   "types-python-dateutil",
   "types-pytz",
