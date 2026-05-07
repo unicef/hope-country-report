@@ -13,6 +13,11 @@ RUN set -x \
     tini \
     libraqm0 \
     libpq5 \
+    binutils \
+    libproj-dev \
+    gdal-bin \
+    libgdal32 \
+    libgeos-c1v5 \
   " \
   && buildDeps=" \
 wget \
