@@ -31,7 +31,6 @@ CONFIG = {
     "AZURE_ACCOUNT_KEY": (str, ""),
     "AZURE_ACCOUNT_NAME": (str, ""),
     "AZURE_CLIENT_ID": (str, "", "Azure Client ID"),
-    "AZURE_CLIENT_KEY": (str, ""),
     "AZURE_CLIENT_SECRET": (str, ""),
     "AZURE_CONTAINER": (str, ""),
     "AZURE_TENANT_ID": (str, ""),
