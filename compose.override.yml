@@ -11,7 +11,7 @@ x-build: &build
 x-django-env: &django-env
   - ALLOWED_HOSTS=backend,localhost
   - AZURE_TENANT_ID=
-  - AZURE_CLIENT_KEY=
+  - AZURE_CLIENT_ID=
   - CACHE_URL=redis://redis:16379/1
   - CELERY_BROKER_URL=redis://redis:16379/0
   - DATABASE_URL=postgis://postgres:postgres@db:15432/hcr
