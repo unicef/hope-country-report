@@ -16,14 +16,14 @@ RO_CONN.update(OPTIONS={"options": "-c default_transaction_read_only=on"})
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgres://postgres:postgres@db:5432/hcr",
-        engine="django.contrib.gis.db.backends.postgis",
+        default="postgis://postgres:postgres@db:5432/hcr",
     ),
     "hope_ro": env.db(
         "DATABASE_HOPE_URL",
         default="postgres://postgres:postgres@hopedb:5432/hopedb?options=-c%20default_transaction_read_only=on",
     ),
 }
+
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
 DATABASE_APPS_MAPPING: dict[str, str] = {
     "core": "default",
