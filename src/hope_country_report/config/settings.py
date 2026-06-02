@@ -17,12 +17,11 @@ DATABASES = {
     "default": env.db(
         "DATABASE_URL",
         default="postgres://postgres:postgres@db:5432/hcr",
-        engine="django.db.backends.postgresql",
+        engine="django.contrib.gis.db.backends.postgis",
     ),
     "hope_ro": env.db(
         "DATABASE_HOPE_URL",
         default="postgres://postgres:postgres@hopedb:5432/hopedb?options=-c%20default_transaction_read_only=on",
-        engine="django.db.backends.postgresql",
     ),
 }
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
