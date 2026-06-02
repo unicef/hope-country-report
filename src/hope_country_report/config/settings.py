@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.power_query",
     "hope_country_report.apps.core",
     "hope_country_report.apps.stream",
+    "streaming",
     "django.contrib.contenttypes",
     # "smart_admin.apps.SmartTemplateConfig",  # templates
     # "smart_admin",  # use this instead of 'django.contrib.admin'
