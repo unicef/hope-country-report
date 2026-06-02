@@ -187,7 +187,7 @@ def test_query_silk(query: "Query", data):
     query.datasets.all().delete()
     tenant_slug = data["hh1"][0].business_area.id
     tenant = data["hh1"][0].business_area.country_office
-    uid = str(data["hh1"][0].business_area.pk)
+    uid = str(data["hh1"][0].business_area.pk).replace("-", "")
     with state.configure(request=req, tenant=tenant, must_tenant=True, tenant_cookie=tenant_slug):
         ds, extra = query.run()
     assert ds.data.count() == 2
