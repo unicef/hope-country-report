@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
+    "django.contrib.gis",
     "hope_country_report.apps.admin",
     "push_notifications",
     # "django.contrib.admin",
