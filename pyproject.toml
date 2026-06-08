@@ -175,7 +175,7 @@ mypy = [
   "types-requests",
 ]
 types-decorator = [
-  "types-six>=1.16.21.20241105",
+  "types-six>=1.17.0.20260518",
 ]
 
 [project.urls]
