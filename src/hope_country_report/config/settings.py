@@ -17,14 +17,13 @@ DATABASES = {
     "default": env.db(
         "DATABASE_URL",
         default="postgis://postgres:postgres@db:5432/hcr",
-        engine="django.contrib.gis.db.backends.postgis",
     ),
     "hope_ro": env.db(
         "DATABASE_HOPE_URL",
-        default="postgis://postgres:postgres@hopedb:5432/hopedb?options=-c%20default_transaction_read_only=on",
-        engine="django.contrib.gis.db.backends.postgis",
+        default="postgres://postgres:postgres@hopedb:5432/hopedb?options=-c%20default_transaction_read_only=on",
     ),
 }
+
 DATABASE_ROUTERS = ("hope_country_report.apps.core.dbrouters.DbRouter",)
 DATABASE_APPS_MAPPING: dict[str, str] = {
     "core": "default",
@@ -47,6 +46,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.power_query",
     "hope_country_report.apps.core",
     "hope_country_report.apps.stream",
+    "streaming",
     "django.contrib.contenttypes",
     # "smart_admin.apps.SmartTemplateConfig",  # templates
     # "smart_admin",  # use this instead of 'django.contrib.admin'
@@ -71,8 +71,8 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.sitemaps",
     "django.contrib.staticfiles",
-    "django.contrib.gis",
     "django.contrib.postgres",
+    "django.contrib.gis",
     "hope_country_report.apps.admin",
     "push_notifications",
     # "django.contrib.admin",
@@ -288,7 +288,3 @@ from .fragments.social_auth import *  # noqa
 from .fragments.taggit import *  # noqa
 from .fragments.tailwind import *  # noqa
 from .fragments.streaming import *  # noqa
-
-
-GDAL_LIBRARY_PATH = env("GDAL_LIBRARY_PATH")
-GEOS_LIBRARY_PATH = env("GEOS_LIBRARY_PATH")
