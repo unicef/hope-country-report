@@ -155,7 +155,7 @@ docs = [
   "mkdocs-simple-hooks>=0.1.5",
   "mkdocstrings[python]>=0.24.1",
   "mkdocstrings-python",
-  "pymdown-extensions>=10.7.1",
+  "pymdown-extensions>=10.21.3",
 ]
 mypy = [
   "django-stubs",
