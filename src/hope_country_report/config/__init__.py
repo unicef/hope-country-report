@@ -102,6 +102,7 @@ CONFIG = {
         str,
         "console://",
         "amqp://guest:guest@localhost:5672//",
+        False,
         "Broker URL for Streaming. Must be a RabbitMQ URL (amqp://) or console://.",
     ),
     "TIME_ZONE": (str, "UTC", setting("std-setting-TIME_ZONE")),
