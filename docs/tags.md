@@ -1,6 +1,0 @@
----
-title: Tags
----
-# Tags
-
----
