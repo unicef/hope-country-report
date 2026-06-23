@@ -98,7 +98,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
             # raise ValueError(f"Results can't be rendered as a tablib Dataset: {e}")
     elif isinstance(result, list | tuple):
         data = tablib.Dataset()
-        fields = set().union(*(d.keys() for d in list(result)))
+        fields = list({k: None for d in result for k in d.keys()}.keys())
         data.headers = fields
         try:
             for obj in result:
