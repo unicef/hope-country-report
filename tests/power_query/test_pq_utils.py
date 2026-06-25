@@ -384,3 +384,35 @@ def test_pdf_insertion_with_rotated_image(tmp_path, create_image_with_orientatio
     img_info = doc.extract_image(images[0][0])
     img = Image.open(BytesIO(img_info["image"]))
     assert img.size == (200, 100)  # Swapped dimensions
+
+
+def test_to_dataset_preserves_order():
+    data = [
+        {
+            "Country": "Burundi",
+            "FSP": "FSP A",
+            "Result": "Success",
+            "Count": 10,
+            "Payment Plan number": 12345,
+            "Payment Status": "Paid",
+            "Verification channel": "SMS",
+            "Activation date": "2026-01-01",
+            "Sampling": "Random",
+            "Sample size": 100,
+            "Completion date": "2026-02-01",
+        }
+    ]
+    ds = to_dataset(data)
+    assert list(ds.headers) == [
+        "Country",
+        "FSP",
+        "Result",
+        "Count",
+        "Payment Plan number",
+        "Payment Status",
+        "Verification channel",
+        "Activation date",
+        "Sampling",
+        "Sample size",
+        "Completion date",
+    ]
