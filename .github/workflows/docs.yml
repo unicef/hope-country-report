@@ -51,7 +51,7 @@ jobs:
           python-version: '3.14'
       - uses: astral-sh/setup-uv@v7
 
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         id: restore-cache
         with:
           path: .venv
@@ -63,7 +63,7 @@ jobs:
       - name: Build Doc
         run: .venv/bin/mkdocs build -d ./docs-output
 
-      - uses: actions/cache/save@v5
+      - uses: actions/cache/save@v6
         id: cache
         if: always() && steps.restore-cache.outputs.cache-hit != 'true'
         with:
