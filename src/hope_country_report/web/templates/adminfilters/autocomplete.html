@@ -1,14 +1,14 @@
 {% extends "adminfilters/_wrapper.html" %}{% load i18n %}
 {% block content %}
 <ul>
-    <li><select style="max-width: 95%" id="ac_{{ spec.field.name }}"
+    <li><select style="width: 100%; max-width: 95%" id="ac_{{ spec.field.name }}"
                 data-ajax--cache="true"
                 data-ajax--delay="250"
                 data-ajax--qs="{{ spec.query_string }}"
                 data-ajax--param="{{ spec.lookup_kwarg }}"
                 data-ajax--type="GET"
                 data-ajax--url="{{ spec.url }}"
-                data-theme="filter-autocomplete"
+                data-theme="admin-autocomplete"
                 data-app-label="{{ spec.target_opts.app_label }}"
                 data-model-name="{{ spec.target_opts.model_name }}"
                 data-field-name="{{ spec.target_field.name }}"
