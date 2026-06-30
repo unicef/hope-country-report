@@ -182,6 +182,105 @@ class SurveyRecipients(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
+class Organization(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    source_id = models.BigIntegerField(null=True)
+    name = models.CharField(null=True)
+    slug = models.CharField(null=True)
+    business_area = models.ForeignKey(
+        "BusinessArea", on_delete=models.DO_NOTHING, related_name="organization_business_area", blank=True, null=True
+    )
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "aurora_organization"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Project(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    source_id = models.BigIntegerField(null=True)
+    name = models.CharField(null=True)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.DO_NOTHING, related_name="project_organization", null=True
+    )
+    programme = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="project_programme", blank=True, null=True
+    )
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "aurora_project"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Record(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    registration = models.IntegerField(null=True)
+    timestamp = models.DateTimeField(null=True)
+    storage = models.BinaryField(blank=True, null=True)
+    ignored = models.BooleanField(blank=True, null=True)
+    source_id = models.IntegerField(null=True)
+    data = models.JSONField(blank=True, null=True)
+    error_message = models.TextField(blank=True, null=True)
+    status = models.CharField(blank=True, null=True)
+    unique_field = models.CharField(blank=True, null=True)
+    size = models.IntegerField(blank=True, null=True)
+    counters = models.JSONField(blank=True, null=True)
+    fields = models.JSONField(blank=True, null=True)
+    files = models.BinaryField(blank=True, null=True)
+    index1 = models.CharField(blank=True, null=True)
+    index2 = models.CharField(blank=True, null=True)
+    index3 = models.CharField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "aurora_record"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Registration(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    source_id = models.BigIntegerField(null=True)
+    name = models.CharField(null=True)
+    slug = models.CharField(null=True)
+    extra = models.JSONField(blank=True, null=True)
+    metadata = models.JSONField(blank=True, null=True)
+    rdi_policy = models.IntegerField(null=True)
+    rdi_parser = models.CharField(blank=True, null=True)
+    mapping = models.JSONField(blank=True, null=True)
+    private_key = models.TextField(blank=True, null=True)
+    project = models.ForeignKey(Project, on_delete=models.DO_NOTHING, related_name="registration_project", null=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = "aurora_registration"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
 class Changelog(HopeModel):
     id = models.BigAutoField(primary_key=True)
     description = models.TextField(null=True)

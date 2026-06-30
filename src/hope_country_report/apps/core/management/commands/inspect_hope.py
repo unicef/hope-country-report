@@ -1,6 +1,5 @@
 import io
 import keyword
-import os
 import re
 from collections import OrderedDict
 from pathlib import Path
@@ -28,10 +27,11 @@ class IRegexList(RegexList):
 WANTED_TABLES = IRegexList(
     [
         "accountability.*",
+        "aurora.*",
         "core.*",
-        "grievance.*",
         "changelog.*",
         "geo.*",
+        "grievance.*",
         "household.*",
         "payment.*",
         "program.*",
@@ -51,6 +51,7 @@ IGNORED_TABLES = RegexList(
         # "Celery_.*",
         # "Chart",
         # "Connection",
+        # "aurora_registration",
         "core_filetemp",
         "core_flex.*",
         "core_migration.*",
@@ -157,7 +158,17 @@ class Command(BaseCommand):
 
             output_filepath = resource_path(f"apps/hope/models/{output_file}")
             Path(output_filepath).write_text(buffer.getvalue())
-            os.system(f"ruff format {output_filepath}")
+            import shutil
+            import subprocess
+
+            if shutil.which("ruff"):
+                subprocess.run(["ruff", "format", str(output_filepath)], check=False)
+            else:
+                self.stdout.write(
+                    self.style.WARNING(
+                        "ruff not found; skipping code formatting. Install dev dependencies with `uv pip install -e .[dev]` to enable formatting."
+                    )
+                )
 
         except NotImplementedError:
             raise CommandError("Database inspection isn't supported for the currently selected database backend.")
