@@ -96,6 +96,11 @@ CONFIG = {
         True,
         "https://python-social-auth.readthedocs.io/en/latest/configuration/settings.html",
     ),
+    "SOCIAL_AUTH_REQUIRE_POST": (
+        bool,
+        True,
+        "https://python-social-auth.readthedocs.io/en/latest/configuration/settings.html",
+    ),
     "STATIC_ROOT": (str, "/tmp/static/", setting("static-root")),
     "STATIC_URL": (str, "/static/", setting("static-url")),
     "STREAMING_BROKER_URL": (
