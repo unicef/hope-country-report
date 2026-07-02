@@ -19,9 +19,10 @@ pytestmark = pytest.mark.django_db()
 def test_login_admnin(django_app, admin_user):
     url = reverse("admin:login")
     res = django_app.get(url)
-    res.form["username"] = admin_user.username
-    res.form["password"] = "password"
-    res = res.form.submit()
+    form = res.forms[0]
+    form["username"] = admin_user.username
+    form["password"] = "password"
+    res = form.submit()
     assert res.status_code == 302
     assert res.location == "/admin/"
 
@@ -31,9 +32,10 @@ def test_login_tenant_user(django_app, tenant_user):
     tenant: "CountryOffice" = tenant_user.roles.first().country_office
     select_tenant_url = reverse("admin:select_tenant")
     res = django_app.get(reverse("admin:login"))
-    res.form["username"] = tenant_user.username
-    res.form["password"] = "password"
-    res = res.form.submit()
+    form = res.forms[0]
+    form["username"] = tenant_user.username
+    form["password"] = "password"
+    res = form.submit()
     assert res.status_code == 302, res.context["form"].errors
     assert res.location == select_tenant_url
     res = res.follow()
@@ -47,9 +49,10 @@ def test_login_tenant_user(django_app, tenant_user):
 def test_login_pending_user(django_app, pending_user):
     select_tenant_url = reverse("admin:select_tenant")
     res = django_app.get(reverse("admin:login"))
-    res.form["username"] = pending_user.username
-    res.form["password"] = "password"
-    res = res.form.submit()
+    form = res.forms[0]
+    form["username"] = pending_user.username
+    form["password"] = "password"
+    res = form.submit()
     assert res.status_code == 302, res.context["form"].errors
     assert res.location == select_tenant_url
     res = res.follow()
