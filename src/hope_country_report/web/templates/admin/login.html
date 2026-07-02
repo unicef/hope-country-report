@@ -1,10 +1,1 @@
 {% extends "admin/login.html" %}
-{% load i18n %}
-
-{% block content %}
-    {{ block.super }}
-    <form action="{% url 'social:begin' 'azuread-tenant-oauth2' %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="button" style="width: 100%; text-align: center; box-sizing: border-box; margin-top: 10px; cursor: pointer;">{% translate "Login with Azure" %}</button>
-    </form>
-{% endblock content %}
