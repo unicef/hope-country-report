@@ -47,7 +47,7 @@ CONFIG = {
     "DATABASE_HOPE_URL": (str, "", "", True, "HOPE database connection url (forced to be readonly)"),
     "DATABASE_URL": (str, "", "", True, doc_environ("environ-env-db-url")),
     "DEBUG": (bool, False, setting("debug")),
-    "DEFAULT_FROM_EMAIL": (str, ""),
+    "DEFAULT_FROM_EMAIL": (str, NOT_SET, "Default sender email address"),
     "EMAIL_BACKEND": (str, "anymail.backends.mailjet.EmailBackend", "Do not change in prod"),
     "EMAIL_HOST": (str, ""),
     "EMAIL_HOST_PASSWORD": (str, ""),
