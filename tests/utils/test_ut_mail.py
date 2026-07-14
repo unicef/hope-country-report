@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 from constance.test import override_config
+from django.conf import settings
 
 from hope_country_report.state import state
 from hope_country_report.utils.mail import notify_report_completion, send_document_password, send_request_access
@@ -43,6 +44,7 @@ def test_send_request_access(cfg, expected, mocked_responses, user, report, mail
             assert res == 1
             assert len(mailoutbox) == 1
             assert mailoutbox[0].bcc == [expected]
+            assert mailoutbox[0].to == [settings.DEFAULT_FROM_EMAIL]
 
 
 @pytest.mark.parametrize(
@@ -78,6 +80,7 @@ def test_notify_report_completion(cfg, expected, mocked_responses, user, report:
             assert res == 1
             assert len(mailoutbox) == 1
             assert mailoutbox[0].bcc == [expected]
+            assert mailoutbox[0].to == [settings.DEFAULT_FROM_EMAIL]
 
 
 def test_notify_report_completion_no_recipients(mocked_responses, report, mailoutbox):

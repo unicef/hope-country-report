@@ -67,6 +67,7 @@ def send_request_access(
     else:
         recipient_list = [report.owner.email]
     email = EmailMessage(
+        to=[settings.DEFAULT_FROM_EMAIL],
         bcc=recipient_list,
         from_email=settings.DEFAULT_FROM_EMAIL,
         subject=f"{sender.full_name} wants to access '{report.title}'",
@@ -100,6 +101,7 @@ def notify_report_completion(report: "ReportConfiguration", request: "AuthHttpRe
         return 0
 
     message = EmailMessage(
+        to=[settings.DEFAULT_FROM_EMAIL],
         from_email=settings.DEFAULT_FROM_EMAIL,
         bcc=recipient_list,
         subject="Report updated/created",
