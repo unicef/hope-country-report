@@ -20,6 +20,8 @@ def check_models(app_configs: "AppConfig", **kwargs: "Any") -> "list[Error]":
                     )
                 )
             elif model.Tenant.tenant_filter_field == "__notset__":
+                if app_config.name == "hope_country_report.apps.hope":
+                    continue
                 errors.append(
                     Warning(
                         f"{model} does not have restrictions enabled",

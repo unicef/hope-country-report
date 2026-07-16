@@ -8,6 +8,7 @@ class Config(AppConfig):
     verbose_name = "HOPE"
 
     def ready(self) -> None:
+        from . import checks  # noqa
         from .patcher import patch
 
         if not state.inspecting:  # pragma: no branch
