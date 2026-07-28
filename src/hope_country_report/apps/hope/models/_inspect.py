@@ -15,11 +15,11 @@ class Feedback(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    issue_type = models.CharField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    issue_type = models.CharField(max_length=20, null=True)
     description = models.TextField(null=True)
     comments = models.TextField(blank=True, null=True)
-    area = models.CharField(null=True)
+    area = models.CharField(max_length=250, null=True)
     language = models.TextField(null=True)
     consent = models.BooleanField(null=True)
     admin2 = models.ForeignKey(
@@ -27,9 +27,6 @@ class Feedback(HopeModel):
     )
     business_area = models.ForeignKey(
         "BusinessArea", on_delete=models.DO_NOTHING, related_name="feedback_business_area", null=True
-    )
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="feedback_copied_from", blank=True, null=True
     )
     household_lookup = models.ForeignKey(
         "Household", on_delete=models.DO_NOTHING, related_name="feedback_household_lookup", blank=True, null=True
@@ -42,6 +39,9 @@ class Feedback(HopeModel):
     )
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="feedback_program", blank=True, null=True
+    )
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="feedback_copied_from", blank=True, null=True
     )
 
     class Meta:
@@ -79,22 +79,16 @@ class Message(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    title = models.CharField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=60, null=True)
     body = models.TextField(null=True)
     number_of_recipients = models.IntegerField(null=True)
-    sampling_type = models.CharField(null=True)
+    sampling_type = models.CharField(max_length=50, null=True)
     full_list_arguments = models.JSONField(blank=True, null=True)
     random_sampling_arguments = models.JSONField(blank=True, null=True)
     sample_size = models.IntegerField(null=True)
     business_area = models.ForeignKey(
         "BusinessArea", on_delete=models.DO_NOTHING, related_name="message_business_area", null=True
-    )
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="message_copied_from", blank=True, null=True
-    )
-    program = models.ForeignKey(
-        "Program", on_delete=models.DO_NOTHING, related_name="message_program", blank=True, null=True
     )
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
@@ -102,6 +96,12 @@ class Message(HopeModel):
         related_name="message_registration_data_import",
         blank=True,
         null=True,
+    )
+    program = models.ForeignKey(
+        "Program", on_delete=models.DO_NOTHING, related_name="message_program", blank=True, null=True
+    )
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="message_copied_from", blank=True, null=True
     )
     payment_plan = models.ForeignKey(
         "PaymentPlan", on_delete=models.DO_NOTHING, related_name="message_payment_plan", blank=True, null=True
@@ -136,25 +136,25 @@ class Survey(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    title = models.CharField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=60, null=True)
     body = models.TextField(null=True)
-    category = models.CharField(null=True)
+    category = models.CharField(max_length=16, null=True)
     number_of_recipients = models.IntegerField(null=True)
-    sample_file = models.CharField(blank=True, null=True)
-    sample_file_generated_at = models.DateTimeField(blank=True, null=True)
-    sampling_type = models.CharField(null=True)
+    sampling_type = models.CharField(max_length=50, null=True)
     full_list_arguments = models.JSONField(null=True)
     random_sampling_arguments = models.JSONField(null=True)
     sample_size = models.IntegerField(null=True)
-    flow_id = models.CharField(blank=True, null=True)
-    successful_rapid_pro_calls = models.TextField(null=True)  # This field type is a guess.
     business_area = models.ForeignKey(
         "BusinessArea", on_delete=models.DO_NOTHING, related_name="survey_business_area", null=True
     )
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="survey_program", blank=True, null=True
     )
+    sample_file = models.CharField(max_length=100, blank=True, null=True)
+    sample_file_generated_at = models.DateTimeField(blank=True, null=True)
+    successful_rapid_pro_calls = models.TextField(null=True)  # This field type is a guess.
+    flow_id = models.CharField(max_length=255, blank=True, null=True)
     payment_plan = models.ForeignKey(
         "PaymentPlan", on_delete=models.DO_NOTHING, related_name="survey_payment_plan", blank=True, null=True
     )
@@ -185,8 +185,8 @@ class SurveyRecipients(HopeModel):
 class Organization(HopeModel):
     id = models.BigAutoField(primary_key=True)
     source_id = models.BigIntegerField(null=True)
-    name = models.CharField(null=True)
-    slug = models.CharField(null=True)
+    name = models.CharField(max_length=1000, null=True)
+    slug = models.CharField(max_length=1000, null=True)
     business_area = models.ForeignKey(
         "BusinessArea", on_delete=models.DO_NOTHING, related_name="organization_business_area", blank=True, null=True
     )
@@ -207,7 +207,7 @@ class Organization(HopeModel):
 class Project(HopeModel):
     id = models.BigAutoField(primary_key=True)
     source_id = models.BigIntegerField(null=True)
-    name = models.CharField(null=True)
+    name = models.CharField(max_length=100, null=True)
     organization = models.ForeignKey(
         Organization, on_delete=models.DO_NOTHING, related_name="project_organization", null=True
     )
@@ -237,15 +237,15 @@ class Record(HopeModel):
     source_id = models.IntegerField(null=True)
     data = models.JSONField(blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
-    status = models.CharField(blank=True, null=True)
-    unique_field = models.CharField(blank=True, null=True)
+    status = models.CharField(max_length=16, blank=True, null=True)
+    unique_field = models.CharField(max_length=255, blank=True, null=True)
     size = models.IntegerField(blank=True, null=True)
     counters = models.JSONField(blank=True, null=True)
     fields = models.JSONField(blank=True, null=True)
     files = models.BinaryField(blank=True, null=True)
-    index1 = models.CharField(blank=True, null=True)
-    index2 = models.CharField(blank=True, null=True)
-    index3 = models.CharField(blank=True, null=True)
+    index1 = models.CharField(max_length=255, blank=True, null=True)
+    index2 = models.CharField(max_length=255, blank=True, null=True)
+    index3 = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -258,12 +258,12 @@ class Record(HopeModel):
 class Registration(HopeModel):
     id = models.BigAutoField(primary_key=True)
     source_id = models.BigIntegerField(null=True)
-    name = models.CharField(null=True)
-    slug = models.CharField(null=True)
+    name = models.CharField(max_length=500, null=True)
+    slug = models.CharField(max_length=50, null=True)
     extra = models.JSONField(blank=True, null=True)
     metadata = models.JSONField(blank=True, null=True)
     rdi_policy = models.IntegerField(null=True)
-    rdi_parser = models.CharField(blank=True, null=True)
+    rdi_parser = models.CharField(max_length=200, blank=True, null=True)
     mapping = models.JSONField(blank=True, null=True)
     private_key = models.TextField(blank=True, null=True)
     project = models.ForeignKey(Project, on_delete=models.DO_NOTHING, related_name="registration_project", null=True)
@@ -284,7 +284,7 @@ class Registration(HopeModel):
 class Changelog(HopeModel):
     id = models.BigAutoField(primary_key=True)
     description = models.TextField(null=True)
-    version = models.CharField(null=True)
+    version = models.CharField(max_length=30, null=True)
     active = models.BooleanField(null=True)
     date = models.DateField(null=True)
 
@@ -302,25 +302,25 @@ class Changelog(HopeModel):
 class Asyncjob(HopeModel):
     id = models.BigAutoField(primary_key=True)
     version = models.BigIntegerField(null=True)
-    description = models.CharField(blank=True, null=True)
-    curr_async_result_id = models.CharField(blank=True, null=True)
-    last_async_result_id = models.CharField(blank=True, null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    curr_async_result_id = models.CharField(max_length=36, blank=True, null=True)
+    last_async_result_id = models.CharField(max_length=36, blank=True, null=True)
     datetime_created = models.DateTimeField(null=True)
     datetime_queued = models.DateTimeField(blank=True, null=True)
     repeatable = models.BooleanField(null=True)
     celery_history = models.JSONField(null=True)
-    local_status = models.CharField(blank=True, null=True)
-    group_key = models.CharField(blank=True, null=True)
-    type = models.CharField(null=True)
+    local_status = models.CharField(max_length=100, blank=True, null=True)
+    group_key = models.CharField(max_length=255, blank=True, null=True)
+    type = models.CharField(max_length=50, null=True)
     config = models.JSONField(null=True)
-    action = models.CharField(blank=True, null=True)
-    sentry_id = models.CharField(blank=True, null=True)
+    action = models.CharField(max_length=500, blank=True, null=True)
+    sentry_id = models.CharField(max_length=255, blank=True, null=True)
     errors = models.JSONField(null=True)
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="asyncjob_program", blank=True, null=True
     )
-    job_name = models.CharField(blank=True, null=True)
-    object_id = models.CharField(blank=True, null=True)
+    job_name = models.CharField(max_length=255, blank=True, null=True)
+    object_id = models.CharField(max_length=64, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -337,37 +337,34 @@ class BusinessArea(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    code = models.CharField(unique=True, null=True)
-    name = models.CharField(null=True)
-    long_name = models.CharField(null=True)
-    region_code = models.CharField(null=True)
-    region_name = models.CharField(null=True)
-    kobo_username = models.CharField(blank=True, null=True)
-    kobo_token = models.CharField(blank=True, null=True)
-    kobo_url = models.CharField(blank=True, null=True)
-    rapid_pro_host = models.CharField(blank=True, null=True)
-    rapid_pro_payment_verification_token = models.CharField(blank=True, null=True)
-    rapid_pro_messages_token = models.CharField(blank=True, null=True)
-    rapid_pro_survey_token = models.CharField(blank=True, null=True)
-    slug = models.CharField(unique=True, null=True)
-    custom_fields = models.JSONField(null=True)
+    code = models.CharField(unique=True, max_length=10, null=True)
+    name = models.CharField(max_length=255, null=True)
+    long_name = models.CharField(max_length=255, null=True)
+    region_code = models.CharField(max_length=8, null=True)
+    region_name = models.CharField(max_length=8, null=True)
+    slug = models.CharField(unique=True, max_length=250, null=True)
+    rapid_pro_payment_verification_token = models.CharField(max_length=40, blank=True, null=True)
+    rapid_pro_host = models.CharField(max_length=200, blank=True, null=True)
     has_data_sharing_agreement = models.BooleanField(null=True)
     is_split = models.BooleanField(null=True)
-    postpone_deduplication = models.BooleanField(null=True)
-    deduplication_duplicate_score = models.FloatField(null=True)
-    deduplication_possible_duplicate_score = models.FloatField(null=True)
-    deduplication_batch_duplicates_percentage = models.IntegerField(null=True)
-    deduplication_batch_duplicates_allowed = models.IntegerField(null=True)
-    deduplication_golden_record_duplicates_percentage = models.IntegerField(null=True)
-    deduplication_golden_record_duplicates_allowed = models.IntegerField(null=True)
-    deduplication_ignore_withdraw = models.BooleanField(null=True)
-    biometric_deduplication_threshold = models.FloatField(null=True)
-    is_accountability_applicable = models.BooleanField(null=True)
-    active = models.BooleanField(null=True)
-    enable_email_notification = models.BooleanField(null=True)
     parent = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="businessarea_parent", blank=True, null=True
     )
+    deduplication_duplicate_score = models.FloatField(null=True)
+    deduplication_batch_duplicates_allowed = models.IntegerField(null=True)
+    deduplication_batch_duplicates_percentage = models.IntegerField(null=True)
+    deduplication_golden_record_duplicates_allowed = models.IntegerField(null=True)
+    deduplication_golden_record_duplicates_percentage = models.IntegerField(null=True)
+    custom_fields = models.JSONField(null=True)
+    deduplication_possible_duplicate_score = models.FloatField(null=True)
+    postpone_deduplication = models.BooleanField(null=True)
+    deduplication_ignore_withdraw = models.BooleanField(null=True)
+    active = models.BooleanField(null=True)
+    is_accountability_applicable = models.BooleanField(null=True)
+    rapid_pro_messages_token = models.CharField(max_length=40, blank=True, null=True)
+    rapid_pro_survey_token = models.CharField(max_length=40, blank=True, null=True)
+    enable_email_notification = models.BooleanField(null=True)
+    biometric_deduplication_threshold = models.FloatField(null=True)
     office_country = models.ForeignKey(
         "Country", on_delete=models.DO_NOTHING, related_name="businessarea_office_country", blank=True, null=True
     )
@@ -385,7 +382,6 @@ class BusinessArea(HopeModel):
 
 
 class BusinessareaCountries(HopeModel):
-    id = models.BigAutoField(primary_key=True)
     businessarea = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="businessareacountries_businessarea", null=True
     )
@@ -420,7 +416,7 @@ class BusinessareaPaymentCountries(HopeModel):
 
 class Countrycodemap(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    ca_code = models.CharField(unique=True, null=True)
+    ca_code = models.CharField(unique=True, max_length=5, null=True)
     country = models.OneToOneField(
         "Country", on_delete=models.DO_NOTHING, related_name="countrycodemap_country", blank=True, null=True
     )
@@ -435,10 +431,11 @@ class Countrycodemap(HopeModel):
 
 class Currency(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    code = models.CharField(unique=True, null=True)
-    name = models.CharField(null=True)
+    code = models.CharField(unique=True, max_length=5, null=True)
+    name = models.CharField(max_length=255, null=True)
     is_crypto = models.BooleanField(null=True)
-    vision_code = models.CharField(null=True)
+    isocode4217 = models.CharField(max_length=5, null=True)
+    vision_code = models.CharField(max_length=5, null=True)
     active = models.BooleanField(null=True)
     number_of_decimals = models.SmallIntegerField(null=True)
 
@@ -457,15 +454,15 @@ class DataCollectingType(HopeModel):
     id = models.BigAutoField(primary_key=True)
     created = models.DateTimeField(null=True)
     modified = models.DateTimeField(null=True)
-    label = models.CharField(null=True)
-    code = models.CharField(null=True)
-    type = models.CharField(blank=True, null=True)
+    code = models.CharField(max_length=32, null=True)
     description = models.TextField(null=True)
     active = models.BooleanField(null=True)
-    deprecated = models.BooleanField(null=True)
     individual_filters_available = models.BooleanField(null=True)
     household_filters_available = models.BooleanField(null=True)
+    label = models.CharField(max_length=32, null=True)
     recalculate_composition = models.BooleanField(null=True)
+    deprecated = models.BooleanField(null=True)
+    type = models.CharField(max_length=32, blank=True, null=True)
     weight = models.SmallIntegerField(null=True)
 
     class Meta:
@@ -525,21 +522,21 @@ class DatacollectingtypeLimitTo(HopeModel):
 class Periodicasyncjob(HopeModel):
     id = models.BigAutoField(primary_key=True)
     version = models.BigIntegerField(null=True)
-    description = models.CharField(blank=True, null=True)
-    curr_async_result_id = models.CharField(blank=True, null=True)
-    last_async_result_id = models.CharField(blank=True, null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    curr_async_result_id = models.CharField(max_length=36, blank=True, null=True)
+    last_async_result_id = models.CharField(max_length=36, blank=True, null=True)
     datetime_created = models.DateTimeField(null=True)
     datetime_queued = models.DateTimeField(blank=True, null=True)
     repeatable = models.BooleanField(null=True)
     celery_history = models.JSONField(null=True)
-    local_status = models.CharField(blank=True, null=True)
-    group_key = models.CharField(blank=True, null=True)
-    type = models.CharField(null=True)
+    local_status = models.CharField(max_length=100, blank=True, null=True)
+    group_key = models.CharField(max_length=255, blank=True, null=True)
+    type = models.CharField(max_length=50, null=True)
     config = models.JSONField(null=True)
-    action = models.CharField(blank=True, null=True)
-    sentry_id = models.CharField(blank=True, null=True)
-    object_id = models.CharField(blank=True, null=True)
-    job_name = models.CharField(blank=True, null=True)
+    action = models.CharField(max_length=500, blank=True, null=True)
+    sentry_id = models.CharField(max_length=255, blank=True, null=True)
+    object_id = models.CharField(max_length=64, blank=True, null=True)
+    job_name = models.CharField(max_length=255, blank=True, null=True)
     errors = models.JSONField(null=True)
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="periodicasyncjob_program", blank=True, null=True
@@ -558,7 +555,7 @@ class Periodicasyncjob(HopeModel):
 
 class Periodicfielddata(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    subtype = models.CharField(null=True)
+    subtype = models.CharField(max_length=16, null=True)
     number_of_rounds = models.IntegerField(null=True)
     rounds_names = models.TextField(null=True)  # This field type is a guess.
 
@@ -575,8 +572,8 @@ class Area(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     original_id = models.UUIDField(blank=True, null=True)
-    name = models.CharField(null=True)
-    p_code = models.CharField(unique=True, blank=True, null=True)
+    name = models.CharField(max_length=255, null=True)
+    p_code = models.CharField(unique=True, max_length=32, blank=True, null=True)
     valid_from = models.DateTimeField(blank=True, null=True)
     valid_until = models.DateTimeField(blank=True, null=True)
     extras = models.JSONField(null=True)
@@ -605,7 +602,7 @@ class Areatype(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     original_id = models.UUIDField(blank=True, null=True)
-    name = models.CharField(null=True)
+    name = models.CharField(max_length=255, null=True)
     area_level = models.IntegerField(null=True)
     valid_from = models.DateTimeField(blank=True, null=True)
     valid_until = models.DateTimeField(blank=True, null=True)
@@ -635,11 +632,11 @@ class Country(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     original_id = models.UUIDField(blank=True, null=True)
-    name = models.CharField(null=True)
-    short_name = models.CharField(null=True)
-    iso_code2 = models.CharField(unique=True, null=True)
-    iso_code3 = models.CharField(unique=True, null=True)
-    iso_num = models.CharField(unique=True, null=True)
+    name = models.CharField(max_length=255, null=True)
+    short_name = models.CharField(max_length=255, null=True)
+    iso_code2 = models.CharField(unique=True, max_length=2, null=True)
+    iso_code3 = models.CharField(unique=True, max_length=3, null=True)
+    iso_num = models.CharField(unique=True, max_length=4, null=True)
     valid_from = models.DateTimeField(blank=True, null=True)
     valid_until = models.DateTimeField(blank=True, null=True)
     extras = models.JSONField(null=True)
@@ -650,6 +647,8 @@ class Country(HopeModel):
     parent = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="country_parent", blank=True, null=True
     )
+    isocode4217 = models.CharField(max_length=5, null=True)
+    iso_code_4217 = models.CharField(max_length=5, null=True)
     currency = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name="country_currency", blank=True, null=True
     )
@@ -669,10 +668,10 @@ class Grievancedocument(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(blank=True, null=True)
-    file = models.CharField(blank=True, null=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    file = models.CharField(max_length=100, blank=True, null=True)
     file_size = models.IntegerField(blank=True, null=True)
-    content_type = models.CharField(null=True)
+    content_type = models.CharField(max_length=100, null=True)
     grievance_ticket = models.ForeignKey(
         "Grievanceticket",
         on_delete=models.DO_NOTHING,
@@ -696,38 +695,38 @@ class Grievanceticket(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
     user_modified = models.DateTimeField(blank=True, null=True)
-    last_notification_sent = models.DateTimeField(blank=True, null=True)
     status = models.IntegerField(null=True)
     category = models.IntegerField(null=True)
     issue_type = models.IntegerField(blank=True, null=True)
     description = models.TextField(null=True)
-    area = models.CharField(null=True)
+    area = models.CharField(max_length=250, null=True)
     language = models.TextField(null=True)
     consent = models.BooleanField(null=True)
-    extras = models.JSONField(null=True)
-    ignored = models.BooleanField(null=True)
-    household_unicef_id = models.CharField(blank=True, null=True)
-    priority = models.IntegerField(null=True)
-    urgency = models.IntegerField(null=True)
-    comments = models.TextField(blank=True, null=True)
-    admin2 = models.ForeignKey(
-        Area, on_delete=models.DO_NOTHING, related_name="grievanceticket_admin2", blank=True, null=True
-    )
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="grievanceticket_business_area", null=True
     )
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="grievanceticket_copied_from", blank=True, null=True
-    )
+    version = models.BigIntegerField(null=True)
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
         on_delete=models.DO_NOTHING,
         related_name="grievanceticket_registration_data_import",
         blank=True,
         null=True,
+    )
+    last_notification_sent = models.DateTimeField(blank=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    extras = models.JSONField(null=True)
+    admin2 = models.ForeignKey(
+        Area, on_delete=models.DO_NOTHING, related_name="grievanceticket_admin2", blank=True, null=True
+    )
+    ignored = models.BooleanField(null=True)
+    household_unicef_id = models.CharField(max_length=250, blank=True, null=True)
+    comments = models.TextField(blank=True, null=True)
+    priority = models.IntegerField(null=True)
+    urgency = models.IntegerField(null=True)
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="grievanceticket_copied_from", blank=True, null=True
     )
 
     class Meta:
@@ -782,7 +781,6 @@ class Ticketaddindividualdetails(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     individual_data = models.JSONField(blank=True, null=True)
-    approve_status = models.BooleanField(null=True)
     household = models.ForeignKey(
         "Household",
         on_delete=models.DO_NOTHING,
@@ -793,6 +791,7 @@ class Ticketaddindividualdetails(HopeModel):
     ticket = models.OneToOneField(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketaddindividualdetails_ticket", null=True
     )
+    approve_status = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -844,15 +843,15 @@ class Ticketdeletehouseholddetails(HopeModel):
         blank=True,
         null=True,
     )
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketdeletehouseholddetails_ticket", null=True
+    )
     reason_household = models.ForeignKey(
         "Household",
         on_delete=models.DO_NOTHING,
         related_name="ticketdeletehouseholddetails_reason_household",
         blank=True,
         null=True,
-    )
-    ticket = models.OneToOneField(
-        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketdeletehouseholddetails_ticket", null=True
     )
 
     class Meta:
@@ -867,8 +866,6 @@ class Ticketdeleteindividualdetails(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    role_reassign_data = models.JSONField(null=True)
-    approve_status = models.BooleanField(null=True)
     individual = models.ForeignKey(
         "Individual",
         on_delete=models.DO_NOTHING,
@@ -879,6 +876,8 @@ class Ticketdeleteindividualdetails(HopeModel):
     ticket = models.OneToOneField(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketdeleteindividualdetails_ticket", null=True
     )
+    approve_status = models.BooleanField(null=True)
+    role_reassign_data = models.JSONField(null=True)
 
     class Meta:
         managed = False
@@ -913,7 +912,6 @@ class Ticketindividualdataupdatedetails(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     individual_data = models.JSONField(blank=True, null=True)
-    role_reassign_data = models.JSONField(null=True)
     individual = models.ForeignKey(
         "Individual",
         on_delete=models.DO_NOTHING,
@@ -923,6 +921,7 @@ class Ticketindividualdataupdatedetails(HopeModel):
     ticket = models.OneToOneField(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketindividualdataupdatedetails_ticket", null=True
     )
+    role_reassign_data = models.JSONField(null=True)
 
     class Meta:
         managed = False
@@ -936,12 +935,14 @@ class Ticketneedsadjudicationdetails(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    is_multiple_duplicates_version = models.BooleanField(null=True)
+    selected_individual = models.ForeignKey(
+        "Individual",
+        on_delete=models.DO_NOTHING,
+        related_name="ticketneedsadjudicationdetails_selected_individual",
+        blank=True,
+        null=True,
+    )
     role_reassign_data = models.JSONField(null=True)
-    extra_data = models.JSONField(null=True)
-    score_min = models.FloatField(null=True)
-    score_max = models.FloatField(null=True)
-    is_cross_area = models.BooleanField(null=True)
     golden_records_individual = models.ForeignKey(
         "Individual",
         on_delete=models.DO_NOTHING,
@@ -955,16 +956,14 @@ class Ticketneedsadjudicationdetails(HopeModel):
         blank=True,
         null=True,
     )
-    selected_individual = models.ForeignKey(
-        "Individual",
-        on_delete=models.DO_NOTHING,
-        related_name="ticketneedsadjudicationdetails_selected_individual",
-        blank=True,
-        null=True,
-    )
     ticket = models.OneToOneField(
         Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketneedsadjudicationdetails_ticket", null=True
     )
+    extra_data = models.JSONField(null=True)
+    score_max = models.FloatField(null=True)
+    score_min = models.FloatField(null=True)
+    is_multiple_duplicates_version = models.BooleanField(null=True)
+    is_cross_area = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -1097,11 +1096,13 @@ class Ticketpaymentverificationdetails(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    payment_verification_status = models.CharField(null=True)
-    new_status = models.CharField(blank=True, null=True)
-    old_received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    new_received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    payment_verification_status = models.CharField(max_length=50, null=True)
+    ticket = models.OneToOneField(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketpaymentverificationdetails_ticket", null=True
+    )
     approve_status = models.BooleanField(null=True)
+    new_received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    new_status = models.CharField(max_length=50, blank=True, null=True)
     payment_verification = models.ForeignKey(
         "Paymentverification",
         on_delete=models.DO_NOTHING,
@@ -1109,9 +1110,7 @@ class Ticketpaymentverificationdetails(HopeModel):
         blank=True,
         null=True,
     )
-    ticket = models.OneToOneField(
-        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketpaymentverificationdetails_ticket", null=True
-    )
+    old_received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1122,7 +1121,6 @@ class Ticketpaymentverificationdetails(HopeModel):
 
 
 class TicketpaymentverificationdetailsPaymentVerificaf7C9(HopeModel):
-    id = models.BigAutoField(primary_key=True)
     ticketpaymentverificationdetails = models.ForeignKey(
         Ticketpaymentverificationdetails,
         on_delete=models.DO_NOTHING,
@@ -1261,31 +1259,31 @@ class Ticketsystemflaggingdetails(HopeModel):
 
 class Document(HopeModel):
     id = models.UUIDField(primary_key=True)
-    rdi_merge_status = models.CharField(null=True)
-    is_removed = models.BooleanField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    last_sync_at = models.DateTimeField(blank=True, null=True)
-    document_number = models.CharField(null=True)
+    document_number = models.CharField(max_length=255, null=True)
     photo = models.ImageField(storage=get_hope_storage(), null=True)
-    status = models.CharField(null=True)
-    cleared = models.BooleanField(null=True)
-    cleared_date = models.DateTimeField(null=True)
-    issuance_date = models.DateTimeField(blank=True, null=True)
-    expiry_date = models.DateTimeField(blank=True, null=True)
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="document_copied_from", blank=True, null=True
+    individual = models.ForeignKey(
+        "Individual", on_delete=models.DO_NOTHING, related_name="document_individual", null=True
     )
+    type = models.ForeignKey("DocumentType", on_delete=models.DO_NOTHING, related_name="document_type", null=True)
+    is_removed = models.BooleanField(null=True)
+    status = models.CharField(max_length=20, null=True)
     country = models.ForeignKey(
         Country, on_delete=models.DO_NOTHING, related_name="document_country", blank=True, null=True
     )
-    individual = models.ForeignKey(
-        "Individual", on_delete=models.DO_NOTHING, related_name="document_individual", null=True
+    last_sync_at = models.DateTimeField(blank=True, null=True)
+    cleared = models.BooleanField(null=True)
+    cleared_date = models.DateTimeField(null=True)
+    expiry_date = models.DateTimeField(blank=True, null=True)
+    issuance_date = models.DateTimeField(blank=True, null=True)
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="document_copied_from", blank=True, null=True
     )
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="document_program", blank=True, null=True
     )
-    type = models.ForeignKey("DocumentType", on_delete=models.DO_NOTHING, related_name="document_type", null=True)
+    rdi_merge_status = models.CharField(max_length=10, null=True)
     removed_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1300,8 +1298,8 @@ class DocumentType(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    label = models.CharField(null=True)
-    key = models.CharField(unique=True, null=True)
+    label = models.CharField(max_length=100, null=True)
+    key = models.CharField(unique=True, max_length=50, null=True)
     is_identity_document = models.BooleanField(null=True)
     unique_for_individual = models.BooleanField(null=True)
     valid_for_deduplication = models.BooleanField(null=True)
@@ -1318,7 +1316,7 @@ class DocumentValidator(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    regex = models.CharField(null=True)
+    regex = models.CharField(max_length=100, null=True)
     type = models.ForeignKey(
         DocumentType, on_delete=models.DO_NOTHING, related_name="documentvalidator_type", null=True
     )
@@ -1335,12 +1333,12 @@ class EntitlementCard(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    card_number = models.CharField(null=True)
-    status = models.CharField(null=True)
-    card_type = models.CharField(null=True)
-    current_card_size = models.CharField(null=True)
-    card_custodian = models.CharField(null=True)
-    service_provider = models.CharField(null=True)
+    card_number = models.CharField(max_length=255, null=True)
+    status = models.CharField(max_length=10, null=True)
+    card_type = models.CharField(max_length=255, null=True)
+    current_card_size = models.CharField(max_length=255, null=True)
+    card_custodian = models.CharField(max_length=255, null=True)
+    service_provider = models.CharField(max_length=255, null=True)
     household = models.ForeignKey(
         "Household", on_delete=models.DO_NOTHING, related_name="entitlementcard_household", blank=True, null=True
     )
@@ -1357,7 +1355,7 @@ class Facility(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(null=True)
+    name = models.CharField(max_length=255, null=True)
     admin_area = models.ForeignKey(Area, on_delete=models.DO_NOTHING, related_name="facility_admin_area", null=True)
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="facility_business_area", null=True
@@ -1376,78 +1374,85 @@ class Facility(HopeModel):
 
 class Household(HopeModel):
     id = models.UUIDField(primary_key=True)
-    rdi_merge_status = models.CharField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    is_removed = models.BooleanField(null=True)
-    removed_date = models.DateTimeField(blank=True, null=True)
-    last_sync_at = models.DateTimeField(blank=True, null=True)
-    version = models.BigIntegerField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    withdrawn = models.BooleanField(null=True)
-    withdrawn_date = models.DateTimeField(blank=True, null=True)
-    consent_sign = models.ImageField(storage=get_hope_storage(), null=True)
-    consent = models.BooleanField(blank=True, null=True)
-    consent_sharing = models.CharField(null=True)
-    residence_status = models.CharField(null=True)
-    address = models.CharField(null=True)
-    zip_code = models.CharField(blank=True, null=True)
+    residence_status = models.CharField(max_length=254, null=True)
     size = models.IntegerField(blank=True, null=True)
+    address = models.CharField(max_length=1024, null=True)
     female_age_group_0_5_count = models.IntegerField(blank=True, null=True)
     female_age_group_6_11_count = models.IntegerField(blank=True, null=True)
     female_age_group_12_17_count = models.IntegerField(blank=True, null=True)
-    female_age_group_18_59_count = models.IntegerField(blank=True, null=True)
-    female_age_group_60_count = models.IntegerField(blank=True, null=True)
     pregnant_count = models.IntegerField(blank=True, null=True)
     male_age_group_0_5_count = models.IntegerField(blank=True, null=True)
     male_age_group_6_11_count = models.IntegerField(blank=True, null=True)
     male_age_group_12_17_count = models.IntegerField(blank=True, null=True)
-    male_age_group_18_59_count = models.IntegerField(blank=True, null=True)
-    male_age_group_60_count = models.IntegerField(blank=True, null=True)
     female_age_group_0_5_disabled_count = models.IntegerField(blank=True, null=True)
     female_age_group_6_11_disabled_count = models.IntegerField(blank=True, null=True)
     female_age_group_12_17_disabled_count = models.IntegerField(blank=True, null=True)
-    female_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
-    female_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
     male_age_group_0_5_disabled_count = models.IntegerField(blank=True, null=True)
     male_age_group_6_11_disabled_count = models.IntegerField(blank=True, null=True)
     male_age_group_12_17_disabled_count = models.IntegerField(blank=True, null=True)
-    male_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
-    male_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
-    children_count = models.IntegerField(blank=True, null=True)
-    male_children_count = models.IntegerField(blank=True, null=True)
-    female_children_count = models.IntegerField(blank=True, null=True)
-    children_disabled_count = models.IntegerField(blank=True, null=True)
-    male_children_disabled_count = models.IntegerField(blank=True, null=True)
-    female_children_disabled_count = models.IntegerField(blank=True, null=True)
     returnee = models.BooleanField(blank=True, null=True)
     flex_fields = models.JSONField(null=True)
+    head_of_household = models.OneToOneField(
+        "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", blank=True, null=True
+    )
+    registration_data_import = models.ForeignKey(
+        "DataRegistrationdataimport",
+        on_delete=models.DO_NOTHING,
+        related_name="household_registration_data_import",
+        blank=True,
+        null=True,
+    )
+    last_sync_at = models.DateTimeField(blank=True, null=True)
     first_registration_date = models.DateTimeField(null=True)
     last_registration_date = models.DateTimeField(null=True)
-    fchild_hoh = models.BooleanField(blank=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    business_area = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="household_business_area", null=True
+    )
     child_hoh = models.BooleanField(blank=True, null=True)
+    consent_sharing = models.CharField(max_length=63, null=True)
+    consent_sign = models.ImageField(storage=get_hope_storage(), null=True)
+    deviceid = models.CharField(max_length=250, null=True)
+    fchild_hoh = models.BooleanField(blank=True, null=True)
+    name_enumerator = models.CharField(max_length=250, null=True)
+    org_enumerator = models.CharField(max_length=250, null=True)
+    org_name_enumerator = models.CharField(max_length=250, null=True)
     start = models.DateTimeField(blank=True, null=True)
-    deviceid = models.CharField(null=True)
-    name_enumerator = models.CharField(null=True)
-    org_enumerator = models.CharField(null=True)
-    org_name_enumerator = models.CharField(null=True)
-    village = models.CharField(null=True)
-    registration_method = models.CharField(null=True)
-    unhcr_id = models.CharField(null=True)
+    village = models.CharField(max_length=250, null=True)
+    consent = models.BooleanField(blank=True, null=True)
+    is_removed = models.BooleanField(null=True)
+    female_age_group_18_59_count = models.IntegerField(blank=True, null=True)
+    female_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
+    female_age_group_60_count = models.IntegerField(blank=True, null=True)
+    female_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
+    male_age_group_18_59_count = models.IntegerField(blank=True, null=True)
+    male_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
+    male_age_group_60_count = models.IntegerField(blank=True, null=True)
+    male_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
+    registration_method = models.CharField(max_length=250, null=True)
+    unhcr_id = models.CharField(max_length=250, null=True)
+    version = models.BigIntegerField(null=True)
+    withdrawn = models.BooleanField(null=True)
+    withdrawn_date = models.DateTimeField(blank=True, null=True)
+    removed_date = models.DateTimeField(blank=True, null=True)
     internal_data = models.JSONField(null=True)
-    detail_id = models.CharField(blank=True, null=True)
-    program_registration_id = models.CharField(unique=True, blank=True, null=True)
-    total_cash_received_usd = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
+    country = models.ForeignKey(
+        Country, on_delete=models.DO_NOTHING, related_name="household_country", blank=True, null=True
+    )
+    country_origin = models.ForeignKey(
+        Country, on_delete=models.DO_NOTHING, related_name="household_country_origin", blank=True, null=True
+    )
+    children_count = models.IntegerField(blank=True, null=True)
+    children_disabled_count = models.IntegerField(blank=True, null=True)
+    female_children_count = models.IntegerField(blank=True, null=True)
+    female_children_disabled_count = models.IntegerField(blank=True, null=True)
+    male_children_count = models.IntegerField(blank=True, null=True)
+    male_children_disabled_count = models.IntegerField(blank=True, null=True)
     total_cash_received = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
-    family_id = models.CharField(blank=True, null=True)
-    origin_unicef_id = models.CharField(blank=True, null=True)
-    is_migration_handled = models.BooleanField(null=True)
-    migrated_at = models.DateTimeField(blank=True, null=True)
-    collect_type = models.CharField(null=True)
-    kobo_submission_uuid = models.UUIDField(blank=True, null=True)
-    kobo_submission_time = models.DateTimeField(blank=True, null=True)
-    enumerator_rec_id = models.IntegerField(blank=True, null=True)
-    flex_registrations_record_id = models.IntegerField(blank=True, null=True)
+    total_cash_received_usd = models.DecimalField(max_digits=64, decimal_places=2, blank=True, null=True)
+    family_id = models.CharField(max_length=100, blank=True, null=True)
     admin1 = models.ForeignKey(
         Area, on_delete=models.DO_NOTHING, related_name="household_admin1", blank=True, null=True
     )
@@ -1460,21 +1465,13 @@ class Household(HopeModel):
     admin4 = models.ForeignKey(
         Area, on_delete=models.DO_NOTHING, related_name="household_admin4", blank=True, null=True
     )
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="household_business_area", null=True
-    )
+    zip_code = models.CharField(max_length=12, blank=True, null=True)
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="household_copied_from", blank=True, null=True
     )
-    country = models.ForeignKey(
-        Country, on_delete=models.DO_NOTHING, related_name="household_country", blank=True, null=True
-    )
-    country_origin = models.ForeignKey(
-        Country, on_delete=models.DO_NOTHING, related_name="household_country_origin", blank=True, null=True
-    )
-    head_of_household = models.OneToOneField(
-        "Individual", on_delete=models.DO_NOTHING, related_name="household_head_of_household", blank=True, null=True
-    )
+    is_migration_handled = models.BooleanField(null=True)
+    origin_unicef_id = models.CharField(max_length=100, blank=True, null=True)
+    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="household_program", null=True)
     household_collection = models.ForeignKey(
         "HouseholdCollection",
         on_delete=models.DO_NOTHING,
@@ -1482,20 +1479,21 @@ class Household(HopeModel):
         blank=True,
         null=True,
     )
-    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="household_program", null=True)
-    registration_data_import = models.ForeignKey(
-        "DataRegistrationdataimport",
-        on_delete=models.DO_NOTHING,
-        related_name="household_registration_data_import",
-        blank=True,
-        null=True,
-    )
+    migrated_at = models.DateTimeField(blank=True, null=True)
+    detail_id = models.CharField(max_length=150, blank=True, null=True)
+    collect_type = models.CharField(max_length=8, null=True)
+    program_registration_id = models.CharField(unique=True, max_length=100, blank=True, null=True)
+    enumerator_rec_id = models.IntegerField(blank=True, null=True)
+    flex_registrations_record_id = models.IntegerField(blank=True, null=True)
+    kobo_submission_time = models.DateTimeField(blank=True, null=True)
+    kobo_submission_uuid = models.UUIDField(blank=True, null=True)
+    rdi_merge_status = models.CharField(max_length=10, null=True)
     other_sex_group_count = models.IntegerField(blank=True, null=True)
     unknown_sex_group_count = models.IntegerField(blank=True, null=True)
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
-    identification_key = models.CharField(blank=True, null=True)
-    originating_id = models.CharField(unique=True, blank=True, null=True)
+    identification_key = models.CharField(max_length=255, blank=True, null=True)
+    originating_id = models.CharField(unique=True, max_length=150, blank=True, null=True)
     facility = models.ForeignKey(
         Facility, on_delete=models.DO_NOTHING, related_name="household_facility", blank=True, null=True
     )
@@ -1533,7 +1531,7 @@ class HouseholdExtraRdis(HopeModel):
 
 class HouseholdCollection(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    unicef_id = models.CharField(blank=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1545,80 +1543,83 @@ class HouseholdCollection(HopeModel):
 
 class Individual(HopeModel):
     id = models.UUIDField(primary_key=True)
-    rdi_merge_status = models.CharField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    is_removed = models.BooleanField(null=True)
-    removed_date = models.DateTimeField(blank=True, null=True)
+    individual_id = models.CharField(max_length=255, null=True)
+    photo = models.ImageField(storage=get_hope_storage(), null=True)
+    full_name = models.CharField(max_length=255, null=True)
+    given_name = models.CharField(max_length=85, null=True)
+    middle_name = models.CharField(max_length=85, null=True)
+    family_name = models.CharField(max_length=85, null=True)
+    relationship = models.CharField(max_length=255, null=True)
+    sex = models.CharField(max_length=255, null=True)
+    birth_date = models.DateField(null=True)
+    estimated_birth_date = models.BooleanField(null=True)
+    marital_status = models.CharField(max_length=255, null=True)
+    phone_no = models.CharField(max_length=128, null=True)
+    phone_no_alternative = models.CharField(max_length=128, null=True)
+    disability = models.CharField(max_length=20, null=True)
+    flex_fields = models.JSONField(null=True)
+    household = models.ForeignKey(
+        Household, on_delete=models.DO_NOTHING, related_name="individual_household", blank=True, null=True
+    )
+    registration_data_import = models.ForeignKey(
+        "DataRegistrationdataimport",
+        on_delete=models.DO_NOTHING,
+        related_name="individual_registration_data_import",
+        blank=True,
+        null=True,
+    )
     last_sync_at = models.DateTimeField(blank=True, null=True)
+    enrolled_in_nutrition_programme = models.BooleanField(blank=True, null=True)
+    work_status = models.CharField(max_length=20, null=True)
+    first_registration_date = models.DateField(null=True)
+    last_registration_date = models.DateField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    deduplication_golden_record_status = models.CharField(max_length=50, null=True)
+    deduplication_golden_record_results = models.JSONField(null=True)
+    sanction_list_possible_match = models.BooleanField(null=True)
+    pregnant = models.BooleanField(blank=True, null=True)
+    deduplication_batch_results = models.JSONField(null=True)
+    deduplication_batch_status = models.CharField(max_length=50, null=True)
+    imported_individual_id = models.UUIDField(blank=True, null=True)
+    comms_disability = models.CharField(max_length=50, null=True)
+    hearing_disability = models.CharField(max_length=50, null=True)
+    memory_disability = models.CharField(max_length=50, null=True)
+    observed_disability = models.CharField(max_length=58, null=True)
+    physical_disability = models.CharField(max_length=50, null=True)
+    seeing_disability = models.CharField(max_length=50, null=True)
+    selfcare_disability = models.CharField(max_length=50, null=True)
+    who_answers_alt_phone = models.CharField(max_length=150, null=True)
+    who_answers_phone = models.CharField(max_length=150, null=True)
+    business_area = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="individual_business_area", null=True
+    )
+    is_removed = models.BooleanField(null=True)
     version = models.BigIntegerField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
     duplicate = models.BooleanField(null=True)
     duplicate_date = models.DateTimeField(blank=True, null=True)
     withdrawn = models.BooleanField(null=True)
     withdrawn_date = models.DateTimeField(blank=True, null=True)
-    individual_id = models.CharField(null=True)
-    photo = models.ImageField(storage=get_hope_storage(), null=True)
-    full_name = models.CharField(null=True)
-    given_name = models.CharField(null=True)
-    middle_name = models.CharField(null=True)
-    family_name = models.CharField(null=True)
-    sex = models.CharField(null=True)
-    birth_date = models.DateField(null=True)
-    estimated_birth_date = models.BooleanField(null=True)
-    marital_status = models.CharField(null=True)
-    phone_no = models.CharField(null=True)
-    phone_no_valid = models.BooleanField(blank=True, null=True)
-    phone_no_alternative = models.CharField(null=True)
-    phone_no_alternative_valid = models.BooleanField(blank=True, null=True)
-    email = models.CharField(null=True)
-    payment_delivery_phone_no = models.CharField(blank=True, null=True)
-    relationship = models.CharField(null=True)
-    work_status = models.CharField(null=True)
-    first_registration_date = models.DateField(null=True)
-    last_registration_date = models.DateField(null=True)
-    flex_fields = models.JSONField(null=True)
-    internal_data = models.JSONField(null=True)
-    enrolled_in_nutrition_programme = models.BooleanField(blank=True, null=True)
-    deduplication_golden_record_status = models.CharField(null=True)
-    deduplication_batch_status = models.CharField(null=True)
-    deduplication_golden_record_results = models.JSONField(null=True)
-    deduplication_batch_results = models.JSONField(null=True)
-    imported_individual_id = models.UUIDField(blank=True, null=True)
-    sanction_list_possible_match = models.BooleanField(null=True)
+    removed_date = models.DateTimeField(blank=True, null=True)
     sanction_list_confirmed_match = models.BooleanField(null=True)
-    pregnant = models.BooleanField(blank=True, null=True)
-    disability = models.CharField(null=True)
-    observed_disability = models.CharField(null=True)
-    disability_certificate_picture = models.ImageField(storage=get_hope_storage(), blank=True, null=True)
-    seeing_disability = models.CharField(null=True)
-    hearing_disability = models.CharField(null=True)
-    physical_disability = models.CharField(null=True)
-    memory_disability = models.CharField(null=True)
-    selfcare_disability = models.CharField(null=True)
-    comms_disability = models.CharField(null=True)
-    who_answers_phone = models.CharField(null=True)
-    who_answers_alt_phone = models.CharField(null=True)
-    fchild_hoh = models.BooleanField(null=True)
+    internal_data = models.JSONField(null=True)
     child_hoh = models.BooleanField(null=True)
-    detail_id = models.CharField(blank=True, null=True)
-    program_registration_id = models.CharField(blank=True, null=True)
-    preferred_language = models.CharField(blank=True, null=True)
-    relationship_confirmed = models.BooleanField(null=True)
-    age_at_registration = models.SmallIntegerField(blank=True, null=True)
-    origin_unicef_id = models.CharField(blank=True, null=True)
-    is_migration_handled = models.BooleanField(null=True)
-    migrated_at = models.DateTimeField(blank=True, null=True)
+    fchild_hoh = models.BooleanField(null=True)
+    disability_certificate_picture = models.ImageField(storage=get_hope_storage(), blank=True, null=True)
     vector_column = models.TextField(blank=True, null=True)  # This field type is a guess.
-    business_area = models.ForeignKey(
-        BusinessArea, on_delete=models.DO_NOTHING, related_name="individual_business_area", null=True
-    )
+    phone_no_alternative_valid = models.BooleanField(blank=True, null=True)
+    phone_no_valid = models.BooleanField(blank=True, null=True)
+    preferred_language = models.CharField(max_length=6, blank=True, null=True)
+    relationship_confirmed = models.BooleanField(null=True)
+    email = models.CharField(max_length=255, null=True)
+    age_at_registration = models.SmallIntegerField(blank=True, null=True)
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="individual_copied_from", blank=True, null=True
     )
-    household = models.ForeignKey(
-        Household, on_delete=models.DO_NOTHING, related_name="individual_household", blank=True, null=True
-    )
+    is_migration_handled = models.BooleanField(null=True)
+    origin_unicef_id = models.CharField(max_length=100, blank=True, null=True)
+    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="individual_program", null=True)
     individual_collection = models.ForeignKey(
         "Individualcollection",
         on_delete=models.DO_NOTHING,
@@ -1626,20 +1627,18 @@ class Individual(HopeModel):
         blank=True,
         null=True,
     )
-    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="individual_program", null=True)
-    registration_data_import = models.ForeignKey(
-        "DataRegistrationdataimport",
-        on_delete=models.DO_NOTHING,
-        related_name="individual_registration_data_import",
-        null=True,
-    )
+    payment_delivery_phone_no = models.CharField(max_length=128, blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
+    detail_id = models.CharField(max_length=150, blank=True, null=True)
+    program_registration_id = models.CharField(max_length=100, blank=True, null=True)
+    rdi_merge_status = models.CharField(max_length=10, null=True)
     biometric_deduplication_batch_results = models.JSONField(null=True)
-    biometric_deduplication_batch_status = models.CharField(null=True)
+    biometric_deduplication_batch_status = models.CharField(max_length=50, null=True)
     biometric_deduplication_golden_record_results = models.JSONField(null=True)
-    biometric_deduplication_golden_record_status = models.CharField(null=True)
-    identification_key = models.CharField(blank=True, null=True)
-    originating_id = models.CharField(unique=True, blank=True, null=True)
-    country_workspace_id = models.CharField(blank=True, null=True)
+    biometric_deduplication_golden_record_status = models.CharField(max_length=50, null=True)
+    identification_key = models.CharField(max_length=255, blank=True, null=True)
+    originating_id = models.CharField(unique=True, max_length=150, blank=True, null=True)
+    country_workspace_id = models.CharField(max_length=150, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1651,7 +1650,7 @@ class Individual(HopeModel):
 
 class Individualcollection(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    unicef_id = models.CharField(blank=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1663,20 +1662,20 @@ class Individualcollection(HopeModel):
 
 class Individualidentity(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    created = models.DateTimeField(null=True)
-    modified = models.DateTimeField(null=True)
-    rdi_merge_status = models.CharField(null=True)
-    is_removed = models.BooleanField(null=True)
-    number = models.CharField(null=True)
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="individualidentity_copied_from", blank=True, null=True
+    number = models.CharField(max_length=255, null=True)
+    individual = models.ForeignKey(
+        Individual, on_delete=models.DO_NOTHING, related_name="individualidentity_individual", null=True
     )
     country = models.ForeignKey(
         Country, on_delete=models.DO_NOTHING, related_name="individualidentity_country", blank=True, null=True
     )
-    individual = models.ForeignKey(
-        Individual, on_delete=models.DO_NOTHING, related_name="individualidentity_individual", null=True
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="individualidentity_copied_from", blank=True, null=True
     )
+    created = models.DateTimeField(null=True)
+    is_removed = models.BooleanField(null=True)
+    modified = models.DateTimeField(null=True)
+    rdi_merge_status = models.CharField(max_length=10, null=True)
     removed_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1689,21 +1688,21 @@ class Individualidentity(HopeModel):
 
 class Individualroleinhousehold(HopeModel):
     id = models.UUIDField(primary_key=True)
-    rdi_merge_status = models.CharField(null=True)
-    is_removed = models.BooleanField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     last_sync_at = models.DateTimeField(blank=True, null=True)
-    role = models.CharField(null=True)
-    copied_from = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_copied_from", blank=True, null=True
-    )
+    role = models.CharField(max_length=255, null=True)
     household = models.ForeignKey(
         Household, on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_household", null=True
     )
     individual = models.ForeignKey(
         Individual, on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_individual", null=True
     )
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="individualroleinhousehold_copied_from", blank=True, null=True
+    )
+    is_removed = models.BooleanField(null=True)
+    rdi_merge_status = models.CharField(max_length=10, null=True)
     removed_date = models.DateTimeField(blank=True, null=True)
 
     class Meta:
@@ -1736,20 +1735,20 @@ class Acceptanceprocessthreshold(HopeModel):
 
 class Account(HopeModel):
     id = models.UUIDField(primary_key=True)
-    rdi_merge_status = models.CharField(null=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    signature_hash = models.CharField(null=True)
+    signature_hash = models.CharField(max_length=40, null=True)
     data = models.JSONField(null=True)
-    unique_key = models.CharField(blank=True, null=True)
+    unique_key = models.CharField(max_length=256, blank=True, null=True)
     individual = models.ForeignKey(
         Individual, on_delete=models.DO_NOTHING, related_name="account_individual", null=True
     )
+    rdi_merge_status = models.CharField(max_length=10, null=True)
     is_unique = models.BooleanField(null=True)
     account_type = models.ForeignKey(
         "Accounttype", on_delete=models.DO_NOTHING, related_name="account_account_type", null=True
     )
-    number = models.CharField(blank=True, null=True)
+    number = models.CharField(max_length=256, blank=True, null=True)
     financial_institution = models.ForeignKey(
         "Financialinstitution",
         on_delete=models.DO_NOTHING,
@@ -1769,10 +1768,10 @@ class Account(HopeModel):
 
 class Accounttype(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    key = models.CharField(unique=True, null=True)
-    label = models.CharField(null=True)
+    key = models.CharField(unique=True, max_length=255, null=True)
+    label = models.CharField(max_length=255, null=True)
     unique_fields = models.TextField(null=True)  # This field type is a guess.
-    payment_gateway_id = models.CharField(blank=True, null=True)
+    payment_gateway_id = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1786,8 +1785,8 @@ class Approval(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    type = models.CharField(null=True)
-    comment = models.CharField(blank=True, null=True)
+    type = models.CharField(max_length=50, null=True)
+    comment = models.CharField(max_length=500, blank=True, null=True)
     approval_process = models.ForeignKey(
         "Approvalprocess", on_delete=models.DO_NOTHING, related_name="approval_approval_process", null=True
     )
@@ -1807,12 +1806,12 @@ class Approvalprocess(HopeModel):
     sent_for_approval_date = models.DateTimeField(blank=True, null=True)
     sent_for_authorization_date = models.DateTimeField(blank=True, null=True)
     sent_for_finance_release_date = models.DateTimeField(blank=True, null=True)
-    approval_number_required = models.IntegerField(null=True)
-    authorization_number_required = models.IntegerField(null=True)
-    finance_release_number_required = models.IntegerField(null=True)
     payment_plan = models.ForeignKey(
         "PaymentPlan", on_delete=models.DO_NOTHING, related_name="approvalprocess_payment_plan", null=True
     )
+    approval_number_required = models.IntegerField(null=True)
+    authorization_number_required = models.IntegerField(null=True)
+    finance_release_number_required = models.IntegerField(null=True)
 
     class Meta:
         managed = False
@@ -1826,11 +1825,11 @@ class Deliverymechanism(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    payment_gateway_id = models.CharField(unique=True, blank=True, null=True)
-    code = models.CharField(unique=True, null=True)
-    name = models.CharField(unique=True, null=True)
+    payment_gateway_id = models.CharField(unique=True, max_length=255, blank=True, null=True)
+    code = models.CharField(unique=True, max_length=255, null=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
     is_active = models.BooleanField(null=True)
-    transfer_type = models.CharField(null=True)
+    transfer_type = models.CharField(max_length=255, null=True)
     account_type = models.ForeignKey(
         Accounttype, on_delete=models.DO_NOTHING, related_name="deliverymechanism_account_type", blank=True, null=True
     )
@@ -1874,12 +1873,12 @@ class Financialinstitution(HopeModel):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(null=True)
-    type = models.CharField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    type = models.CharField(max_length=30, null=True)
     country = models.ForeignKey(
         Country, on_delete=models.DO_NOTHING, related_name="financialinstitution_country", blank=True, null=True
     )
-    swift_code = models.CharField(blank=True, null=True)
+    swift_code = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1896,7 +1895,7 @@ class Financialinstitutionmapping(HopeModel):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    code = models.CharField(null=True)
+    code = models.CharField(max_length=30, null=True)
     financial_institution = models.ForeignKey(
         Financialinstitution,
         on_delete=models.DO_NOTHING,
@@ -1925,12 +1924,12 @@ class Financialserviceprovider(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(unique=True, null=True)
-    vision_vendor_number = models.CharField(unique=True, null=True)
+    name = models.CharField(unique=True, max_length=100, null=True)
+    vision_vendor_number = models.CharField(unique=True, max_length=100, null=True)
     distribution_limit = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
-    communication_channel = models.CharField(null=True)
+    communication_channel = models.CharField(max_length=6, null=True)
     data_transfer_configuration = models.JSONField(blank=True, null=True)
-    payment_gateway_id = models.CharField(blank=True, null=True)
+    payment_gateway_id = models.CharField(max_length=255, blank=True, null=True)
     internal_data = models.JSONField(null=True)
 
     class Meta:
@@ -1994,8 +1993,8 @@ class Financialserviceproviderxlsxtemplate(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(null=True)
-    columns = models.CharField(null=True)
+    name = models.CharField(max_length=120, null=True)
+    columns = models.CharField(max_length=1000, null=True)
     core_fields = models.TextField(null=True)  # This field type is a guess.
     flex_fields = models.TextField(null=True)  # This field type is a guess.
     document_types = models.TextField(null=True)  # This field type is a guess.
@@ -2015,8 +2014,8 @@ class Followupinstruction(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    background_action_status = models.CharField(blank=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    background_action_status = models.CharField(max_length=255, blank=True, null=True)
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="followupinstruction_business_area", null=True
     )
@@ -2034,9 +2033,9 @@ class Followupinstruction(HopeModel):
 
 class Fspnamemapping(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    external_name = models.CharField(null=True)
-    hope_name = models.CharField(null=True)
-    source = models.CharField(null=True)
+    external_name = models.CharField(max_length=255, null=True)
+    hope_name = models.CharField(max_length=255, null=True)
+    source = models.CharField(max_length=30, null=True)
     fsp = models.ForeignKey(
         Financialserviceprovider, on_delete=models.DO_NOTHING, related_name="fspnamemapping_fsp", null=True
     )
@@ -2053,13 +2052,6 @@ class Fspxlsxtemplateperdeliverymechanism(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    delivery_mechanism = models.ForeignKey(
-        Deliverymechanism,
-        on_delete=models.DO_NOTHING,
-        related_name="fspxlsxtemplateperdeliverymechanism_delivery_mechanism",
-        blank=True,
-        null=True,
-    )
     financial_service_provider = models.ForeignKey(
         Financialserviceprovider,
         on_delete=models.DO_NOTHING,
@@ -2070,6 +2062,13 @@ class Fspxlsxtemplateperdeliverymechanism(HopeModel):
         Financialserviceproviderxlsxtemplate,
         on_delete=models.DO_NOTHING,
         related_name="fspxlsxtemplateperdeliverymechanism_xlsx_template",
+        null=True,
+    )
+    delivery_mechanism = models.ForeignKey(
+        Deliverymechanism,
+        on_delete=models.DO_NOTHING,
+        related_name="fspxlsxtemplateperdeliverymechanism_delivery_mechanism",
+        blank=True,
         null=True,
     )
 
@@ -2086,35 +2085,24 @@ class Payment(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    signature_hash = models.CharField(null=True)
-    status = models.CharField(null=True)
+    status = models.CharField(max_length=255, null=True)
     status_date = models.DateTimeField(null=True)
     entitlement_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     entitlement_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     delivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     delivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     delivery_date = models.DateTimeField(blank=True, null=True)
-    transaction_reference_id = models.CharField(blank=True, null=True)
-    transaction_status_blockchain_link = models.CharField(blank=True, null=True)
-    conflicted = models.BooleanField(null=True)
+    transaction_reference_id = models.CharField(max_length=255, blank=True, null=True)
     excluded = models.BooleanField(null=True)
     entitlement_date = models.DateTimeField(blank=True, null=True)
-    is_follow_up = models.BooleanField(null=True)
-    reason_for_unsuccessful_payment = models.CharField(blank=True, null=True)
-    order_number = models.IntegerField(blank=True, null=True)
-    token_number = models.IntegerField(blank=True, null=True)
-    additional_collector_name = models.CharField(blank=True, null=True)
-    additional_document_type = models.CharField(blank=True, null=True)
-    additional_document_number = models.CharField(blank=True, null=True)
-    fsp_auth_code = models.CharField(blank=True, null=True)
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="payment_business_area", null=True
     )
-    collector = models.ForeignKey(Individual, on_delete=models.DO_NOTHING, related_name="payment_collector", null=True)
-    delivery_type = models.ForeignKey(
-        Deliverymechanism, on_delete=models.DO_NOTHING, related_name="payment_delivery_type", blank=True, null=True
+    head_of_household = models.ForeignKey(
+        Individual, on_delete=models.DO_NOTHING, related_name="payment_head_of_household", blank=True, null=True
     )
+    household = models.ForeignKey(Household, on_delete=models.DO_NOTHING, related_name="payment_household", null=True)
+    parent = models.ForeignKey("PaymentPlan", on_delete=models.DO_NOTHING, related_name="payment_parent", null=True)
     financial_service_provider = models.ForeignKey(
         Financialserviceprovider,
         on_delete=models.DO_NOTHING,
@@ -2122,16 +2110,27 @@ class Payment(HopeModel):
         blank=True,
         null=True,
     )
-    head_of_household = models.ForeignKey(
-        Individual, on_delete=models.DO_NOTHING, related_name="payment_head_of_household", blank=True, null=True
+    collector = models.ForeignKey(Individual, on_delete=models.DO_NOTHING, related_name="payment_collector", null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    conflicted = models.BooleanField(null=True)
+    is_follow_up = models.BooleanField(null=True)
+    source_payment = models.ForeignKey(
+        "self", on_delete=models.DO_NOTHING, related_name="payment_source_payment", blank=True, null=True
     )
-    household = models.ForeignKey(Household, on_delete=models.DO_NOTHING, related_name="payment_household", null=True)
-    parent = models.ForeignKey("PaymentPlan", on_delete=models.DO_NOTHING, related_name="payment_parent", null=True)
+    reason_for_unsuccessful_payment = models.CharField(max_length=255, blank=True, null=True)
+    order_number = models.IntegerField(blank=True, null=True)
     program = models.ForeignKey(
         "Program", on_delete=models.DO_NOTHING, related_name="payment_program", blank=True, null=True
     )
-    source_payment = models.ForeignKey(
-        "self", on_delete=models.DO_NOTHING, related_name="payment_source_payment", blank=True, null=True
+    token_number = models.IntegerField(blank=True, null=True)
+    additional_collector_name = models.CharField(max_length=64, blank=True, null=True)
+    additional_document_number = models.CharField(max_length=128, blank=True, null=True)
+    additional_document_type = models.CharField(max_length=128, blank=True, null=True)
+    signature_hash = models.CharField(max_length=40, null=True)
+    transaction_status_blockchain_link = models.CharField(max_length=255, blank=True, null=True)
+    fsp_auth_code = models.CharField(max_length=128, blank=True, null=True)
+    delivery_type = models.ForeignKey(
+        Deliverymechanism, on_delete=models.DO_NOTHING, related_name="payment_delivery_type", blank=True, null=True
     )
     is_cash_assist = models.BooleanField(null=True)
     internal_data = models.JSONField(null=True)
@@ -2142,7 +2141,7 @@ class Payment(HopeModel):
     )
     extras = models.JSONField(null=True)
     sent_to_fsp_date = models.DateTimeField(blank=True, null=True)
-    collector_type = models.CharField(null=True)
+    collector_type = models.CharField(max_length=120, null=True)
     currency = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name="payment_currency", blank=True, null=True
     )
@@ -2178,8 +2177,6 @@ class PaymentPlan(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
     status_date = models.DateTimeField(null=True)
     start_date = models.DateTimeField(blank=True, null=True)
     end_date = models.DateTimeField(blank=True, null=True)
@@ -2192,8 +2189,8 @@ class PaymentPlan(HopeModel):
     total_delivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     total_undelivered_quantity = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     total_undelivered_quantity_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    status = models.CharField(null=True)
-    background_action_status = models.CharField(blank=True, null=True)
+    status = models.CharField(max_length=50, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
     dispersion_start_date = models.DateField(blank=True, null=True)
     dispersion_end_date = models.DateField(blank=True, null=True)
     female_children_count = models.IntegerField(null=True)
@@ -2202,23 +2199,25 @@ class PaymentPlan(HopeModel):
     male_adults_count = models.IntegerField(null=True)
     total_households_count = models.IntegerField(null=True)
     total_individuals_count = models.IntegerField(null=True)
-    imported_file_date = models.DateTimeField(blank=True, null=True)
-    steficon_applied_date = models.DateTimeField(blank=True, null=True)
-    exclusion_reason = models.TextField(blank=True, null=True)
-    exclude_household_error = models.TextField(blank=True, null=True)
-    name = models.CharField(blank=True, null=True)
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="paymentplan_business_area", null=True
     )
+    steficon_applied_date = models.DateTimeField(blank=True, null=True)
+    imported_file_date = models.DateTimeField(blank=True, null=True)
+    background_action_status = models.CharField(max_length=50, blank=True, null=True)
     program_cycle = models.ForeignKey(
         "ProgramCycle", on_delete=models.DO_NOTHING, related_name="paymentplan_program_cycle", null=True
     )
     source_payment_plan = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="paymentplan_source_payment_plan", blank=True, null=True
     )
+    exclusion_reason = models.TextField(blank=True, null=True)
+    exclude_household_error = models.TextField(blank=True, null=True)
+    version = models.BigIntegerField(null=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
     internal_data = models.JSONField(null=True)
     is_cash_assist = models.BooleanField(null=True)
-    build_status = models.CharField(blank=True, null=True)
+    build_status = models.CharField(max_length=50, blank=True, null=True)
     built_at = models.DateTimeField(blank=True, null=True)
     excluded_ids = models.TextField(blank=True, null=True)
     steficon_targeting_applied_date = models.DateTimeField(blank=True, null=True)
@@ -2240,7 +2239,7 @@ class PaymentPlan(HopeModel):
     )
     flag_exclude_if_active_adjudication_ticket = models.BooleanField(null=True)
     flag_exclude_if_on_sanction_list = models.BooleanField(null=True)
-    abort_comment = models.CharField(null=True)
+    abort_comment = models.CharField(max_length=255, null=True)
     flat_amount_value = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     custom_exchange_rate = models.BooleanField(null=True)
     currency = models.ForeignKey(
@@ -2255,7 +2254,7 @@ class PaymentPlan(HopeModel):
         blank=True,
         null=True,
     )
-    plan_type = models.CharField(null=True)
+    plan_type = models.CharField(max_length=20, null=True)
     export_tag = models.SmallIntegerField(blank=True, null=True)
     follow_up_instruction = models.ForeignKey(
         Followupinstruction,
@@ -2300,12 +2299,12 @@ class Paymentplangroup(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    name = models.CharField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    name = models.CharField(max_length=255, null=True)
     cycle = models.ForeignKey(
         "ProgramCycle", on_delete=models.DO_NOTHING, related_name="paymentplangroup_cycle", null=True
     )
-    background_action_status = models.CharField(blank=True, null=True)
+    background_action_status = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2322,8 +2321,8 @@ class Paymentplanpurpose(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    name = models.CharField(unique=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
     description = models.TextField(null=True)
 
     class Meta:
@@ -2361,13 +2360,13 @@ class Paymentplansplit(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    split_type = models.CharField(null=True)
+    split_type = models.CharField(max_length=24, null=True)
     chunks_no = models.IntegerField(blank=True, null=True)
     sent_to_payment_gateway = models.BooleanField(null=True)
-    order = models.IntegerField(null=True)
     payment_plan = models.ForeignKey(
         PaymentPlan, on_delete=models.DO_NOTHING, related_name="paymentplansplit_payment_plan", null=True
     )
+    order = models.IntegerField(null=True)
 
     class Meta:
         managed = False
@@ -2401,8 +2400,8 @@ class Paymentplansplitpayments(HopeModel):
 
 class Paymentplansupportingdocument(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    title = models.CharField(null=True)
-    file = models.CharField(null=True)
+    title = models.CharField(max_length=255, null=True)
+    file = models.CharField(max_length=100, null=True)
     uploaded_at = models.DateTimeField(null=True)
     payment_plan = models.ForeignKey(
         PaymentPlan, on_delete=models.DO_NOTHING, related_name="paymentplansupportingdocument_payment_plan", null=True
@@ -2420,17 +2419,17 @@ class Paymentverification(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    status = models.CharField(null=True)
+    status = models.CharField(max_length=50, null=True)
     status_date = models.DateTimeField(blank=True, null=True)
-    received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    sent_to_rapid_pro = models.BooleanField(null=True)
     payment_verification_plan = models.ForeignKey(
         "Paymentverificationplan",
         on_delete=models.DO_NOTHING,
         related_name="paymentverification_payment_verification_plan",
         null=True,
     )
+    received_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    version = models.BigIntegerField(null=True)
+    sent_to_rapid_pro = models.BooleanField(null=True)
     payment = models.ForeignKey(
         Payment, on_delete=models.DO_NOTHING, related_name="paymentverification_payment", null=True
     )
@@ -2447,11 +2446,9 @@ class Paymentverificationplan(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    status = models.CharField(null=True)
-    sampling = models.CharField(null=True)
-    verification_channel = models.CharField(null=True)
+    status = models.CharField(max_length=50, null=True)
+    sampling = models.CharField(max_length=50, null=True)
+    verification_channel = models.CharField(max_length=50, null=True)
     sample_size = models.IntegerField(blank=True, null=True)
     responded_count = models.IntegerField(blank=True, null=True)
     received_count = models.IntegerField(blank=True, null=True)
@@ -2459,16 +2456,18 @@ class Paymentverificationplan(HopeModel):
     received_with_problems_count = models.IntegerField(blank=True, null=True)
     confidence_interval = models.FloatField(blank=True, null=True)
     margin_of_error = models.FloatField(blank=True, null=True)
-    rapid_pro_flow_id = models.CharField(null=True)
-    rapid_pro_flow_start_uuids = models.TextField(null=True)  # This field type is a guess.
+    rapid_pro_flow_id = models.CharField(max_length=255, null=True)
     age_filter = models.JSONField(blank=True, null=True)
     excluded_admin_areas_filter = models.JSONField(blank=True, null=True)
-    sex_filter = models.CharField(blank=True, null=True)
+    sex_filter = models.CharField(max_length=10, blank=True, null=True)
     activation_date = models.DateTimeField(blank=True, null=True)
     completion_date = models.DateTimeField(blank=True, null=True)
+    version = models.BigIntegerField(null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
+    rapid_pro_flow_start_uuids = models.TextField(null=True)  # This field type is a guess.
     xlsx_file_exporting = models.BooleanField(null=True)
     xlsx_file_imported = models.BooleanField(null=True)
-    error = models.CharField(blank=True, null=True)
+    error = models.CharField(max_length=500, blank=True, null=True)
     payment_plan = models.ForeignKey(
         PaymentPlan, on_delete=models.DO_NOTHING, related_name="paymentverificationplan_payment_plan", null=True
     )
@@ -2485,7 +2484,7 @@ class Paymentverificationsummary(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    status = models.CharField(null=True)
+    status = models.CharField(max_length=50, null=True)
     activation_date = models.DateTimeField(blank=True, null=True)
     completion_date = models.DateTimeField(blank=True, null=True)
     payment_plan = models.OneToOneField(
@@ -2506,10 +2505,10 @@ class Paymentverificationsummary(HopeModel):
 
 class Westernuniondata(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    name = models.CharField(unique=True, null=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
     date = models.DateField(blank=True, null=True)
     amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    status = models.CharField(null=True)
+    status = models.CharField(max_length=20, null=True)
     error_msg = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -2525,9 +2524,9 @@ class Westernuniondata(HopeModel):
 
 class Westernunioninvoice(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    name = models.CharField(unique=True, null=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
     is_legacy = models.BooleanField(null=True)
-    advice_name = models.CharField(blank=True, null=True)
+    advice_name = models.CharField(max_length=255, blank=True, null=True)
     charges = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     date = models.DateField(blank=True, null=True)
     error_msg = models.TextField(blank=True, null=True)
@@ -2539,7 +2538,7 @@ class Westernunioninvoice(HopeModel):
         blank=True,
         null=True,
     )
-    status = models.CharField(null=True)
+    status = models.CharField(max_length=20, null=True)
 
     class Meta:
         managed = False
@@ -2554,7 +2553,7 @@ class Westernunioninvoice(HopeModel):
 
 class Westernunioninvoicepayment(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    transaction_status = models.CharField(blank=True, null=True)
+    transaction_status = models.CharField(max_length=1, blank=True, null=True)
     payment = models.ForeignKey(
         Payment, on_delete=models.DO_NOTHING, related_name="westernunioninvoicepayment_payment", null=True
     )
@@ -2579,10 +2578,10 @@ class Westernunionpaymentplanreport(HopeModel):
     payment_plan = models.ForeignKey(
         PaymentPlan, on_delete=models.DO_NOTHING, related_name="westernunionpaymentplanreport_payment_plan", null=True
     )
-    invoice = models.ForeignKey(
+    qcf_file = models.ForeignKey(
         Westernunioninvoice,
         on_delete=models.DO_NOTHING,
-        related_name="westernunionpaymentplanreport_invoice",
+        related_name="westernunionpaymentplanreport_qcf_file",
         null=True,
     )
 
@@ -2598,11 +2597,11 @@ class Beneficiarygroup(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(unique=True, null=True)
-    group_label = models.CharField(null=True)
-    group_label_plural = models.CharField(null=True)
-    member_label = models.CharField(null=True)
-    member_label_plural = models.CharField(null=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
+    group_label = models.CharField(max_length=255, null=True)
+    group_label_plural = models.CharField(max_length=255, null=True)
+    member_label = models.CharField(max_length=255, null=True)
+    member_label_plural = models.CharField(max_length=255, null=True)
     master_detail = models.BooleanField(null=True)
 
     class Meta:
@@ -2617,43 +2616,44 @@ class Beneficiarygroup(HopeModel):
 
 
 class Program(HopeModel):
-    is_removed = models.BooleanField(null=True)
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    last_sync_at = models.DateTimeField(blank=True, null=True)
-    version = models.BigIntegerField(null=True)
-    name = models.CharField(null=True)
-    status = models.CharField(null=True)
+    name = models.CharField(max_length=255, null=True)
+    status = models.CharField(max_length=10, null=True)
     start_date = models.DateField(null=True)
     end_date = models.DateField(blank=True, null=True)
-    description = models.CharField(null=True)
+    description = models.CharField(max_length=255, null=True)
     budget = models.DecimalField(max_digits=11, decimal_places=2, null=True)
-    frequency_of_payments = models.CharField(null=True)
-    sector = models.CharField(null=True)
-    scope = models.CharField(blank=True, null=True)
+    frequency_of_payments = models.CharField(max_length=50, null=True)
+    sector = models.CharField(max_length=50, null=True)
+    scope = models.CharField(max_length=50, blank=True, null=True)
     cash_plus = models.BooleanField(null=True)
     population_goal = models.IntegerField(null=True)
-    administrative_areas_of_implementation = models.CharField(null=True)
-    is_visible = models.BooleanField(null=True)
-    household_count = models.IntegerField(null=True)
-    individual_count = models.IntegerField(null=True)
-    partner_access = models.CharField(null=True)
-    biometric_deduplication_enabled = models.BooleanField(null=True)
+    administrative_areas_of_implementation = models.CharField(max_length=255, null=True)
     business_area = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="program_business_area", null=True
     )
+    last_sync_at = models.DateTimeField(blank=True, null=True)
+    is_removed = models.BooleanField(null=True)
+    version = models.BigIntegerField(null=True)
     data_collecting_type = models.ForeignKey(
         DataCollectingType, on_delete=models.DO_NOTHING, related_name="program_data_collecting_type", null=True
     )
+    is_visible = models.BooleanField(null=True)
+    household_count = models.IntegerField(null=True)
+    individual_count = models.IntegerField(null=True)
+    partner_access = models.CharField(max_length=50, null=True)
+    biometric_deduplication_enabled = models.BooleanField(null=True)
     beneficiary_group = models.ForeignKey(
         Beneficiarygroup, on_delete=models.DO_NOTHING, related_name="program_beneficiary_group", null=True
     )
-    collision_detector = models.CharField(null=True)
-    code = models.CharField(null=True)
+    collision_detector = models.CharField(max_length=200, null=True)
+    code = models.CharField(max_length=4, null=True)
     reconciliation_window_in_days = models.IntegerField(null=True)
     send_reconciliation_window_expiry_notifications = models.BooleanField(null=True)
-    identification_key_individual_label = models.CharField(blank=True, null=True)
+    status_rank = models.SmallIntegerField(blank=True, null=True)
+    identification_key_individual_label = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2667,7 +2667,6 @@ class Program(HopeModel):
 
 
 class ProgramAdminAreas(HopeModel):
-    id = models.BigAutoField(primary_key=True)
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="programadminareas_program", null=True
     )
@@ -2723,12 +2722,12 @@ class ProgramCycle(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     version = models.BigIntegerField(null=True)
-    unicef_id = models.CharField(blank=True, null=True)
-    title = models.CharField(blank=True, null=True)
-    status = models.CharField(null=True)
+    status = models.CharField(max_length=10, null=True)
     start_date = models.DateField(null=True)
     end_date = models.DateField(blank=True, null=True)
     program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, related_name="programcycle_program", null=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
+    unicef_id = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2758,7 +2757,7 @@ class DataDeduplicationenginesimilaritypair(HopeModel):
     program = models.ForeignKey(
         Program, on_delete=models.DO_NOTHING, related_name="datadeduplicationenginesimilaritypair_program", null=True
     )
-    status_code = models.CharField(null=True)
+    status_code = models.CharField(max_length=20, null=True)
 
     class Meta:
         managed = False
@@ -2772,16 +2771,16 @@ class DataImportdata(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    status = models.CharField(null=True)
-    business_area_slug = models.CharField(null=True)
-    file = models.CharField(blank=True, null=True)
-    data_type = models.CharField(null=True)
+    status = models.CharField(max_length=40, null=True)
+    business_area_slug = models.CharField(max_length=200, null=True)
+    file = models.CharField(max_length=100, blank=True, null=True)
+    data_type = models.CharField(max_length=4, null=True)
     number_of_households = models.IntegerField(blank=True, null=True)
     number_of_individuals = models.IntegerField(blank=True, null=True)
     error = models.TextField(null=True)
     validation_errors = models.TextField(null=True)
-    delivery_mechanisms_validation_errors = models.TextField(null=True)
     created_by_id = models.UUIDField(blank=True, null=True)
+    delivery_mechanisms_validation_errors = models.TextField(null=True)
 
     class Meta:
         managed = False
@@ -2795,7 +2794,7 @@ class DataKoboimportdata(HopeModel):
     importdata_ptr = models.OneToOneField(
         DataImportdata, on_delete=models.DO_NOTHING, related_name="datakoboimportdata_importdata_ptr", null=True
     )
-    kobo_asset_id = models.CharField(null=True)
+    kobo_asset_id = models.CharField(max_length=100, null=True)
     only_active_submissions = models.BooleanField(null=True)
     pull_pictures = models.BooleanField(null=True)
 
@@ -2811,7 +2810,7 @@ class DataKoboimportedsubmission(HopeModel):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(blank=True, null=True)
     kobo_submission_uuid = models.UUIDField(null=True)
-    kobo_asset_id = models.CharField(null=True)
+    kobo_asset_id = models.CharField(max_length=150, null=True)
     kobo_submission_time = models.DateTimeField(null=True)
     amended = models.BooleanField(null=True)
     imported_household = models.ForeignKey(
@@ -2841,29 +2840,12 @@ class DataRegistrationdataimport(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    version = models.BigIntegerField(null=True)
-    name = models.CharField(unique=True, null=True)
-    status = models.CharField(null=True)
+    name = models.CharField(unique=True, max_length=255, null=True)
+    status = models.CharField(max_length=255, null=True)
     import_date = models.DateTimeField(null=True)
-    data_source = models.CharField(null=True)
+    data_source = models.CharField(max_length=255, null=True)
     number_of_individuals = models.IntegerField(null=True)
     number_of_households = models.IntegerField(null=True)
-    batch_duplicates = models.IntegerField(null=True)
-    batch_possible_duplicates = models.IntegerField(null=True)
-    batch_unique = models.IntegerField(null=True)
-    golden_record_duplicates = models.IntegerField(null=True)
-    golden_record_possible_duplicates = models.IntegerField(null=True)
-    golden_record_unique = models.IntegerField(null=True)
-    dedup_engine_batch_duplicates = models.IntegerField(null=True)
-    dedup_engine_golden_record_duplicates = models.IntegerField(null=True)
-    error_message = models.TextField(null=True)
-    sentry_id = models.CharField(blank=True, null=True)
-    pull_pictures = models.BooleanField(null=True)
-    screen_beneficiary = models.BooleanField(null=True)
-    excluded = models.BooleanField(null=True)
-    erased = models.BooleanField(null=True)
-    refuse_reason = models.CharField(blank=True, null=True)
-    deduplication_engine_status = models.CharField(blank=True, null=True)
     business_area = models.ForeignKey(
         BusinessArea,
         on_delete=models.DO_NOTHING,
@@ -2871,6 +2853,23 @@ class DataRegistrationdataimport(HopeModel):
         blank=True,
         null=True,
     )
+    error_message = models.TextField(null=True)
+    version = models.BigIntegerField(null=True)
+    pull_pictures = models.BooleanField(null=True)
+    sentry_id = models.CharField(max_length=100, blank=True, null=True)
+    screen_beneficiary = models.BooleanField(null=True)
+    excluded = models.BooleanField(null=True)
+    erased = models.BooleanField(null=True)
+    refuse_reason = models.CharField(max_length=100, blank=True, null=True)
+    program = models.ForeignKey(
+        Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", blank=True, null=True
+    )
+    batch_duplicates = models.IntegerField(null=True)
+    batch_possible_duplicates = models.IntegerField(null=True)
+    batch_unique = models.IntegerField(null=True)
+    golden_record_duplicates = models.IntegerField(null=True)
+    golden_record_possible_duplicates = models.IntegerField(null=True)
+    golden_record_unique = models.IntegerField(null=True)
     import_data = models.OneToOneField(
         DataImportdata,
         on_delete=models.DO_NOTHING,
@@ -2878,12 +2877,12 @@ class DataRegistrationdataimport(HopeModel):
         blank=True,
         null=True,
     )
-    program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", blank=True, null=True
-    )
+    deduplication_engine_status = models.CharField(max_length=255, blank=True, null=True)
+    dedup_engine_batch_duplicates = models.IntegerField(null=True)
+    dedup_engine_golden_record_duplicates = models.IntegerField(null=True)
     import_from_ids = models.TextField(blank=True, null=True)
     exclude_external_collectors = models.BooleanField(null=True)
-    country_workspace_id = models.CharField(unique=True, blank=True, null=True)
+    country_workspace_id = models.CharField(unique=True, max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -2900,9 +2899,9 @@ class ListSanctionlist(HopeModel):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(null=True)
+    name = models.CharField(max_length=255, null=True)
     config = models.JSONField(null=True)
-    strategy = models.CharField(unique=True, null=True)
+    strategy = models.CharField(unique=True, max_length=200, null=True)
 
     class Meta:
         managed = False
@@ -2921,23 +2920,23 @@ class ListSanctionlistindividual(HopeModel):
     updated_at = models.DateTimeField(null=True)
     data_id = models.IntegerField(null=True)
     version_num = models.IntegerField(null=True)
-    first_name = models.CharField(null=True)
-    second_name = models.CharField(null=True)
-    third_name = models.CharField(null=True)
-    fourth_name = models.CharField(null=True)
-    full_name = models.CharField(null=True)
-    name_original_script = models.CharField(null=True)
-    un_list_type = models.CharField(null=True)
-    reference_number = models.CharField(null=True)
+    first_name = models.CharField(max_length=85, null=True)
+    second_name = models.CharField(max_length=85, null=True)
+    third_name = models.CharField(max_length=85, null=True)
+    full_name = models.CharField(max_length=255, null=True)
+    name_original_script = models.CharField(max_length=255, null=True)
+    un_list_type = models.CharField(max_length=100, null=True)
+    reference_number = models.CharField(max_length=50, null=True)
     listed_on = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(null=True)
     designation = models.TextField(null=True)
-    list_type = models.CharField(null=True)
-    street = models.CharField(null=True)
-    city = models.CharField(null=True)
-    state_province = models.CharField(null=True)
-    address_note = models.CharField(null=True)
+    list_type = models.CharField(max_length=50, null=True)
+    street = models.CharField(max_length=255, null=True)
+    city = models.CharField(max_length=255, null=True)
+    state_province = models.CharField(max_length=255, null=True)
+    address_note = models.CharField(max_length=255, null=True)
     active = models.BooleanField(null=True)
+    fourth_name = models.CharField(max_length=85, null=True)
     country_of_birth = models.ForeignKey(
         Country,
         on_delete=models.DO_NOTHING,
@@ -2965,7 +2964,7 @@ class ListSanctionlistindividualaliasname(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    name = models.CharField(null=True)
+    name = models.CharField(max_length=255, null=True)
     individual = models.ForeignKey(
         ListSanctionlistindividual,
         on_delete=models.DO_NOTHING,
@@ -2988,17 +2987,17 @@ class ListSanctionlistindividualcountries(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
+    individual = models.ForeignKey(
+        ListSanctionlistindividual,
+        on_delete=models.DO_NOTHING,
+        related_name="listsanctionlistindividualcountries_individual",
+        null=True,
+    )
     country = models.ForeignKey(
         Country,
         on_delete=models.DO_NOTHING,
         related_name="listsanctionlistindividualcountries_country",
         blank=True,
-        null=True,
-    )
-    individual = models.ForeignKey(
-        ListSanctionlistindividual,
-        on_delete=models.DO_NOTHING,
-        related_name="listsanctionlistindividualcountries_individual",
         null=True,
     )
 
@@ -3034,10 +3033,10 @@ class ListSanctionlistindividualdocument(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    document_number = models.CharField(null=True)
-    type_of_document = models.CharField(null=True)
-    date_of_issue = models.CharField(blank=True, null=True)
-    note = models.CharField(null=True)
+    document_number = models.CharField(max_length=255, null=True)
+    type_of_document = models.CharField(max_length=255, null=True)
+    date_of_issue = models.CharField(max_length=255, blank=True, null=True)
+    note = models.CharField(max_length=255, null=True)
     individual = models.ForeignKey(
         ListSanctionlistindividual,
         on_delete=models.DO_NOTHING,
@@ -3090,8 +3089,8 @@ class ListUploadedxlsxfile(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    file = models.CharField(null=True)
-    associated_email = models.CharField(null=True)
+    file = models.CharField(max_length=100, null=True)
+    associated_email = models.CharField(max_length=254, null=True)
 
     class Meta:
         managed = False
@@ -3147,17 +3146,17 @@ class Targetingcriteriarulefilter(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    comparison_method = models.CharField(null=True)
-    flex_field_classification = models.CharField(null=True)
-    field_name = models.CharField(null=True)
+    comparison_method = models.CharField(max_length=20, null=True)
+    field_name = models.CharField(max_length=50, null=True)
     arguments = models.JSONField(null=True)
-    round_number = models.IntegerField(blank=True, null=True)
     targeting_criteria_rule = models.ForeignKey(
         Targetingcriteriarule,
         on_delete=models.DO_NOTHING,
         related_name="targetingcriteriarulefilter_targeting_criteria_rule",
         null=True,
     )
+    flex_field_classification = models.CharField(max_length=20, null=True)
+    round_number = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -3171,17 +3170,17 @@ class Targetingindividualblockrulefilter(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    comparison_method = models.CharField(null=True)
-    flex_field_classification = models.CharField(null=True)
-    field_name = models.CharField(null=True)
+    comparison_method = models.CharField(max_length=20, null=True)
+    field_name = models.CharField(max_length=50, null=True)
     arguments = models.JSONField(null=True)
-    round_number = models.IntegerField(blank=True, null=True)
     individuals_filters_block = models.ForeignKey(
         "Targetingindividualrulefilterblock",
         on_delete=models.DO_NOTHING,
         related_name="targetingindividualblockrulefilter_individuals_filters_block",
         null=True,
     )
+    flex_field_classification = models.CharField(max_length=20, null=True)
+    round_number = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -3195,13 +3194,13 @@ class Targetingindividualrulefilterblock(HopeModel):
     id = models.UUIDField(primary_key=True)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
-    target_only_hoh = models.BooleanField(null=True)
     targeting_criteria_rule = models.ForeignKey(
         Targetingcriteriarule,
         on_delete=models.DO_NOTHING,
         related_name="targetingindividualrulefilterblock_targeting_criteria_rule",
         null=True,
     )
+    target_only_hoh = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -3213,25 +3212,25 @@ class Targetingindividualrulefilterblock(HopeModel):
 
 class Downpayment(HopeModel):
     rec_serial_number = models.IntegerField(primary_key=True)
-    business_area = models.CharField(null=True)
-    down_payment_reference = models.CharField(null=True)
-    document_type = models.CharField(null=True)
-    consumed_fc_number = models.CharField(null=True)
-    consumed_fc_item_number = models.CharField(blank=True, null=True)
+    business_area = models.CharField(max_length=4, null=True)
+    down_payment_reference = models.CharField(max_length=20, null=True)
+    document_type = models.CharField(max_length=10, null=True)
+    consumed_fc_number = models.CharField(max_length=10, null=True)
     total_down_payment_amount_local = models.DecimalField(max_digits=15, decimal_places=2, null=True)
     total_down_payment_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    currency_code = models.CharField(blank=True, null=True)
+    currency_code = models.CharField(max_length=5, blank=True, null=True)
     posting_date = models.DateField(blank=True, null=True)
     doc_year = models.IntegerField(blank=True, null=True)
-    doc_number = models.CharField(blank=True, null=True)
-    doc_item_number = models.CharField(blank=True, null=True)
+    doc_number = models.CharField(max_length=10, blank=True, null=True)
+    doc_item_number = models.CharField(max_length=3, blank=True, null=True)
     create_date = models.DateTimeField(blank=True, null=True)
-    created_by = models.CharField(blank=True, null=True)
+    created_by = models.CharField(max_length=20, blank=True, null=True)
     update_date = models.DateTimeField(blank=True, null=True)
-    updated_by = models.CharField(blank=True, null=True)
+    updated_by = models.CharField(max_length=20, blank=True, null=True)
     office = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="downpayment_office", blank=True, null=True
     )
+    consumed_fc_item_number = models.CharField(max_length=3, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -3243,32 +3242,32 @@ class Downpayment(HopeModel):
 
 class Fundscommitment(HopeModel):
     rec_serial_number = models.IntegerField(primary_key=True)
-    business_area = models.CharField(blank=True, null=True)
-    funds_commitment_number = models.CharField(blank=True, null=True)
-    document_type = models.CharField(blank=True, null=True)
-    document_text = models.CharField(blank=True, null=True)
-    currency_code = models.CharField(blank=True, null=True)
-    gl_account = models.CharField(blank=True, null=True)
+    business_area = models.CharField(max_length=4, blank=True, null=True)
+    funds_commitment_number = models.CharField(max_length=10, blank=True, null=True)
+    document_type = models.CharField(max_length=2, blank=True, null=True)
+    document_text = models.CharField(max_length=50, blank=True, null=True)
+    currency_code = models.CharField(max_length=5, blank=True, null=True)
+    gl_account = models.CharField(max_length=10, blank=True, null=True)
     commitment_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     commitment_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     total_open_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     total_open_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    vendor_id = models.CharField(blank=True, null=True)
+    vendor_id = models.CharField(max_length=10, blank=True, null=True)
     posting_date = models.DateField(blank=True, null=True)
-    vision_approval = models.CharField(blank=True, null=True)
-    document_reference = models.CharField(blank=True, null=True)
-    fc_status = models.CharField(blank=True, null=True)
-    funds_commitment_item = models.CharField(blank=True, null=True)
-    wbs_element = models.CharField(blank=True, null=True)
-    grant_number = models.CharField(blank=True, null=True)
+    vision_approval = models.CharField(max_length=1, blank=True, null=True)
+    document_reference = models.CharField(max_length=16, blank=True, null=True)
+    fc_status = models.CharField(max_length=1, blank=True, null=True)
     create_date = models.DateTimeField(blank=True, null=True)
-    created_by = models.CharField(blank=True, null=True)
+    created_by = models.CharField(max_length=20, blank=True, null=True)
     update_date = models.DateTimeField(blank=True, null=True)
-    updated_by = models.CharField(blank=True, null=True)
-    sponsor = models.CharField(blank=True, null=True)
-    sponsor_name = models.CharField(blank=True, null=True)
-    fund = models.CharField(blank=True, null=True)
-    funds_center = models.CharField(blank=True, null=True)
+    updated_by = models.CharField(max_length=20, blank=True, null=True)
+    grant_number = models.CharField(max_length=20, blank=True, null=True)
+    sponsor = models.CharField(max_length=10, blank=True, null=True)
+    sponsor_name = models.CharField(max_length=100, blank=True, null=True)
+    wbs_element = models.CharField(max_length=24, blank=True, null=True)
+    fund = models.CharField(max_length=10, blank=True, null=True)
+    funds_center = models.CharField(max_length=16, blank=True, null=True)
+    funds_commitment_item = models.CharField(max_length=3, blank=True, null=True)
     percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     office = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="fundscommitment_office", blank=True, null=True
@@ -3284,7 +3283,7 @@ class Fundscommitment(HopeModel):
 
 class Fundscommitmentgroup(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    funds_commitment_number = models.CharField(null=True)
+    funds_commitment_number = models.CharField(max_length=10, null=True)
 
     class Meta:
         managed = False
@@ -3295,33 +3294,33 @@ class Fundscommitmentgroup(HopeModel):
 
 
 class Fundscommitmentitem(HopeModel):
-    funds_commitment_item = models.CharField(null=True)
+    funds_commitment_item = models.CharField(max_length=3, null=True)
     rec_serial_number = models.IntegerField(primary_key=True)
-    vendor_id = models.CharField(blank=True, null=True)
-    business_area = models.CharField(blank=True, null=True)
+    vendor_id = models.CharField(max_length=10, blank=True, null=True)
+    business_area = models.CharField(max_length=4, blank=True, null=True)
     posting_date = models.DateField(blank=True, null=True)
-    vision_approval = models.CharField(blank=True, null=True)
-    document_reference = models.CharField(blank=True, null=True)
-    fc_status = models.CharField(blank=True, null=True)
-    wbs_element = models.CharField(blank=True, null=True)
-    grant_number = models.CharField(blank=True, null=True)
-    document_type = models.CharField(blank=True, null=True)
-    document_text = models.CharField(blank=True, null=True)
-    currency_code = models.CharField(blank=True, null=True)
-    gl_account = models.CharField(blank=True, null=True)
+    vision_approval = models.CharField(max_length=1, blank=True, null=True)
+    document_reference = models.CharField(max_length=16, blank=True, null=True)
+    fc_status = models.CharField(max_length=1, blank=True, null=True)
+    wbs_element = models.CharField(max_length=24, blank=True, null=True)
+    grant_number = models.CharField(max_length=20, blank=True, null=True)
+    document_type = models.CharField(max_length=2, blank=True, null=True)
+    document_text = models.CharField(max_length=50, blank=True, null=True)
+    currency_code = models.CharField(max_length=5, blank=True, null=True)
+    gl_account = models.CharField(max_length=10, blank=True, null=True)
     commitment_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     commitment_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     total_open_amount_local = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     total_open_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
-    sponsor = models.CharField(blank=True, null=True)
-    sponsor_name = models.CharField(blank=True, null=True)
-    fund = models.CharField(blank=True, null=True)
-    funds_center = models.CharField(blank=True, null=True)
+    sponsor = models.CharField(max_length=10, blank=True, null=True)
+    sponsor_name = models.CharField(max_length=100, blank=True, null=True)
+    fund = models.CharField(max_length=10, blank=True, null=True)
+    funds_center = models.CharField(max_length=16, blank=True, null=True)
     percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     create_date = models.DateTimeField(blank=True, null=True)
-    created_by = models.CharField(blank=True, null=True)
+    created_by = models.CharField(max_length=20, blank=True, null=True)
     update_date = models.DateTimeField(blank=True, null=True)
-    updated_by = models.CharField(blank=True, null=True)
+    updated_by = models.CharField(max_length=20, blank=True, null=True)
     funds_commitment_group = models.ForeignKey(
         Fundscommitmentgroup,
         on_delete=models.DO_NOTHING,
