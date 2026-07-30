@@ -464,6 +464,7 @@ class DataCollectingType(HopeModel):
     deprecated = models.BooleanField(null=True)
     type = models.CharField(max_length=32, blank=True, null=True)
     weight = models.SmallIntegerField(null=True)
+    collects_individual_data = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -1500,6 +1501,36 @@ class Household(HopeModel):
     currency = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name="household_currency", blank=True, null=True
     )
+    kab_female_age_group_0_5_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_6_11_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_12_17_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_18_59_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_60_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_0_5_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_6_11_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_12_17_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_18_59_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_60_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_0_5_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_6_11_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_12_17_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_0_5_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_6_11_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_12_17_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_size = models.IntegerField(blank=True, null=True)
+    kab_pregnant_count = models.IntegerField(blank=True, null=True)
+    kab_children_count = models.IntegerField(blank=True, null=True)
+    kab_female_children_count = models.IntegerField(blank=True, null=True)
+    kab_male_children_count = models.IntegerField(blank=True, null=True)
+    kab_children_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_children_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_children_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_other_sex_group_count = models.IntegerField(blank=True, null=True)
+    kab_unknown_sex_group_count = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
