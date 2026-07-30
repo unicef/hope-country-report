@@ -434,7 +434,6 @@ class Currency(HopeModel):
     code = models.CharField(unique=True, max_length=5, null=True)
     name = models.CharField(max_length=255, null=True)
     is_crypto = models.BooleanField(null=True)
-    isocode4217 = models.CharField(max_length=5, null=True)
     vision_code = models.CharField(max_length=5, null=True)
     active = models.BooleanField(null=True)
     number_of_decimals = models.SmallIntegerField(null=True)
@@ -648,8 +647,6 @@ class Country(HopeModel):
     parent = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="country_parent", blank=True, null=True
     )
-    isocode4217 = models.CharField(max_length=5, null=True)
-    iso_code_4217 = models.CharField(max_length=5, null=True)
     currency = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name="country_currency", blank=True, null=True
     )
