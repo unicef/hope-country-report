@@ -10,9 +10,9 @@ on:
       - feature/*
       - bugfix/*
       - hotfix/*
-#  pull_request:
-#    branches: [ develop, master ]
-#    types: [ synchronize, opened, reopened, ready_for_review ]
+  pull_request:
+    branches: [ develop, master ]
+    types: [ synchronize, opened, reopened, ready_for_review ]
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
@@ -72,7 +72,7 @@ jobs:
       db:
         image: postgis/postgis:14-3.5
         env:
-          POSTGRES_DATABASE: country_report
+          POSTGRES_DB: country_report
           POSTGRES_PASSWORD: postgres
           POSTGRES_USERNAME: postgres
         ports:
@@ -85,7 +85,7 @@ jobs:
       hopedb:
         image: postgis/postgis:14-3.5
         env:
-          POSTGRES_DATABASE: hopedb
+          POSTGRES_DB: hopedb
           POSTGRES_PASSWORD: postgres
           POSTGRES_USERNAME: postgres
         ports:

@@ -95,7 +95,7 @@ COPY uv.lock README.md MANIFEST.in pyproject.toml /app/
 COPY --chown=hope:unicef . /app/
 
 RUN --mount=type=cache,target=/root/.uv-cache \
-    find ../src -name 'node_modules' -prune \
+    find src/ -name 'node_modules' -prune \
         -o -name *.py -o -name *.html -o -name *.js -o -name *.css \
         -type f \
         -exec ls -l "{}" \;  | sha1sum | awk '{print $1}' > CODE_CHECKSUM \
@@ -180,7 +180,7 @@ CMD ["run"]
 
 LABEL distro="final"
 LABEL maintainer="hope@unicef.org"
-LABEL cheksum="$CHECKSUM"
+LABEL checksum="$CHECKSUM"
 
 LABEL org.opencontainers.image.authors="hope@unicef.org"
 LABEL org.opencontainers.image.description="Hope Country Report"

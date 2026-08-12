@@ -1553,7 +1553,6 @@ dependencies = [
     { name = "pypdf" },
     { name = "python-pptx" },
     { name = "pytopojson" },
-    { name = "pytz" },
     { name = "pyzipper" },
     { name = "qrcode" },
     { name = "redis" },
@@ -1579,7 +1578,6 @@ dev = [
     { name = "mypy" },
     { name = "pdbpp" },
     { name = "pre-commit" },
-    { name = "py" },
     { name = "pymdown-extensions" },
     { name = "pyquery" },
     { name = "pytest" },
@@ -1596,7 +1594,6 @@ dev = [
     { name = "tox-uv" },
     { name = "types-freezegun" },
     { name = "types-python-dateutil" },
-    { name = "types-pytz" },
     { name = "types-redis" },
     { name = "types-requests" },
     { name = "types-setuptools" },
@@ -1640,7 +1637,6 @@ mypy = [
     { name = "types-markdown" },
     { name = "types-pygments" },
     { name = "types-python-dateutil" },
-    { name = "types-pytz" },
     { name = "types-qrcode" },
     { name = "types-requests" },
 ]
@@ -1745,7 +1741,6 @@ requires-dist = [
     { name = "pillow" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "psycopg", extras = ["binary"] },
-    { name = "py", marker = "extra == 'dev'" },
     { name = "py-vapid" },
     { name = "pyhtml2pdf" },
     { name = "pymdown-extensions", marker = "extra == 'dev'" },
@@ -1762,7 +1757,6 @@ requires-dist = [
     { name = "pytest-xdist", marker = "extra == 'dev'" },
     { name = "python-pptx" },
     { name = "pytopojson" },
-    { name = "pytz" },
     { name = "pyzipper" },
     { name = "qrcode" },
     { name = "redis" },
@@ -1787,8 +1781,6 @@ requires-dist = [
     { name = "types-pygments", marker = "extra == 'mypy'" },
     { name = "types-python-dateutil", marker = "extra == 'dev'" },
     { name = "types-python-dateutil", marker = "extra == 'mypy'" },
-    { name = "types-pytz", marker = "extra == 'dev'" },
-    { name = "types-pytz", marker = "extra == 'mypy'" },
     { name = "types-qrcode", marker = "extra == 'mypy'" },
     { name = "types-redis", marker = "extra == 'dev'" },
     { name = "types-requests", marker = "extra == 'dev'" },
@@ -2808,15 +2800,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/2c/c1547871be3790676e8868b38655496422f94f0978dfb66b74bdba2f1676/psycopg_binary-3.3.4-cp314-cp314-musllinux_1_2_riscv64.whl", hash = "sha256:6b9016b1714da4dd5ecaaa75b82098aa5a0b87854ce9b092e21c27c4ae23e014", size = 3946204, upload-time = "2026-05-01T23:31:39.626Z" },
     { url = "https://files.pythonhosted.org/packages/c4/b1/f6670f00fa7ea601584623f6c11602ab92117d83eaff885e0210f6de7418/psycopg_binary-3.3.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:47c656a8a7ba6eb0cff1801a4caaa9c8bdc12d03080e273aff1c8ac39971a77e", size = 4255811, upload-time = "2026-05-01T23:31:44.986Z" },
     { url = "https://files.pythonhosted.org/packages/eb/e6/5fff07a70d1f945ed90ae131c3bd76cab32beff7c58c6db15ad5820b6d1f/psycopg_binary-3.3.4-cp314-cp314-win_amd64.whl", hash = "sha256:c37e024c07308cd06cf3ec51bfd0e7f6157585a4d84d1bce4a7f5f7913719bf8", size = 3666849, upload-time = "2026-05-01T23:31:51.165Z" },
-]
-
-[[package]]
-name = "py"
-version = "1.11.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/98/ff/fec109ceb715d2a6b4c4a85a61af3b40c723a961e8828319fbcb15b868dc/py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719", size = 207796, upload-time = "2021-11-04T17:17:01.377Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/f0/10642828a8dfb741e5f3fbaac830550a518a775c7fff6f04a007259b0548/py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378", size = 98708, upload-time = "2021-11-04T17:17:00.152Z" },
 ]
 
 [[package]]
@@ -3891,15 +3874,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/df/9a/aefb9f80ff79641d36149352afe66ca835c5e6894deb518418f786f4b8ad/types_python_dateutil-2.9.0.20260716.tar.gz", hash = "sha256:1d55d1c3024bdb4861bb6a6622c9ec800c433d87bdc5b16fb84cdd0eed4ef2cb", size = 17516, upload-time = "2026-07-16T04:48:06.604Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/16/85/cff97326a81e7e8877803e78e3ea56c840b85bb811934b9c936f7c40f185/types_python_dateutil-2.9.0.20260716-py3-none-any.whl", hash = "sha256:1ae41d51a5c5f6bbeeb7f1f34df7086d55ff1605cf88d2ed71a7a276e1a7794e", size = 18443, upload-time = "2026-07-16T04:48:05.793Z" },
-]
-
-[[package]]
-name = "types-pytz"
-version = "2026.2.0.20260518"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9f/d9/9fa4019d2235bd374293e1fd4153879b28b6ae1d2bae98addd352c9713f2/types_pytz-2026.2.0.20260518.tar.gz", hash = "sha256:e5d254329e9c4e91f0781b22c43a4bb2d10bb044d97b24c4b05d45567b0eae16", size = 10871, upload-time = "2026-05-18T06:02:45.789Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/89/41e80670779a223d8bc8bc83019a619988cfa5c432cedac5cec23884fbc4/types_pytz-2026.2.0.20260518-py3-none-any.whl", hash = "sha256:3a12eaa38f476bd650902a9c9bb442f03f3c7dee2be5c5848bce61bd708d205a", size = 10125, upload-time = "2026-05-18T06:02:44.968Z" },
 ]
 
 [[package]]
