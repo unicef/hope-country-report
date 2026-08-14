@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.power_query",
     "hope_country_report.apps.core",
     "hope_country_report.apps.stream",
+    "hope_country_report.apps.bitcaster.apps.AppConfig",
     "streaming",
     "django.contrib.contenttypes",
     # "smart_admin.apps.SmartTemplateConfig",  # templates
@@ -265,6 +266,13 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 EMAIL_USE_SSL = env("EMAIL_USE_SSL")
 
+
+BITCASTER_APPLICATION_SLUG = env("BITCASTER_APPLICATION_SLUG")
+BITCASTER_BAE = env("BITCASTER_BAE")
+BITCASTER_CLIENT_CLASS = env("BITCASTER_CLIENT_CLASS")
+BITCASTER_ENABLED = env("BITCASTER_ENABLED")
+BITCASTER_ORGANIZATION_SLUG = env("BITCASTER_ORGANIZATION_SLUG")
+BITCASTER_PROJECT_SLUG = env("BITCASTER_PROJECT_SLUG")
 
 from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa

@@ -180,6 +180,20 @@ wheels = [
 ]
 
 [[package]]
+name = "bitcaster-sdk"
+version = "0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "humanfriendly" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/9c/686581e3c7da198c0bcfaed325e76bd173f0a3dc5de513d0214800a2bbce/bitcaster_sdk-0.3.tar.gz", hash = "sha256:4973c4078dff514a88d5791b386f896ba9eb505ad5ae4f71497e607d40add0c7", size = 13191, upload-time = "2026-07-29T18:43:11.312Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/72/3b66088360ece24af6c656c81f6bebef1d35760440d14c8a044a6617ab29/bitcaster_sdk-0.3-py3-none-any.whl", hash = "sha256:8880f54df93dba9ee20ba4aeea29c271b7ac4d7ab2a3fbfb2b7eab072a59d394", size = 19578, upload-time = "2026-07-29T18:43:10.05Z" },
+]
+
+[[package]]
 name = "bracex"
 version = "3.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1489,6 +1503,7 @@ name = "hcr"
 source = { editable = "." }
 dependencies = [
     { name = "azure-devops" },
+    { name = "bitcaster-sdk" },
     { name = "celery" },
     { name = "django" },
     { name = "django-admin-cursor-paginator" },
@@ -1651,6 +1666,7 @@ types-decorator = [
 [package.metadata]
 requires-dist = [
     { name = "azure-devops" },
+    { name = "bitcaster-sdk", specifier = ">=0.3,<1" },
     { name = "cairosvg", marker = "extra == 'docs'", specifier = ">=2.9.0" },
     { name = "celery" },
     { name = "django", specifier = ">=5.1,<5.3" },
@@ -1825,6 +1841,18 @@ version = "0.1.13"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/31/a76f4bfa885f93b8167cb4c85cf32b54d1f64384d0b897d45bc6d19b7b45/htmlmin2-0.1.13-py3-none-any.whl", hash = "sha256:75609f2a42e64f7ce57dbff28a39890363bde9e7e5885db633317efbdf8c79a2", size = 34486, upload-time = "2023-03-14T21:28:30.388Z" },
+]
+
+[[package]]
+name = "humanfriendly"
+version = "10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyreadline3", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cc/3f/2c29224acb2e2df4d2046e4c73ee2662023c58ff5b113c4c1adac0886c43/humanfriendly-10.0.tar.gz", hash = "sha256:6b0b831ce8f15f7300721aa49829fc4e83921a9a301cc7f606be6686a2288ddc", size = 360702, upload-time = "2021-09-17T21:40:43.31Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f0/0f/310fb31e39e2d734ccaa2c0fb981ee41f7bd5056ce9bc29b2248bd569169/humanfriendly-10.0-py2.py3-none-any.whl", hash = "sha256:1697e1a8a8f550fd43c2865cd84542fc175a61dcb779b6fee18cf6b6ccba1477", size = 86794, upload-time = "2021-09-17T21:40:39.897Z" },
 ]
 
 [[package]]
@@ -2967,6 +2995,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ae/48/79e774ea00b671d08867f06d9258203be81834236c150ac00e942d8fc4db/pyquery-2.0.1.tar.gz", hash = "sha256:0194bb2706b12d037db12c51928fe9ebb36b72d9e719565daba5a6c595322faf", size = 44999, upload-time = "2024-08-30T08:12:24.289Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/f5/5067b48012967ea166b9bd0a015b69e0560e4c6e7c06f28d9bab8f9dd10b/pyquery-2.0.1-py3-none-any.whl", hash = "sha256:aedfa0bd0eb9afc94b3ddbec8f375a6362b32bc9662f46e3e0d866483f4771b0", size = 22573, upload-time = "2024-08-30T08:12:22.586Z" },
+]
+
+[[package]]
+name = "pyreadline3"
+version = "3.5.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b6/6d/f94028646d7bbe6d9d873c47ee7c246f2d29129d253f0d96cb6fcab70733/pyreadline3-3.5.6.tar.gz", hash = "sha256:61e53218b99656091ddb077df9e71f25850e72e030b6183b39c9b7e6e4f4a9bf", size = 100368, upload-time = "2026-05-14T17:55:04.471Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/5e/35c856e186b74678c24927847ad9895a51f1bc02a0c6126477a6c6040064/pyreadline3-3.5.6-py3-none-any.whl", hash = "sha256:8449b734232e42a5dcd74048e39b60db2839a4c38cf3ae2bf7707d58b5389c0d", size = 85243, upload-time = "2026-05-14T17:55:03.262Z" },
 ]
 
 [[package]]
