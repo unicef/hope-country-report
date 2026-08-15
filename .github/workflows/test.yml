@@ -70,7 +70,7 @@ jobs:
         ports:
           - 6379:6379
       db:
-        image: postgis/postgis:14-3.5
+        image: postgis/postgis:15-3.5
         env:
           POSTGRES_DB: country_report
           POSTGRES_PASSWORD: postgres
@@ -83,7 +83,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       hopedb:
-        image: postgis/postgis:14-3.5
+        image: postgis/postgis:15-3.5
         env:
           POSTGRES_DB: hopedb
           POSTGRES_PASSWORD: postgres
