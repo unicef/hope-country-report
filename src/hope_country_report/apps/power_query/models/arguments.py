@@ -8,15 +8,12 @@ from django.utils.text import slugify
 from natural_keys import NaturalKeyModel
 
 from ...core.models import CountryOffice
-from ..processors import mimetype_map
 from ._base import AdminReversable
 
 if TYPE_CHECKING:
     from typing import Any, Iterable
 
 logger = logging.getLogger(__name__)
-
-MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
 def get_matrix(param, input_: "Iterable" = None) -> "list[dict[str,str]]":
