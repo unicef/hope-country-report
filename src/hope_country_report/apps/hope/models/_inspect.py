@@ -727,8 +727,6 @@ class Grievanceticket(HopeModel):
         blank=True,
         null=True,
     )
-    submission_channel = models.IntegerField(blank=True, null=True)
-    assigned_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
