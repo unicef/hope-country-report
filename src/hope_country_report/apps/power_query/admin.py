@@ -566,7 +566,7 @@ class ReportDocumentAdmin(
     readonly_fields = ("arguments", "report", "dataset", "content_type", "formatter", "info", "size")
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("report__query", "dataset")
+        qs = super().get_queryset(request).select_related("report__query", "dataset", "formatter")
         if request.user.is_superuser:
             return qs
         if state.must_tenant:

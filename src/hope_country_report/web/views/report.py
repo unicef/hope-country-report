@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from adminfilters.utils import parse_bool
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Count
+from django.db.models import Count, F
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 class OfficeConfigurationListView(SelectedOfficeMixin, PermissionRequiredMixin, ListView[ReportConfiguration]):
     template_name = "web/office/config_list.html"
     permission_required = ["power_query.view_reportconfiguration"]
-    paginate_by = 50
+    paginate_by = 15
     ordering_fields = [
         "title",
         "active",
@@ -35,10 +35,10 @@ class OfficeConfigurationListView(SelectedOfficeMixin, PermissionRequiredMixin, 
     ]
 
     def get_ordering(self):
-        ordering = self.request.GET.get("ordering", "title")
+        ordering = self.request.GET.get("ordering", "-last_run")
         # prevent ordering by arbitrary fields
         if ordering.lstrip("-") not in self.ordering_fields:
-            return "title"
+            return "-last_run"
         return ordering
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -88,9 +88,17 @@ class OfficeConfigurationListView(SelectedOfficeMixin, PermissionRequiredMixin, 
         if report_name := self.request.GET.get("report", None):
             qs = qs.filter(name=report_name)
 
-        qs = qs.annotate(
-            restricted_count=Count("limit_access_to", distinct=True),
-            is_parametrized=Count("query__parametrizer", distinct=True),
+        qs = (
+            qs.annotate(
+                restricted_count=Count("limit_access_to", distinct=True),
+                is_parametrized=Count("query__parametrizer", distinct=True),
+            )
+            .select_related(
+                "country_office",
+                "query",
+                "query__parametrizer",
+            )
+            .prefetch_related("tags")
         )
 
         ordering = self.get_ordering()
@@ -100,6 +108,10 @@ class OfficeConfigurationListView(SelectedOfficeMixin, PermissionRequiredMixin, 
         if "restricted" in ordering:
             ordering = ordering.replace("restricted", "restricted_count")
 
+        if ordering == "-last_run":
+            return qs.order_by(F("last_run").desc(nulls_last=True))
+        if ordering == "last_run":
+            return qs.order_by(F("last_run").asc(nulls_last=True))
         return qs.order_by(ordering)
 
 
