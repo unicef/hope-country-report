@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, NoReturn, Type
 from unittest.mock import Mock
 
 import factory
-import fitz
+import pymupdf as fitz
 import pytest
 import tablib
 from django.core.files.base import ContentFile

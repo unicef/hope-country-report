@@ -4,7 +4,7 @@ from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import fitz
+import pymupdf as fitz
 import pytest
 import tablib
 from django.contrib.auth.models import AnonymousUser

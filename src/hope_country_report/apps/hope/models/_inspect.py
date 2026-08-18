@@ -342,9 +342,6 @@ class BusinessArea(HopeModel):
     long_name = models.CharField(null=True)
     region_code = models.CharField(null=True)
     region_name = models.CharField(null=True)
-    kobo_username = models.CharField(blank=True, null=True)
-    kobo_token = models.CharField(blank=True, null=True)
-    kobo_url = models.CharField(blank=True, null=True)
     rapid_pro_host = models.CharField(blank=True, null=True)
     rapid_pro_payment_verification_token = models.CharField(blank=True, null=True)
     rapid_pro_messages_token = models.CharField(blank=True, null=True)
@@ -467,6 +464,7 @@ class DataCollectingType(HopeModel):
     household_filters_available = models.BooleanField(null=True)
     recalculate_composition = models.BooleanField(null=True)
     weight = models.SmallIntegerField(null=True)
+    collects_individual_data = models.BooleanField(null=True)
 
     class Meta:
         managed = False
@@ -729,6 +727,8 @@ class Grievanceticket(HopeModel):
         blank=True,
         null=True,
     )
+    submission_channel = models.IntegerField(blank=True, null=True)
+    assigned_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1502,6 +1502,36 @@ class Household(HopeModel):
     currency = models.ForeignKey(
         Currency, on_delete=models.DO_NOTHING, related_name="household_currency", blank=True, null=True
     )
+    kab_female_age_group_0_5_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_6_11_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_12_17_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_18_59_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_60_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_0_5_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_6_11_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_12_17_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_18_59_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_60_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_0_5_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_6_11_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_12_17_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_0_5_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_6_11_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_12_17_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_18_59_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_age_group_60_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_size = models.IntegerField(blank=True, null=True)
+    kab_pregnant_count = models.IntegerField(blank=True, null=True)
+    kab_children_count = models.IntegerField(blank=True, null=True)
+    kab_female_children_count = models.IntegerField(blank=True, null=True)
+    kab_male_children_count = models.IntegerField(blank=True, null=True)
+    kab_children_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_female_children_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_male_children_disabled_count = models.IntegerField(blank=True, null=True)
+    kab_other_sex_group_count = models.IntegerField(blank=True, null=True)
+    kab_unknown_sex_group_count = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False

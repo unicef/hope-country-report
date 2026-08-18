@@ -6,7 +6,7 @@ from collections.abc import Callable
 from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
-import fitz
+import pymupdf as fitz
 import pdfkit
 from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
