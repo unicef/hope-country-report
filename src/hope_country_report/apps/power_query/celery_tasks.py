@@ -20,6 +20,7 @@ from redis import StrictRedis
 from sentry_sdk import capture_exception
 
 from ...config.celery import app
+from ...signals import report_failed
 from .exceptions import QueryRunCanceled, QueryRunTerminated
 from .utils import sentry_tags
 
@@ -174,6 +175,7 @@ def refresh_report(self: PowerQueryTask, report_id: int, version: int = 0) -> "R
                 report.error_message = str(e)
                 report.sentry_error_id = str(capture_exception(e))
                 report.save(update_fields=["error_message", "sentry_error_id"])
+                report_failed.send(sender=ReportConfiguration, instance=report)
             except DjangoDbError as save_e:
                 logger.error(f"DB error saving failure details for report {report_id}: {save_e}")
             except Exception as save_e:
