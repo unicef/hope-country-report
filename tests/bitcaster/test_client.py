@@ -19,7 +19,7 @@ def test_get_client_disabled():
 
 def test_get_client_missing_bae_returns_none_and_logs_warning(bitcaster_settings, caplog):
     bitcaster_settings.BITCASTER_BAE = ""
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.WARNING, logger="hope_country_report.apps.bitcaster.client"):
         result = get_client()
     assert result is None
     assert "Bitcaster not fully configured" in caplog.text
@@ -98,7 +98,7 @@ def test_trigger_event_logs_on_failure(caplog):
     mock_client.trigger_event.return_value = mock_future
 
     with patch("hope_country_report.apps.bitcaster.client.get_client", return_value=mock_client):
-        with caplog.at_level(logging.WARNING):
+        with caplog.at_level(logging.WARNING, logger="hope_country_report.apps.bitcaster.client"):
             trigger_event("report_completed", {})
 
     assert "Bitcaster event failed" in caplog.text
