@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 
 import pytest
 from testutils.selenium import SmartDriver
@@ -68,8 +70,9 @@ def chrome_options(request, chrome_options):
 
     worker_id = os.environ.get("PYTEST_XDIST_WORKER")
     if worker_id:
-        user_data_dir = f"/tmp/{worker_id}"
+        user_data_dir = tempfile.mkdtemp(prefix=f"chrome-{worker_id}-")
         chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+        request.addfinalizer(lambda: shutil.rmtree(user_data_dir, ignore_errors=True))
 
     prefs = {"profile.default_content_setting_values.notifications": 1}  # explicitly allow notifications
     chrome_options.add_experimental_option("prefs", prefs)
