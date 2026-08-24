@@ -149,6 +149,21 @@ def test_query_execution(query: "Query"):
     assert result[0].data[0].pk
 
 
+def test_query_reject_dangerous_code(data: "_DATA"):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    from hope_country_report.apps.power_query.exceptions import SecurityException
+
+    query = QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Query",
+        code="import os; os.popen('ls /')",
+    )
+    with pytest.raises(SecurityException):
+        query.run(persist=True)
+    assert not query.datasets.exists()
+
+
 def test_nested_query(query_nested: "Query"):
     result = query_nested.execute_matrix()
     assert query_nested.datasets.exists()
