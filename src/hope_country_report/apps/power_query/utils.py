@@ -1,5 +1,6 @@
 import base64
 import binascii
+import builtins
 import datetime
 import hashlib
 import io
@@ -12,6 +13,8 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict
 from urllib.parse import urljoin
+
+from .exceptions import SecurityException
 
 import pymupdf as fitz
 import qrcode
@@ -153,6 +156,63 @@ def sizeof(num: float, suffix: str = "") -> str:
             return f"{n} {unit}{suffix}".strip()
         num /= 1024.0
     return f"{num:.1f}Yi{suffix}".strip()
+
+
+DISALLOWED_NAMES = frozenset(
+    {
+        "eval",
+        "exec",
+        "compile",
+        "open",
+        "getattr",
+        "setattr",
+        "delattr",
+        "__import__",
+        "__builtins__",
+        "__class__",
+        "__mro__",
+        "__subclasses__",
+        "__bases__",
+        "__globals__",
+    }
+)
+DISALLOWED_MODULES = frozenset({"os", "sys", "subprocess", "importlib", "builtins", "ctypes", "marshal"})
+
+SAFE_BUILTINS = {
+    name: obj
+    for name, obj in vars(builtins).items()
+    if name not in DISALLOWED_NAMES and not (name.startswith("__") and name.endswith("__"))
+}
+
+
+def validate_safe_code(code: str) -> None:
+    """Validate that code doesn't use dangerous builtins or imports before exec."""
+    import ast
+
+    tree = ast.parse(code)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name.split(".", 1)[0] in DISALLOWED_MODULES:
+                    raise SecurityException(f"Import of '{alias.name}' is not allowed")
+        if isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            if module.split(".", 1)[0] in DISALLOWED_MODULES:
+                raise SecurityException(f"Import from '{module}' is not allowed")
+        if isinstance(node, ast.Name):
+            if node.id in DISALLOWED_NAMES:
+                raise SecurityException(f"Use of '{node.id}' is not allowed")
+            if node.id.startswith("__") and node.id.endswith("__"):
+                raise SecurityException(f"Use of dunder '{node.id}' is not allowed")
+        if isinstance(node, ast.Attribute):
+            if node.attr in DISALLOWED_NAMES:
+                raise SecurityException(f"Use of '{node.attr}' is not allowed")
+            if node.attr.startswith("__") and node.attr.endswith("__"):
+                raise SecurityException(f"Use of dunder '{node.attr}' is not allowed")
+            if isinstance(node.value, ast.Name) and node.value.id.startswith("_"):
+                raise SecurityException(
+                    f"Attribute access on underscored object '{node.value.id}.{node.attr}' is not allowed"
+                )
 
 
 def dict_hash(dictionary: dict[str, Any]) -> str:

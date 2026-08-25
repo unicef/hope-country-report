@@ -13,6 +13,7 @@ from django.utils import timezone
 from datetime import timezone as tz
 from PIL import ExifTags, Image
 
+from hope_country_report.apps.power_query.exceptions import SecurityException
 from hope_country_report.apps.power_query.utils import (
     apply_exif_orientation,
     basicauth,
@@ -29,6 +30,7 @@ from hope_country_report.apps.power_query.utils import (
     sentry_tags,
     sizeof,
     to_dataset,
+    validate_safe_code,
 )
 from hope_country_report.utils.media import resource_path
 
@@ -416,3 +418,8 @@ def test_to_dataset_preserves_order():
         "Sample size",
         "Completion date",
     ]
+
+
+def test_validate_safe_code_rejects_os_import() -> None:
+    with pytest.raises(SecurityException):
+        validate_safe_code("import os; os.popen('ls /')")

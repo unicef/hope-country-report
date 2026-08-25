@@ -30,6 +30,9 @@ DATABASE_APPS_MAPPING: dict[str, str] = {
     "hope": "hope_ro",
 }
 
+GDAL_LIBRARY_PATH = env("GDAL_LIBRARY_PATH")
+GEOS_LIBRARY_PATH = env("GEOS_LIBRARY_PATH")
+
 MIGRATION_MODULES = {"hope": None}
 
 STORAGES = {
