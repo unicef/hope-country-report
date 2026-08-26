@@ -31,8 +31,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
-
 
 # @cleanup.select
 class ReportDocument(PowerQueryModel, FileProviderMixin, TimeStampMixin, models.Model):

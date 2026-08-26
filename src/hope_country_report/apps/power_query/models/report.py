@@ -16,7 +16,6 @@ from ....signals import report_completed
 from ....utils.mail import notify_report_completion, send_document_password
 from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
-from ..processors import mimetype_map
 from ._base import AdminReversable, ManageableObject, PowerQueryCeleryFields, PowerQueryModel, TimeStampMixin
 from .formatter import Formatter
 from .query import Query
@@ -28,8 +27,6 @@ if TYPE_CHECKING:
     from .dataset import Dataset
 
 logger = logging.getLogger(__name__)
-
-MIMETYPES = [(k, v) for k, v in mimetype_map.items()]
 
 
 class ReportConfiguration(

@@ -1,7 +1,7 @@
 import uuid
 
 import factory
-import pytz
+from datetime import timezone as tz
 from django.utils.text import slugify
 from factory import fuzzy, post_generation
 from faker import Faker
@@ -172,8 +172,8 @@ class HouseholdFactory(AutoRegisterModelFactory):
     business_area = factory.SubFactory(BusinessAreaFactory)
     head_of_household = factory.SubFactory(IndividualFactory)
     program = factory.SubFactory(ProgramFactory)
-    first_registration_date = factory.Faker("date_time", tzinfo=pytz.UTC)
-    last_registration_date = factory.Faker("date_time", tzinfo=pytz.UTC)
+    first_registration_date = factory.Faker("date_time", tzinfo=tz.utc)
+    last_registration_date = factory.Faker("date_time", tzinfo=tz.utc)
     copied_from = None
     country = None
     country_origin = None

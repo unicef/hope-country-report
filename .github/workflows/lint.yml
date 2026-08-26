@@ -9,9 +9,9 @@ on:
       - feature/*
       - bugfix/*
       - hotfix/*
-#  pull_request:
-#    branches: [develop, master]
-#    types: [synchronize, opened, reopened, ready_for_review]
+  pull_request:
+    branches: [develop, master]
+    types: [synchronize, opened, reopened, ready_for_review]
 
 defaults:
   run:
@@ -55,10 +55,10 @@ jobs:
         with:
           python-version: '3.14'
       - name: Install requirements
-        run: pip install ruff==0.9.3
+        run: pip install ruff
       - name: Check syntax
         # Stop the build if there are Python syntax errors or undefined names
-        run: ruff check --output-format concise src/
+        run: ruff check --output-format concise src/ tests/
 
       - name: Warnings
-        run: ruff format --check
+        run: ruff format --check src/ tests/

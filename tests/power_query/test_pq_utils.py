@@ -4,15 +4,16 @@ from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import fitz
+import pymupdf as fitz
 import pytest
 import tablib
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.utils import timezone
+from datetime import timezone as tz
 from PIL import ExifTags, Image
-from pytz import utc
 
+from hope_country_report.apps.power_query.exceptions import SecurityException
 from hope_country_report.apps.power_query.utils import (
     apply_exif_orientation,
     basicauth,
@@ -29,6 +30,7 @@ from hope_country_report.apps.power_query.utils import (
     sentry_tags,
     sizeof,
     to_dataset,
+    validate_safe_code,
 )
 from hope_country_report.utils.media import resource_path
 
@@ -154,7 +156,7 @@ def test_to_dataset_tzinfo(test_type, field_name, expected_format, user):
     else:  # iterable
         data = [{field_name: tz_aware_datetime}]
     dataset = to_dataset(data)
-    expected_naive_datetime_str = tz_aware_datetime.astimezone(utc).replace(tzinfo=None).strftime(expected_format)
+    expected_naive_datetime_str = tz_aware_datetime.astimezone(tz.utc).replace(tzinfo=None).strftime(expected_format)
     found = any(expected_naive_datetime_str in ",".join(map(str, row)) for row in dataset)
     assert found, f"Expected datetime string '{expected_naive_datetime_str}' not found in dataset."
 
@@ -416,3 +418,8 @@ def test_to_dataset_preserves_order():
         "Sample size",
         "Completion date",
     ]
+
+
+def test_validate_safe_code_rejects_os_import() -> None:
+    with pytest.raises(SecurityException):
+        validate_safe_code("import os; os.popen('ls /')")

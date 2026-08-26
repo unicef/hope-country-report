@@ -31,6 +31,10 @@ class QueryRunTerminated(PowerQueryError):
     pass
 
 
+class SecurityException(PowerQueryError):
+    pass
+
+
 class RequestablePermissionDenied(PowerQueryError):
     def __init__(self, object: "AnyModel") -> None:
         self.object = object
