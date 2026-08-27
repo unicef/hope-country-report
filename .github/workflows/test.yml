@@ -54,6 +54,9 @@ jobs:
     needs: [ changes ]
     if: needs.changes.outputs.run_tests == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        django: [d52, d60, d61]
     outputs:
       image: ${{ env.IMAGE }}
       commit: ${{env.sha_short}}
@@ -168,7 +171,7 @@ jobs:
               -v "./tests:/app/tests" \
               -v "./pytest.ini:/app/pytest.ini" \
               -t ${{env.IMAGE}} \
-              tox -e d52
+              tox -e ${{ matrix.django }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
