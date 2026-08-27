@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        django: [d52, d60, d61]
+        django: [d52, d60]
     outputs:
       image: ${{ env.IMAGE }}
       commit: ${{env.sha_short}}
