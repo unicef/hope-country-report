@@ -118,7 +118,8 @@ def test_celery_no_worker(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = False
     assert report.task_status == report.NOT_SCHEDULED
     report.queue()
-    assert report.task_status == report.QUEUED
+    with mock.patch("django_celery_boost.models.CeleryTaskModel.is_queued", return_value=True):
+        assert report.task_status == report.QUEUED
     report.terminate()
     assert report.task_status == report.NOT_SCHEDULED
 
