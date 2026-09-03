@@ -163,12 +163,14 @@ jobs:
               -e CACHE_URL=redis://localhost:6379/2 \
               -e SECRET_KEY=super-secret-key-just-for-testing \
               -e DATABASE_HOPE_URL=${DATABASE_HOPE_URL} \
+              -e GDAL_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgdal.so.32 \
+              -e GEOS_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgeos_c.so.1 \
               -v "./output/:/app/output" \
               -v "./src/:/app/src" \
               -v "./tests:/app/tests" \
               -v "./pytest.ini:/app/pytest.ini" \
               -t ${{env.IMAGE}} \
-              tox -e d52
+              tox -e tests
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
