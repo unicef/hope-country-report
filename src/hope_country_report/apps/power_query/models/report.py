@@ -12,6 +12,7 @@ from django_celery_beat.models import PeriodicTask
 from django_celery_boost.models import CeleryTaskModel
 from taggit.managers import TaggableManager
 
+from ....signals import report_completed
 from ....utils.mail import notify_report_completion, send_document_password
 from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
@@ -175,13 +176,16 @@ class ReportConfiguration(
                     result.append(res)
             self.last_run = timezone.now()
             self.save()
-        if notify and self.documents.exists():
+        has_documents = self.documents.exists()
+        if notify and has_documents:
             fresh_self = type(self).objects.get(pk=self.pk)
             if fresh_self.protect:
                 for user in fresh_self.notify_to.all():
                     send_document_password(user, fresh_self)
             else:
                 notify_report_completion(fresh_self)
+        if has_documents:
+            report_completed.send(sender=type(self), instance=self)
         return result
 
     def __str__(self) -> str:
