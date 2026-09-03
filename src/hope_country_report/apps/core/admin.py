@@ -10,6 +10,7 @@ from django.db.models.fields.json import JSONField
 from jsoneditor.forms import JSONEditor
 from leaflet.admin import LeafletGeoAdmin
 from smart_admin.mixins import DisplayAllMixin
+from hope_bitcaster.admin import BitcasterUserAdminMixin
 from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 
 from hope_country_report.apps.core.models import CountryOffice, CountryShape, User, UserRole
@@ -31,7 +32,7 @@ def _filter_fieldsets(fieldsets):
 
 
 @admin.register(User)
-class UserAdmin(_UserAdminPlus):  # type: ignore
+class UserAdmin(BitcasterUserAdminMixin, _UserAdminPlus):  # type: ignore
     extra_fieldsets = _filter_fieldsets(_UserAdminPlus.extra_fieldsets)
 
 

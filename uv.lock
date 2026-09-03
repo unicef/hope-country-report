@@ -203,16 +203,16 @@ wheels = [
 
 [[package]]
 name = "bitcaster-sdk"
-version = "0.3"
+version = "0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "humanfriendly" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/9c/686581e3c7da198c0bcfaed325e76bd173f0a3dc5de513d0214800a2bbce/bitcaster_sdk-0.3.tar.gz", hash = "sha256:4973c4078dff514a88d5791b386f896ba9eb505ad5ae4f71497e607d40add0c7", size = 13191, upload-time = "2026-07-29T18:43:11.312Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/bb/1127ba4dff32c5374209f7e99f3632297dc90b62d16ac894a3482c3f22cb/bitcaster_sdk-0.4.tar.gz", hash = "sha256:a2eceb4f638580b416817a4ce78305de7b3f381d50dc14d44cc63fca73e2c872", size = 16994, upload-time = "2026-08-15T14:59:27.646Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2f/72/3b66088360ece24af6c656c81f6bebef1d35760440d14c8a044a6617ab29/bitcaster_sdk-0.3-py3-none-any.whl", hash = "sha256:8880f54df93dba9ee20ba4aeea29c271b7ac4d7ab2a3fbfb2b7eab072a59d394", size = 19578, upload-time = "2026-07-29T18:43:10.05Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/73/ca9c0ae57a0f50e8f7a8e100e4e1ab4285370fc981a1a149bd8b763e3c3b/bitcaster_sdk-0.4-py3-none-any.whl", hash = "sha256:cb2f34d472ddcb642dda7d557a889dafacdfb266500d9ff775c6177ca9131814", size = 24268, upload-time = "2026-08-15T14:59:26.641Z" },
 ]
 
 [[package]]
@@ -1552,7 +1552,6 @@ name = "hcr"
 source = { editable = "." }
 dependencies = [
     { name = "azure-devops" },
-    { name = "bitcaster-sdk" },
     { name = "celery" },
     { name = "django" },
     { name = "django-admin-cursor-paginator" },
@@ -1605,6 +1604,7 @@ dependencies = [
     { name = "drf-extensions" },
     { name = "flower" },
     { name = "geojson" },
+    { name = "hope-bitcaster" },
     { name = "htmlmin2" },
     { name = "natural-keys" },
     { name = "pathvalidate" },
@@ -1711,7 +1711,6 @@ types-decorator = [
 [package.metadata]
 requires-dist = [
     { name = "azure-devops" },
-    { name = "bitcaster-sdk", specifier = ">=0.3,<1" },
     { name = "cairosvg", marker = "extra == 'docs'", specifier = ">=2.9.0" },
     { name = "celery" },
     { name = "django", specifier = ">=5.1,<5.3" },
@@ -1773,6 +1772,7 @@ requires-dist = [
     { name = "freezegun", marker = "extra == 'dev'" },
     { name = "fs", marker = "extra == 'dev'" },
     { name = "geojson" },
+    { name = "hope-bitcaster", git = "https://github.com/unicef/hope-bitcaster.git" },
     { name = "htmlmin2" },
     { name = "lxml-stubs", marker = "extra == 'mypy'" },
     { name = "markupsafe", marker = "extra == 'docs'", specifier = ">=2.1.5" },
@@ -1865,6 +1865,16 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/82/e5/0b56d723a76ca67abadbf7fb71609fb0ea7e6926e94fcca6c65a85b36a0e/hjson-3.1.0.tar.gz", hash = "sha256:55af475a27cf83a7969c808399d7bccdec8fb836a07ddbd574587593b9cdcf75", size = 40541, upload-time = "2022-08-13T02:53:01.919Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1f/7f/13cd798d180af4bf4c0ceddeefba2b864a63c71645abc0308b768d67bb81/hjson-3.1.0-py3-none-any.whl", hash = "sha256:65713cdcf13214fb554eb8b4ef803419733f4f5e551047c9b711098ab7186b89", size = 54018, upload-time = "2022-08-13T02:52:59.899Z" },
+]
+
+[[package]]
+name = "hope-bitcaster"
+version = "0.1.dev1+gfb94b7a22"
+source = { git = "https://github.com/unicef/hope-bitcaster.git#fb94b7a22687fb57e4e55323de4c47e0e428b040" }
+dependencies = [
+    { name = "bitcaster-sdk" },
+    { name = "celery" },
+    { name = "django" },
 ]
 
 [[package]]

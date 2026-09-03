@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "hope_country_report.apps.power_query",
     "hope_country_report.apps.core",
     "hope_country_report.apps.stream",
+    "hope_bitcaster.apps.AppConfig",
     "hope_country_report.apps.bitcaster.apps.AppConfig",
     "streaming",
     "django.contrib.contenttypes",

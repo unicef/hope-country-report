@@ -20,7 +20,7 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
   "azure-devops",
-  "bitcaster-sdk>=0.3,<1",
+  "hope-bitcaster @ git+https://github.com/unicef/hope-bitcaster.git",
   "celery",
   "django>=5.1,<5.3",
   "django-admin-cursor-paginator",
@@ -189,6 +189,9 @@ include = [
 packages = [
   "src/hope_country_report",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.version]
 source = "vcs"
