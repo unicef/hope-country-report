@@ -11,6 +11,7 @@ from django.views.generic import TemplateView
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.forms import SelectTenantForm
+from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -26,9 +27,12 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
                 co = CountryOffice.objects.get(slug=self.kwargs["co"])
             else:
                 co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
-            return co
         except (CountryOffice.DoesNotExist, IndexError):
             raise PermissionDenied
+        # Bind the resolved office to the request tenant context so tenant-scoped
+        # managers (e.g. power_query) stay isolated on the currently-viewed office.
+        state.tenant = co
+        return co
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         kwargs["view"] = self

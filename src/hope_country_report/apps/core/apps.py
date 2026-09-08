@@ -6,5 +6,6 @@ class Config(AppConfig):
     verbose_name = "Core"
 
     def ready(self) -> None:
+        from . import checks  # noqa: F401
         from ...config.celery import app  # noqa
         from ...utils import flags  # noqa

@@ -192,6 +192,32 @@ def test_document_request_access(django_app, user, restricted_document: "ReportD
         assert res.status_code == 302
 
 
+def test_document_download_restricted(django_app, user, restricted_document: "ReportDocument"):
+    """A document restricted to other users must not be downloadable by their URL."""
+    config: "ReportConfiguration" = restricted_document.report
+    url = reverse("office-doc-download", args=[config.country_office.slug, restricted_document.pk])
+    with user_grant_permissions(user, ["power_query.download_reportdocument"], config.country_office):
+        res = django_app.get(url, user=user, expect_errors=True)
+    assert res.status_code == 302
+    assert (
+        res.headers["Location"]
+        == f"/{restricted_document.report.country_office.slug}/request-access/{restricted_document.report.pk}/"
+    )
+
+
+def test_document_display_restricted(django_app, user, restricted_document: "ReportDocument"):
+    """A document restricted to other users must not be streamed by their URL."""
+    config: "ReportConfiguration" = restricted_document.report
+    url = reverse("office-doc-display", args=[config.country_office.slug, restricted_document.pk])
+    with user_grant_permissions(user, ["power_query.view_reportconfiguration"], config.country_office):
+        res = django_app.get(url, user=user, expect_errors=True)
+    assert res.status_code == 302
+    assert (
+        res.headers["Location"]
+        == f"/{restricted_document.report.country_office.slug}/request-access/{restricted_document.report.pk}/"
+    )
+
+
 def test_document_display(django_app, report_document):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner

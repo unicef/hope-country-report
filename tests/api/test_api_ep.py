@@ -1,12 +1,16 @@
 from unittest import mock
 from unittest.mock import Mock
+from typing import TYPE_CHECKING
 
 import pytest
+from django.core.files.base import ContentFile
 from rest_framework.test import APIClient
 from testutils.factories import ChartPageFactory, QueryFactory, ReportConfigurationFactory
 
-from hope_country_report.apps.power_query.models import Query, ReportDocument
 from hope_country_report.state import state
+
+if TYPE_CHECKING:
+    from hope_country_report.apps.power_query.models import Query
 
 pytestmark = [pytest.mark.api, pytest.mark.django_db]
 
@@ -125,8 +129,8 @@ def test_api_document_download(client, data):
 
 def test_api_document_download_no_file(client, data):
     url = f"/api/offices/{data['co'].slug}/config/{data['report'].pk}/documents/{data['doc'].pk}/download/"
-    doc = Mock(spec=ReportDocument)()
-    doc.file.size = 0
-    with mock.patch("hope_country_report.api.views.ReportDocument.objects.get", lambda **k: doc):
-        res = client.get(url)
+    doc = data["doc"]
+    doc.file = ContentFile(b"", name="empty.pdf")
+    doc.save(update_fields=["file"])
+    res = client.get(url)
     assert res.status_code == 404
