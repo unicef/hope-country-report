@@ -32,6 +32,10 @@ class PowerQueryManager(SmartManager["_PowerQueryModel"]):
             active_tenant = selected_tenant or get_selected_tenant()
             if active_tenant:
                 _filter = Q(**{tenant_filter_field: active_tenant})
+            else:
+                # Tenant isolation must never silently fail open: when a tenant is
+                # required but none is selected, return an empty queryset.
+                _filter = Q(pk__in=[])
         return _filter
 
     def get_queryset(self) -> "QuerySet[_PowerQueryModel]":

@@ -5,7 +5,6 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
-from django.urls import URLPattern, URLResolver, reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from smart_admin.autocomplete import SmartAutocompleteJsonView
@@ -17,6 +16,8 @@ from .utils import get_selected_tenant, is_tenant_valid, must_tenant, set_select
 if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Any
+
+    from django.urls import URLPattern, URLResolver
 
     from hope_country_report.types.http import AuthHttpRequest
 
@@ -33,7 +34,7 @@ class TenantAutocompleteJsonView(SmartAutocompleteJsonView):
     #     return super().get_context_data(**kwargs)
     #
     def has_perm(self, request: "AuthHttpRequest", obj: "AnyModel|None" = None) -> bool:
-        return request.user.is_active
+        return bool(request.user.is_active and request.user.is_staff)
 
     # def get(self, request, *args, **kwargs):
     #     return JsonResponse({"t": state.tenant.slug})
@@ -73,9 +74,9 @@ class TenantAdminSite(SmartAdminSite):
         return TenantAutocompleteJsonView.as_view(admin_site=self)(request)
 
     def has_permission(self, request: "AuthHttpRequest") -> bool:
-        # if must_tenant():
-        return request.user.is_active
-        # return super().has_permission(request)
+        # The admin panel is restricted to staff members: regular users must not
+        # be able to reach admin screens, even authenticated ones.
+        return bool(request.user.is_active and request.user.is_staff)
 
     def get_urls(self) -> "list[URLResolver | URLPattern]":
         from django.urls import path
@@ -105,11 +106,7 @@ class TenantAdminSite(SmartAdminSite):
     def login(
         self, request: "HttpRequest", extra_context: "dict[str, Any] | None" = None
     ) -> "HttpResponse|HttpResponseRedirect":
-        response = super().login(request, extra_context)
-        if request.method == "POST" and request.user.is_authenticated and not request.user.is_staff:
-            return HttpResponseRedirect(reverse("admin:select_tenant"))
-
-        return response
+        return super().login(request, extra_context)
 
     @method_decorator(never_cache)
     def index(

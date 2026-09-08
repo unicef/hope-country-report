@@ -81,6 +81,19 @@ class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixi
 class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
     permission_required = ["power_query.view_reportconfiguration"]
 
+    def handle_no_permission(self) -> HttpResponseRedirect:
+        if not self.has_permission():
+            raise RequestablePermissionDenied(self.get_object().report)
+        return super().handle_no_permission()
+
+    def has_permission(self) -> bool:
+        obj: "ReportDocument" = self.get_object()
+        try:
+            perms = self.get_permission_required()
+            return self.request.user.has_perms(perms, obj)
+        except (PermissionDenied, RequestablePermissionDenied):
+            raise RequestablePermissionDenied(obj.report)
+
     def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
         return ReportDocument.objects.get(
             report__country_office=self.selected_office, id=self.kwargs["pk"], report__visible=True
@@ -100,8 +113,23 @@ class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, De
 class OfficeDocumentDownloadView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
     permission_required = ["power_query.download_reportdocument"]
 
+    def handle_no_permission(self) -> HttpResponseRedirect:
+        if not self.has_permission():
+            raise RequestablePermissionDenied(self.get_object().report)
+        return super().handle_no_permission()
+
+    def has_permission(self) -> bool:
+        obj: "ReportDocument" = self.get_object()
+        try:
+            perms = self.get_permission_required()
+            return self.request.user.has_perms(perms, obj)
+        except (PermissionDenied, RequestablePermissionDenied):
+            raise RequestablePermissionDenied(obj.report)
+
     def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
-        return ReportDocument.objects.get(report__country_office=self.selected_office, id=self.kwargs["pk"])
+        return ReportDocument.objects.get(
+            report__country_office=self.selected_office, id=self.kwargs["pk"], report__visible=True
+        )
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> "RedirectOrResponse":  # type: ignore[override]
         try:
