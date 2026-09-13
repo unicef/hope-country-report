@@ -103,7 +103,6 @@ def test_api_document_download_restricted_denied(afg_user, afghanistan):
     """A document restricted to specific users must not be downloadable by others."""
     from testutils.factories import ReportDocumentFactory, UserFactory
 
-
     owner = UserFactory(username="owner")
     allowed = UserFactory(username="allowed")
     doc = ReportDocumentFactory(
@@ -120,7 +119,6 @@ def test_api_document_download_restricted_denied(afg_user, afghanistan):
 
 def test_api_document_restricted_retrieve_denied(afg_user, afghanistan):
     from testutils.factories import ReportDocumentFactory, UserFactory
-
 
     owner = UserFactory(username="owner2")
     allowed = UserFactory(username="allowed2")

@@ -82,11 +82,7 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     def offices(self, request: "AnyRequest") -> JsonResponse:
-        qs = (
-            conf.auth.get_allowed_tenants(request)
-            .filter(active=True)
-            .values_list("shape__iso3", "name", "active")
-        )
+        qs = conf.auth.get_allowed_tenants(request).filter(active=True).values_list("shape__iso3", "name", "active")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
 
 

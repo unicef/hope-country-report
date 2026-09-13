@@ -33,9 +33,7 @@ def chart_data(afghanistan):
 
     niger = CountryOfficeFactory(name="Niger")
     with state.set(must_tenant=False):
-        ChartPageFactory(
-            country_office=afghanistan, query=QueryFactory(country_office=afghanistan), title="AFG chart"
-        )
+        ChartPageFactory(country_office=afghanistan, query=QueryFactory(country_office=afghanistan), title="AFG chart")
         ChartPageFactory(country_office=niger, query=QueryFactory(country_office=niger), title="NER chart")
     return {"co": afghanistan, "niger": niger}
 
