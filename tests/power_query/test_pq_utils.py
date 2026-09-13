@@ -15,6 +15,7 @@ from PIL import ExifTags, Image
 
 from hope_country_report.apps.power_query.exceptions import SecurityException
 from hope_country_report.apps.power_query.utils import (
+    SAFE_BUILTINS,
     apply_exif_orientation,
     basicauth,
     convert_pdf_to_image_pdf,
@@ -27,6 +28,7 @@ from hope_country_report.apps.power_query.utils import (
     insert_special_language_image,
     is_valid_template,
     load_font_for_language,
+    safe_import,
     sentry_tags,
     sizeof,
     to_dataset,
@@ -423,3 +425,28 @@ def test_to_dataset_preserves_order():
 def test_validate_safe_code_rejects_os_import() -> None:
     with pytest.raises(SecurityException):
         validate_safe_code("import os; os.popen('ls /')")
+
+
+def test_validate_safe_code_rejects_relative_import() -> None:
+    with pytest.raises(SecurityException):
+        validate_safe_code("from . import x")
+
+
+@pytest.mark.parametrize("module", ["math", "hashlib", "datetime", "django.db.models"])
+def test_safe_import_allows(module: str) -> None:
+    assert safe_import(module) is not None
+
+
+@pytest.mark.parametrize("module", ["os", "sys", "subprocess", "importlib", "builtins", "ctypes", "marshal"])
+def test_safe_import_rejects_disallowed(module: str) -> None:
+    with pytest.raises(SecurityException):
+        safe_import(module)
+
+
+def test_safe_import_rejects_relative_import() -> None:
+    with pytest.raises(SecurityException):
+        safe_import("", level=1)
+
+
+def test_safe_import_registered_in_safe_builtins() -> None:
+    assert SAFE_BUILTINS["__import__"] is safe_import

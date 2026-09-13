@@ -178,11 +178,29 @@ DISALLOWED_NAMES = frozenset(
 )
 DISALLOWED_MODULES = frozenset({"os", "sys", "subprocess", "importlib", "builtins", "ctypes", "marshal"})
 
+
+def safe_import(
+    name: str,
+    globals_: Any = None,
+    locals_: Any = None,
+    fromlist: tuple[str, ...] = (),
+    level: int = 0,
+) -> Any:
+    """Safe __import__ wrapper preventing loading of disallowed modules and relative imports."""
+    if level > 0:
+        raise SecurityException("Relative imports are not allowed")
+    base_mod = name.split(".", 1)[0]
+    if not base_mod or base_mod in DISALLOWED_MODULES:
+        raise SecurityException(f"Import of '{name}' is not allowed")
+    return builtins.__import__(name, globals_, locals_, fromlist, level)
+
+
 SAFE_BUILTINS = {
     name: obj
     for name, obj in vars(builtins).items()
     if name not in DISALLOWED_NAMES and not (name.startswith("__") and name.endswith("__"))
 }
+SAFE_BUILTINS["__import__"] = safe_import
 
 
 def validate_safe_code(code: str) -> None:
@@ -196,6 +214,8 @@ def validate_safe_code(code: str) -> None:
                 if alias.name.split(".", 1)[0] in DISALLOWED_MODULES:
                     raise SecurityException(f"Import of '{alias.name}' is not allowed")
         if isinstance(node, ast.ImportFrom):
+            if node.level > 0:
+                raise SecurityException("Relative imports are not allowed")
             module = node.module or ""
             if module.split(".", 1)[0] in DISALLOWED_MODULES:
                 raise SecurityException(f"Import from '{module}' is not allowed")

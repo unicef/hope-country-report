@@ -91,10 +91,13 @@
             </a></li>
         {% endif %}
         <li class="OfficePageListView flex">
-            <a class="flex w-full px-4" href="{% url "logout" %}">
-                <span class="flex text-2xl pt-2 pr-4 icon icon-logout"></span>
-                <div class="flex-grow  pt-3 display-open">{% translate "Logout" %}</div>
-            </a>
+            <form method="post" action="{% url "logout" %}">
+                {% csrf_token %}
+                <button type="submit" class="flex w-full px-4 text-left">
+                    <span class="flex text-2xl pt-2 pr-4 icon icon-logout"></span>
+                    <div class="flex-grow  pt-3 display-open">{% translate "Logout" %}</div>
+                </button>
+            </form>
         </li>
     </ul>
     <ul class="menu d-block block">

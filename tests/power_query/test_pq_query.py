@@ -164,6 +164,71 @@ def test_query_reject_dangerous_code(data: "_DATA"):
     assert not query.datasets.exists()
 
 
+def test_query_execution_with_imports(data: "_DATA"):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    query = QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Query With Imports",
+        code=(
+            "import datetime\n"
+            "import hashlib\n"
+            "from django.db.models import F\n"
+            "from hope_country_report.apps.hope.models import Household\n"
+            "result = conn.all()\n"
+        ),
+    )
+    result = query.run(persist=True)
+    assert query.datasets.exists()
+    assert result[0].data
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "import os; os.popen('ls /')",
+        "from subprocess import Popen",
+        "from . import x",
+    ],
+)
+def test_query_blocks_disallowed_imports(data: "_DATA", code: str):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    from hope_country_report.apps.power_query.exceptions import SecurityException
+
+    query = QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Query",
+        code=code,
+    )
+    with pytest.raises(SecurityException):
+        query.run(persist=True)
+    assert not query.datasets.exists()
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "open('/etc/passwd')",
+        "eval('1+1')",
+        "exec('print(1)')",
+    ],
+)
+def test_query_blocks_dangerous_builtins(data: "_DATA", code: str):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    from hope_country_report.apps.power_query.exceptions import SecurityException
+
+    query = QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Query",
+        code=code,
+    )
+    with pytest.raises(SecurityException):
+        query.run(persist=True)
+    assert not query.datasets.exists()
+
+
 def test_nested_query(query_nested: "Query"):
     result = query_nested.execute_matrix()
     assert query_nested.datasets.exists()
