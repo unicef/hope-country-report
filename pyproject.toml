@@ -75,7 +75,6 @@ dependencies = [
   "htmlmin2",
   "natural-keys",
   "pathvalidate",
-  "pdfkit",
   "pillow",
   "psycopg[binary]",
   "py-vapid",
