@@ -46,5 +46,6 @@ def test_handle_report_failed_calls_trigger_event(failed_report):
             "title": failed_report.title,
             "country_office": failed_report.country_office.slug,
             "error_message": "Query timed out",
+            "notify_to": [failed_report.owner.email],
         },
     )

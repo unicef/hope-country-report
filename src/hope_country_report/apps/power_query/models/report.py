@@ -184,7 +184,7 @@ class ReportConfiguration(
                     send_document_password(user, fresh_self)
             else:
                 notify_report_completion(fresh_self)
-        if has_documents:
+        if has_documents and notify:
             report_completed.send(sender=type(self), instance=self)
         return result
 

@@ -17,7 +17,7 @@ def handle_report_completed(sender: type, instance: "ReportConfiguration", **kwa
             "pk": instance.pk,
             "title": instance.title,
             "country_office": instance.country_office.slug if instance.country_office else None,
-            "notify_to": [u.email for u in instance.notify_to.all()],
+            "notify_to": [u.email for u in instance.notify_to.all() if u.email],
         },
     )
 
@@ -31,5 +31,6 @@ def handle_report_failed(sender: type, instance: "ReportConfiguration", **kwargs
             "title": instance.title,
             "country_office": instance.country_office.slug if instance.country_office else None,
             "error_message": instance.error_message,
+            "notify_to": [instance.owner.email] if instance.owner and instance.owner.email else [],
         },
     )
