@@ -1,9 +1,13 @@
 import os
+import re
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
 from testutils.selenium import SmartDriver
+
+ARTIFACT_DIR = Path(os.environ.get("SELENIUM_ARTIFACT_DIR", "output/selenium"))
 
 
 def pytest_configure(config):
@@ -12,9 +16,34 @@ def pytest_configure(config):
     os.environ["DISPLAY"] = ":10.0"
 
 
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+    setattr(item, f"rep_{report.when}", report)
+
+
+def _capture_failure(driver: "SmartDriver", node: "pytest.Item") -> None:
+    """Persist screenshot + console log + page source when a Selenium test fails."""
+    try:
+        ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        name = re.sub(r"[^0-9A-Za-z_.-]+", "_", node.nodeid)
+        (ARTIFACT_DIR / f"{name}.png").write_bytes(driver.get_screenshot_as_png())
+        lines = [f"url: {driver.current_url}", ""]
+        try:
+            lines.append("console:")
+            lines.extend(f"  {e.get('level')}: {e.get('message')}" for e in driver.get_log("browser"))
+        except Exception as exc:  # noqa: BLE001 - best effort diagnostics
+            lines.append(f"console: <unavailable: {exc}>")
+        lines.extend(["", "page source:", driver.page_source])
+        (ARTIFACT_DIR / f"{name}.txt").write_text("\n".join(lines), encoding="utf-8")
+    except Exception:  # noqa: BLE001 - never mask the real failure
+        pass
+
+
 @pytest.fixture
 def capabilities(capabilities):
-    capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+    capabilities["goog:loggingPrefs"] = {"performance": "ALL", "browser": "ALL"}
     capabilities["acceptInsecureCerts"] = True
     return capabilities
 
@@ -91,7 +120,7 @@ def driver(driver, live_server):
 
 
 @pytest.fixture
-def browser(transactional_db, driver: "SmartDriver", live_server, settings, monkeypatch) -> "SmartDriver":
+def browser(request, transactional_db, driver: "SmartDriver", live_server, settings, monkeypatch) -> "SmartDriver":
     from django.core.handlers.wsgi import WSGIRequest
 
     # from testutils.utils import find_by_css, force_login, wait_for, wait_for_url
@@ -114,6 +143,10 @@ def browser(transactional_db, driver: "SmartDriver", live_server, settings, monk
     # driver.fullscreen_window()
 
     yield driver
+
+    report = getattr(request.node, "rep_call", None)
+    if report is not None and report.failed:
+        _capture_failure(driver, request.node)
 
 
 @pytest.fixture()
