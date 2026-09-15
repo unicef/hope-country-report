@@ -160,8 +160,10 @@ def test_processor_pdf(dataset: NoReturn, tmp_path: Path):
     result = processors.ToPDF(fmt).process({"dataset": dataset, "business_area": "Afghanistan"})
     output = tmp_path / "AAAA.pdf"
     output.write_bytes(result)
-    PdfReader(output)
+    reader = PdfReader(output)
     assert result
+    # Rendering must keep the table content, not just produce a valid PDF.
+    assert "str" in reader.pages[0].extract_text()
 
 
 def test_processor_pdfform(dataset: NoReturn, tmp_path: Path):
