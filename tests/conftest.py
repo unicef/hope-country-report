@@ -106,6 +106,7 @@ def pytest_configure(config):
     settings.SESSION_COOKIE_NAME = "hcr_test"
     settings.SESSION_COOKIE_DOMAIN = ""
     settings.STATIC_ROOT = "/tmp/static"
+    settings.BITCASTER_ENABLED = False
     settings.SIGNING_BACKEND = "django.core.signing.TimestampSigner"
     settings.WP_PRIVATE_KEY = ""
     settings.STREAMING = {
@@ -257,6 +258,17 @@ def state_context(db):
     set_flag("LOCAL_LOGIN", True).start()
     with state.configure():
         yield
+
+
+@pytest.fixture
+def bitcaster_settings(settings):
+    settings.BITCASTER_ENABLED = True
+    settings.BITCASTER_BAE = "https://testkey@bitcaster.example.com/api/o/org/"
+    settings.BITCASTER_CLIENT_CLASS = "bitcaster_sdk.async_client.AsyncClient"
+    settings.BITCASTER_ORGANIZATION_SLUG = "org"
+    settings.BITCASTER_PROJECT_SLUG = "project"
+    settings.BITCASTER_APPLICATION_SLUG = "app"
+    return settings
 
 
 @pytest.fixture
