@@ -369,6 +369,8 @@ class BusinessArea(HopeModel):
         "Country", on_delete=models.DO_NOTHING, related_name="businessarea_office_country", blank=True, null=True
     )
     rdi_import_xlsx_disabled = models.BooleanField(null=True)
+    vision_integration_active = models.BooleanField(null=True)
+    timezone = models.CharField(null=True)
 
     class Meta:
         managed = False
@@ -1670,6 +1672,10 @@ class Individual(HopeModel):
     identification_key = models.CharField(blank=True, null=True)
     originating_id = models.CharField(unique=True, blank=True, null=True)
     country_workspace_id = models.CharField(blank=True, null=True)
+    family_name_latin = models.CharField(blank=True, null=True)
+    full_name_latin = models.CharField(blank=True, null=True)
+    given_name_latin = models.CharField(blank=True, null=True)
+    middle_name_latin = models.CharField(blank=True, null=True)
 
     class Meta:
         managed = False
