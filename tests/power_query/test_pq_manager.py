@@ -31,6 +31,22 @@ def test_get_tenant_filter_no_active_tenant(manager):
     assert manager.get_tenant_filter() == Q()
 
 
+def test_get_tenant_filter_fail_closed_when_tenant_required_but_not_selected(manager):
+    """Tenant isolation must never silently return all objects."""
+    from unittest.mock import Mock
+
+    from django.contrib.auth.models import User
+
+    from hope_country_report.apps.power_query.models import Query
+
+    manager.model = Query
+    staff_user = User(username="staff", is_staff=True, is_superuser=False, is_active=True)
+    request = Mock()
+    request.user = staff_user
+    with state.set(request=request, must_tenant=None, tenant=None, tenant_cookie=None):
+        assert manager.get_tenant_filter() == Q(pk__in=[])
+
+
 def test_get_tenant_filter_valid_tenant(manager, afghanistan):
     from hope_country_report.apps.power_query.models import Query
 

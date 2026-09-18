@@ -33,6 +33,7 @@ from .utils import SAFE_BUILTINS, validate_safe_code
 from ...utils.mail import send_document_password
 from ...utils.media import download_media
 from ...utils.perf import profile
+from ..tenant.utils import get_selected_tenant, must_tenant
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import (
     ChartPage,
@@ -76,6 +77,25 @@ class AutoProjectCol(admin.ModelAdmin):
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         base = super().get_autocomplete_fields(request)
         return ("country_office", *base)
+
+
+class TenantAwareAdminMixin:
+    """Restrict admin querysets to the tenant selected by the user.
+
+    Only superusers are allowed to see data of every CountryOffice. Staff members
+    are always tenant-scoped, so they cannot browse other offices' objects.
+    """
+
+    def get_queryset(self, request: HttpRequest) -> "QuerySet[Any]":
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        tenant = get_selected_tenant()
+        if tenant:
+            return qs.filter(country_office=tenant)
+        if must_tenant():
+            return qs.none()
+        return qs
 
 
 @admin.register(Query)
@@ -349,6 +369,7 @@ class DatasetAdmin(
 
 @admin.register(Formatter)
 class FormatterAdmin(
+    TenantAwareAdminMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
@@ -387,7 +408,9 @@ class FormatterAdmin(
 
 
 @admin.register(ReportTemplate)
-class ReportTemplateAdmin(AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin[ReportTemplate]):
+class ReportTemplateAdmin(
+    TenantAwareAdminMixin, AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin[ReportTemplate]
+):
     list_display = (
         "name",
         "doc",
@@ -564,7 +587,6 @@ class ReportDocumentAdmin(
     list_display = ("title", "content_type", "report", "file", "compressed", "protected")
     list_filter = (("report", AutoCompleteFilter), "report__compress", "report__protect")
     search_fields = ("title",)
-    filter_horizontal = ("limit_access_to",)
     date_hierarchy = "dataset__last_run"
     readonly_fields = ("arguments", "report", "dataset", "content_type", "formatter", "info", "size")
 
@@ -593,6 +615,7 @@ class ReportDocumentAdmin(
 
 @admin.register(ChartPage)
 class ChartPageAdmin(
+    TenantAwareAdminMixin,
     AdminFiltersMixin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
