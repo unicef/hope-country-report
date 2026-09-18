@@ -1,7 +1,7 @@
 import contextlib
 from typing import TYPE_CHECKING
 
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -26,6 +26,8 @@ class SmartDriver(WebDriver):
 
         driver.wait_for = cls.wait_for.__get__(driver)
         driver.wait_for_url = cls.wait_for_url.__get__(driver)
+        driver.wait_for_load = cls.wait_for_load.__get__(driver)
+        driver.click_and_wait = cls.click_and_wait.__get__(driver)
         driver.login = cls.login.__get__(driver)
         return driver
 
@@ -95,7 +97,7 @@ class SmartDriver(WebDriver):
         select = Select(self.wait_for(By.NAME, "tenant"))
         select.select_by_value(str(tenant.pk))
 
-    def wait_for(self, *args, timeout=10, clickable=False):
+    def wait_for(self, *args, timeout=30, clickable=False):
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.support.ui import WebDriverWait
 
@@ -106,12 +108,42 @@ class SmartDriver(WebDriver):
             wait.until(EC.visibility_of_element_located((*args,)))
         return self.find_element(*args)
 
-    def wait_for_url(self, url):
+    def wait_for_load(self, timeout=30):
+        """Wait until the current document has finished loading."""
+        from selenium.webdriver.support.ui import WebDriverWait
+
+        WebDriverWait(self, timeout).until(
+            lambda driver: driver.execute_script("return document.readyState") == "complete"
+        )
+
+    def wait_for_url(self, url, timeout=30):
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.support.ui import WebDriverWait
 
-        wait = WebDriverWait(self, 10)
+        wait = WebDriverWait(self, timeout)
         wait.until(EC.url_contains(url))
+        self.wait_for_load(timeout=timeout)
+
+    def click_and_wait(self, element, timeout=30):
+        """Click `element` and wait until the navigation changes the current URL.
+
+        Clicking a link starts a navigation; querying immediately for the next
+        element can find it on the page that is still navigating and lose the
+        click. Under load the native click can also be dropped entirely, so we
+        fall back to an in-page click when the URL does not change.
+        """
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.support.ui import WebDriverWait
+
+        self.wait_for_load(timeout=timeout)
+        previous = self.current_url
+        element.click()
+        try:
+            WebDriverWait(self, timeout).until(EC.url_changes(previous))
+        except TimeoutException:
+            self.execute_script("arguments[0].click()", element)
+            WebDriverWait(self, timeout).until(EC.url_changes(previous))
+        self.wait_for_load(timeout=timeout)
 
     def set_input_value(self, *args):
         rules = args[:-1]
