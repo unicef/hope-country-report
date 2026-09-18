@@ -38,7 +38,11 @@ class OfficeReportDocumentListView(SelectedOfficeMixin, PermissionRequiredMixin,
         return super().get_context_data(title=_("Available Reports"), **kwargs)
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        qs = ReportDocument.objects.filter(report__country_office=self.selected_office)
+        qs = (
+            ReportDocument.objects.filter(report__country_office=self.selected_office)
+            .select_related("report", "report__owner", "report__country_office")
+            .prefetch_related("report__tags")
+        )
         if tag := self.request.GET.get("tag", None):
             qs = qs.filter(report__tags__name=tag)
         if active := self.request.GET.get("active", None):
