@@ -64,7 +64,7 @@ def test_api_offices_list_scoped_to_user_roles(afg_user, data):
     client.force_authenticate(user=afg_user)
     res = client.get("/api/offices/")
     assert res.status_code == 200
-    slugs = [o["slug"] for o in res.json()]
+    slugs = [o["slug"] for o in _results(res.json())]
     assert data["co"].slug in slugs
     assert data["niger"].slug not in slugs
     assert data["sudan"].slug not in slugs

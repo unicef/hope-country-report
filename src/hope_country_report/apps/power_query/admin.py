@@ -33,6 +33,7 @@ from .utils import SAFE_BUILTINS, validate_safe_code
 from ...utils.mail import send_document_password
 from ...utils.media import download_media
 from ...utils.perf import profile
+from ..tenant.utils import get_selected_tenant, must_tenant
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import (
     ChartPage,
@@ -89,8 +90,11 @@ class TenantAwareAdminMixin:
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
-        if state.must_tenant:
-            return qs.filter(country_office=state.tenant)
+        tenant = get_selected_tenant()
+        if tenant:
+            return qs.filter(country_office=tenant)
+        if must_tenant():
+            return qs.none()
         return qs
 
 
