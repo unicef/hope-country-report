@@ -34,6 +34,22 @@ class SelectedOfficeViewSet(viewsets.ReadOnlyModelViewSet):
         return CountryOffice.objects.get(id=self.kwargs["slug"])
 
 
+class ObjectPermissions(permissions.DjangoObjectPermissions):
+    """Enforce object permissions on safe methods as well.
+
+    DRF maps GET/HEAD to no permissions, so ``has_object_permission`` is never called
+    for reads and a restricted object (e.g. a report with ``limit_access_to``) would be
+    readable by any user allowed to see the office. Requiring the ``view`` permission on
+    the object closes that gap and yields the same request-access redirect as the web views.
+    """
+
+    perms_map = {
+        **permissions.DjangoObjectPermissions.perms_map,
+        "GET": ["%(app_label)s.view_%(model_name)s"],
+        "HEAD": ["%(app_label)s.view_%(model_name)s"],
+    }
+
+
 class TenantScopedViewSetMixin:
     """Scope querysets to the CountryOffices the requesting user may access.
 
@@ -46,6 +62,17 @@ class TenantScopedViewSetMixin:
 
     def allowed_office_ids(self) -> "Any":
         return conf.auth.get_allowed_tenants(self.request).values("pk")
+
+    @staticmethod
+    def unscoped(model: "Any") -> "Any":
+        """Return a queryset without the thread-local tenant filter.
+
+        ``power_query`` models use ``PowerQueryManager``, which fails closed to an empty
+        queryset when no tenant is selected. API authorisation is derived from
+        ``request.user`` (``allowed_office_ids``), so that state-based filter must be
+        bypassed for requests where no tenant can be resolved (e.g. token auth).
+        """
+        return getattr(model, "_all", model._default_manager).all()
 
     def apply_parent_lookups(self, queryset: "Any") -> "Any":
         if hasattr(self, "filter_queryset_by_parents_lookups"):
@@ -107,7 +134,7 @@ class QueryViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.ReadOn
     permission_classes = [permissions.DjangoObjectPermissions]
 
     def get_queryset(self):
-        queryset = Query.objects.filter(country_office__in=self.allowed_office_ids())
+        queryset = self.unscoped(Query).filter(country_office__in=self.allowed_office_ids())
         return self.apply_parent_lookups(queryset).order_by("-pk")
 
     @action(detail=True, methods=["get"])
@@ -136,7 +163,7 @@ class ChartViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.ReadOn
     permission_classes = [permissions.DjangoObjectPermissions]
 
     def get_queryset(self):
-        queryset = ChartPage.objects.filter(country_office__in=self.allowed_office_ids())
+        queryset = self.unscoped(ChartPage).filter(country_office__in=self.allowed_office_ids())
         return self.apply_parent_lookups(queryset).order_by("-pk")
 
 
@@ -145,7 +172,7 @@ class DatasetViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.Read
     permission_classes = [permissions.DjangoObjectPermissions]
 
     def get_queryset(self):
-        queryset = Dataset.objects.filter(query__country_office__in=self.allowed_office_ids())
+        queryset = self.unscoped(Dataset).filter(query__country_office__in=self.allowed_office_ids())
         queryset = self.apply_parent_lookups(queryset)
         query_id = self.kwargs.get("parent_lookup_query")
         if query_id:
@@ -203,7 +230,7 @@ class ReportViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.ReadO
     filterset_fields = ["name"]
 
     def get_queryset(self):
-        queryset = ReportConfiguration.objects.filter(country_office__in=self.allowed_office_ids())
+        queryset = self.unscoped(ReportConfiguration).filter(country_office__in=self.allowed_office_ids())
         return self.apply_parent_lookups(queryset).order_by("-pk")
 
 
@@ -214,10 +241,10 @@ class DocumentViewSet(
     viewsets.ReadOnlyModelViewSet,
 ):
     serializer_class = ReportDocumentSerializer
-    permission_classes = [permissions.DjangoObjectPermissions]
+    permission_classes = [ObjectPermissions]
 
     def get_queryset(self):
-        queryset = ReportDocument.objects.filter(report__visible=True)
+        queryset = self.unscoped(ReportDocument).filter(report__visible=True)
         queryset = queryset.filter(report__country_office__in=self.allowed_office_ids())
         return self.apply_parent_lookups(queryset).order_by("-pk")
 

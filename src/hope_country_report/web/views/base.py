@@ -29,10 +29,13 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
                 co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
         except (CountryOffice.DoesNotExist, IndexError):
             raise PermissionDenied
-        # Bind the resolved office to the request tenant context so tenant-scoped
-        # managers (e.g. power_query) stay isolated on the currently-viewed office.
         state.tenant = co
         return co
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        if request.user.is_authenticated:
+            self.selected_office
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         kwargs["view"] = self
