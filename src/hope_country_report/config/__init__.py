@@ -100,6 +100,12 @@ CONFIG = {
     "SESSION_COOKIE_NAME": (str, "hcr_session", setting("session-cookie-name")),
     "SESSION_COOKIE_PATH": (str, "/", setting("session-cookie-path")),
     "SESSION_COOKIE_SECURE": (bool, True, setting("session-cookie-secure")),
+    "SESSION_COOKIE_AGE": (int, 86400, setting("std-setting-SESSION_COOKIE_AGE")),
+    "SESSION_EXPIRE_AT_BROWSER_CLOSE": (
+        bool,
+        True,
+        setting("std-setting-SESSION_EXPIRE_AT_BROWSER_CLOSE"),
+    ),
     "SIGNING_BACKEND": (str, "django.core.signing.TimestampSigner", setting("signing-backend")),
     "SOCIAL_AUTH_REDIRECT_IS_HTTPS": (
         bool,
