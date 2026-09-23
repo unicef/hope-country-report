@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_gis",
     "corsheaders",
+    "csp",
     "social_django",
     "admin_extra_buttons",
     "django_celery_boost",
