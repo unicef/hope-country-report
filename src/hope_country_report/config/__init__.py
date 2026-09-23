@@ -103,7 +103,7 @@ CONFIG = {
     "SESSION_COOKIE_AGE": (int, 86400, setting("std-setting-SESSION_COOKIE_AGE")),
     "SESSION_EXPIRE_AT_BROWSER_CLOSE": (
         bool,
-        True,
+        False,
         setting("std-setting-SESSION_EXPIRE_AT_BROWSER_CLOSE"),
     ),
     "SIGNING_BACKEND": (str, "django.core.signing.TimestampSigner", setting("signing-backend")),
