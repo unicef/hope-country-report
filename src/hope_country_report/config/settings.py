@@ -228,6 +228,7 @@ TEMPLATES = [
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
                 "hope_country_report.web.context_processors.state",
+                "django_celery_boost.context_processors.flower",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",

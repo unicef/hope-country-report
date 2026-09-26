@@ -8,24 +8,24 @@
         {% endif %}
         {% if original.effective_status == "QUEUED" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_terminate' original.pk %}">Cancel</a>
-            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_addr }}/task/{{ original.curr_async_result_id }}">Flower</a>
         {% endif %}
         {% if original.effective_status == "MISSING" %}
             {# <a class="button" href="{% url opts|admin_urlname:'celery_queue' original.pk %}">Queue</a> #}
-            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_addr }}/task/{{ original.curr_async_result_id }}">Flower</a>
         {% endif %}
         {% if original.effective_status == "REVOKED" %}
-            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_addr }}/task/{{ original.curr_async_result_id }}">Flower</a>
         {% endif %}
         {% if original.effective_status == "STARTED" %}
             <a class="button" href="{% url opts|admin_urlname:'celery_terminate' original.pk %}">Terminate</a>
-            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_addr }}/task/{{ original.curr_async_result_id }}">Flower</a>
         {% endif %}
         {% if original.effective_status == "SUCCESS" %}
-            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_addr }}/task/{{ original.curr_async_result_id }}">Flower</a>
         {% endif %}
         {% if original.effective_status == "FAILURE" %}
-            <a class="button" target="_flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+            <a class="button" target="_flower" href="{{ flower_addr }}/task/{{ original.curr_async_result_id }}">Flower</a>
         {% endif %}
     {% endif %}
 </div>
