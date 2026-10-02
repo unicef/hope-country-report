@@ -38,11 +38,54 @@ def chart_data(afghanistan):
     return {"co": afghanistan, "niger": niger}
 
 
+ADMIN_GET_URLS = [
+    "admin:index",
+    "admin:core_user_changelist",
+    "admin:power_query_query_changelist",
+    "admin:power_query_dataset_changelist",
+    "admin:power_query_reportconfiguration_changelist",
+    "admin:power_query_reportdocument_changelist",
+    "admin:power_query_formatter_changelist",
+    "admin:power_query_reporttemplate_changelist",
+    "admin:power_query_chartpage_changelist",
+    "admin:power_query_parametrizer_changelist",
+]
+
+
 def test_admin_requires_staff(django_app, user):
     """A non-staff authenticated user must not get access to the admin panel."""
     res = django_app.get("/admin/", user=user)
     assert res.status_code == 302
     assert "/admin/login/" in res.location
+
+
+@pytest.mark.parametrize("url_name", ADMIN_GET_URLS)
+def test_all_admin_changelists_require_staff(django_app, user, url_name):
+    """Every admin changelist must redirect a non-staff user to the login page."""
+    res = django_app.get(reverse(url_name), user=user)
+    assert res.status_code == 302
+    assert "/admin/login/" in res.location
+
+
+@pytest.mark.parametrize(
+    ("url_name", "args"),
+    [
+        ("admin:power_query_query_add", []),
+        ("admin:power_query_query_change", [1]),
+        ("admin:power_query_query_explain", [1]),
+        ("admin:core_user_change", [1]),
+    ],
+)
+def test_admin_object_views_require_staff(django_app, user, url_name, args):
+    """Non-staff users must be blocked before any object lookup on admin views."""
+    res = django_app.get(reverse(url_name, args=args), user=user)
+    assert res.status_code == 302
+    assert "/admin/login/" in res.location
+
+
+def test_staff_can_reach_power_query_admin(django_app, admin_user):
+    res = django_app.get(reverse("admin:power_query_query_changelist"), user=admin_user)
+    assert res.status_code == 200
 
 
 def test_admin_index_superuser(django_app, admin_user):

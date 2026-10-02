@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Callable
 
 import tablib
 from admin_extra_buttons.decorators import button
-from admin_extra_buttons.mixins import ExtraButtonsMixin
+
+from ..core.mixins import StaffGatedExtraButtonsMixin as ExtraButtonsMixin
 from admin_extra_buttons.utils import HttpResponseRedirectToReferrer
 from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
