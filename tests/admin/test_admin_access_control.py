@@ -88,6 +88,66 @@ def test_staff_can_reach_power_query_admin(django_app, admin_user):
     assert res.status_code == 200
 
 
+def _query_admin():
+    from django.contrib.admin.sites import site
+
+    from hope_country_report.apps.power_query.models import Query
+
+    return site._registry[Query]
+
+
+def test_non_author_cannot_edit_query(afghanistan, reporters):
+    """Holding change_query is not enough: authoring requires the QueryUsers group."""
+    from unittest.mock import Mock
+
+    from django.contrib.auth.models import Permission
+
+    from testutils.factories import UserFactory, UserRoleFactory
+
+    user = UserFactory(username="non_author", is_staff=True, is_active=True)
+    UserRoleFactory(user=user, group=reporters, country_office=afghanistan)
+    user.user_permissions.add(Permission.objects.get(content_type__app_label="power_query", codename="change_query"))
+    request = Mock(user=user)
+    admin = _query_admin()
+    assert admin.has_change_permission(request) is False
+    assert admin.has_add_permission(request) is False
+
+
+def test_query_author_can_edit_query(db):
+    from unittest.mock import Mock
+
+    from hope_country_report.apps.core.utils import get_or_create_query_user_group
+
+    from testutils.factories import UserFactory
+
+    group = get_or_create_query_user_group()
+    user = UserFactory(username="author", is_staff=True, is_active=True)
+    user.groups.add(group)
+    request = Mock(user=user)
+    admin = _query_admin()
+    assert admin.has_change_permission(request) is True
+    assert admin.has_add_permission(request) is True
+
+
+def test_generated_artifacts_are_read_only(db):
+    from unittest.mock import Mock
+
+    from django.contrib.admin.sites import site
+
+    from hope_country_report.apps.power_query.models import Dataset, ReportDocument
+
+    user = Mock(is_superuser=False, is_active=True, is_staff=True)
+    superuser = Mock(is_superuser=True, is_active=True, is_staff=True)
+    for model in (Dataset, ReportDocument):
+        model_admin = site._registry[model]
+        assert model_admin.has_add_permission(Mock(user=user)) is False
+        assert model_admin.has_change_permission(Mock(user=user)) is False
+        assert model_admin.has_delete_permission(Mock(user=user)) is False
+        # superusers may delete for maintenance, but never edit the stored file
+        assert model_admin.has_change_permission(Mock(user=superuser)) is False
+        assert model_admin.has_delete_permission(Mock(user=superuser)) is True
+
+
 def test_expired_role_staff_sees_no_objects(django_app, afghanistan, reporters):
     """A staff user whose only UserRole has expired must see no tenant objects."""
     from datetime import date

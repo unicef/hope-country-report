@@ -46,6 +46,7 @@ from .models import (
     ReportDocument,
     ReportTemplate,
 )
+from .permissions import is_query_author
 from .utils import to_dataset
 from .widget import FormatterEditor
 
@@ -103,9 +104,40 @@ class TenantAwareAdminMixin:
         return qs.filter(**{self.get_tenant_filter_field(): tenant})
 
 
+class QueryAuthorAdminMixin:
+    """Restrict authoring actions to superusers and the QueryUsers group."""
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return is_query_author(request.user) and super().has_add_permission(request)
+
+    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
+        return is_query_author(request.user) and super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
+        return is_query_author(request.user) and super().has_delete_permission(request, obj)
+
+
+class ReadOnlyArtifactAdminMixin:
+    """Generated artifacts (datasets/documents) are never added or edited through the admin.
+
+    Deletion is limited to superusers so cascades and maintenance still work, but a
+    tenant user can never replace ``Dataset.file`` (the pickle deserialization sink).
+    """
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
+        return False
+
+    def has_delete_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
+        return bool(request.user.is_superuser)
+
+
 @admin.register(Query)
 class QueryAdmin(
     TenantAwareAdminMixin,
+    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     AutoProjectCol,
     CeleryTaskModelAdmin,
@@ -157,15 +189,16 @@ class QueryAdmin(
             ctx,
         )
 
-    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
-        if request.user.is_superuser:
-            return True
-        if obj and obj.owner == request.user:
-            return True
-        return super().has_change_permission(request, obj)
-
     def has_queue_permission(self, perm, request: HttpRequest, o: "Query | None") -> bool:
-        return self.has_change_permission(request, o)
+        # Executing an existing query is a reporter action: allow superusers,
+        # QueryUsers authors, owners and holders of the change permission, while
+        # editing query code stays restricted to QueryAuthorAdminMixin.
+        if request.user.is_superuser or is_query_author(request.user):
+            return True
+        if o is not None and getattr(o, "owner_id", None) == request.user.pk:
+            return True
+        opts = self.model._meta
+        return request.user.has_perm(f"{opts.app_label}.change_{opts.model_name}", o)
 
     @button()
     def notification(self, request: HttpRequest, pk: str) -> HttpResponse:
@@ -305,6 +338,7 @@ class FileProviderAdmin(admin.ModelAdmin):
 @admin.register(Dataset)
 class DatasetAdmin(
     TenantAwareAdminMixin,
+    ReadOnlyArtifactAdminMixin,
     AdminFiltersMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
@@ -368,6 +402,7 @@ class DatasetAdmin(
 @admin.register(Formatter)
 class FormatterAdmin(
     TenantAwareAdminMixin,
+    QueryAuthorAdminMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
@@ -407,7 +442,12 @@ class FormatterAdmin(
 
 @admin.register(ReportTemplate)
 class ReportTemplateAdmin(
-    TenantAwareAdminMixin, AdminFiltersMixin, ExtraButtonsMixin, AdminActionPermMixin, ModelAdmin[ReportTemplate]
+    TenantAwareAdminMixin,
+    QueryAuthorAdminMixin,
+    AdminFiltersMixin,
+    ExtraButtonsMixin,
+    AdminActionPermMixin,
+    ModelAdmin[ReportTemplate],
 ):
     list_display = (
         "name",
@@ -441,6 +481,7 @@ class ReportTemplateAdmin(
 @admin.register(ReportConfiguration)
 class ReportConfigurationAdmin(
     TenantAwareAdminMixin,
+    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     CeleryTaskModelAdmin,
     AutoProjectCol,
@@ -487,14 +528,19 @@ class ReportConfigurationAdmin(
         return super().get_queryset(request).select_related("query", "country_office", "owner")
 
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
-        if request.user.is_superuser:
-            return True
+        if not is_query_author(request.user):
+            return False
         if obj and obj.owner == request.user:
             return True
         return super().has_change_permission(request, obj)
 
     def has_queue_permission(self, perm, request: HttpRequest, o: "ReportConfiguration | None") -> bool:
-        return self.has_change_permission(request, o)
+        if request.user.is_superuser or is_query_author(request.user):
+            return True
+        if o is not None and getattr(o, "owner_id", None) == request.user.pk:
+            return True
+        opts = self.model._meta
+        return request.user.has_perm(f"{opts.app_label}.change_{opts.model_name}", o)
 
     def get_changeform_initial_data(self, request: HttpRequest) -> "dict[str, Any]":
         kwargs: dict[str, Any] = {"owner": request.user}
@@ -545,6 +591,7 @@ class ReportConfigurationAdmin(
 @admin.register(Parametrizer)
 class QueryArgsAdmin(
     TenantAwareAdminMixin,
+    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     AutoProjectCol,
     LinkedObjectsMixin,
@@ -572,6 +619,7 @@ class QueryArgsAdmin(
 @admin.register(ReportDocument)
 class ReportDocumentAdmin(
     TenantAwareAdminMixin,
+    ReadOnlyArtifactAdminMixin,
     AdminFiltersMixin,
     LinkedObjectsMixin,
     FileProviderAdmin,
@@ -607,6 +655,7 @@ class ReportDocumentAdmin(
 @admin.register(ChartPage)
 class ChartPageAdmin(
     TenantAwareAdminMixin,
+    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
