@@ -11,7 +11,6 @@ from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from constance import config
-from debug_toolbar.panels.sql.utils import reformat_sql
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
@@ -19,6 +18,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connections, models
 from django.db.models import QuerySet
+from django.db.models.sql.query import Query as SQLQuery
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
@@ -210,7 +210,7 @@ class QueryAdmin(
             url += f"?query={obj.pk}&office={obj.country_office_id}"
         return HttpResponseRedirect(url)
 
-    @button()
+    @button(permission=lambda r, o, handler: handler.model_admin.has_queue_permission("explain", r, o))
     def explain(self, request: HttpRequest, pk: int) -> HttpResponse:
         context = self.get_common_context(request, pk)
         if request.method == "POST":
@@ -225,13 +225,15 @@ class QueryAdmin(
                     with query_execution_guard():
                         exec(code, {"__builtins__": SAFE_BUILTINS}, locals_)
                     sql = locals_.get("sql")
-                    if sql:
-                        cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
-                        context["sql"] = reformat_sql(str(locals_.get("sql", "")))
-                        cursor.execute(f"EXPLAIN ANALYZE {sql}")
-                        headers = [d[0] for d in cursor.description]
-                        result = cursor.fetchall()
-                        context.update(result=result, sql=sql, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
+                    if not isinstance(sql, SQLQuery):
+                        raise ValueError("Only Django QuerySet expressions are allowed for EXPLAIN")
+                    sql_text = str(sql)
+                    cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
+                    context["sql"] = sql_text
+                    cursor.execute(f"EXPLAIN ANALYZE {sql_text}")
+                    headers = [d[0] for d in cursor.description]
+                    result = cursor.fetchall()
+                    context.update(result=result, sql=sql_text, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
                 except Exception as e:
                     self.message_error_to_user(request, e)
                 self.message_user(request, code)
@@ -361,7 +363,7 @@ class DatasetAdmin(
         "last_run",
     )
     change_form_template = None
-    readonly_fields = ("last_run", "query", "info")
+    readonly_fields = ("last_run", "query", "info", "file", "size")
     date_hierarchy = "last_run"
 
     def get_queryset(self, request):
