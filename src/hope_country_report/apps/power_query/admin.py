@@ -34,7 +34,7 @@ from .utils import SAFE_BUILTINS, validate_safe_code
 from ...utils.mail import send_document_password
 from ...utils.media import download_media
 from ...utils.perf import profile
-from ..tenant.utils import get_selected_tenant, must_tenant
+from ..tenant.utils import get_selected_tenant
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
 from .models import (
     ChartPage,
@@ -83,24 +83,29 @@ class AutoProjectCol(admin.ModelAdmin):
 class TenantAwareAdminMixin:
     """Restrict admin querysets to the tenant selected by the user.
 
-    Only superusers are allowed to see data of every CountryOffice. Staff members
-    are always tenant-scoped, so they cannot browse other offices' objects.
+    Only superusers are allowed to see data of every CountryOffice. Everyone
+    else is always tenant-scoped and, when no tenant is selected, sees nothing
+    (fail closed) instead of falling back to an unfiltered queryset.
     """
+
+    tenant_filter_field: "str|None" = None
+
+    def get_tenant_filter_field(self) -> str:
+        return self.tenant_filter_field or self.model.Tenant.tenant_filter_field  # type: ignore[attr-defined]
 
     def get_queryset(self, request: HttpRequest) -> "QuerySet[Any]":
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
         tenant = get_selected_tenant()
-        if tenant:
-            return qs.filter(country_office=tenant)
-        if must_tenant():
+        if tenant is None:
             return qs.none()
-        return qs
+        return qs.filter(**{self.get_tenant_filter_field(): tenant})
 
 
 @admin.register(Query)
 class QueryAdmin(
+    TenantAwareAdminMixin,
     AdminFiltersMixin,
     AutoProjectCol,
     CeleryTaskModelAdmin,
@@ -126,12 +131,7 @@ class QueryAdmin(
     date_hierarchy = "datasets__last_run"
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("target", "owner")
-        if request.user.is_superuser:
-            return qs
-        if state.must_tenant:
-            return qs.filter(country_office=state.tenant)
-        return qs
+        return super().get_queryset(request).select_related("target", "owner")
 
     @admin.display(boolean=True)
     def success(self, obj: Query) -> bool:
@@ -303,6 +303,7 @@ class FileProviderAdmin(admin.ModelAdmin):
 
 @admin.register(Dataset)
 class DatasetAdmin(
+    TenantAwareAdminMixin,
     AdminFiltersMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
@@ -329,12 +330,7 @@ class DatasetAdmin(
     date_hierarchy = "last_run"
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("query", "query__target")
-        if request.user.is_superuser:
-            return qs
-        if state.must_tenant:
-            return qs.filter(query__country_office=state.tenant)
-        return qs
+        return super().get_queryset(request).select_related("query", "query__target")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
@@ -443,6 +439,7 @@ class ReportTemplateAdmin(
 
 @admin.register(ReportConfiguration)
 class ReportConfigurationAdmin(
+    TenantAwareAdminMixin,
     AdminFiltersMixin,
     CeleryTaskModelAdmin,
     AutoProjectCol,
@@ -486,12 +483,7 @@ class ReportConfigurationAdmin(
     object: "ReportConfiguration"
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("query", "country_office", "owner")
-        if request.user.is_superuser:
-            return qs
-        if state.must_tenant:
-            return qs.filter(query__country_office=state.tenant)
-        return qs
+        return super().get_queryset(request).select_related("query", "country_office", "owner")
 
     def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
         if request.user.is_superuser:
@@ -551,6 +543,7 @@ class ReportConfigurationAdmin(
 
 @admin.register(Parametrizer)
 class QueryArgsAdmin(
+    TenantAwareAdminMixin,
     AdminFiltersMixin,
     AutoProjectCol,
     LinkedObjectsMixin,
@@ -577,6 +570,7 @@ class QueryArgsAdmin(
 
 @admin.register(ReportDocument)
 class ReportDocumentAdmin(
+    TenantAwareAdminMixin,
     AdminFiltersMixin,
     LinkedObjectsMixin,
     FileProviderAdmin,
@@ -592,12 +586,7 @@ class ReportDocumentAdmin(
     readonly_fields = ("arguments", "report", "dataset", "content_type", "formatter", "info", "size")
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("report__query", "dataset", "formatter")
-        if request.user.is_superuser:
-            return qs
-        if state.must_tenant:
-            return qs.filter(report__query__country_office=state.tenant)
-        return qs
+        return super().get_queryset(request).select_related("report__query", "dataset", "formatter")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

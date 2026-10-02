@@ -88,6 +88,25 @@ def test_staff_can_reach_power_query_admin(django_app, admin_user):
     assert res.status_code == 200
 
 
+def test_expired_role_staff_sees_no_objects(django_app, afghanistan, reporters):
+    """A staff user whose only UserRole has expired must see no tenant objects."""
+    from datetime import date
+
+    from django.contrib.auth.models import Permission
+
+    from testutils.factories import QueryFactory, UserFactory, UserRoleFactory
+
+    user = UserFactory(username="expired_staff", is_staff=True, is_active=True)
+    UserRoleFactory(user=user, group=reporters, country_office=afghanistan, expires=date(2020, 1, 1))
+    user.user_permissions.add(Permission.objects.get(content_type__app_label="power_query", codename="view_query"))
+    with state.set(must_tenant=False):
+        QueryFactory(country_office=afghanistan, name="expired-role-query")
+
+    res = django_app.get(reverse("admin:power_query_query_changelist"), user=user)
+    assert res.status_code == 200
+    assert "expired-role-query" not in res.text
+
+
 def test_admin_index_superuser(django_app, admin_user):
     res = django_app.get("/admin/", user=admin_user)
     assert res.status_code == 200
