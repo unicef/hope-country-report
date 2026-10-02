@@ -30,7 +30,7 @@ from smart_admin.mixins import DisplayAllMixin, LinkedObjectsMixin
 from ...state import state
 from ...utils.language import can_slice
 
-from .utils import SAFE_BUILTINS, validate_safe_code
+from .utils import SAFE_BUILTINS, query_execution_guard, validate_safe_code
 from ...utils.mail import send_document_password
 from ...utils.media import download_media
 from ...utils.perf import profile
@@ -189,7 +189,8 @@ class QueryAdmin(
                     code = f"""sql={q}.query"""
                     locals_ = {"conn": ct.model_class().objects}
                     validate_safe_code(code)
-                    exec(code, {**globals(), "__builtins__": SAFE_BUILTINS}, locals_)
+                    with query_execution_guard():
+                        exec(code, {"__builtins__": SAFE_BUILTINS}, locals_)
                     sql = locals_.get("sql")
                     if sql:
                         cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
