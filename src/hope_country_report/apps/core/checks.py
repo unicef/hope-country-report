@@ -8,55 +8,37 @@ if TYPE_CHECKING:
 
 AZURE_STORAGE_BACKEND = "storages.backends.azure_storage.AzureStorage"
 
-DOCUMENT_STORAGE_ALIASES = ("default", "media")
+# Documents are stored through Django's default storage, which is bound to the
+# media backend (``FILE_STORAGE_MEDIA``); see STORAGES in config/settings.py.
+DOCUMENT_STORAGE_ALIAS = "default"
 
 _CREDENTIAL_OPTION_KEYS = ("account_key", "sas_token", "connection_string", "token_credential")
 
-_CREDENTIAL_SETTINGS = (
-    "AZURE_ACCOUNT_KEY",
-    "AZURE_SAS_TOKEN",
-    "AZURE_CONNECTION_STRING",
-    "AZURE_TOKEN_CREDENTIAL",
-    "MEDIA_AZURE_ACCOUNT_KEY",
-    "MEDIA_AZURE_SAS_TOKEN",
-)
+
+def _document_storage() -> "dict[str, Any]":
+    return (getattr(settings, "STORAGES", {}) or {}).get(DOCUMENT_STORAGE_ALIAS) or {}
 
 
-def _azure_document_aliases() -> "list[str]":
-    storages = getattr(settings, "STORAGES", {}) or {}
-    aliases = []
-    for alias in DOCUMENT_STORAGE_ALIASES:
-        config = storages.get(alias) or {}
-        if config.get("BACKEND") == AZURE_STORAGE_BACKEND:
-            aliases.append(alias)
-    return aliases
-
-
-def _has_credentials(alias: str) -> bool:
-    storages = getattr(settings, "STORAGES", {}) or {}
-    options = (storages.get(alias) or {}).get("OPTIONS") or {}
-    if any(options.get(key) for key in _CREDENTIAL_OPTION_KEYS):
-        return True
-    return any(getattr(settings, name, "") for name in _CREDENTIAL_SETTINGS)
+def _has_credentials(storage: "dict[str, Any]") -> bool:
+    options = storage.get("OPTIONS") or {}
+    return any(options.get(key) for key in _CREDENTIAL_OPTION_KEYS)
 
 
 @register()
 def check_media_storage(app_configs: "AppConfig | None", **kwargs: "Any") -> "list[Error|Warning]":
-    aliases = _azure_document_aliases()
-    if not aliases:
+    storage = _document_storage()
+    if storage.get("BACKEND") != AZURE_STORAGE_BACKEND:
         return []
 
-    missing = [alias for alias in aliases if not _has_credentials(alias)]
-    if missing:
+    if not _has_credentials(storage):
         return [
             Error(
-                f"Azure Blob storage for {', '.join(missing)} is configured without stored credentials.",
+                "Azure Blob document storage is configured without stored credentials.",
                 hint=(
-                    "Provide account_key/sas_token/connection_string/token_credential in the "
-                    "storage OPTIONS (or AZURE_ACCOUNT_KEY/AZURE_SAS_TOKEN), and make sure the "
-                    "container is PRIVATE. Report documents must be streamed through the "
-                    "authenticated download views and must never be reachable through the "
-                    "public blob endpoint."
+                    "Add account_key/sas_token/connection_string/token_credential to the "
+                    "FILE_STORAGE_MEDIA OPTIONS and make sure the container is PRIVATE. Report "
+                    "documents must be streamed through the authenticated download views and must "
+                    "never be reachable through the public blob endpoint."
                 ),
                 id="hcr.E001",
             )
