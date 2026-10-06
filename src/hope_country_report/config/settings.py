@@ -38,6 +38,7 @@ MIGRATION_MODULES = {"hope": None}
 STORAGES = {
     "default": env.storage("FILE_STORAGE_MEDIA"),
     "staticfiles": env.storage("FILE_STORAGE_STATIC"),
+    "media": env.storage("FILE_STORAGE_MEDIA"),
     "hope": env.storage("FILE_STORAGE_HOPE"),
 }
 INSTALLED_APPS = [
