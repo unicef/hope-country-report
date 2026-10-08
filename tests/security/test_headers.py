@@ -23,10 +23,10 @@ def test_referrer_policy(anon_client):
 
 
 @pytest.mark.django_db
-def test_x_frame_options_sameorigin(anon_client):
+def test_x_frame_options_deny(anon_client):
     res = anon_client.get("/login/")
     assert res.status_code == 200
-    assert res.headers["X-Frame-Options"] == "SAMEORIGIN"
+    assert res.headers["X-Frame-Options"] == "DENY"
 
 
 @pytest.mark.django_db

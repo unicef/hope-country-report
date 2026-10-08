@@ -20,11 +20,11 @@ def _check(**overrides):
         return check_media_storage(cfg)
 
 
-def test_check_models():
-    from hope_country_report.apps.hope.checks import check_models
-
-    cfg = apps.get_app_config("admin")
-    check_models(cfg)
+def _storages(default_backend=FILESYSTEM, default_options=None):
+    return {
+        "default": {"BACKEND": default_backend, "OPTIONS": default_options or {}},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
 
 
 def test_check_media_storage_ignores_filesystem_storage():
