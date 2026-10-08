@@ -7,21 +7,23 @@ if TYPE_CHECKING:
     from django.apps import AppConfig
 
 AZURE_STORAGE_BACKEND = "storages.backends.azure_storage.AzureStorage"
-
-# Documents are stored through Django's default storage, which is bound to the
-# media backend (``FILE_STORAGE_MEDIA``); see STORAGES in config/settings.py.
 DOCUMENT_STORAGE_ALIAS = "default"
-
 _CREDENTIAL_OPTION_KEYS = ("account_key", "sas_token", "connection_string", "token_credential")
+_CREDENTIAL_SETTING_KEYS = ("AZURE_ACCOUNT_KEY", "AZURE_SAS_TOKEN", "AZURE_CONNECTION_STRING")
 
 
 def _document_storage() -> "dict[str, Any]":
-    return (getattr(settings, "STORAGES", {}) or {}).get(DOCUMENT_STORAGE_ALIAS) or {}
+    try:
+        return settings.STORAGES[DOCUMENT_STORAGE_ALIAS]
+    except (KeyError, TypeError):
+        return {}
 
 
 def _has_credentials(storage: "dict[str, Any]") -> bool:
     options = storage.get("OPTIONS") or {}
-    return any(options.get(key) for key in _CREDENTIAL_OPTION_KEYS)
+    if any(options.get(key) for key in _CREDENTIAL_OPTION_KEYS):
+        return True
+    return any(getattr(settings, key, "") for key in _CREDENTIAL_SETTING_KEYS)
 
 
 @register()
@@ -36,17 +38,17 @@ def check_media_storage(app_configs: "AppConfig | None", **kwargs: "Any") -> "li
                 "Azure Blob document storage is configured without stored credentials.",
                 hint=(
                     "Add account_key/sas_token/connection_string/token_credential to the "
-                    "FILE_STORAGE_MEDIA OPTIONS and make sure the container is PRIVATE. Report "
+                    "FILE_STORAGE_DEFAULT OPTIONS and make sure the container is PRIVATE. Report "
                     "documents must be streamed through the authenticated download views and must "
                     "never be reachable through the public blob endpoint."
                 ),
-                id="hcr.E001",
+                id="hcr.W001",
             )
         ]
 
     return [
         Warning(
-            "Ensure the Azure media container is private (not publicly readable).",
+            "Ensure the Azure document container is private (not publicly readable).",
             hint=(
                 "Document files are only reachable through authenticated views, but a "
                 "publicly readable container would bypass every permission check on the "
