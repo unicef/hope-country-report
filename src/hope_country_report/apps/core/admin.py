@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 from admin_extra_buttons.decorators import button
-from admin_extra_buttons.mixins import ExtraButtonsMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from django import forms
@@ -13,6 +12,7 @@ from smart_admin.mixins import DisplayAllMixin
 from hope_bitcaster.admin import BitcasterUserAdminMixin
 from unicef_security.admin import UserAdminPlus as _UserAdminPlus
 
+from hope_country_report.apps.core.mixins import StaffGatedExtraButtonsMixin as ExtraButtonsMixin
 from hope_country_report.apps.core.models import CountryOffice, CountryShape, User, UserRole
 
 if TYPE_CHECKING:
