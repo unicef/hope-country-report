@@ -1,6 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 
+from django.conf import settings
 from django.core.signing import get_cookie_signer
 from django.db.models import Q
 from django.utils import timezone
@@ -51,7 +52,13 @@ def get_selected_tenant() -> "CountryOffice | None":
 def set_selected_tenant(tenant: "CountryOffice") -> None:
     state.tenant = tenant
     signer = get_cookie_signer()
-    state.add_cookies(conf.COOKIE_NAME, signer.sign(tenant.slug))
+    state.add_cookies(
+        conf.COOKIE_NAME,
+        signer.sign(tenant.slug),
+        secure=settings.SESSION_COOKIE_SECURE,
+        httponly=True,
+        samesite="Lax",
+    )
 
 
 def is_tenant_valid() -> bool:

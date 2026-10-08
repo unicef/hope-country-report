@@ -88,6 +88,17 @@ def test_staff_can_reach_power_query_admin(django_app, admin_user):
     assert res.status_code == 200
 
 
+def test_hope_models_are_not_registered_in_admin(db, admin_user):
+    from django.contrib.admin.sites import site
+
+    assert not [m for m in site._registry if m._meta.app_label == "hope"]
+
+
+def test_hope_admin_url_unreachable(django_app, admin_user):
+    res = django_app.get("/admin/hope/household/", user=admin_user, expect_errors=True)
+    assert res.status_code == 404
+
+
 def _query_admin():
     from django.contrib.admin.sites import site
 

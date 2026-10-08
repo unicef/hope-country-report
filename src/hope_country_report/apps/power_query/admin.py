@@ -32,7 +32,6 @@ from ...utils.language import can_slice
 
 from .utils import SAFE_BUILTINS, query_execution_guard, validate_safe_code
 from ...utils.mail import send_document_password
-from ...utils.media import download_media
 from ...utils.perf import profile
 from ..tenant.utils import get_selected_tenant
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
@@ -645,7 +644,11 @@ class ReportDocumentAdmin(
     @button()
     def download(self, request: HttpRequest, pk: str) -> HttpResponse | StreamingHttpResponse:
         doc = self.get_object(request, pk)
-        return download_media(doc.file.path, response_class=HttpResponse)
+        # Stream through the storage backend (``Storage.path()`` is not supported
+        # by AzureStorage, so ``download_media`` would break for private blobs).
+        response = StreamingHttpResponse(doc.file, content_type="application/force-download")
+        response["Content-Disposition"] = f'attachment; filename="{doc.filename}"'
+        return response
 
     @button()
     def resend_password(self, request: "AuthHttpRequest", pk: str) -> HttpResponse:
