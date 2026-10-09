@@ -27,7 +27,7 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
 )
-SOCIAL_AUTH_SANITIZE_REDIRECTS = False
+SOCIAL_AUTH_SANITIZE_REDIRECTS = True
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = env.bool("SOCIAL_AUTH_REDIRECT_IS_HTTPS")
 SOCIAL_AUTH_REQUIRE_POST = env.bool("SOCIAL_AUTH_REQUIRE_POST")
 SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True

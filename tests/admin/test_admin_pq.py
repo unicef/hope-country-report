@@ -162,6 +162,17 @@ def test_query_explain(django_app, admin_user, query: "Query"):
     assert "sql" in res.context
 
 
+def test_query_explain_rejects_arbitrary_sql(django_app, admin_user, query: "Query"):
+    """A non-QuerySet expression must not reach the raw EXPLAIN statement."""
+    url = reverse("admin:power_query_query_explain", args=[query.pk])
+    res = django_app.get(url, user=admin_user)
+    form = res.forms["explain-form"]
+    form["target"] = ContentType.objects.get(app_label="hope", model="household").pk
+    form["query"] = "type('X', (), {'query': 'SELECT pg_sleep(5)'})()"
+    res = form.submit()
+    assert "sql" not in res.context
+
+
 @pytest.fixture
 def owner_user(db):
     """A staff user who owns the query."""
