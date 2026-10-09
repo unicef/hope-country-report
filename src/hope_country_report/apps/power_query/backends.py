@@ -37,20 +37,20 @@ class PowerQueryBackend(ModelBackend):
         }
 
     def has_perm(self, user_obj: "AnyUser", perm: str, obj: "AnyModel|None" = None) -> bool:
+        """Object-level perms come from the user's role group on the object's office.
+
+        There is no owner bypass: authorization is standard model permissions
+        (tenant-scoped through ``UserRole``) plus superusers.
+        """
         if user_obj.is_active and user_obj.is_superuser:
             return True
 
         if user_obj.is_authenticated and obj and obj._meta.app_label == "power_query":
-            if getattr(obj, "owner", None) and user_obj == obj.owner:
-                return True
-            if isinstance(obj, ReportDocument):
-                if user_obj == obj.report.owner:
-                    return True
-                if (
-                    obj.report.limit_access_to.count()
-                    and not obj.report.limit_access_to.filter(id=user_obj.id).exists()
-                ):
-                    raise RequestablePermissionDenied(obj.report)
-            else:
-                return perm in self.get_all_permissions(user_obj, obj)
+            if (
+                isinstance(obj, ReportDocument)
+                and obj.report.limit_access_to.count()
+                and not obj.report.limit_access_to.filter(id=user_obj.id).exists()
+            ):
+                raise RequestablePermissionDenied(obj.report)
+            return perm in self.get_all_permissions(user_obj, obj)
         return super().has_perm(user_obj, perm, obj)

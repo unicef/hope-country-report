@@ -288,9 +288,11 @@ def test_user_profile(django_app, afghanistan, afg_user):
 
 
 def test_download_media(django_app, report_document: "ReportDocument"):
-    """The report owner can fetch the stored file through the raw media endpoint."""
+    """A user with the view permission can fetch the stored file."""
+    user = report_document.report.owner
     url = reverse("download-media", args=[report_document.file.name])
-    res = django_app.get(url, user=report_document.report.owner)
+    with user_grant_permissions(user, ["power_query.view_reportdocument"], report_document.report.country_office):
+        res = django_app.get(url, user=user)
     assert res.headers["Content-Type"] == "application/force-download"
 
 

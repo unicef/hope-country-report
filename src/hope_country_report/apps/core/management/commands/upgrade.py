@@ -11,7 +11,7 @@ from django.core.management.base import CommandError, SystemCheckError
 from django.core.validators import validate_email
 
 from hope_country_report.apps.core.models import CountryShape
-from hope_country_report.apps.core.utils import get_or_create_query_user_group, get_or_create_reporter_group
+from hope_country_report.apps.core.utils import get_or_create_reporter_group
 from hope_country_report.apps.power_query.defaults import create_defaults, create_periodic_tasks
 from hope_country_report.config import env
 from hope_country_report.utils.media import resource_path
@@ -186,7 +186,6 @@ class Command(BaseCommand):
 
             echo("Create default group")
             get_or_create_reporter_group()
-            get_or_create_query_user_group()
             echo("Sync Country Offices")
             CountryOffice.objects.sync()
 
