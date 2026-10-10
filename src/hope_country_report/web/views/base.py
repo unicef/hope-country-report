@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, TypeVar
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.signing import get_cookie_signer
@@ -51,7 +52,13 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse | StreamingHttpResponse:
         response = super().get(request, *args, **kwargs)
         signer = get_cookie_signer()
-        response.set_cookie(conf.COOKIE_NAME, signer.sign(self.selected_office.slug))
+        response.set_cookie(
+            conf.COOKIE_NAME,
+            signer.sign(self.selected_office.slug),
+            secure=settings.SESSION_COOKIE_SECURE,
+            httponly=True,
+            samesite="Lax",
+        )
         return response
 
 

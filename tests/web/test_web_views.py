@@ -8,7 +8,7 @@ from django.urls import reverse
 from testutils.factories import UserFactory
 from testutils.perms import user_grant_permissions
 
-from hope_country_report.apps.power_query.models import Query, ReportConfiguration, ReportDocument, ReportTemplate
+from hope_country_report.apps.power_query.models import Query, ReportConfiguration, ReportDocument
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
@@ -90,6 +90,23 @@ def test_select_tenant(django_app, report_configuration):
 #     res = django_app.get(url, user=report_configuration.owner)
 #     assert res.status_code == 200
 #
+
+
+def test_selected_tenant_cookie_flags(db, afghanistan, settings):
+    from django.http import HttpResponse
+
+    from hope_country_report.apps.tenant.utils import set_selected_tenant
+    from hope_country_report.state import state
+
+    settings.SESSION_COOKIE_SECURE = True
+    with state.configure():
+        set_selected_tenant(afghanistan)
+        response = HttpResponse()
+        state.set_cookies(response)
+    cookie = response.cookies["selected_tenant"]
+    assert cookie["secure"] is True
+    assert cookie["httponly"] is True
+    assert cookie["samesite"] == "Lax"
 
 
 def test_dashboard_list(django_app, report_configuration: "ReportConfiguration"):
@@ -270,22 +287,42 @@ def test_user_profile(django_app, afghanistan, afg_user):
     assert afg_user.language == "es"
 
 
-def test_download_media(django_app, report_template: "ReportTemplate", user):
-    url = reverse("download-media", args=[report_template.doc.path])
-    res = django_app.get(url, user=user)
+def test_download_media(django_app, report_document: "ReportDocument"):
+    """A user with the view permission can fetch the stored file."""
+    user = report_document.report.owner
+    url = reverse("download-media", args=[report_document.file.name])
+    with user_grant_permissions(user, ["power_query.view_reportdocument"], report_document.report.country_office):
+        res = django_app.get(url, user=user)
     assert res.headers["Content-Type"] == "application/force-download"
 
 
-def test_download_media_requires_login(django_app, report_template: "ReportTemplate", user):
-    url = reverse("download-media", args=[report_template.doc.path])
+def test_download_media_requires_login(django_app, report_document: "ReportDocument"):
+    url = reverse("download-media", args=[report_document.file.name])
     res = django_app.get(url)
     assert res.status_code == 302
+
+
+def test_download_media_superuser(django_app, report_document: "ReportDocument", admin_user):
+    url = reverse("download-media", args=[report_document.file.name])
+    res = django_app.get(url, user=admin_user)
+    assert res.status_code == 200
+
+
+def test_download_media_cross_tenant_denied(django_app, report_document: "ReportDocument"):
+    from testutils.factories import CountryOfficeFactory, UserFactory
+
+    niger = CountryOfficeFactory(name="Niger")
+    other = UserFactory(username="other_user", is_active=True)
+    url = reverse("download-media", args=[report_document.file.name])
+    with user_grant_permissions(other, ["power_query.view_reportdocument"], country_office=niger):
+        res = django_app.get(url, user=other, expect_errors=True)
+    assert res.status_code == 403
 
 
 def test_download_media_handle_missing(django_app, user):
     url = reverse("download-media", args=["missing-file.zap"])
     res = django_app.get(url, user=user, expect_errors=True)
-    assert res.status_code == 404
+    assert res.status_code == 403
 
 
 def _role_user(afghanistan, reporters, expires):

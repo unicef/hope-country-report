@@ -88,6 +88,17 @@ def test_staff_can_reach_power_query_admin(django_app, admin_user):
     assert res.status_code == 200
 
 
+def test_hope_models_are_not_registered_in_admin(db, admin_user):
+    from django.contrib.admin.sites import site
+
+    assert not [m for m in site._registry if m._meta.app_label == "hope"]
+
+
+def test_hope_admin_url_unreachable(django_app, admin_user):
+    res = django_app.get("/admin/hope/household/", user=admin_user, expect_errors=True)
+    assert res.status_code == 404
+
+
 def _query_admin():
     from django.contrib.admin.sites import site
 
@@ -96,33 +107,33 @@ def _query_admin():
     return site._registry[Query]
 
 
-def test_non_author_cannot_edit_query(afghanistan, reporters):
-    """Holding change_query is not enough: authoring requires the QueryUsers group."""
+def test_query_without_permission_cannot_be_edited(afghanistan, reporters):
+    """No ``change_query``/``add_query`` (tenant-scoped) means no authoring."""
     from unittest.mock import Mock
-
-    from django.contrib.auth.models import Permission
 
     from testutils.factories import UserFactory, UserRoleFactory
 
-    user = UserFactory(username="non_author", is_staff=True, is_active=True)
+    user = UserFactory(username="no_perm", is_staff=True, is_active=True)
     UserRoleFactory(user=user, group=reporters, country_office=afghanistan)
-    user.user_permissions.add(Permission.objects.get(content_type__app_label="power_query", codename="change_query"))
     request = Mock(user=user)
     admin = _query_admin()
     assert admin.has_change_permission(request) is False
     assert admin.has_add_permission(request) is False
 
 
-def test_query_author_can_edit_query(db):
+def test_query_with_permission_can_be_edited(db):
+    """Authoring is the standard model permission (assigned via admin)."""
     from unittest.mock import Mock
 
-    from hope_country_report.apps.core.utils import get_or_create_query_user_group
+    from django.contrib.auth.models import Permission
 
     from testutils.factories import UserFactory
 
-    group = get_or_create_query_user_group()
     user = UserFactory(username="author", is_staff=True, is_active=True)
-    user.groups.add(group)
+    user.user_permissions.add(
+        Permission.objects.get(content_type__app_label="power_query", codename="change_query"),
+        Permission.objects.get(content_type__app_label="power_query", codename="add_query"),
+    )
     request = Mock(user=user)
     admin = _query_admin()
     assert admin.has_change_permission(request) is True

@@ -151,6 +151,41 @@ def test_processor_docx(dataset: NoReturn, tmp_path: Path):
     assert result
 
 
+def test_processor_docx_sandboxed(dataset: NoReturn):
+    """A malicious Jinja payload in an uploaded template must not execute."""
+    import io
+    import zipfile
+
+    from docx import Document
+    from jinja2.exceptions import SecurityError
+
+    from hope_country_report.apps.power_query.models import ReportTemplate
+
+    payload = "{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}"
+    buffer = io.BytesIO()
+    document = Document()
+    document.add_paragraph("XPLACEHOLDERX")
+    document.save(buffer)
+    buffer.seek(0)
+
+    out = io.BytesIO()
+    with zipfile.ZipFile(buffer) as zin, zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == "word/document.xml":
+                data = data.replace(b"XPLACEHOLDERX", payload.encode())
+            zout.writestr(item, data)
+    out.seek(0)
+
+    tpl = ReportTemplate(name="evil.docx", file_suffix=".docx")
+    tpl.doc.save("evil.docx", ContentFile(out.read()))
+
+    fmt = Mock()
+    fmt.template = tpl
+    with pytest.raises(SecurityError):
+        processors.ToWord(fmt).process({"dataset": dataset, "business_area": "Afghanistan", "country_office": ""})
+
+
 def test_processor_pdf(dataset: NoReturn, tmp_path: Path):
     from testutils.factories import FormatterFactory
 

@@ -29,6 +29,12 @@ def tenant_user(request):
     else:
         co: "CountryOffice" = CountryOfficeFactory()
     g: "Group" = get_or_create_reporter_group()
+    # permissions are assigned in the admin; grant one here to exercise the backend
+    from django.contrib.auth.models import Permission
+
+    g.permissions.add(
+        Permission.objects.get(content_type__app_label="power_query", codename="view_reportconfiguration")
+    )
     r: "UserRole" = UserRoleFactory(group=g, country_office=co)
     return r.user
 

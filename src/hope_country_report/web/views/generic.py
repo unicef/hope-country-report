@@ -1,4 +1,5 @@
 import datetime
+import os
 from typing import TYPE_CHECKING, Any, TypeVar
 from urllib.parse import urlparse
 
@@ -18,7 +19,7 @@ from hope_country_report.apps.core.forms import CountryOfficeForm
 from hope_country_report.apps.core.models import CountryOffice, User
 from hope_country_report.apps.tenant.forms import SelectTenantForm
 from hope_country_report.apps.tenant.utils import set_selected_tenant
-from hope_country_report.utils.media import download_media
+
 
 from .base import SelectedOfficeMixin
 
@@ -142,7 +143,51 @@ class OfficePageListView(SelectedOfficeMixin, ListView[User]):
 
 @login_required
 def download(request: "HttpRequest", path: str) -> HttpResponse | StreamingHttpResponse:
-    return download_media(path)
+    """Serve a stored file only to a user allowed to view the owning object.
+
+    The raw media endpoint must not rely on the login alone: resolve the path
+    back to its object and enforce the object-level ``view`` permission.
+    """
+    from django.core.exceptions import PermissionDenied
+
+    from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied
+    from hope_country_report.apps.power_query.models import Dataset, ReportDocument, ReportTemplate
+    from hope_country_report.apps.tenant.config import conf
+
+    # Resolve with the unscoped manager on purpose: authorization is enforced
+    # explicitly below, so the lookup must not depend on a selected tenant.
+    obj = (
+        ReportDocument._all.filter(file=path).first()
+        or Dataset._all.filter(file=path).first()
+        or ReportTemplate.objects.filter(doc=path).first()
+    )
+    if obj is None:
+        raise PermissionDenied
+
+    if isinstance(obj, ReportDocument):
+        office, field_name = obj.report.country_office, "file"
+    elif isinstance(obj, Dataset):
+        office, field_name = obj.query.country_office, "file"
+    else:
+        office, field_name = obj.country_office, "doc"
+
+    # The object must belong to a CountryOffice the user is allowed to access.
+    if not request.user.is_superuser and (
+        office is None or not conf.auth.get_allowed_tenants(request).filter(pk=office.pk).exists()
+    ):
+        raise PermissionDenied
+
+    try:
+        allowed = request.user.has_perm(f"power_query.view_{obj._meta.model_name}", obj)
+    except RequestablePermissionDenied:
+        allowed = False
+    if not allowed:
+        raise PermissionDenied
+
+    file = getattr(obj, field_name)
+    response = StreamingHttpResponse(file, content_type="application/force-download")
+    response["Content-Disposition"] = f'attachment; filename="{os.path.basename(file.name)}"'
+    return response
 
 
 @login_required

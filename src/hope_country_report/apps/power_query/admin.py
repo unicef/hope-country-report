@@ -11,7 +11,6 @@ from adminactions.helpers import AdminActionPermMixin
 from adminfilters.autocomplete import AutoCompleteFilter
 from adminfilters.mixin import AdminFiltersMixin
 from constance import config
-from debug_toolbar.panels.sql.utils import reformat_sql
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
@@ -19,6 +18,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connections, models
 from django.db.models import QuerySet
+from django.db.models.sql.query import Query as SQLQuery
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.template.response import TemplateResponse
@@ -32,7 +32,6 @@ from ...utils.language import can_slice
 
 from .utils import SAFE_BUILTINS, query_execution_guard, validate_safe_code
 from ...utils.mail import send_document_password
-from ...utils.media import download_media
 from ...utils.perf import profile
 from ..tenant.utils import get_selected_tenant
 from .forms import ExplainQueryForm, FormatterTestForm, QueryForm, SelectDatasetForm
@@ -46,7 +45,6 @@ from .models import (
     ReportDocument,
     ReportTemplate,
 )
-from .permissions import is_query_author
 from .utils import to_dataset
 from .widget import FormatterEditor
 
@@ -104,19 +102,6 @@ class TenantAwareAdminMixin:
         return qs.filter(**{self.get_tenant_filter_field(): tenant})
 
 
-class QueryAuthorAdminMixin:
-    """Restrict authoring actions to superusers and the QueryUsers group."""
-
-    def has_add_permission(self, request: HttpRequest) -> bool:
-        return is_query_author(request.user) and super().has_add_permission(request)
-
-    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
-        return is_query_author(request.user) and super().has_change_permission(request, obj)
-
-    def has_delete_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
-        return is_query_author(request.user) and super().has_delete_permission(request, obj)
-
-
 class ReadOnlyArtifactAdminMixin:
     """Generated artifacts (datasets/documents) are never added or edited through the admin.
 
@@ -137,7 +122,6 @@ class ReadOnlyArtifactAdminMixin:
 @admin.register(Query)
 class QueryAdmin(
     TenantAwareAdminMixin,
-    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     AutoProjectCol,
     CeleryTaskModelAdmin,
@@ -190,13 +174,6 @@ class QueryAdmin(
         )
 
     def has_queue_permission(self, perm, request: HttpRequest, o: "Query | None") -> bool:
-        # Executing an existing query is a reporter action: allow superusers,
-        # QueryUsers authors, owners and holders of the change permission, while
-        # editing query code stays restricted to QueryAuthorAdminMixin.
-        if request.user.is_superuser or is_query_author(request.user):
-            return True
-        if o is not None and getattr(o, "owner_id", None) == request.user.pk:
-            return True
         opts = self.model._meta
         return request.user.has_perm(f"{opts.app_label}.change_{opts.model_name}", o)
 
@@ -210,7 +187,7 @@ class QueryAdmin(
             url += f"?query={obj.pk}&office={obj.country_office_id}"
         return HttpResponseRedirect(url)
 
-    @button()
+    @button(permission=lambda r, o, handler: handler.model_admin.has_queue_permission("explain", r, o))
     def explain(self, request: HttpRequest, pk: int) -> HttpResponse:
         context = self.get_common_context(request, pk)
         if request.method == "POST":
@@ -225,13 +202,15 @@ class QueryAdmin(
                     with query_execution_guard():
                         exec(code, {"__builtins__": SAFE_BUILTINS}, locals_)
                     sql = locals_.get("sql")
-                    if sql:
-                        cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
-                        context["sql"] = reformat_sql(str(locals_.get("sql", "")))
-                        cursor.execute(f"EXPLAIN ANALYZE {sql}")
-                        headers = [d[0] for d in cursor.description]
-                        result = cursor.fetchall()
-                        context.update(result=result, sql=sql, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
+                    if not isinstance(sql, SQLQuery):
+                        raise ValueError("Only Django QuerySet expressions are allowed for EXPLAIN")
+                    sql_text = str(sql)
+                    cursor = connections[settings.POWER_QUERY_DB_ALIAS].cursor()
+                    context["sql"] = sql_text
+                    cursor.execute(f"EXPLAIN ANALYZE {sql_text}")
+                    headers = [d[0] for d in cursor.description]
+                    result = cursor.fetchall()
+                    context.update(result=result, sql=sql_text, headers=headers, alias=settings.POWER_QUERY_DB_ALIAS)
                 except Exception as e:
                     self.message_error_to_user(request, e)
                 self.message_user(request, code)
@@ -361,7 +340,7 @@ class DatasetAdmin(
         "last_run",
     )
     change_form_template = None
-    readonly_fields = ("last_run", "query", "info")
+    readonly_fields = ("last_run", "query", "info", "file", "size")
     date_hierarchy = "last_run"
 
     def get_queryset(self, request):
@@ -402,7 +381,6 @@ class DatasetAdmin(
 @admin.register(Formatter)
 class FormatterAdmin(
     TenantAwareAdminMixin,
-    QueryAuthorAdminMixin,
     ExtraButtonsMixin,
     DisplayAllMixin,
     AdminActionPermMixin,
@@ -443,7 +421,6 @@ class FormatterAdmin(
 @admin.register(ReportTemplate)
 class ReportTemplateAdmin(
     TenantAwareAdminMixin,
-    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     ExtraButtonsMixin,
     AdminActionPermMixin,
@@ -481,7 +458,6 @@ class ReportTemplateAdmin(
 @admin.register(ReportConfiguration)
 class ReportConfigurationAdmin(
     TenantAwareAdminMixin,
-    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     CeleryTaskModelAdmin,
     AutoProjectCol,
@@ -527,18 +503,7 @@ class ReportConfigurationAdmin(
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("query", "country_office", "owner")
 
-    def has_change_permission(self, request: HttpRequest, obj: "Any|None" = None) -> bool:
-        if not is_query_author(request.user):
-            return False
-        if obj and obj.owner == request.user:
-            return True
-        return super().has_change_permission(request, obj)
-
     def has_queue_permission(self, perm, request: HttpRequest, o: "ReportConfiguration | None") -> bool:
-        if request.user.is_superuser or is_query_author(request.user):
-            return True
-        if o is not None and getattr(o, "owner_id", None) == request.user.pk:
-            return True
         opts = self.model._meta
         return request.user.has_perm(f"{opts.app_label}.change_{opts.model_name}", o)
 
@@ -591,7 +556,6 @@ class ReportConfigurationAdmin(
 @admin.register(Parametrizer)
 class QueryArgsAdmin(
     TenantAwareAdminMixin,
-    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     AutoProjectCol,
     LinkedObjectsMixin,
@@ -643,7 +607,11 @@ class ReportDocumentAdmin(
     @button()
     def download(self, request: HttpRequest, pk: str) -> HttpResponse | StreamingHttpResponse:
         doc = self.get_object(request, pk)
-        return download_media(doc.file.path, response_class=HttpResponse)
+        # Stream through the storage backend (``Storage.path()`` is not supported
+        # by AzureStorage, so ``download_media`` would break for private blobs).
+        response = StreamingHttpResponse(doc.file, content_type="application/force-download")
+        response["Content-Disposition"] = f'attachment; filename="{doc.filename}"'
+        return response
 
     @button()
     def resend_password(self, request: "AuthHttpRequest", pk: str) -> HttpResponse:
@@ -655,7 +623,6 @@ class ReportDocumentAdmin(
 @admin.register(ChartPage)
 class ChartPageAdmin(
     TenantAwareAdminMixin,
-    QueryAuthorAdminMixin,
     AdminFiltersMixin,
     LinkedObjectsMixin,
     ExtraButtonsMixin,
