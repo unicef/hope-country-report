@@ -20,7 +20,7 @@ from hope_country_report.utils.perf import profile
 
 from ..exceptions import QueryRunCanceled, QueryRunTerminated
 from ..json import PQJSONEncoder
-from ..utils import SAFE_BUILTINS, dict_hash, to_dataset, validate_safe_code
+from ..utils import SAFE_BUILTINS, dict_hash, query_execution_guard, to_dataset, validate_safe_code
 from ._base import AdminReversable, PowerQueryCeleryFields, PowerQueryModel
 from .arguments import Parametrizer
 
@@ -187,7 +187,8 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                         try:
                             code = self.get_code()
                             validate_safe_code(code)
-                            exec(code, {**globals(), "__builtins__": SAFE_BUILTINS}, locals_)
+                            with query_execution_guard():
+                                exec(code, {"__builtins__": SAFE_BUILTINS}, locals_)
                             result = locals_.get("result")
                             extra = locals_.get("extra")
                         except Exception:

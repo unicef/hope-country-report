@@ -1,15 +1,14 @@
 from typing import TYPE_CHECKING
 
-from dateutil.utils import today
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
-from django.db.models import Q, QuerySet
 
-from hope_country_report.apps.tenant.utils import get_selected_tenant
+from hope_country_report.apps.tenant.utils import active_role_q, get_selected_tenant
 from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from django.db import Model
+    from django.db.models import QuerySet
 
     from hope_country_report.apps.core.models import CountryOffice, User
     from hope_country_report.types.django import _R, AnyModel, AnyUser
@@ -28,7 +27,9 @@ class TenantBackend(BaseBackend):
         if not hasattr(user, perm_cache_name):
             qs = Permission.objects.all()
             if not user.is_superuser:
-                qs = qs.filter(group__userrole__user=user, group__userrole__country_office=tenant)
+                qs = qs.filter(group__userrole__user=user, group__userrole__country_office=tenant).filter(
+                    active_role_q("group__userrole__")
+                )
             perms = qs.values_list("content_type__app_label", "codename").order_by()
             setattr(user, perm_cache_name, {f"{ct}.{name}" for ct, name in perms})
         return getattr(user, perm_cache_name)
@@ -55,7 +56,7 @@ class TenantBackend(BaseBackend):
         elif request.user.is_authenticated:
             allowed_tenants = (
                 conf.tenant_model.objects.filter(userrole__user=request.user)
-                .filter(Q(userrole__expires=None) | Q(userrole__expires__gt=today()))
+                .filter(active_role_q("userrole__"))
                 .distinct()
             )
         else:

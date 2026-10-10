@@ -5,6 +5,7 @@ from django.contrib.auth.models import Permission
 
 from hope_country_report.apps.power_query.exceptions import RequestablePermissionDenied
 from hope_country_report.apps.power_query.models import ReportDocument
+from hope_country_report.apps.tenant.utils import active_role_q
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -23,7 +24,7 @@ class PowerQueryBackend(ModelBackend):
             if not hasattr(user_obj, perm_cache_name):
                 perms = Permission.objects.filter(
                     group__userrole__user=user_obj, group__userrole__country_office=obj.country_office
-                )
+                ).filter(active_role_q("group__userrole__"))
                 perms = perms.values_list("content_type__app_label", "codename").order_by()
                 setattr(user_obj, perm_cache_name, {f"{ct}.{name}" for ct, name in perms})
             return getattr(user_obj, perm_cache_name)
