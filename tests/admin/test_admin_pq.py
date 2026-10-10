@@ -64,6 +64,14 @@ def test_celery_inspect(django_app, admin_user, query):
     with mock.patch.object(Query, "curr_async_result_id", "some-task-id", create=True):
         res = django_app.get(url, user=admin_user)
         assert res.status_code == 200
+        assert "/flower/task/" in res.text
+
+
+def test_flower_addr_available_in_admin_context(django_app, admin_user):
+    """The Flower address is exposed to every admin template via the context processor."""
+    res = django_app.get(reverse("admin:index"), user=admin_user)
+    assert res.status_code == 200
+    assert str(res.context["flower_addr"]).endswith("/flower")
 
 
 def test_celery_queue(django_app, admin_user, query):
