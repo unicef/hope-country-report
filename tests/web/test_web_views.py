@@ -288,6 +288,31 @@ def test_download_media_handle_missing(django_app, user):
     assert res.status_code == 404
 
 
+def _role_user(afghanistan, reporters, expires):
+    from testutils.factories import UserFactory, UserRoleFactory
+
+    user = UserFactory(username=f"role-{expires}", is_active=True, is_staff=False, is_superuser=False)
+    UserRoleFactory(user=user, group=reporters, country_office=afghanistan, expires=expires)
+    user.groups.add(reporters)
+    return user
+
+
+def test_expired_userrole_cannot_access_office(django_app, afghanistan, reporters):
+    """A user whose UserRole.expires is in the past must lose office access."""
+    from datetime import date
+
+    user = _role_user(afghanistan, reporters, date(2020, 1, 1))
+    res = django_app.get(reverse("office-index", args=[afghanistan.slug]), user=user, expect_errors=True)
+    assert res.status_code == 403
+
+
+def test_active_userrole_can_access_office(django_app, afghanistan, reporters):
+    """A non-expired role still resolves the office."""
+    user = _role_user(afghanistan, reporters, None)
+    res = django_app.get(reverse("office-index", args=[afghanistan.slug]), user=user)
+    assert res.status_code == 200
+
+
 def test_office_preferences(django_app, afg_user, afghanistan):
     url = reverse("office-preferences", args=[afghanistan.slug])
     with user_grant_permissions(afg_user, ["core.change_countryoffice"], afghanistan):

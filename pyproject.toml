@@ -91,6 +91,7 @@ dependencies = [
   "setuptools",
   "shapely",
   "social-auth-app-django",
+  "social-auth-core<6",
   "sqlparse",
   "swapper",
   "tablib[xlsx]",

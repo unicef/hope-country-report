@@ -139,14 +139,13 @@ def test_query_run(django_app, admin_user, query):
 
 @pytest.mark.django_db(transaction=True)
 def test_delete_file(django_app, admin_user, dataset: "Dataset"):
+    """Deleting a Dataset still removes its stored file (admin delete is disabled)."""
     file_path = dataset.file.path
     assert default_storage.exists(file_path)
-    url = reverse("admin:power_query_dataset_change", args=[dataset.pk])
-    res = django_app.get(url, user=admin_user)
-    res = res.click("Delete")
-    res.forms[1].submit()
+    pk = dataset.pk
+    dataset.delete()
     with pytest.raises(ObjectDoesNotExist):
-        dataset.refresh_from_db()
+        Dataset.objects.get(pk=pk)
     assert not default_storage.exists(file_path)
 
 

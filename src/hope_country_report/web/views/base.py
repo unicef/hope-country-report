@@ -26,8 +26,12 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
             if self.request.user.is_superuser:
                 co = CountryOffice.objects.get(slug=self.kwargs["co"])
             else:
-                co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
-        except (CountryOffice.DoesNotExist, IndexError):
+                # Resolve through the expiry-aware tenant backend so an expired
+                # UserRole can no longer reach the office's reports/documents.
+                co = conf.auth.get_allowed_tenants(self.request).filter(slug=self.kwargs["co"]).first()
+                if co is None:
+                    raise PermissionDenied
+        except CountryOffice.DoesNotExist:
             raise PermissionDenied
         state.tenant = co
         return co

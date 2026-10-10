@@ -170,17 +170,41 @@ def test_query_execution_with_imports(data: "_DATA"):
     query = QueryFactory(
         target=ContentTypeFactory(app_label="hope", model="household"),
         name="Query With Imports",
-        code=(
-            "import datetime\n"
-            "import hashlib\n"
-            "from django.db.models import F\n"
-            "from hope_country_report.apps.hope.models import Household\n"
-            "result = conn.all()\n"
-        ),
+        code=("import datetime\nimport hashlib\nfrom django.db.models import F\nresult = conn.all()\n"),
     )
     result = query.run(persist=True)
     assert query.datasets.exists()
     assert result[0].data
+
+
+def test_query_does_not_leak_module_globals(data: "_DATA"):
+    """Module globals (logging/hashlib/tempfile/os ...) must not be reachable."""
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    query = QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Leak Globals",
+        code="result = logging.os.popen('id').read()",
+    )
+    with pytest.raises(NameError):
+        query.run(persist=True)
+    assert not query.datasets.exists()
+
+
+@pytest.mark.parametrize("code", ["import pickle", "import shutil", "import posix", "import logging"])
+def test_query_blocks_reexport_imports(data: "_DATA", code: str):
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    from hope_country_report.apps.power_query.exceptions import SecurityException
+
+    query = QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Query",
+        code=code,
+    )
+    with pytest.raises(SecurityException):
+        query.run(persist=True)
+    assert not query.datasets.exists()
 
 
 @pytest.mark.parametrize(
