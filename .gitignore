@@ -11,6 +11,7 @@ media/
 *.egg*
 celerybeat-schedule
 coverage.xml
+output/
 !.coveragerc
 !.dockerignore
 !.flake8

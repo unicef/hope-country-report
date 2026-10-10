@@ -10,7 +10,9 @@ from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from ..apps.core.models import CountryOffice, CountryShape
+from ..apps.power_query.exceptions import RequestablePermissionDenied
 from ..apps.power_query.models import ChartPage, Dataset, Query, ReportConfiguration, ReportDocument
+from ..apps.tenant.config import conf
 from .serializers import (
     BoundarySerializer,
     ChartPageSerializer,
@@ -30,6 +32,52 @@ if TYPE_CHECKING:
 class SelectedOfficeViewSet(viewsets.ReadOnlyModelViewSet):
     def selected_office(self) -> CountryOffice:
         return CountryOffice.objects.get(id=self.kwargs["slug"])
+
+
+class ObjectPermissions(permissions.DjangoObjectPermissions):
+    """Enforce object permissions on safe methods as well.
+
+    DRF maps GET/HEAD to no permissions, so ``has_object_permission`` is never called
+    for reads and a restricted object (e.g. a report with ``limit_access_to``) would be
+    readable by any user allowed to see the office. Requiring the ``view`` permission on
+    the object closes that gap and yields the same request-access redirect as the web views.
+    """
+
+    perms_map = {
+        **permissions.DjangoObjectPermissions.perms_map,
+        "GET": ["%(app_label)s.view_%(model_name)s"],
+        "HEAD": ["%(app_label)s.view_%(model_name)s"],
+    }
+
+
+class TenantScopedViewSetMixin:
+    """Scope querysets to the CountryOffices the requesting user may access.
+
+    Scoping relies on ``request.user`` (via ``get_allowed_tenants``) rather than the
+    thread-local tenant so that it also holds for token-authenticated requests, where
+    the state middleware cannot resolve a tenant.
+    """
+
+    request: Any
+
+    def allowed_office_ids(self) -> "Any":
+        return conf.auth.get_allowed_tenants(self.request).values("pk")
+
+    @staticmethod
+    def unscoped(model: "Any") -> "Any":
+        """Return a queryset without the thread-local tenant filter.
+
+        ``power_query`` models use ``PowerQueryManager``, which fails closed to an empty
+        queryset when no tenant is selected. API authorisation is derived from
+        ``request.user`` (``allowed_office_ids``), so that state-based filter must be
+        bypassed for requests where no tenant can be resolved (e.g. token auth).
+        """
+        return getattr(model, "_all", model._default_manager).all()
+
+    def apply_parent_lookups(self, queryset: "Any") -> "Any":
+        if hasattr(self, "filter_queryset_by_parents_lookups"):
+            return self.filter_queryset_by_parents_lookups(queryset)
+        return queryset
 
 
 class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -61,7 +109,7 @@ class HCRHomeViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     def offices(self, request: "AnyRequest") -> JsonResponse:
-        qs = CountryOffice.objects.filter(active=True).values_list("shape__iso3", "name", "active")
+        qs = conf.auth.get_allowed_tenants(request).filter(active=True).values_list("shape__iso3", "name", "active")
         return JsonResponse(list(qs), safe=False, content_type="application/json")
 
 
@@ -69,18 +117,25 @@ class CountryOfficeFilter(filters.FilterSet):
     slug = filters.CharFilter(lookup_expr="istartswith")
 
 
-class CountryOfficeViewSet(viewsets.ReadOnlyModelViewSet):
+class CountryOfficeViewSet(TenantScopedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = CountryOffice.objects.all()
     serializer_class = CountryOfficeSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
     filterset_class = CountryOfficeFilter
     lookup_field = "slug"
 
+    def get_queryset(self):
+        return conf.auth.get_allowed_tenants(self.request)
 
-class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
-    queryset = Query.objects.all().order_by("-pk")
+
+class QueryViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = Query.objects.all()
     serializer_class = QuerySerializer
     permission_classes = [permissions.DjangoObjectPermissions]
+
+    def get_queryset(self):
+        queryset = self.unscoped(Query).filter(country_office__in=self.allowed_office_ids())
+        return self.apply_parent_lookups(queryset).order_by("-pk")
 
     @action(detail=True, methods=["get"])
     def latest_dataset(self, request, *args, **kwargs):
@@ -102,19 +157,23 @@ class QueryViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-class ChartViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
-    queryset = ChartPage.objects.all().order_by("-pk")
+class ChartViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = ChartPage.objects.all()
     serializer_class = ChartPageSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
+    def get_queryset(self):
+        queryset = self.unscoped(ChartPage).filter(country_office__in=self.allowed_office_ids())
+        return self.apply_parent_lookups(queryset).order_by("-pk")
 
-class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
-    queryset = Dataset.objects.all().order_by("-pk")
+
+class DatasetViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = DatasetListSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = self.unscoped(Dataset).filter(query__country_office__in=self.allowed_office_ids())
+        queryset = self.apply_parent_lookups(queryset)
         query_id = self.kwargs.get("parent_lookup_query")
         if query_id:
             queryset = queryset.filter(query_id=query_id)
@@ -165,32 +224,50 @@ class DatasetViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         return Response(data)
 
 
-class ReportViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
-    queryset = ReportConfiguration.objects.all().order_by("-pk")
+class ReportViewSet(TenantScopedViewSetMixin, NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = ReportConfigurationSerializer
     permission_classes = [permissions.DjangoObjectPermissions]
     filterset_fields = ["name"]
 
+    def get_queryset(self):
+        queryset = self.unscoped(ReportConfiguration).filter(country_office__in=self.allowed_office_ids())
+        return self.apply_parent_lookups(queryset).order_by("-pk")
 
-class DocumentViewSet(NestedViewSetMixin, SelectedOfficeViewSet, viewsets.ReadOnlyModelViewSet):
-    queryset = ReportDocument.objects.all().order_by("-pk")
+
+class DocumentViewSet(
+    TenantScopedViewSetMixin,
+    NestedViewSetMixin,
+    SelectedOfficeViewSet,
+    viewsets.ReadOnlyModelViewSet,
+):
     serializer_class = ReportDocumentSerializer
-    permission_classes = [permissions.DjangoObjectPermissions]
+    permission_classes = [ObjectPermissions]
+
+    def get_queryset(self):
+        queryset = self.unscoped(ReportDocument).filter(report__visible=True)
+        queryset = queryset.filter(report__country_office__in=self.allowed_office_ids())
+        return self.apply_parent_lookups(queryset).order_by("-pk")
 
     @action(detail=True)
     def download(
         self,
         request: "AnyRequest",
-        parent_lookup_report__country_office__slug: str,
-        parent_lookup_report__id: str,
-        pk: str,
+        *args: tuple[Any],
+        **kwargs: dict[str, str],
     ) -> "Response|StreamingHttpResponse":
         try:
-            doc = ReportDocument.objects.get(
-                report__country_office__slug=parent_lookup_report__country_office__slug,
-                report__id=parent_lookup_report__id,
-                pk=pk,
+            doc: ReportDocument = self.get_object()
+            if not request.user.has_perm("power_query.download_reportdocument", doc):
+                return Response(
+                    {"detail": "You do not have permission to download this document."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        except RequestablePermissionDenied:
+            return Response(
+                {"detail": "This document is restricted. Please request access first."},
+                status=status.HTTP_403_FORBIDDEN,
             )
+        try:
             if not doc.file.size:
                 raise FileNotFoundError
             response = StreamingHttpResponse(doc.file, content_type="application/force-download")

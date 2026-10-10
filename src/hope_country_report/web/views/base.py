@@ -11,6 +11,7 @@ from django.views.generic import TemplateView
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.apps.tenant.forms import SelectTenantForm
+from hope_country_report.state import state
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -25,10 +26,20 @@ class SelectedOfficeMixin(LoginRequiredMixin, View):
             if self.request.user.is_superuser:
                 co = CountryOffice.objects.get(slug=self.kwargs["co"])
             else:
-                co = CountryOffice.objects.filter(userrole__user=self.request.user, slug=self.kwargs["co"])[0]
-            return co
-        except (CountryOffice.DoesNotExist, IndexError):
+                # Resolve through the expiry-aware tenant backend so an expired
+                # UserRole can no longer reach the office's reports/documents.
+                co = conf.auth.get_allowed_tenants(self.request).filter(slug=self.kwargs["co"]).first()
+                if co is None:
+                    raise PermissionDenied
+        except CountryOffice.DoesNotExist:
             raise PermissionDenied
+        state.tenant = co
+        return co
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        if request.user.is_authenticated:
+            self.selected_office
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         kwargs["view"] = self

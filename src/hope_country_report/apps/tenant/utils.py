@@ -2,17 +2,42 @@ import logging
 from typing import TYPE_CHECKING
 
 from django.core.signing import get_cookie_signer
+from django.db.models import Q
+from django.utils import timezone
 
 from hope_country_report.apps.tenant.config import conf
 from hope_country_report.state import State, state
 
 if TYPE_CHECKING:
+    from django.db.models import QuerySet
     from django.http import HttpResponse
 
     from hope_country_report.apps.core.models import CountryOffice
+    from hope_country_report.types.django import AnyUser
     from hope_country_report.types.http import AuthHttpRequest
 
 logger = logging.getLogger(__name__)
+
+
+def active_role_q(prefix: str = "") -> Q:
+    """Q object matching UserRole rows that have not expired.
+
+    ``prefix`` allows reuse in joins, e.g. ``active_role_q("userrole__")``.
+    """
+    return Q(**{f"{prefix}expires__isnull": True}) | Q(**{f"{prefix}expires__gt": timezone.localdate()})
+
+
+def active_roles(user: "AnyUser") -> "QuerySet":
+    """Return the user's non-expired UserRole rows.
+
+    ``UserRole.expires`` is the revocation control; callers must use this (or
+    ``conf.auth.get_allowed_tenants``) instead of ``user.roles`` directly.
+    """
+    from hope_country_report.apps.core.models import UserRole
+
+    if not getattr(user, "is_authenticated", False):
+        return UserRole.objects.none()
+    return user.roles.filter(active_role_q())
 
 
 def get_selected_tenant() -> "CountryOffice | None":
@@ -40,7 +65,7 @@ def must_tenant() -> bool:
 
         if state.request.user.is_anonymous or state.request.user.is_superuser:
             state.must_tenant = False
-        elif state.request.user.is_staff or state.request.user.roles.exists():
+        elif state.request.user.is_staff or active_roles(state.request.user).exists():
             state.must_tenant = True
         else:
             state.must_tenant = None
@@ -48,7 +73,7 @@ def must_tenant() -> bool:
 
 
 def get_tenant_cookie_from_request(request: "AuthHttpRequest") -> str | None:
-    if request and request.user.is_authenticated and request.user.roles.exists():
+    if request and request.user.is_authenticated and active_roles(request.user).exists():
         signer = get_cookie_signer()
         cookie_value = request.COOKIES.get(conf.COOKIE_NAME)
         if cookie_value:

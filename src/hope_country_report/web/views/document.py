@@ -38,7 +38,11 @@ class OfficeReportDocumentListView(SelectedOfficeMixin, PermissionRequiredMixin,
         return super().get_context_data(title=_("Available Reports"), **kwargs)
 
     def get_queryset(self) -> "_SupportsPagination[_M]":
-        qs = ReportDocument.objects.filter(report__country_office=self.selected_office)
+        qs = (
+            ReportDocument.objects.filter(report__country_office=self.selected_office)
+            .select_related("report", "report__owner", "report__country_office")
+            .prefetch_related("report__tags")
+        )
         if tag := self.request.GET.get("tag", None):
             qs = qs.filter(report__tags__name=tag)
         if active := self.request.GET.get("active", None):
@@ -81,6 +85,19 @@ class OfficeReportDocumentDetailView(SelectedOfficeMixin, PermissionRequiredMixi
 class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
     permission_required = ["power_query.view_reportconfiguration"]
 
+    def handle_no_permission(self) -> HttpResponseRedirect:
+        if not self.has_permission():
+            raise RequestablePermissionDenied(self.get_object().report)
+        return super().handle_no_permission()
+
+    def has_permission(self) -> bool:
+        obj: "ReportDocument" = self.get_object()
+        try:
+            perms = self.get_permission_required()
+            return self.request.user.has_perms(perms, obj)
+        except (PermissionDenied, RequestablePermissionDenied):
+            raise RequestablePermissionDenied(obj.report)
+
     def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
         return ReportDocument.objects.get(
             report__country_office=self.selected_office, id=self.kwargs["pk"], report__visible=True
@@ -100,8 +117,23 @@ class OfficeDocumentDisplayView(SelectedOfficeMixin, PermissionRequiredMixin, De
 class OfficeDocumentDownloadView(SelectedOfficeMixin, PermissionRequiredMixin, DetailView[ReportDocument]):
     permission_required = ["power_query.download_reportdocument"]
 
+    def handle_no_permission(self) -> HttpResponseRedirect:
+        if not self.has_permission():
+            raise RequestablePermissionDenied(self.get_object().report)
+        return super().handle_no_permission()
+
+    def has_permission(self) -> bool:
+        obj: "ReportDocument" = self.get_object()
+        try:
+            perms = self.get_permission_required()
+            return self.request.user.has_perms(perms, obj)
+        except (PermissionDenied, RequestablePermissionDenied):
+            raise RequestablePermissionDenied(obj.report)
+
     def get_object(self, queryset: "QuerySet[_M] | None" = None) -> "_M":
-        return ReportDocument.objects.get(report__country_office=self.selected_office, id=self.kwargs["pk"])
+        return ReportDocument.objects.get(
+            report__country_office=self.selected_office, id=self.kwargs["pk"], report__visible=True
+        )
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> "RedirectOrResponse":  # type: ignore[override]
         try:

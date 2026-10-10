@@ -7,7 +7,6 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
 import pymupdf as fitz
-import pdfkit
 from django.core.files.temp import NamedTemporaryFile
 from django.template import Context, Template
 from django.utils.functional import classproperty
@@ -182,8 +181,14 @@ class ToPDF(ProcessorStrategy):
 
     def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         tpl = Template(self.formatter.code)
-        out = tpl.render(Context(context))
-        return pdfkit.from_string(out)
+        html = tpl.render(Context(context))
+        return fitz.Story(html=html).write_with_links(self._page).tobytes()
+
+    @staticmethod
+    def _page(rect_num: int, filled: "fitz.Rect") -> "tuple[fitz.Rect, fitz.Rect, None]":
+        # A4 with ~10mm margins, matching the previous wkhtmltopdf defaults.
+        page = fitz.paper_rect("A4")
+        return page, page + (28, 28, -28, -28), None
 
 
 class ToFormPDF(ProcessorStrategy):

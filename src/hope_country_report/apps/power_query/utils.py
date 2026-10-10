@@ -1,13 +1,15 @@
 import base64
 import binascii
 import builtins
+import contextlib
 import datetime
 import hashlib
 import io
 import json
 import logging
 import sys
-from collections.abc import Callable, Container, Iterable
+import threading
+from collections.abc import Callable, Container, Iterable, Iterator
 from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
@@ -164,9 +166,18 @@ DISALLOWED_NAMES = frozenset(
         "exec",
         "compile",
         "open",
+        "input",
+        "breakpoint",
         "getattr",
         "setattr",
         "delattr",
+        "globals",
+        "locals",
+        "vars",
+        "type",
+        "object",
+        "super",
+        "memoryview",
         "__import__",
         "__builtins__",
         "__class__",
@@ -176,7 +187,37 @@ DISALLOWED_NAMES = frozenset(
         "__globals__",
     }
 )
-DISALLOWED_MODULES = frozenset({"os", "sys", "subprocess", "importlib", "builtins", "ctypes", "marshal"})
+
+# Modules user-authored query code is allowed to import. This is an allowlist:
+# modules such as ``shutil``, ``logging``, ``posix``, ``ntpath`` and ``posixpath``
+# re-export ``os``, so any denylist is trivially bypassable.
+ALLOWED_MODULES = frozenset(
+    {
+        "calendar",
+        "collections",
+        "datetime",
+        "decimal",
+        "functools",
+        "hashlib",
+        "itertools",
+        "json",
+        "math",
+        "operator",
+        "re",
+        "statistics",
+        "string",
+        "tablib",
+        "time",
+        "uuid",
+        "django.db.models",
+    }
+)
+
+
+def is_allowed_module(name: str) -> bool:
+    if name in ALLOWED_MODULES or name.split(".", 1)[0] in ALLOWED_MODULES:
+        return True
+    return any(name == dotted or name.startswith(f"{dotted}.") for dotted in ALLOWED_MODULES if "." in dotted)
 
 
 def safe_import(
@@ -186,11 +227,10 @@ def safe_import(
     fromlist: tuple[str, ...] = (),
     level: int = 0,
 ) -> Any:
-    """Safe __import__ wrapper preventing loading of disallowed modules and relative imports."""
+    """Safe __import__ wrapper restricting imports to the module allowlist."""
     if level > 0:
         raise SecurityException("Relative imports are not allowed")
-    base_mod = name.split(".", 1)[0]
-    if not base_mod or base_mod in DISALLOWED_MODULES:
+    if not is_allowed_module(name):
         raise SecurityException(f"Import of '{name}' is not allowed")
     return builtins.__import__(name, globals_, locals_, fromlist, level)
 
@@ -202,6 +242,45 @@ SAFE_BUILTINS = {
 }
 SAFE_BUILTINS["__import__"] = safe_import
 
+# Runtime guard installed around query execution. Audit hooks cannot be scoped,
+# so the hook is a no-op unless the current thread is executing query code
+# (``query_execution_guard``). This is defense-in-depth: the builtins/import
+# allowlists above are the primary control.
+_QUERY_EXEC_STATE = threading.local()
+
+_DENIED_AUDIT_EVENTS = frozenset(
+    {
+        "ctypes.dlopen",
+        "ctypes.dlsym",
+        "os.exec",
+        "os.fork",
+        "os.kill",
+        "os.posix_spawn",
+        "os.spawn",
+        "os.system",
+        "pickle.find_class",
+        "subprocess.Popen",
+    }
+)
+
+
+def _query_audit_hook(event: str, args: tuple) -> None:
+    if getattr(_QUERY_EXEC_STATE, "active", False) and event in _DENIED_AUDIT_EVENTS:
+        raise SecurityException(f"Operation '{event}' is not allowed")
+
+
+sys.addaudithook(_query_audit_hook)
+
+
+@contextlib.contextmanager
+def query_execution_guard() -> "Iterator[None]":
+    previous = getattr(_QUERY_EXEC_STATE, "active", False)
+    _QUERY_EXEC_STATE.active = True
+    try:
+        yield
+    finally:
+        _QUERY_EXEC_STATE.active = previous
+
 
 def validate_safe_code(code: str) -> None:
     """Validate that code doesn't use dangerous builtins or imports before exec."""
@@ -211,13 +290,13 @@ def validate_safe_code(code: str) -> None:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name.split(".", 1)[0] in DISALLOWED_MODULES:
+                if not is_allowed_module(alias.name):
                     raise SecurityException(f"Import of '{alias.name}' is not allowed")
         if isinstance(node, ast.ImportFrom):
             if node.level > 0:
                 raise SecurityException("Relative imports are not allowed")
             module = node.module or ""
-            if module.split(".", 1)[0] in DISALLOWED_MODULES:
+            if not is_allowed_module(module):
                 raise SecurityException(f"Import from '{module}' is not allowed")
         if isinstance(node, ast.Name):
             if node.id in DISALLOWED_NAMES:

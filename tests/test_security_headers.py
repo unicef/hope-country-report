@@ -24,6 +24,7 @@ def test_security_settings_are_configured():
     assert settings.SECURE_CONTENT_TYPE_NOSNIFF is True
     assert "django.middleware.security.SecurityMiddleware" in settings.MIDDLEWARE
     assert "csp.middleware.CSPMiddleware" in settings.MIDDLEWARE
+    assert "csp" in settings.INSTALLED_APPS
     assert settings.CONTENT_SECURITY_POLICY["DIRECTIVES"].get("default-src")
 
 

@@ -118,10 +118,13 @@ def test_celery_no_worker(db, settings, report: "ReportConfiguration") -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = False
     assert report.task_status == report.NOT_SCHEDULED
     report.queue()
+    # `is_queued()` inspects the shared Redis broker, which the autouse
+    # `state_context` fixture purges in every test, so the lookup races with
+    # other xdist workers. Mock it to exercise the state machine deterministically.
     with mock.patch("django_celery_boost.models.CeleryTaskModel.is_queued", return_value=True):
         assert report.task_status == report.QUEUED
-    report.terminate()
-    assert report.task_status == report.NOT_SCHEDULED
+        report.terminate()
+        assert report.task_status == report.NOT_SCHEDULED
 
 
 def test_report_refresh(db, settings, report: "ReportConfiguration") -> None:

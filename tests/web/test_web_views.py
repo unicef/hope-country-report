@@ -192,6 +192,32 @@ def test_document_request_access(django_app, user, restricted_document: "ReportD
         assert res.status_code == 302
 
 
+def test_document_download_restricted(django_app, user, restricted_document: "ReportDocument"):
+    """A document restricted to other users must not be downloadable by their URL."""
+    config: "ReportConfiguration" = restricted_document.report
+    url = reverse("office-doc-download", args=[config.country_office.slug, restricted_document.pk])
+    with user_grant_permissions(user, ["power_query.download_reportdocument"], config.country_office):
+        res = django_app.get(url, user=user, expect_errors=True)
+    assert res.status_code == 302
+    assert (
+        res.headers["Location"]
+        == f"/{restricted_document.report.country_office.slug}/request-access/{restricted_document.report.pk}/"
+    )
+
+
+def test_document_display_restricted(django_app, user, restricted_document: "ReportDocument"):
+    """A document restricted to other users must not be streamed by their URL."""
+    config: "ReportConfiguration" = restricted_document.report
+    url = reverse("office-doc-display", args=[config.country_office.slug, restricted_document.pk])
+    with user_grant_permissions(user, ["power_query.view_reportconfiguration"], config.country_office):
+        res = django_app.get(url, user=user, expect_errors=True)
+    assert res.status_code == 302
+    assert (
+        res.headers["Location"]
+        == f"/{restricted_document.report.country_office.slug}/request-access/{restricted_document.report.pk}/"
+    )
+
+
 def test_document_display(django_app, report_document):
     config: "ReportConfiguration" = report_document.report
     user: "User" = config.owner
@@ -260,6 +286,31 @@ def test_download_media_handle_missing(django_app, user):
     url = reverse("download-media", args=["missing-file.zap"])
     res = django_app.get(url, user=user, expect_errors=True)
     assert res.status_code == 404
+
+
+def _role_user(afghanistan, reporters, expires):
+    from testutils.factories import UserFactory, UserRoleFactory
+
+    user = UserFactory(username=f"role-{expires}", is_active=True, is_staff=False, is_superuser=False)
+    UserRoleFactory(user=user, group=reporters, country_office=afghanistan, expires=expires)
+    user.groups.add(reporters)
+    return user
+
+
+def test_expired_userrole_cannot_access_office(django_app, afghanistan, reporters):
+    """A user whose UserRole.expires is in the past must lose office access."""
+    from datetime import date
+
+    user = _role_user(afghanistan, reporters, date(2020, 1, 1))
+    res = django_app.get(reverse("office-index", args=[afghanistan.slug]), user=user, expect_errors=True)
+    assert res.status_code == 403
+
+
+def test_active_userrole_can_access_office(django_app, afghanistan, reporters):
+    """A non-expired role still resolves the office."""
+    user = _role_user(afghanistan, reporters, None)
+    res = django_app.get(reverse("office-index", args=[afghanistan.slug]), user=user)
+    assert res.status_code == 200
 
 
 def test_office_preferences(django_app, afg_user, afghanistan):

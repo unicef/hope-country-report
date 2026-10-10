@@ -19,13 +19,8 @@
 
 5\.
 ```python
-hh_list= [
-    "HH-23-0271.6128",
-    "HH-23-0271.6129",
-    ".......",
-    "HH-24-2546.2547"
-]
-result=list(conn.filter(unicef_id__in=hh_list).values("unicef_id", "program__name", "registration_data_import__name"))
+hh_list = ["HH-23-0271.6128", "HH-23-0271.6129", ".......", "HH-24-2546.2547"]
+result = list(conn.filter(unicef_id__in=hh_list).values("unicef_id", "program__name", "registration_data_import__name"))
 ```
 Paste the list into the `hh_list` variable and filter the query for households in that list.
 

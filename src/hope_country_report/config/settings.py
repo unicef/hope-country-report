@@ -36,7 +36,7 @@ GEOS_LIBRARY_PATH = env("GEOS_LIBRARY_PATH")
 MIGRATION_MODULES = {"hope": None}
 
 STORAGES = {
-    "default": env.storage("FILE_STORAGE_DEFAULT"),
+    "default": env.storage("FILE_STORAGE_MEDIA"),
     "staticfiles": env.storage("FILE_STORAGE_STATIC"),
     "media": env.storage("FILE_STORAGE_MEDIA"),
     "hope": env.storage("FILE_STORAGE_HOPE"),
@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     "hope_country_report.apps.power_query",
     "hope_country_report.apps.core",
     "hope_country_report.apps.stream",
+    "hope_bitcaster.apps.AppConfig",
+    "hope_country_report.apps.bitcaster.apps.AppConfig",
     "streaming",
     "django.contrib.contenttypes",
     # "smart_admin.apps.SmartTemplateConfig",  # templates
@@ -91,6 +93,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_gis",
     "corsheaders",
+    "csp",
     "social_django",
     "admin_extra_buttons",
     "django_celery_boost",
@@ -142,20 +145,25 @@ STATICFILES_FINDERS = [
 SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-X_FRAME_OPTIONS = "SAMEORIGIN"
+X_FRAME_OPTIONS = "DENY"
 
+SECURE_PROXY_SSL_HEADER = env("SECURE_PROXY_SSL_HEADER")
 SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT")
 SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env("SECURE_HSTS_INCLUDE_SUBDOMAINS")
 SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
+SECURE_CONTENT_TYPE_NOSNIFF = env("SECURE_CONTENT_TYPE_NOSNIFF")
 SECURE_REFERRER_POLICY = env("SECURE_REFERRER_POLICY")
-SECURE_CONTENT_TYPE_NOSNIFF = True
-# CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")
+# The obsolete X-XSS-Protection header is deliberately NOT set, see
+# https://owasp.org/www-project-secure-headers/#x-xss-protection
+CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")
 SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE")
 SESSION_COOKIE_PATH = env("SESSION_COOKIE_PATH")
 SESSION_COOKIE_DOMAIN = env("SESSION_COOKIE_DOMAIN")
 # SESSION_COOKIE_HTTPONLY = env("SESSION_COOKIE_HTTPONLY")
 SESSION_COOKIE_NAME = env("SESSION_COOKIE_NAME")
+SESSION_COOKIE_AGE = env("SESSION_COOKIE_AGE")
+SESSION_EXPIRE_AT_BROWSER_CLOSE = env("SESSION_EXPIRE_AT_BROWSER_CLOSE")
 # SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
 
 LOGIN_URL = "/login/"
@@ -269,6 +277,13 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 EMAIL_USE_SSL = env("EMAIL_USE_SSL")
 
+
+BITCASTER_APPLICATION_SLUG = env("BITCASTER_APPLICATION_SLUG")
+BITCASTER_BAE = env("BITCASTER_BAE")
+BITCASTER_CLIENT_CLASS = env("BITCASTER_CLIENT_CLASS")
+BITCASTER_ENABLED = env("BITCASTER_ENABLED")
+BITCASTER_ORGANIZATION_SLUG = env("BITCASTER_ORGANIZATION_SLUG")
+BITCASTER_PROJECT_SLUG = env("BITCASTER_PROJECT_SLUG")
 
 from .fragments.anymail import *  # noqa
 from .fragments.app import *  # noqa

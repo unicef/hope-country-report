@@ -26,26 +26,26 @@
 
 ```python
 from django.db.models import ExpressionWrapper, F, DecimalField
-households=list(conn.select_related(
-"head_of_household",
-"business_area",
-"parent",
-"household"
-).filter(
-    business_area__slug="belarus",
-    parent__unicef_id="PP-0630-24-00000017"
-).values(
-"entitlement_quantity",
-"head_of_household__given_name",
-"head_of_household__given_name",
-"head_of_household__family_name",
-"head_of_household__middle_name",
-"head_of_household__sex",
-"household__address",
-"head_of_household__phone_no",
-"household__unicef_id"
-).annotate(
-    commission=ExpressionWrapper((F('entitlement_quantity')*5/100)*1.20, output_field=DecimalField(decimal_places=2) ))
+
+households = list(
+    conn.select_related("head_of_household", "business_area", "parent", "household")
+    .filter(business_area__slug="belarus", parent__unicef_id="PP-0630-24-00000017")
+    .values(
+        "entitlement_quantity",
+        "head_of_household__given_name",
+        "head_of_household__given_name",
+        "head_of_household__family_name",
+        "head_of_household__middle_name",
+        "head_of_household__sex",
+        "household__address",
+        "head_of_household__phone_no",
+        "household__unicef_id",
+    )
+    .annotate(
+        commission=ExpressionWrapper(
+            (F("entitlement_quantity") * 5 / 100) * 1.20, output_field=DecimalField(decimal_places=2)
+        )
+    )
 )
 result = []
 for household in households:

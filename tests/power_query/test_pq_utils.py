@@ -437,10 +437,24 @@ def test_safe_import_allows(module: str) -> None:
     assert safe_import(module) is not None
 
 
-@pytest.mark.parametrize("module", ["os", "sys", "subprocess", "importlib", "builtins", "ctypes", "marshal"])
+@pytest.mark.parametrize("module", ["os", "sys", "subprocess", "importlib", "builtins", "ctypes", "marshal", "pickle"])
 def test_safe_import_rejects_disallowed(module: str) -> None:
     with pytest.raises(SecurityException):
         safe_import(module)
+
+
+@pytest.mark.parametrize(
+    "module",
+    ["shutil", "posix", "logging", "tempfile", "pathlib", "ntpath", "posixpath", "socket", "hope_country_report"],
+)
+def test_safe_import_rejects_reexport_modules(module: str) -> None:
+    """Modules that re-export ``os`` or reach project internals must be rejected."""
+    with pytest.raises(SecurityException):
+        safe_import(module)
+
+
+def test_safe_import_allows_submodules_of_allowlisted() -> None:
+    assert safe_import("django.db.models.functions") is not None
 
 
 def test_safe_import_rejects_relative_import() -> None:
@@ -450,3 +464,23 @@ def test_safe_import_rejects_relative_import() -> None:
 
 def test_safe_import_registered_in_safe_builtins() -> None:
     assert SAFE_BUILTINS["__import__"] is safe_import
+
+
+@pytest.mark.parametrize("name", ["globals", "locals", "vars", "type", "object", "super", "input", "breakpoint"])
+def test_reflection_builtins_removed(name: str) -> None:
+    assert name not in SAFE_BUILTINS
+
+
+@pytest.mark.parametrize("code", ["result = globals()", "result = vars()", "result = type('X', (), {})"])
+def test_validate_safe_code_rejects_reflection(code: str) -> None:
+    with pytest.raises(SecurityException):
+        validate_safe_code(code)
+
+
+def test_query_execution_guard_toggles_and_restores() -> None:
+    from hope_country_report.apps.power_query.utils import _QUERY_EXEC_STATE, query_execution_guard
+
+    assert not getattr(_QUERY_EXEC_STATE, "active", False)
+    with query_execution_guard():
+        assert _QUERY_EXEC_STATE.active
+    assert not _QUERY_EXEC_STATE.active
