@@ -1841,7 +1841,7 @@ requires-dist = [
     { name = "sentry-sdk" },
     { name = "setuptools" },
     { name = "shapely" },
-    { name = "social-auth-app-django" },
+    { name = "social-auth-app-django", specifier = "<7" },
     { name = "social-auth-core", specifier = "<6" },
     { name = "sqlparse" },
     { name = "swapper" },
@@ -1864,7 +1864,7 @@ requires-dist = [
     { name = "types-setuptools", marker = "extra == 'dev'" },
     { name = "types-six", marker = "extra == 'types-decorator'", specifier = ">=1.17.0.20260724" },
     { name = "tzdata" },
-    { name = "unicef-security" },
+    { name = "unicef-security", specifier = ">=1.11" },
     { name = "watchdog", extras = ["watchmedo"] },
 ]
 provides-extras = ["dev", "docs", "mypy", "types-decorator"]
@@ -4091,7 +4091,7 @@ wheels = [
 
 [[package]]
 name = "unicef-security"
-version = "1.10.0"
+version = "1.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celery" },
@@ -4105,9 +4105,9 @@ dependencies = [
     { name = "requests" },
     { name = "social-auth-app-django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/7a/b84a40197750aaabda1f9f4eb7e4c9845b28db44e1561917a396f926911f/unicef_security-1.10.0.tar.gz", hash = "sha256:6df9c18914b192670fa885e6ccb0ece06783f447cd0094010f3fc66338ed2227", size = 14392, upload-time = "2026-06-30T15:11:32.868Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/19/6cf7af8e2f6eea8cd536d9029343ff945e23b2a596a04265d72555f6f11f/unicef_security-1.11.1.tar.gz", hash = "sha256:f81de6b7baa88c0ceaefd50226895c8fdbfd019a11cb0366922f48bc973b7d8e", size = 14519, upload-time = "2026-10-08T18:58:04.175Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/7f/757df777aaa82320175a46015d67b5f074ba47e73c031e1226a931cf5cbf/unicef_security-1.10.0-py2.py3-none-any.whl", hash = "sha256:1a5751024a10694b55f8963201c6c6f6045fb43e84a3036a41f73fe2f8ce9a66", size = 23321, upload-time = "2026-06-30T15:11:31.651Z" },
+    { url = "https://files.pythonhosted.org/packages/77/90/4c2e82738102b56cb72f331a6ed48d3280b3362205a01c4f5f989f0de0c9/unicef_security-1.11.1-py2.py3-none-any.whl", hash = "sha256:6c5422fde16f7ec8c85c2b1d328d68d7267b0c317d8c5999051c681715e7861a", size = 23490, upload-time = "2026-10-08T18:58:02.898Z" },
 ]
 
 [[package]]

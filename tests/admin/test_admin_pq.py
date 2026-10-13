@@ -162,21 +162,15 @@ def test_query_explain(django_app, admin_user, query: "Query"):
     assert "sql" in res.context
 
 
-@pytest.fixture
-def owner_user(db):
-    """A staff user who owns the query."""
-    from django.contrib.auth.models import Permission
-    from django.contrib.contenttypes.models import ContentType
-    from testutils.factories import UserFactory
-
-    u = UserFactory(username="owner", is_staff=True, is_superuser=False, is_active=True)
-
-    # Grant model-level change permission for Query model
-    ct = ContentType.objects.get_for_model(Query)
-    perm = Permission.objects.get(content_type=ct, codename="change_query")
-    u.user_permissions.add(perm)
-
-    return u
+def test_query_explain_rejects_arbitrary_sql(django_app, admin_user, query: "Query"):
+    """A non-QuerySet expression must not reach the raw EXPLAIN statement."""
+    url = reverse("admin:power_query_query_explain", args=[query.pk])
+    res = django_app.get(url, user=admin_user)
+    form = res.forms["explain-form"]
+    form["target"] = ContentType.objects.get(app_label="hope", model="household").pk
+    form["query"] = "type('X', (), {'query': 'SELECT pg_sleep(5)'})()"
+    res = form.submit()
+    assert "sql" not in res.context
 
 
 @pytest.fixture
@@ -199,23 +193,20 @@ def role_user(db, afghanistan):
 
 
 @pytest.fixture
-def query_owned(owner_user, afghanistan):
+def query_owned(afghanistan):
     from testutils.factories import ContentTypeFactory, QueryFactory
 
     return QueryFactory(
         target=ContentTypeFactory(app_label="auth", model="permission"),
         name="Owned Query",
         code="result=conn.all()",
-        owner=owner_user,
         country_office=afghanistan,
     )
 
 
-@pytest.mark.parametrize("user_fixture", ["admin_user", "owner_user", "role_user"])
+@pytest.mark.parametrize("user_fixture", ["admin_user", "role_user"])
 def test_query_queue_permissions(django_app, request, user_fixture, query_owned, afghanistan):
-    """
-    Test that Superuser, Owner, and Role-based User can all access the QUEUE button.
-    """
+    """Superusers and role users holding ``change_query`` can access the QUEUE button."""
     user = request.getfixturevalue(user_fixture)
     url = reverse("admin:power_query_query_celery_queue", args=[query_owned.pk])
 
@@ -226,11 +217,9 @@ def test_query_queue_permissions(django_app, request, user_fixture, query_owned,
             assert "Confirm queue action" in res.text
 
 
-@pytest.mark.parametrize("user_fixture", ["admin_user", "owner_user", "role_user"])
+@pytest.mark.parametrize("user_fixture", ["admin_user", "role_user"])
 def test_query_run_permissions_debug(django_app, request, user_fixture, query_owned, settings, afghanistan):
-    """
-    Test that Superuser, Owner, and Role-based User can access RUN button ONLY if DEBUG=True.
-    """
+    """Superusers and role users with ``change_query`` can access RUN only if DEBUG=True."""
     settings.DEBUG = True
     user = request.getfixturevalue(user_fixture)
     url = reverse("admin:power_query_query_run", args=[query_owned.pk])

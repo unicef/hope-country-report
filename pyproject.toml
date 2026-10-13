@@ -90,13 +90,13 @@ dependencies = [
   "sentry-sdk",
   "setuptools",
   "shapely",
-  "social-auth-app-django",
+  "social-auth-app-django<7",
   "social-auth-core<6",
   "sqlparse",
   "swapper",
   "tablib[xlsx]",
   "tzdata",
-  "unicef-security",
+  "unicef-security>=1.11",
   "watchdog[watchmedo]",
 ]
 [project.optional-dependencies]

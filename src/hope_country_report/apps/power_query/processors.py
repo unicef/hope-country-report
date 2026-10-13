@@ -163,11 +163,14 @@ class ToWord(ProcessorStrategy):
 
     def process(self, context: "dict[str, Any]") -> "ProcessorResult":
         from docxtpl import DocxTemplate
+        from jinja2.sandbox import SandboxedEnvironment
 
         tpl: "ReportTemplate" = self.formatter.template
 
         doc = DocxTemplate(tpl.doc)
-        doc.render(context)
+        # Uploaded templates are untrusted: render in a sandbox so Jinja syntax
+        # cannot walk into __globals__/__builtins__ and execute code.
+        doc.render(context, jinja_env=SandboxedEnvironment())
         buffer = BytesIO()
         doc.save(buffer)
         buffer.seek(0)

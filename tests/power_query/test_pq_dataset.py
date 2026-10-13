@@ -14,6 +14,32 @@ from testutils.factories import (
 pytestmark = pytest.mark.django_db
 
 
+def test_safe_unpickler_rejects_gadget():
+    import io
+    import os
+    import pickle
+
+    from hope_country_report.apps.power_query.models._base import SafeUnpickler
+
+    class Exploit:
+        def __reduce__(self):
+            return (os.system, ("id",))
+
+    payload = pickle.dumps(Exploit())
+    with pytest.raises((pickle.UnpicklingError, AttributeError)):
+        SafeUnpickler(io.BytesIO(payload)).load()
+
+
+def test_safe_unpickler_allows_engine_types():
+    import io
+    from datetime import date
+    from decimal import Decimal
+
+    for value in ({"a": 1}, [1, 2, 3], "text", 42, 1.5, True, None, date(2020, 1, 1), Decimal("1.5")):
+        payload = Dataset.marshall(value)
+        assert Dataset.unmarshall(io.BytesIO(payload)) == value
+
+
 @pytest.fixture
 def api_client():
     return APIClient()
@@ -173,21 +199,14 @@ def test_document_has_dataset_url(api_client, authorized_user, token, afghanista
         )
 
 
-class DataLibStub:
-    def __init__(self, data):
-        self.data = data
-
-    @property
-    def dict(self):
-        return self.data
-
-
 def test_retrieve_dataset_data_endpoint(api_client, authorized_user, token, afghanistan, query):
+    import tablib
     from django.core.files.base import ContentFile
     from hope_country_report.state import state
 
-    test_data = [{"id": i} for i in range(50)]
-    stub = DataLibStub(test_data)
+    stub = tablib.Dataset(headers=["id"])
+    for i in range(50):
+        stub.append((i,))
 
     with state.set(tenant=afghanistan):
         dataset = Dataset.objects.create(

@@ -98,6 +98,7 @@ CONFIG = {
     "SESSION_COOKIE_DOMAIN": (str, "unicef.org", setting("std-setting-SESSION_COOKIE_DOMAIN")),
     "SESSION_COOKIE_HTTPONLY": (bool, True, setting("session-cookie-httponly")),
     "SESSION_COOKIE_NAME": (str, "hcr_session", setting("session-cookie-name")),
+    "SESSION_COOKIE_SAMESITE": (str, "Lax", setting("session-cookie-samesite")),
     "SESSION_COOKIE_PATH": (str, "/", setting("session-cookie-path")),
     "SESSION_COOKIE_SECURE": (bool, True, setting("session-cookie-secure")),
     "SESSION_COOKIE_AGE": (int, 86400, setting("std-setting-SESSION_COOKIE_AGE")),

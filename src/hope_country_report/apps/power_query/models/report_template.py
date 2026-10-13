@@ -12,6 +12,12 @@ from django_cleanup import cleanup
 
 from hope_country_report.apps.core.models import CountryOffice
 from hope_country_report.apps.power_query.utils import is_valid_template
+from hope_country_report.apps.power_query.validators import (
+    report_template_upload_to,
+    validate_template_content,
+    validate_template_extension,
+    validate_template_size,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -23,7 +29,10 @@ logger = logging.getLogger(__name__)
 class ReportTemplate(models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)
-    doc = models.FileField()
+    doc = models.FileField(
+        upload_to=report_template_upload_to,
+        validators=[validate_template_extension, validate_template_size, validate_template_content],
+    )
     file_suffix = models.CharField(max_length=20)
 
     class Tenant:

@@ -1,6 +1,9 @@
+import datetime
+import decimal
 import logging
 import os
 import pickle
+import uuid
 from typing import TYPE_CHECKING
 
 from concurrency.fields import AutoIncVersionField
@@ -47,6 +50,73 @@ class PowerQueryModel(AdminReversable, models.Model):
     _all = SmartManager()
 
 
+# ``Dataset`` payloads are pickled server-side, but a lower-privileged actor must
+# never be able to smuggle a pickle gadget. Only classes produced by the query
+# engine are allowed during unpickling; everything else (os/posix/subprocess and
+# dangerous builtins such as eval/exec/getattr) is rejected.
+_UNPICKLE_ALLOWED_MODULE_PREFIXES = (
+    "datetime",
+    "decimal",
+    "uuid",
+    "collections",
+    "copyreg",
+    "tablib",
+    "django.db.models",
+    "hope_country_report.apps.hope.models",
+)
+
+_UNPICKLE_ALLOWED_BUILTINS = frozenset(
+    {
+        "NoneType",
+        "bool",
+        "bytearray",
+        "bytes",
+        "complex",
+        "dict",
+        "float",
+        "frozenset",
+        "int",
+        "list",
+        "memoryview",
+        "object",
+        "range",
+        "set",
+        "slice",
+        "str",
+        "tuple",
+    }
+)
+
+
+# Value types that are safe to reconstruct even when a third party (e.g. test
+# tooling) subclasses them.
+_UNPICKLE_SAFE_BASES = (
+    datetime.date,
+    datetime.datetime,
+    datetime.time,
+    datetime.timedelta,
+    decimal.Decimal,
+    uuid.UUID,
+    models.Model,
+)
+
+
+class SafeUnpickler(pickle.Unpickler):
+    """``pickle.Unpickler`` restricted to the classes the query engine emits."""
+
+    def find_class(self, module: str, name: str) -> "Any":
+        if module == "builtins":
+            if name not in _UNPICKLE_ALLOWED_BUILTINS:
+                raise pickle.UnpicklingError(f"Unpickling of builtins.{name} is not allowed")
+            return super().find_class(module, name)
+        if module.startswith(_UNPICKLE_ALLOWED_MODULE_PREFIXES):
+            return super().find_class(module, name)
+        cls = super().find_class(module, name)
+        if isinstance(cls, type) and issubclass(cls, _UNPICKLE_SAFE_BASES):
+            return cls
+        raise pickle.UnpicklingError(f"Unpickling of {module}.{name} is not allowed")
+
+
 class FileProviderMixin(models.Model):
     def get_file_path(self, filename):
         return os.path.join(type(self).__name__.lower(), filename)
@@ -63,7 +133,7 @@ class FileProviderMixin(models.Model):
 
     @classmethod
     def unmarshall(cls, value):
-        return pickle.load(value)
+        return SafeUnpickler(value).load()
 
     @property
     def data(self) -> "Any":
