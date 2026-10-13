@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
@@ -150,7 +150,7 @@ test_data = [
 
 @pytest.mark.parametrize("test_type, field_name, expected_format", test_data)
 def test_to_dataset_tzinfo(test_type, field_name, expected_format, user):
-    tz_aware_datetime = timezone.make_aware(datetime.datetime(2023, 3, 15, 12, 0))
+    tz_aware_datetime = timezone.make_aware(dt.datetime(2023, 3, 15, 12, 0))
     if test_type == "queryset_values_list":
         user.date_joined = tz_aware_datetime
         user.save()

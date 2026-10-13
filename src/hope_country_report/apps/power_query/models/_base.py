@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import decimal
 import logging
 import os
@@ -91,10 +91,10 @@ _UNPICKLE_ALLOWED_BUILTINS = frozenset(
 # Value types that are safe to reconstruct even when a third party (e.g. test
 # tooling) subclasses them.
 _UNPICKLE_SAFE_BASES = (
-    datetime.date,
-    datetime.datetime,
-    datetime.time,
-    datetime.timedelta,
+    dt.date,
+    dt.datetime,
+    dt.time,
+    dt.timedelta,
     decimal.Decimal,
     uuid.UUID,
     models.Model,

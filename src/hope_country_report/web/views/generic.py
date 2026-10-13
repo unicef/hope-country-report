@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import os
 from typing import TYPE_CHECKING, Any, TypeVar
 from urllib.parse import urlparse
@@ -82,7 +82,7 @@ class OfficePreferencesView(SelectedOfficeMixin, PermissionRequiredMixin, Update
         from django.utils import formats
         from django.utils.translation import override
 
-        sample = datetime.datetime(2000, 12, 31, 23, 59)
+        sample = dt.datetime(2000, 12, 31, 23, 59)
 
         with override(self.get_object().locale):
             return super().get_context_data(

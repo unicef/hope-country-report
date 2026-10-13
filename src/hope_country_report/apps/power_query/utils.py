@@ -2,7 +2,7 @@ import base64
 import binascii
 import builtins
 import contextlib
-import datetime
+import datetime as dt
 import hashlib
 import io
 import json
@@ -73,9 +73,9 @@ def is_valid_template(filename: Path) -> bool:
     return not filename.stem.startswith(".")
 
 
-def make_naive(value: datetime.datetime) -> datetime.datetime:
-    if isinstance(value, datetime.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
-        return value.astimezone(datetime.UTC).replace(tzinfo=None)
+def make_naive(value: dt.datetime) -> dt.datetime:
+    if isinstance(value, dt.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
+        return value.astimezone(dt.UTC).replace(tzinfo=None)
     return value
 
 
@@ -92,7 +92,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
                 for f in fields:
                     if isinstance(obj, tuple):
                         line.append(str(obj))
-                    elif isinstance(obj, datetime.datetime):
+                    elif isinstance(obj, dt.datetime):
                         line.append(make_naive(obj))
                     else:
                         line.append(str(getattr(obj, f)))
@@ -107,7 +107,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
         data.headers = fields
         try:
             for obj in result:
-                data.append([make_naive(obj[f]) if isinstance(obj[f], datetime.datetime) else obj[f] for f in fields])
+                data.append([make_naive(obj[f]) if isinstance(obj[f], dt.datetime) else obj[f] for f in fields])
         except Exception:
             raise ValueError("Results can't be rendered as a tablib Dataset")
     elif isinstance(result, tablib.Dataset | dict):

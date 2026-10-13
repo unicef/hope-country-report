@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
@@ -148,7 +148,7 @@ class CountryOffice(TimeStampedModel, models.Model):
 
 DATE_FORMATS: list[tuple[str, str]]
 TIME_FORMATS: list[tuple[str, str]]
-sample = datetime.datetime(2000, 12, 31, 23, 59)
+sample = dt.datetime(2000, 12, 31, 23, 59)
 
 DATE_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["Y M d", "j M Y", "Y-m-d", "Y M d, l", "D, j M Y"]]
 TIME_FORMATS = [(fmt, dateformat.format(sample, fmt)) for fmt in ["h:i a", "H:i"]]
