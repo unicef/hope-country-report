@@ -93,9 +93,7 @@ class Message(HopeModel):
     copied_from = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="message_copied_from", blank=True, null=True
     )
-    program = models.ForeignKey(
-        "Program", on_delete=models.DO_NOTHING, related_name="message_program", blank=True, null=True
-    )
+    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="message_program", null=True)
     registration_data_import = models.ForeignKey(
         "DataRegistrationdataimport",
         on_delete=models.DO_NOTHING,
@@ -152,9 +150,7 @@ class Survey(HopeModel):
     business_area = models.ForeignKey(
         "BusinessArea", on_delete=models.DO_NOTHING, related_name="survey_business_area", null=True
     )
-    program = models.ForeignKey(
-        "Program", on_delete=models.DO_NOTHING, related_name="survey_program", blank=True, null=True
-    )
+    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="survey_program", null=True)
     payment_plan = models.ForeignKey(
         "PaymentPlan", on_delete=models.DO_NOTHING, related_name="survey_payment_plan", blank=True, null=True
     )
@@ -371,6 +367,7 @@ class BusinessArea(HopeModel):
     rdi_import_xlsx_disabled = models.BooleanField(null=True)
     vision_integration_active = models.BooleanField(null=True)
     timezone = models.CharField(null=True)
+    ingest_source = models.CharField(null=True)
 
     class Meta:
         managed = False
@@ -434,7 +431,7 @@ class Countrycodemap(HopeModel):
 
 class Currency(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    code = models.CharField(unique=True, null=True)
+    code = models.CharField(null=True)
     name = models.CharField(null=True)
     is_crypto = models.BooleanField(null=True)
     vision_code = models.CharField(null=True)
@@ -915,7 +912,6 @@ class Ticketindividualdataupdatedetails(HopeModel):
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
     individual_data = models.JSONField(blank=True, null=True)
-    role_reassign_data = models.JSONField(null=True)
     individual = models.ForeignKey(
         "Individual",
         on_delete=models.DO_NOTHING,
@@ -1803,6 +1799,23 @@ class Account(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
+class Accountattachment(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    title = models.CharField(null=True)
+    file = models.CharField(null=True)
+    uploaded_at = models.DateTimeField(null=True)
+    account = models.ForeignKey(
+        Account, on_delete=models.DO_NOTHING, related_name="accountattachment_account", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "payment_accountattachment"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
 class Accounttype(HopeModel):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(unique=True, null=True)
@@ -2163,9 +2176,7 @@ class Payment(HopeModel):
     )
     household = models.ForeignKey(Household, on_delete=models.DO_NOTHING, related_name="payment_household", null=True)
     parent = models.ForeignKey("PaymentPlan", on_delete=models.DO_NOTHING, related_name="payment_parent", null=True)
-    program = models.ForeignKey(
-        "Program", on_delete=models.DO_NOTHING, related_name="payment_program", blank=True, null=True
-    )
+    program = models.ForeignKey("Program", on_delete=models.DO_NOTHING, related_name="payment_program", null=True)
     source_payment = models.ForeignKey(
         "self", on_delete=models.DO_NOTHING, related_name="payment_source_payment", blank=True, null=True
     )
@@ -2774,31 +2785,31 @@ class ProgramCycle(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class DataDeduplicationenginesimilaritypair(HopeModel):
+class DataBiometricdedupesimilaritypair(HopeModel):
     id = models.BigAutoField(primary_key=True)
     similarity_score = models.DecimalField(max_digits=5, decimal_places=2, null=True)
     individual1 = models.ForeignKey(
         Individual,
         on_delete=models.DO_NOTHING,
-        related_name="datadeduplicationenginesimilaritypair_individual1",
+        related_name="databiometricdedupesimilaritypair_individual1",
         blank=True,
         null=True,
     )
     individual2 = models.ForeignKey(
         Individual,
         on_delete=models.DO_NOTHING,
-        related_name="datadeduplicationenginesimilaritypair_individual2",
+        related_name="databiometricdedupesimilaritypair_individual2",
         blank=True,
         null=True,
     )
     program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="datadeduplicationenginesimilaritypair_program", null=True
+        Program, on_delete=models.DO_NOTHING, related_name="databiometricdedupesimilaritypair_program", null=True
     )
     status_code = models.CharField(null=True)
 
     class Meta:
         managed = False
-        db_table = "registration_data_deduplicationenginesimilaritypair"
+        db_table = "registration_data_biometricdedupesimilaritypair"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -2899,13 +2910,8 @@ class DataRegistrationdataimport(HopeModel):
     excluded = models.BooleanField(null=True)
     erased = models.BooleanField(null=True)
     refuse_reason = models.CharField(blank=True, null=True)
-    deduplication_engine_status = models.CharField(blank=True, null=True)
     business_area = models.ForeignKey(
-        BusinessArea,
-        on_delete=models.DO_NOTHING,
-        related_name="dataregistrationdataimport_business_area",
-        blank=True,
-        null=True,
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_business_area", null=True
     )
     import_data = models.OneToOneField(
         DataImportdata,
@@ -2915,7 +2921,7 @@ class DataRegistrationdataimport(HopeModel):
         null=True,
     )
     program = models.ForeignKey(
-        Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", blank=True, null=True
+        Program, on_delete=models.DO_NOTHING, related_name="dataregistrationdataimport_program", null=True
     )
     import_from_ids = models.TextField(blank=True, null=True)
     exclude_external_collectors = models.BooleanField(null=True)
@@ -3318,13 +3324,41 @@ class Fundscommitment(HopeModel):
         tenant_filter_field: str = "__all__"
 
 
-class Fundscommitmentgroup(HopeModel):
+class Fundscommitmentheader(HopeModel):
     id = models.BigAutoField(primary_key=True)
-    funds_commitment_number = models.CharField(null=True)
+    funds_commitment_number = models.CharField(unique=True, null=True)
+    vendor_id = models.CharField(blank=True, null=True)
+    posting_date = models.DateField(blank=True, null=True)
+    document_reference = models.CharField(blank=True, null=True)
+    fc_status = models.CharField(blank=True, null=True)
+    currency = models.CharField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = "vision_fundscommitmentgroup"
+        db_table = "vision_fundscommitmentheader"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class FundscommitmentheaderPaymentPlans(HopeModel):
+    id = models.BigAutoField(primary_key=True)
+    fundscommitmentheader = models.ForeignKey(
+        Fundscommitmentheader,
+        on_delete=models.DO_NOTHING,
+        related_name="fundscommitmentheaderpaymentplans_fundscommitmentheader",
+        null=True,
+    )
+    paymentplan = models.ForeignKey(
+        PaymentPlan,
+        on_delete=models.DO_NOTHING,
+        related_name="fundscommitmentheaderpaymentplans_paymentplan",
+        null=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "vision_fundscommitmentheader_payment_plans"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -3358,17 +3392,14 @@ class Fundscommitmentitem(HopeModel):
     created_by = models.CharField(blank=True, null=True)
     update_date = models.DateTimeField(blank=True, null=True)
     updated_by = models.CharField(blank=True, null=True)
-    funds_commitment_group = models.ForeignKey(
-        Fundscommitmentgroup,
+    funds_commitment_header = models.ForeignKey(
+        Fundscommitmentheader,
         on_delete=models.DO_NOTHING,
-        related_name="fundscommitmentitem_funds_commitment_group",
+        related_name="fundscommitmentitem_funds_commitment_header",
         null=True,
     )
     office = models.ForeignKey(
         BusinessArea, on_delete=models.DO_NOTHING, related_name="fundscommitmentitem_office", blank=True, null=True
-    )
-    payment_plan = models.ForeignKey(
-        PaymentPlan, on_delete=models.DO_NOTHING, related_name="fundscommitmentitem_payment_plan", blank=True, null=True
     )
 
     class Meta:

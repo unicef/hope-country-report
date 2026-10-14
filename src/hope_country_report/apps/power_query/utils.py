@@ -215,6 +215,7 @@ ALLOWED_MODULES = frozenset(
         "django.db.models",
         "django.utils.timezone",
         "hope_country_report.apps.hope.models",
+        "hope_country_report.apps.power_query.models",
     }
 )
 
