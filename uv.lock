@@ -1722,7 +1722,7 @@ types-decorator = [
 [package.metadata]
 requires-dist = [
     { name = "azure-devops" },
-    { name = "cairosvg", marker = "extra == 'docs'", specifier = ">=2.9.0" },
+    { name = "cairosvg", marker = "extra == 'docs'", specifier = ">=2.9.1" },
     { name = "celery" },
     { name = "django", specifier = ">=5.2,<6.2" },
     { name = "django-admin-cursor-paginator" },
@@ -1819,7 +1819,7 @@ requires-dist = [
     { name = "py-vapid" },
     { name = "pyhtml2pdf" },
     { name = "pymdown-extensions", marker = "extra == 'dev'" },
-    { name = "pymdown-extensions", marker = "extra == 'docs'", specifier = ">=11.0" },
+    { name = "pymdown-extensions", marker = "extra == 'docs'", specifier = ">=12.1" },
     { name = "pymupdf" },
     { name = "pypdf" },
     { name = "pyquery", marker = "extra == 'dev'" },
@@ -1841,8 +1841,8 @@ requires-dist = [
     { name = "sentry-sdk" },
     { name = "setuptools" },
     { name = "shapely" },
-    { name = "social-auth-app-django", specifier = "<7" },
-    { name = "social-auth-core", specifier = "<6" },
+    { name = "social-auth-app-django", specifier = ">=7,<8" },
+    { name = "social-auth-core", specifier = ">=6.1,<7" },
     { name = "sqlparse" },
     { name = "swapper" },
     { name = "tablib", extras = ["xlsx"] },
@@ -3615,21 +3615,21 @@ wheels = [
 
 [[package]]
 name = "social-auth-app-django"
-version = "6.1.0"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "django" },
     { name = "social-auth-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/8c/813d5fdcc1b81500b4803bd4807825321c307fc45bae9efcfa5d660d4aa8/social_auth_app_django-6.1.0.tar.gz", hash = "sha256:7ce0489710f450dafd652833eea833505ccf5dacda6b188daa8bf90038986557", size = 47148, upload-time = "2026-09-30T16:42:17.508Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/cb/36b2406979a9e6c152da7526a24464d3c5aa8f9c39b475e10cb82217f473/social_auth_app_django-7.1.0.tar.gz", hash = "sha256:77058a2717d537899d9fe92039e06f9567d9cf5574f6bcb1345649d2fd670b09", size = 73138, upload-time = "2026-10-08T09:36:54.785Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/18/e64decbe38a820c6e844658d079c6f37108035161cb95352ffa6a79a03fc/social_auth_app_django-6.1.0-py3-none-any.whl", hash = "sha256:b192b1f7c432c7d5d552ac44f43d07c7c01bfd528c6dfa0f7605df5a8495afd8", size = 38879, upload-time = "2026-09-30T16:42:16.49Z" },
+    { url = "https://files.pythonhosted.org/packages/81/6f/35265b4063d21c29ff80358ebe4320e02f351a1ff63004e732e087804a44/social_auth_app_django-7.1.0-py3-none-any.whl", hash = "sha256:a6e51eb905c81da15548b156315690f608867d68552daadcdb5aa180500f8ff4", size = 48467, upload-time = "2026-10-08T09:36:53.873Z" },
 ]
 
 [[package]]
 name = "social-auth-core"
-version = "5.2.0"
+version = "6.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -3640,9 +3640,9 @@ dependencies = [
     { name = "requests" },
     { name = "requests-oauthlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/31/0b/8d5137b3a020719702e1d159a68c6c4dd863e1ae57fd4875a4a68b2855fe/social_auth_core-5.2.0.tar.gz", hash = "sha256:72d3c52fe87d07c0db8421fee5f5ec33b3dacce449975b8a572cd0691e3de315", size = 292820, upload-time = "2026-09-30T15:55:58.723Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/d6/868d9881c61a0bb102f3875f018a06dabfa61bedb88614e52f6508434e07/social_auth_core-6.1.1.tar.gz", hash = "sha256:674c285e75b04aaaf438fbbb6b2376b343f7b932d5dce1726e61cd23b17b6cff", size = 421444, upload-time = "2026-10-10T07:41:13.833Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/31/245e19405808689b60810ec8ebd0a4d6be51d73e69c810e686fb7aede33a/social_auth_core-5.2.0-py3-none-any.whl", hash = "sha256:e7b9990450291488deffce8d92d14d4396021b8d3c4a0ac5c32ec03bfaccc496", size = 492771, upload-time = "2026-09-30T15:55:57.372Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/6f/2b6fa4611fa4d4d44623f785e43a2f6320b9f6b55686e49fdbea01de9969/social_auth_core-6.1.1-py3-none-any.whl", hash = "sha256:f5ab36e843c7ea20bce96ecab95e716ab1c8afe85d3d3c322446246aaffadd13", size = 283223, upload-time = "2026-10-10T07:41:12.166Z" },
 ]
 
 [[package]]
@@ -4091,7 +4091,7 @@ wheels = [
 
 [[package]]
 name = "unicef-security"
-version = "1.11.1"
+version = "1.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celery" },
@@ -4105,9 +4105,9 @@ dependencies = [
     { name = "requests" },
     { name = "social-auth-app-django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/19/6cf7af8e2f6eea8cd536d9029343ff945e23b2a596a04265d72555f6f11f/unicef_security-1.11.1.tar.gz", hash = "sha256:f81de6b7baa88c0ceaefd50226895c8fdbfd019a11cb0366922f48bc973b7d8e", size = 14519, upload-time = "2026-10-08T18:58:04.175Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/25/76/2fa30c14839a123b81382352fb4d2715d86446e71e0ec4662cad075896b7/unicef_security-1.12.0.tar.gz", hash = "sha256:07dbb821e9dc3fe46d865eb55ebfbc7e0564813c68796c8e38a980c94210b0a0", size = 14526, upload-time = "2026-10-13T13:33:38.914Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/77/90/4c2e82738102b56cb72f331a6ed48d3280b3362205a01c4f5f989f0de0c9/unicef_security-1.11.1-py2.py3-none-any.whl", hash = "sha256:6c5422fde16f7ec8c85c2b1d328d68d7267b0c317d8c5999051c681715e7861a", size = 23490, upload-time = "2026-10-08T18:58:02.898Z" },
+    { url = "https://files.pythonhosted.org/packages/83/e6/8eb240ae8ccde9ac1e08e98809f0104f639a8adcf98907cd6c01aee44c28/unicef_security-1.12.0-py2.py3-none-any.whl", hash = "sha256:ee9552d7fe43d92b8ae8b9b2e8be0c1c5bba8fb8d7099f3ecd6df1dacd72b1b8", size = 23492, upload-time = "2026-10-13T13:33:37.363Z" },
 ]
 
 [[package]]
