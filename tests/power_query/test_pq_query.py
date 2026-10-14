@@ -177,6 +177,28 @@ def test_query_execution_with_imports(data: "_DATA"):
     assert result[0].data
 
 
+def test_query_execution_with_utility_imports(data: "_DATA"):
+    """Imports used by production queries #6, #70, #203, #410 and #430 must execute."""
+    from testutils.factories import ContentTypeFactory, QueryFactory
+
+    query = QueryFactory(
+        target=ContentTypeFactory(app_label="hope", model="household"),
+        name="Query With Utility Imports",
+        code=(
+            "import datetime\n"
+            "from dateutil.relativedelta import relativedelta\n"
+            "from django.utils import timezone\n"
+            "from hope_country_report.apps.hope.models import Household\n"
+            "delta = relativedelta(days=1)\n"
+            "now = timezone.now()\n"
+            "result = conn.filter(id__in=Household.objects.values('id'))\n"
+        ),
+    )
+    result = query.run(persist=True)
+    assert query.datasets.exists()
+    assert result[0].data
+
+
 def test_query_does_not_leak_module_globals(data: "_DATA"):
     """Module globals (logging/hashlib/tempfile/os ...) must not be reachable."""
     from testutils.factories import ContentTypeFactory, QueryFactory
