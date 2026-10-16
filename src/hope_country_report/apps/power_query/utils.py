@@ -2,7 +2,7 @@ import base64
 import binascii
 import builtins
 import contextlib
-import datetime
+import datetime as dt
 import hashlib
 import io
 import json
@@ -73,9 +73,9 @@ def is_valid_template(filename: Path) -> bool:
     return not filename.stem.startswith(".")
 
 
-def make_naive(value: datetime.datetime) -> datetime.datetime:
-    if isinstance(value, datetime.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
-        return value.astimezone(datetime.UTC).replace(tzinfo=None)
+def make_naive(value: dt.datetime) -> dt.datetime:
+    if isinstance(value, dt.datetime) and value.tzinfo is not None and value.tzinfo.utcoffset(value) is not None:
+        return value.astimezone(dt.UTC).replace(tzinfo=None)
     return value
 
 
@@ -92,7 +92,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
                 for f in fields:
                     if isinstance(obj, tuple):
                         line.append(str(obj))
-                    elif isinstance(obj, datetime.datetime):
+                    elif isinstance(obj, dt.datetime):
                         line.append(make_naive(obj))
                     else:
                         line.append(str(getattr(obj, f)))
@@ -107,7 +107,7 @@ def to_dataset(result: "QuerySet[AnyModel]|Iterable[Any]|tablib.Dataset|Dict[str
         data.headers = fields
         try:
             for obj in result:
-                data.append([make_naive(obj[f]) if isinstance(obj[f], datetime.datetime) else obj[f] for f in fields])
+                data.append([make_naive(obj[f]) if isinstance(obj[f], dt.datetime) else obj[f] for f in fields])
         except Exception:
             raise ValueError("Results can't be rendered as a tablib Dataset")
     elif isinstance(result, tablib.Dataset | dict):
@@ -191,8 +191,10 @@ DISALLOWED_NAMES = frozenset(
 # Modules user-authored query code is allowed to import. This is an allowlist:
 # modules such as ``shutil``, ``logging``, ``posix``, ``ntpath`` and ``posixpath``
 # re-export ``os``, so any denylist is trivially bypassable.
+#
 ALLOWED_MODULES = frozenset(
     {
+        # stdlib
         "calendar",
         "collections",
         "datetime",
@@ -206,10 +208,13 @@ ALLOWED_MODULES = frozenset(
         "re",
         "statistics",
         "string",
-        "tablib",
         "time",
         "uuid",
+        "dateutil",
+        "tablib",
         "django.db.models",
+        "django.utils.timezone",
+        "hope_country_report.apps.hope.models",
     }
 )
 
@@ -218,6 +223,19 @@ def is_allowed_module(name: str) -> bool:
     if name in ALLOWED_MODULES or name.split(".", 1)[0] in ALLOWED_MODULES:
         return True
     return any(name == dotted or name.startswith(f"{dotted}.") for dotted in ALLOWED_MODULES if "." in dotted)
+
+
+def is_allowed_import(name: str, fromlist: Iterable[str] = ()) -> bool:
+    """Check an import statement against the module allowlist.
+
+    ``name`` is the module being imported, ``fromlist`` the requested names of a
+    ``from <name> import <fromlist>`` statement. Importing a submodule from a
+    non-allowlisted parent is allowed only when every requested child module is
+    itself allowlisted (e.g. ``from django.utils import timezone``).
+    """
+    if is_allowed_module(name):
+        return True
+    return bool(fromlist) and all(is_allowed_module(f"{name}.{item}") for item in fromlist)
 
 
 def safe_import(
@@ -230,7 +248,7 @@ def safe_import(
     """Safe __import__ wrapper restricting imports to the module allowlist."""
     if level > 0:
         raise SecurityException("Relative imports are not allowed")
-    if not is_allowed_module(name):
+    if not is_allowed_import(name, fromlist):
         raise SecurityException(f"Import of '{name}' is not allowed")
     return builtins.__import__(name, globals_, locals_, fromlist, level)
 
@@ -290,13 +308,13 @@ def validate_safe_code(code: str) -> None:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if not is_allowed_module(alias.name):
+                if not is_allowed_import(alias.name):
                     raise SecurityException(f"Import of '{alias.name}' is not allowed")
         if isinstance(node, ast.ImportFrom):
             if node.level > 0:
                 raise SecurityException("Relative imports are not allowed")
             module = node.module or ""
-            if not is_allowed_module(module):
+            if not is_allowed_import(module, [alias.name for alias in node.names]):
                 raise SecurityException(f"Import from '{module}' is not allowed")
         if isinstance(node, ast.Name):
             if node.id in DISALLOWED_NAMES:

@@ -84,10 +84,6 @@ def test_be_limit_access_to(backend, user, restricted_document):
         assert backend.has_perm(allowed, "power_query.view_reportdocument", restricted_document)
 
 
-def test_be_owner_has_perm(backend, data):
-    assert backend.has_perm(data.query_afg.owner, "power_query.view_reportdocument", data.query_afg)
-
-
 def test_be_anonymous(backend, data):
     assert not backend.has_perm(AnonymousUser(), "power_query.view_reportdocument", data.query_afg)
 

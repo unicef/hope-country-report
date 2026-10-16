@@ -90,13 +90,13 @@ dependencies = [
   "sentry-sdk",
   "setuptools",
   "shapely",
-  "social-auth-app-django",
-  "social-auth-core<6",
+  "social-auth-app-django>=7,<8",
+  "social-auth-core>=6.1,<7",
   "sqlparse",
   "swapper",
   "tablib[xlsx]",
   "tzdata",
-  "unicef-security",
+  "unicef-security>=1.11",
   "watchdog[watchmedo]",
 ]
 [project.optional-dependencies]
@@ -130,7 +130,7 @@ dev = [
   "types-setuptools",
 ]
 docs = [
-  "cairosvg>=2.9.0",
+  "cairosvg>=2.9.1",
   "markupsafe>=2.1.5",
   "mdx-gh-links>=0.4",
   "mkdocs>=1.6.1",
@@ -153,7 +153,7 @@ docs = [
   "mkdocs-simple-hooks>=0.1.5",
   "mkdocstrings[python]>=1.0.6",
   "mkdocstrings-python",
-  "pymdown-extensions>=11.0",
+  "pymdown-extensions>=12.1",
 ]
 mypy = [
   "django-stubs",

@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 
 from django.contrib.auth.models import AnonymousUser
 from django.template import Library
@@ -11,7 +11,7 @@ from hope_country_report.state import state
 register = Library()
 
 
-def get_format_for_user(user: User | AnonymousUser, value: datetime.datetime, fmt: str | None) -> str | None:
+def get_format_for_user(user: User | AnonymousUser, value: dt.datetime, fmt: str | None) -> str | None:
     datetime_format = getattr(user, "datetime_format", "Y M d h:i a")
     time_format = getattr(user, "time_format", "h:i a")
     date_format = getattr(user, "date_format", "Y M d")
@@ -31,7 +31,7 @@ def get_format_for_user(user: User | AnonymousUser, value: datetime.datetime, fm
 
 
 @register.filter(expects_localtime=True, is_safe=False)
-def userdatetime(value: datetime.datetime | None, fmt: str | None = None) -> str:
+def userdatetime(value: dt.datetime | None, fmt: str | None = None) -> str:
     if not value:
         return ""
 

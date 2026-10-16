@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
@@ -150,7 +150,7 @@ test_data = [
 
 @pytest.mark.parametrize("test_type, field_name, expected_format", test_data)
 def test_to_dataset_tzinfo(test_type, field_name, expected_format, user):
-    tz_aware_datetime = timezone.make_aware(datetime.datetime(2023, 3, 15, 12, 0))
+    tz_aware_datetime = timezone.make_aware(dt.datetime(2023, 3, 15, 12, 0))
     if test_type == "queryset_values_list":
         user.date_joined = tz_aware_datetime
         user.save()
@@ -464,6 +464,111 @@ def test_safe_import_rejects_relative_import() -> None:
 
 def test_safe_import_registered_in_safe_builtins() -> None:
     assert SAFE_BUILTINS["__import__"] is safe_import
+
+
+# Import lines used by production queries #6, #70, #127, #203, #410 and #430.
+# They must keep validating or the corresponding queries fail with
+# "Import ... is not allowed".
+PRODUCTION_IMPORT_LINES = [
+    # Query #6
+    "from datetime import date",
+    "from collections import defaultdict",
+    "from django.db.models import Case, When, Sum, Count, F, Value, DecimalField, IntegerField, CharField",
+    "from django.db.models.functions import Coalesce, TruncDate, Cast, ExtractYear",
+    "from hope_country_report.apps.hope.models import Payment",
+    # Query #70
+    "import datetime",
+    "from hope_country_report.apps.hope.models import Document, Account",
+    "from django.db.models import Subquery, OuterRef",
+    "from django.utils import timezone",
+    # Query #127
+    "from django.db.models import Q, Count, F, ExpressionWrapper, IntegerField",
+    "from datetime import timedelta",
+    "from django.db.models.functions import Extract",
+    # Query #203
+    "from dateutil.relativedelta import relativedelta",
+    # Query #410
+    "from django.db.models import Count, Q, Prefetch",
+    "from hope_country_report.apps.hope.models import Individual, Document",
+    # Query #430
+    "from django.db.models import Subquery, OuterRef, Value, F, Func",
+    "from django.db.models.functions import JSONObject",
+    "from django.db.models.fields.json import KeyTransform",
+    "from django.db.models.fields import CharField",
+]
+
+
+@pytest.mark.parametrize("code", PRODUCTION_IMPORT_LINES)
+def test_validate_safe_code_allows_production_imports(code: str) -> None:
+    validate_safe_code(code)
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "hope_country_report.apps.hope.models",
+        "dateutil",
+        "dateutil.relativedelta",
+        "django.utils.timezone",
+    ],
+)
+def test_safe_import_allows_extended_allowlist(module: str) -> None:
+    assert safe_import(module) is not None
+
+
+@pytest.mark.parametrize(
+    "name, fromlist",
+    [
+        ("django.utils", ("timezone",)),
+        ("dateutil", ("relativedelta",)),
+        ("django.db", ("models",)),
+    ],
+)
+def test_safe_import_allows_submodule_from_parent(name: str, fromlist: tuple[str, ...]) -> None:
+    """Submodule imports work from a non-allowlisted parent when the child is allowed."""
+    assert safe_import(name, fromlist=fromlist) is not None
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "import dateutil.relativedelta",
+        "import django.utils.timezone",
+        "import hope_country_report.apps.hope.models",
+    ],
+)
+def test_validate_safe_code_allows_dotted_imports(code: str) -> None:
+    validate_safe_code(code)
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "from hope_country_report.apps.core.models import User",
+        "from hope_country_report.apps.core import models",
+        "from hope_country_report import apps",
+        "from django.utils import autoreload",
+        "from django.utils import module_loading",
+        "from django.utils import timezone, autoreload",
+    ],
+)
+def test_validate_safe_code_rejects_escapes(code: str) -> None:
+    with pytest.raises(SecurityException):
+        validate_safe_code(code)
+
+
+@pytest.mark.parametrize(
+    "name, fromlist",
+    [
+        ("hope_country_report", ()),
+        ("hope_country_report.apps", ("core",)),
+        ("django.utils", ("autoreload",)),
+        ("django.utils", ("timezone", "autoreload")),
+    ],
+)
+def test_safe_import_rejects_escapes(name: str, fromlist: tuple[str, ...]) -> None:
+    with pytest.raises(SecurityException):
+        safe_import(name, fromlist=fromlist)
 
 
 @pytest.mark.parametrize("name", ["globals", "locals", "vars", "type", "object", "super", "input", "breakpoint"])

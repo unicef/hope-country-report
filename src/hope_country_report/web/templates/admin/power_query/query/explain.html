@@ -12,8 +12,8 @@
         {% if sql %}
             <dl>
                 <dt>{% translate "Executed SQL" %}</dt>
-                <dd id="sql-short" style="">{{ sql|safe|truncatechars:200 }}</dd>
-                <dd id="sql-full" style="display: none">{{ sql|safe }}</dd>
+                <dd id="sql-short" style="">{{ sql|truncatechars:200 }}</dd>
+                <dd id="sql-full" style="display: none">{{ sql }}</dd>
             </dl>
             <table style="width: 100%">
                 <thead>
