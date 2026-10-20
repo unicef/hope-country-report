@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.14.*"
 
 [[package]]
@@ -752,7 +752,7 @@ wheels = [
 
 [[package]]
 name = "django-celery-boost"
-version = "0.8"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celery" },
@@ -760,9 +760,9 @@ dependencies = [
     { name = "django-concurrency" },
     { name = "sentry-sdk" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1c/68/eb6a1b3f2cd71c2d6c5a7b3f82705ac1a284128a8f3842162a89fdc8b715/django_celery_boost-0.8.tar.gz", hash = "sha256:9037f8335c1e45b535b884ce10841d99d1c75d1a4230d0d90ce6ec8b8c866d94", size = 11091, upload-time = "2026-03-23T10:45:20.434Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/29/aac238c214db1af46f40b3ebf99b299fbbf6d1f855f1b82e9f17e42abe7a/django_celery_boost-0.9.0.tar.gz", hash = "sha256:55eb0ecca99b69d46ff64d7b77b49ea69fd4f48ca9f003cd44b5e5e8cd8d1137", size = 12127, upload-time = "2026-10-19T07:55:58.656Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/28/de/c8f7befcc555cca094ca5797963936ca2ae2454859a42b5cd8d45e17670b/django_celery_boost-0.8-py3-none-any.whl", hash = "sha256:f88e6b4262dfcefe42f9b6961756b991656e8b46daa69138822ed7692fbde0f3", size = 13871, upload-time = "2026-03-23T10:45:18.931Z" },
+    { url = "https://files.pythonhosted.org/packages/04/b6/01386ec9c85897f26f1345eef60cfac2e08b2457d01b8578e19237680c3d/django_celery_boost-0.9.0-py3-none-any.whl", hash = "sha256:b908851c60d5f6deebbfedd40b40045d98ea7a730debf2e380854dc9017110d3", size = 15577, upload-time = "2026-10-19T07:55:57.026Z" },
 ]
 
 [[package]]
@@ -1732,7 +1732,7 @@ requires-dist = [
     { name = "django-advanced-filters" },
     { name = "django-anymail" },
     { name = "django-celery-beat" },
-    { name = "django-celery-boost" },
+    { name = "django-celery-boost", specifier = ">=0.9.0" },
     { name = "django-celery-results" },
     { name = "django-chartjs" },
     { name = "django-cleanup" },

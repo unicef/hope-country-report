@@ -76,3 +76,6 @@ line-ending = "auto"
 "tests/**.py" = ["S101", "PLR2004", "S", "SIM117", "D", "UP", "PLR0913", "ANN", "N999"]
 "src/**/versioning/**.py" = ["N999", ]
 "src/**/one_time_scripts/**.py" = ["T201", ]
+# Power Query bodies are exec()'d scripts: self/arguments/conn/QueryManager/invoke
+# are injected by the runner, and imports are often repeated for readability.
+"src/**/live/queries/*.py" = ["F401", "F811", "F821"]

@@ -30,7 +30,7 @@ dependencies = [
   "django-advanced-filters",
   "django-anymail",
   "django-celery-beat",
-  "django-celery-boost",
+  "django-celery-boost>=0.9.0",
   "django-celery-results",
   "django-chartjs",
   "django-cleanup",
