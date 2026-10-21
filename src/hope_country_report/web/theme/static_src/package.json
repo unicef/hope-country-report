@@ -18,13 +18,13 @@
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/line-clamp": "^0.4.4",
-    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/typography": "^0.5.4",
     "cross-env": "^7.0.3",
     "postcss": "^8.5.28",
     "postcss-import": "^15.1.0",
-    "postcss-nested": "^6.2.0",
+    "postcss-nested": "^9.0.1",
     "postcss-simple-vars": "^7.0.1",
     "rimraf": "^5.0.10",
-    "tailwindcss": "^3.4.19"
+    "tailwindcss": "^4.3.3"
   }
 }
