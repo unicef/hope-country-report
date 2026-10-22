@@ -1740,7 +1740,7 @@ requires-dist = [
     { name = "django-advanced-filters" },
     { name = "django-anymail" },
     { name = "django-celery-beat" },
-    { name = "django-celery-boost" },
+    { name = "django-celery-boost", specifier = ">=0.9.0" },
     { name = "django-celery-results" },
     { name = "django-chartjs" },
     { name = "django-cleanup" },

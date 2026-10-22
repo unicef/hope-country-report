@@ -4,7 +4,7 @@
     <h1>{{ original }}</h1>
     ==== {{ original.get_celery_queue_position }} ====
     {{ original.curr_async_result_id }}
-    <a class="button" target="flower" href="{{ flower_address }}/task/{{ original.curr_async_result_id }}">Flower</a>
+    <a class="button" target="flower" href="{{ flower_addr }}/task/{{ original.curr_async_result_id }}">Flower</a>
 
     <h3>queue_info</h3>
     <table>
