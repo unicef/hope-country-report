@@ -24,7 +24,7 @@ case "$1" in
         if [ "${STATIC_URL}" = "/static/" ]; then
             MAPPING="--static-map ${STATIC_URL}=${STATIC_ROOT}"
         fi
-        exec tini -- uwsgi --http :8000 \
+        exec tini -- gosu hope:unicef uwsgi --http :8000 \
             -H /venv \
             --module hope_country_report.config.wsgi \
             --mimefile=/conf/mime.types \
