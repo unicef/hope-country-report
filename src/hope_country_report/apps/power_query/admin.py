@@ -243,7 +243,7 @@ class QueryAdmin(
         ctx["results"] = results
         return render(request, "admin/power_query/query/run_result.html", ctx)
 
-    @button()
+    @button(permission=lambda r, o, handler: handler.model_admin.has_queue_permission("preview", r, o))
     def preview(self, request: HttpRequest, pk: int) -> HttpResponse | HttpResponseRedirect:
         obj: Query = self.get_object(request, str(pk))
         try:
