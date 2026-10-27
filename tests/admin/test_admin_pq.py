@@ -37,8 +37,9 @@ def test_celery_terminate(django_app, admin_user, query):
         assert res_get.location == change_url
         res_follow = res_get.follow(expect_errors=True)
         messages = [m.message for m in res_follow.context["messages"]]
-        assert "Task not queued." in messages
+        assert "Task is not scheduled." in messages
 
+    Query.objects.filter(pk=query.pk).update(curr_async_result_id="test-task-id")
     with mock.patch.object(Query, "is_queued", return_value=True):
         with mock.patch.object(Query, "terminate") as mock_terminate:
             res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
@@ -108,8 +109,9 @@ def test_celery_revoke(django_app, admin_user, query):
         assert res_get_not_queued.location == change_url
         res_follow_not_queued = res_get_not_queued.follow(expect_errors=True)
         messages = [m.message for m in res_follow_not_queued.context["messages"]]
-        assert "Task not queued." in messages
+        assert "Task is not scheduled." in messages
 
+    Query.objects.filter(pk=query.pk).update(curr_async_result_id="test-task-id")
     with mock.patch.object(Query, "is_queued", return_value=True):
         with mock.patch.object(Query, "revoke") as mock_revoke:
             res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
