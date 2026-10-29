@@ -1,8 +1,10 @@
+import json
 import logging
 import signal
 import uuid
 from typing import TYPE_CHECKING, Any, NoReturn
 
+import tablib
 from billiard.einfo import ExceptionInfo
 from celery import group
 from celery.contrib.abortable import AbortableTask
@@ -145,6 +147,78 @@ def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "
     except Exception as e:
         logger.exception(f"Unhandled exception in run_background_query for query {query_id}: {e}")
         raise
+
+
+@app.task
+@sentry_tags
+def preview_query(query_id: int, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Execute a query preview inside the dedicated Power Query runner.
+
+    The web process only dispatches this task. The runner must be deployed with
+    a clone/scratch app DB, a read-only HOPE clone and no production secrets.
+    """
+    from hope_country_report.apps.power_query.models import Query
+
+    from .utils import dict_hash, to_dataset
+
+    if not settings.POWER_QUERY_RUNNER or settings.POWER_QUERY_EXECUTION_MODE != "runner":
+        raise RuntimeError("preview_query must run in the Power Query runner")
+    try:
+        query = Query.objects.get(pk=query_id)
+        arguments = arguments or {}
+        dataset, extra = query.run(persist=False, arguments=arguments, use_existing=False, preview=True)
+        result = dataset.data
+        try:
+            tabular = to_dataset(result)
+        except Exception:
+            tabular = None
+        if not hasattr(tabular, "export"):
+            tabular = tablib.Dataset(headers=["result"])
+            tabular.append([str(result)])
+        extra = json.loads(json.dumps(extra or {}, default=str))
+        return {
+            "query_id": query.pk,
+            "hash": dict_hash({"query": query.pk, "arguments": arguments}),
+            "dataset_json": tabular.export("json"),
+            "result_type": type(result).__name__,
+            "info": {"type": type(result).__name__, "arguments": arguments, "extra": extra},
+            "extra": extra,
+        }
+    except Exception as e:
+        return {"query_id": query_id, "error": f"{type(e).__name__}: {e}"}
+
+
+@app.task
+@sentry_tags
+def store_preview_result(payload: dict[str, Any]) -> str | None:
+    """Persist a preview produced by the runner into the production Dataset table."""
+    from django.core.files.base import ContentFile
+    from django.utils import timezone
+
+    from hope_country_report.apps.power_query.models import Dataset, Query
+
+    query = Query.objects.get(pk=payload["query_id"])
+    if error := payload.get("error"):
+        query.error_message = str(error)[:2000]
+        query.save(update_fields=["error_message"])
+        return None
+
+    dataset = tablib.Dataset().load(payload["dataset_json"], format="json")
+    content = ContentFile(Dataset.marshall(dataset), name=f"{query.pk}_{payload['hash']}.pkl")
+    Dataset.objects.update_or_create(
+        query=query,
+        hash=payload["hash"],
+        defaults={
+            "description": "",
+            "file": content,
+            "size": len(dataset),
+            "info": payload["info"],
+            "last_run": timezone.now(),
+        },
+    )
+    query.error_message = ""
+    query.save(update_fields=["error_message"])
+    return payload["hash"]
 
 
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)

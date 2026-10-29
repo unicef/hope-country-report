@@ -252,6 +252,21 @@ class QueryAdmin(
                 args = obj.parametrizer.get_matrix()[0]
             else:
                 args = {}
+            if settings.POWER_QUERY_EXECUTION_MODE == "runner":
+                from celery import chain
+
+                from .celery_tasks import preview_query, store_preview_result
+
+                chain(
+                    preview_query.s(obj.pk, args).set(queue=settings.POWER_QUERY_RUNNER_QUEUE),
+                    store_preview_result.s().set(queue=settings.CELERY_TASK_DEFAULT_QUEUE),
+                ).apply_async()
+                self.message_user(
+                    request,
+                    "Preview queued. Results will appear under Datasets.",
+                    messages.INFO,
+                )
+                return HttpResponseRedirect(reverse("admin:power_query_query_change", args=[obj.pk]))
             with profile() as timing:
                 ds, extra = obj.run(False, args, use_existing=True, preview=True)
             ret = ds.data

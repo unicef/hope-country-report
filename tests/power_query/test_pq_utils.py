@@ -541,6 +541,13 @@ def test_validate_safe_code_allows_dotted_imports(code: str) -> None:
     validate_safe_code(code)
 
 
+def test_validate_safe_code_allows_type_attribute() -> None:
+    """Model fields named ``type`` are not the builtin ``type()``."""
+    validate_safe_code("result = doc.type.label")
+    with pytest.raises(SecurityException):
+        validate_safe_code("result = type(doc)")
+
+
 @pytest.mark.parametrize(
     "code",
     [

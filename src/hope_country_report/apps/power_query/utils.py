@@ -333,7 +333,9 @@ def validate_safe_code(code: str) -> None:
             if node.id.startswith("__") and node.id.endswith("__"):
                 raise SecurityException(f"Use of dunder '{node.id}' is not allowed")
         if isinstance(node, ast.Attribute):
-            if node.attr in DISALLOWED_NAMES:
+            # ``type`` is a common model field (``doc.type``). The dangerous form is
+            # the builtin call, which is still rejected by the ast.Name check above.
+            if node.attr in DISALLOWED_NAMES and node.attr != "type":
                 raise SecurityException(f"Use of '{node.attr}' is not allowed")
             if node.attr.startswith("__") and node.attr.endswith("__"):
                 raise SecurityException(f"Use of dunder '{node.attr}' is not allowed")

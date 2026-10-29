@@ -41,6 +41,14 @@ case "$1" in
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery worker \
             --concurrency=4 -E --loglevel=ERROR
         ;;
+    pq-runner)
+        # Service entrypoint — a separate Celery worker that is the only process allowed to execute Power Query previews.
+        export POWER_QUERY_RUNNER="${POWER_QUERY_RUNNER:-1}"
+        export POWER_QUERY_EXECUTION_MODE="${POWER_QUERY_EXECUTION_MODE:-runner}"
+        exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery worker \
+            --queues="${POWER_QUERY_RUNNER_QUEUE:-queue_hcr_power_query}" \
+            --concurrency=1 -E --loglevel=ERROR
+        ;;
     beat)
         exec tini -- gosu hope:unicef celery -A hope_country_report.config.celery beat \
             --loglevel=ERROR --scheduler django_celery_beat.schedulers:DatabaseScheduler

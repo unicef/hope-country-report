@@ -5,6 +5,10 @@ from pathlib import Path
 from django.core.exceptions import ValidationError
 
 ALLOWED_TEMPLATE_EXTENSIONS = frozenset({".docx", ".pdf"})
+ALLOWED_TEMPLATE_MIME_TYPES = {
+    ".docx": frozenset({"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}),
+    ".pdf": frozenset({"application/pdf"}),
+}
 MAX_TEMPLATE_SIZE = 10 * 1024 * 1024
 
 
@@ -26,6 +30,23 @@ def validate_template_size(value) -> None:
         raise ValidationError(
             f"Template is too large (max {MAX_TEMPLATE_SIZE // (1024 * 1024)} MB).",
             code="file_too_large",
+        )
+
+
+def validate_template_mime_type(value) -> None:
+    """Reject a client-declared MIME type that does not match the extension.
+
+    The actual content is still checked by ``validate_template_content``: the
+    browser-provided ``content_type`` is untrusted, so this is only an early
+    allowlist check.
+    """
+    suffix = Path(value.name).suffix.lower()
+    allowed = ALLOWED_TEMPLATE_MIME_TYPES.get(suffix, frozenset())
+    content_type = (getattr(value, "content_type", "") or "").split(";", 1)[0].strip().lower()
+    if content_type not in allowed:
+        raise ValidationError(
+            "Unsupported template MIME type.",
+            code="invalid_mime_type",
         )
 
 
