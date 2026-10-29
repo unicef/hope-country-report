@@ -268,8 +268,9 @@ def test_reportconfig_admin_terminate(app, report_config):
         assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
         messages = [m.message for m in res_follow.context["messages"]]
-        assert "Task not queued." in messages
+        assert "Task is not scheduled." in messages
 
+    ReportConfiguration.objects.filter(pk=report_config.pk).update(curr_async_result_id="test-task-id")
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=True):
         with mock.patch.object(ReportConfiguration, "terminate") as mock_terminate:
             res = app.get(url)
@@ -299,8 +300,9 @@ def test_reportconfig_admin_revoke(app: Callable, report_config: ReportConfigura
         assert res_get.location == change_url, "Redirect should go to the change page"
         res_follow = res_get.follow()
         messages = [m.message for m in res_follow.context["messages"]]
-        assert "Task not queued." in messages
+        assert "Task is not scheduled." in messages
 
+    ReportConfiguration.objects.filter(pk=report_config.pk).update(curr_async_result_id="test-task-id")
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=True):
         with mock.patch.object(ReportConfiguration, "revoke") as mock_revoke:
             res = app.get(url)
