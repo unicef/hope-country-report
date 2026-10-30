@@ -541,6 +541,13 @@ def test_validate_safe_code_allows_dotted_imports(code: str) -> None:
     validate_safe_code(code)
 
 
+def test_validate_safe_code_allows_type_attribute() -> None:
+    """Model fields named ``type`` are not the builtin ``type()``."""
+    validate_safe_code("result = doc.type.label")
+    with pytest.raises(SecurityException):
+        validate_safe_code("result = type(doc)")
+
+
 @pytest.mark.parametrize(
     "code",
     [
@@ -583,9 +590,35 @@ def test_validate_safe_code_rejects_reflection(code: str) -> None:
 
 
 def test_query_execution_guard_toggles_and_restores() -> None:
-    from hope_country_report.apps.power_query.utils import _QUERY_EXEC_STATE, query_execution_guard
+    from hope_country_report.apps.power_query.utils import _query_execution_active, query_execution_guard
 
-    assert not getattr(_QUERY_EXEC_STATE, "active", False)
+    assert not _query_execution_active()
     with query_execution_guard():
-        assert _QUERY_EXEC_STATE.active
-    assert not _QUERY_EXEC_STATE.active
+        assert _query_execution_active()
+    assert not _query_execution_active()
+
+
+def test_query_execution_guard_is_process_wide() -> None:
+    """The audit guard must also apply in threads spawned by query code."""
+    import sys
+    import threading
+
+    from hope_country_report.apps.power_query.utils import query_execution_guard
+
+    errors: list[Exception] = []
+
+    def worker() -> None:
+        try:
+            sys.audit("os.system", "true")
+        except SecurityException as e:
+            errors.append(e)
+
+    with query_execution_guard():
+        thread = threading.Thread(target=worker)
+        thread.start()
+        thread.join()
+
+    assert errors
+    assert str(errors[0]) == "Operation 'os.system' is not allowed"
+    # Outside the guard the same audit event is not denied.
+    sys.audit("os.system", "true")

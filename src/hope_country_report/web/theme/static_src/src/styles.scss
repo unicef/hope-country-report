@@ -1,4 +1,8 @@
-@tailwind base;
+@layer theme, base, components, utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer components {
 
 .box {
   @apply mb-2 bg-white drop-shadow-md rounded p-4 ;
@@ -173,9 +177,8 @@ body.api {
     line-height: 1.1;
   }
 }
+} /* @layer components */
 
-
-@tailwind utilities;
 /*
 //@tailwind components;
 //

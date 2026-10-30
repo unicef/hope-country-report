@@ -140,6 +140,21 @@ def test_query_with_permission_can_be_edited(db):
     assert admin.has_add_permission(request) is True
 
 
+def test_query_preview_requires_change_permission(django_app, db):
+    """A staff user with only ``view_query`` cannot execute the Preview button."""
+    from django.contrib.auth.models import Permission
+    from django.urls import reverse
+
+    from testutils.factories import QueryFactory, UserFactory
+
+    user = UserFactory(username="query_viewer", is_staff=True, is_active=True)
+    user.user_permissions.add(Permission.objects.get(content_type__app_label="power_query", codename="view_query"))
+    query = QueryFactory(name="permission-check")
+    url = reverse("admin:power_query_query_preview", args=[query.pk])
+    res = django_app.get(url, user=user, status=403)
+    assert res.status_code == 403
+
+
 def test_generated_artifacts_are_read_only(db):
     from unittest.mock import Mock
 

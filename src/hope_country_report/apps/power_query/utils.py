@@ -262,10 +262,13 @@ SAFE_BUILTINS = {
 SAFE_BUILTINS["__import__"] = safe_import
 
 # Runtime guard installed around query execution. Audit hooks cannot be scoped,
-# so the hook is a no-op unless the current thread is executing query code
-# (``query_execution_guard``). This is defense-in-depth: the builtins/import
-# allowlists above are the primary control.
-_QUERY_EXEC_STATE = threading.local()
+# so the hook is a no-op unless a query is executing anywhere in this process.
+# The flag is process-wide (not thread-local): a query can spawn a thread, and a
+# thread-local flag would leave the audit hook disabled in that child thread.
+# This is defense-in-depth: the builtins/import allowlists above are the primary
+# control.
+_QUERY_EXEC_LOCK = threading.Lock()
+_QUERY_EXEC_DEPTH = 0
 
 _DENIED_AUDIT_EVENTS = frozenset(
     {
@@ -283,8 +286,13 @@ _DENIED_AUDIT_EVENTS = frozenset(
 )
 
 
+def _query_execution_active() -> bool:
+    with _QUERY_EXEC_LOCK:
+        return _QUERY_EXEC_DEPTH > 0
+
+
 def _query_audit_hook(event: str, args: tuple) -> None:
-    if getattr(_QUERY_EXEC_STATE, "active", False) and event in _DENIED_AUDIT_EVENTS:
+    if event in _DENIED_AUDIT_EVENTS and _query_execution_active():
         raise SecurityException(f"Operation '{event}' is not allowed")
 
 
@@ -293,12 +301,14 @@ sys.addaudithook(_query_audit_hook)
 
 @contextlib.contextmanager
 def query_execution_guard() -> "Iterator[None]":
-    previous = getattr(_QUERY_EXEC_STATE, "active", False)
-    _QUERY_EXEC_STATE.active = True
+    global _QUERY_EXEC_DEPTH
+    with _QUERY_EXEC_LOCK:
+        _QUERY_EXEC_DEPTH += 1
     try:
         yield
     finally:
-        _QUERY_EXEC_STATE.active = previous
+        with _QUERY_EXEC_LOCK:
+            _QUERY_EXEC_DEPTH -= 1
 
 
 def validate_safe_code(code: str) -> None:
@@ -323,7 +333,9 @@ def validate_safe_code(code: str) -> None:
             if node.id.startswith("__") and node.id.endswith("__"):
                 raise SecurityException(f"Use of dunder '{node.id}' is not allowed")
         if isinstance(node, ast.Attribute):
-            if node.attr in DISALLOWED_NAMES:
+            # ``type`` is a common model field (``doc.type``). The dangerous form is
+            # the builtin call, which is still rejected by the ast.Name check above.
+            if node.attr in DISALLOWED_NAMES and node.attr != "type":
                 raise SecurityException(f"Use of '{node.attr}' is not allowed")
             if node.attr.startswith("__") and node.attr.endswith("__"):
                 raise SecurityException(f"Use of dunder '{node.attr}' is not allowed")
