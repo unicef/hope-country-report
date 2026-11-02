@@ -696,7 +696,6 @@ class Grievanceticket(HopeModel):
     version = models.BigIntegerField(null=True)
     unicef_id = models.CharField(blank=True, null=True)
     user_modified = models.DateTimeField(blank=True, null=True)
-    last_notification_sent = models.DateTimeField(blank=True, null=True)
     status = models.IntegerField(null=True)
     category = models.IntegerField(null=True)
     issue_type = models.IntegerField(blank=True, null=True)
@@ -771,6 +770,24 @@ class Grievanceticketthrough(HopeModel):
     class Meta:
         managed = False
         db_table = "grievance_grievanceticketthrough"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Mytaskstracking(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    first_email_at = models.DateTimeField(blank=True, null=True)
+    last_reminder_at = models.DateTimeField(blank=True, null=True)
+    business_area = models.ForeignKey(
+        BusinessArea, on_delete=models.DO_NOTHING, related_name="mytaskstracking_business_area", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_mytaskstracking"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
@@ -1193,6 +1210,23 @@ class Ticketreferraldetails(HopeModel):
     class Meta:
         managed = False
         db_table = "grievance_ticketreferraldetails"
+
+    class Tenant:
+        tenant_filter_field: str = "__all__"
+
+
+class Ticketseen(HopeModel):
+    id = models.UUIDField(primary_key=True)
+    created_at = models.DateTimeField(null=True)
+    updated_at = models.DateTimeField(null=True)
+    seen_at = models.DateTimeField(null=True)
+    ticket = models.ForeignKey(
+        Grievanceticket, on_delete=models.DO_NOTHING, related_name="ticketseen_ticket", null=True
+    )
+
+    class Meta:
+        managed = False
+        db_table = "grievance_ticketseen"
 
     class Tenant:
         tenant_filter_field: str = "__all__"
