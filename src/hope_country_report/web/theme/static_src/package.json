@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npm run dev",
     "build": "npm run build:clean && npm run build:tailwind",
-    "build:clean": "rimraf ../static/css",
+    "build:clean": "node -e \"require('node:fs').rmSync('../static/css', {recursive: true, force: true})\"",
     "build:tailwind": "tailwindcss -i ./src/styles.scss -o ../static/css/styles.css --minify",
     "dev": "tailwindcss -i ./src/styles.scss -o ../static/css/styles.css -w"
   },
@@ -16,7 +16,6 @@
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.4",
-    "rimraf": "^5.0.10",
     "tailwindcss": "^4.3.3"
   }
 }
