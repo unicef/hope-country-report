@@ -96,7 +96,7 @@ dependencies = [
   "swapper",
   "tablib[xlsx]",
   "tzdata",
-  "unicef-security>=1.11",
+  "unicef-security>=1.12.0",
   "watchdog[watchmedo]",
 ]
 [project.optional-dependencies]
