@@ -260,7 +260,6 @@ def test_reportconfig_admin_queue(app, report_config):
 def test_reportconfig_admin_terminate(app, report_config):
     """Test the celery terminate action."""
     url = reverse("admin:power_query_reportconfiguration_celery_terminate", args=[report_config.pk])
-
     change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=False):
         res_get = app.get(url, headers={"Referer": change_url})
@@ -277,22 +276,25 @@ def test_reportconfig_admin_terminate(app, report_config):
             assert res.status_code == 200
             assert f"Confirm termination request for {report_config}" in res.text
 
-            change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
+    ReportConfiguration.objects.filter(pk=report_config.pk).update(curr_async_result_id="some-task-id")
+    with mock.patch.object(ReportConfiguration, "terminate") as mock_terminate:
+        res = app.get(url)
+        assert res.status_code == 200
+        assert f"Confirm termination request for {report_config}" in res.text
 
-            res_post = res.forms[1].submit()
-            assert res_post.status_code == 302
-            assert res_post.location == change_url, "Redirect should go back to the change page"
-            mock_terminate.assert_called_once()
+        res_post = res.forms[1].submit()
+        assert res_post.status_code == 302
+        assert res_post.location == change_url, "Redirect should go back to the change page"
+        mock_terminate.assert_called_once()
 
-            res_follow = res_post.follow()
-            messages = [m.message for m in res_follow.context["messages"]]
-            assert len(messages) > 0, "Expected success/info message after terminate"
+        res_follow = res_post.follow()
+        messages = [m.message for m in res_follow.context["messages"]]
+        assert len(messages) > 0, "Expected success/info message after terminate"
 
 
 def test_reportconfig_admin_revoke(app: Callable, report_config: ReportConfiguration) -> None:
     """Test the celery revoke action."""
     url = reverse("admin:power_query_reportconfiguration_celery_revoke", args=[report_config.pk])
-
     change_url = reverse("admin:power_query_reportconfiguration_change", args=[report_config.pk])
     with mock.patch.object(ReportConfiguration, "is_queued", return_value=False):
         res_get = app.get(url, headers={"Referer": change_url})

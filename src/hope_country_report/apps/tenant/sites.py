@@ -1,7 +1,6 @@
 from functools import update_wrapper
 from typing import TYPE_CHECKING
 
-from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -55,7 +54,6 @@ class TenantAdminSite(SmartAdminSite):
 
     def each_context(self, request: "AuthHttpRequest") -> "dict[str, Any]":
         ret = super().each_context(request)
-        ret["flower_address"] = settings.POWER_QUERY_FLOWER_ADDRESS
         if must_tenant():
             selected_tenant = get_selected_tenant()
             ret["tenant_form"] = SelectTenantForm(initial={"tenant": selected_tenant}, request=request)
