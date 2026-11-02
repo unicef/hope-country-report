@@ -24,7 +24,7 @@ from sentry_sdk import capture_exception
 from ...config.celery import app
 from ...signals import report_failed
 from .exceptions import QueryRunCanceled, QueryRunTerminated
-from .utils import sentry_tags
+from .utils import get_execution_queue, sentry_tags
 
 if TYPE_CHECKING:
     from .models import Query, QueryMatrixResult, ReportConfiguration, ReportResult
@@ -114,6 +114,9 @@ class ReportTask(AbstractPowerQueryTask):
 @app.task(bind=True, base=PowerQueryTask)
 @sentry_tags
 def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "QueryMatrixResult":
+    if settings.POWER_QUERY_EXECUTION_MODE == "runner" and not settings.POWER_QUERY_RUNNER:
+        raise RuntimeError("run_background_query is only allowed in the dedicated runner")
+
     from hope_country_report.apps.power_query.models import Query
 
     query = None
@@ -224,6 +227,9 @@ def store_preview_result(payload: dict[str, Any]) -> str | None:
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def refresh_report(self: PowerQueryTask, report_id: int, version: int = 0) -> "ReportResult":
+    if settings.POWER_QUERY_EXECUTION_MODE == "runner" and not settings.POWER_QUERY_RUNNER:
+        raise RuntimeError("refresh_report is only allowed in the dedicated runner")
+
     from hope_country_report.apps.power_query.models import ReportConfiguration
 
     result: "ReportResult" = []
@@ -237,7 +243,9 @@ def refresh_report(self: PowerQueryTask, report_id: int, version: int = 0) -> "R
         report.sentry_error_id = None
         report.save(update_fields=["error_message", "sentry_error_id"])
 
-        result = report.execute(run_query=True)
+        result = report.execute(run_query=True, notify=not settings.POWER_QUERY_RUNNER)
+        if settings.POWER_QUERY_RUNNER and report.documents.exists():
+            notify_report.apply_async(args=[report.pk], queue=settings.CELERY_TASK_DEFAULT_QUEUE)
     except RecordModifiedError as e:
         raise Reject(e, requeue=False)
     except (Ignore, Reject, Retry):
@@ -258,6 +266,25 @@ def refresh_report(self: PowerQueryTask, report_id: int, version: int = 0) -> "R
     return result
 
 
+@app.task
+@sentry_tags
+def notify_report(report_id: int) -> None:
+    """Send report notifications from a process allowed to hold mail credentials."""
+    from ...signals import report_completed
+    from ...utils.mail import notify_report_completion, send_document_password
+    from .models import ReportConfiguration
+
+    report = ReportConfiguration.objects.get(pk=report_id)
+    if not report.documents.exists():
+        return
+    if report.protect:
+        for user in report.notify_to.all():
+            send_document_password(user, report)
+    else:
+        notify_report_completion(report)
+    report_completed.send(sender=ReportConfiguration, instance=report)
+
+
 @app.task(bind=True, default_retry_delay=60, max_retries=3, base=ReportTask)
 @sentry_tags
 def reports_refresh(self: AbortableTask, **kwargs: dict[str, Any]) -> Any:
@@ -271,7 +298,8 @@ def reports_refresh(self: AbortableTask, **kwargs: dict[str, Any]) -> Any:
             return result
 
         grp = [
-            refresh_report.subtask((report.pk, report.version)) for report in periodic_task.reports.filter(active=True)
+            refresh_report.subtask((report.pk, report.version)).set(queue=get_execution_queue())
+            for report in periodic_task.reports.filter(active=True)
         ]
 
         if grp:

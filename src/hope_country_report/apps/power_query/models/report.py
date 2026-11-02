@@ -16,7 +16,14 @@ from ....signals import report_completed
 from ....utils.mail import notify_report_completion, send_document_password
 from ...core.models import CountryOffice
 from ..json import PQJSONEncoder
-from ._base import AdminReversable, ManageableObject, PowerQueryCeleryFields, PowerQueryModel, TimeStampMixin
+from ._base import (
+    AdminReversable,
+    ManageableObject,
+    PowerQueryCeleryFields,
+    PowerQueryModel,
+    RunnerQueueMixin,
+    TimeStampMixin,
+)
 from .formatter import Formatter
 from .query import Query
 
@@ -30,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class ReportConfiguration(
+    RunnerQueueMixin,
     CeleryTaskModel,
     PowerQueryCeleryFields,
     PowerQueryModel,

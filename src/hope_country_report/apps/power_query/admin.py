@@ -548,6 +548,11 @@ class ReportConfigurationAdmin(
 
     @button(visible=lambda btn: "change" in btn.context["request"].path)
     def execute(self, request: HttpRequest, pk: int) -> HttpResponse:
+        obj = self.get_object(request, pk)
+        if settings.POWER_QUERY_EXECUTION_MODE == "runner":
+            obj.queue()
+            self.message_user(request, "Report queued. Documents will appear under Documents.", messages.INFO)
+            return HttpResponseRedirect(obj.get_admin_url())
         ctx = self.get_common_context(request, pk, title="Execution results")
         try:
             results = self.object.execute(run_query=True)

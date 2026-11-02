@@ -1,6 +1,7 @@
 from typing import Any, TYPE_CHECKING
 import json
 
+from django.conf import settings
 from django.core.checks import Warning, register
 from django.db.utils import OperationalError, ProgrammingError
 
@@ -36,6 +37,22 @@ def check_periodic_tasks(app_configs: "AppConfig | None" = None, **kwargs: Any) 
                         id="power_query.W001",
                     )
                 )
+
+        if settings.POWER_QUERY_EXECUTION_MODE == "runner":
+            code_tasks = [
+                "hope_country_report.apps.power_query.celery_tasks.run_background_query",
+                "hope_country_report.apps.power_query.celery_tasks.refresh_report",
+            ]
+            for task in PeriodicTask.objects.filter(task__in=code_tasks):
+                if (task.queue or "") != settings.POWER_QUERY_RUNNER_QUEUE:
+                    warnings.append(
+                        Warning(
+                            f"PeriodicTask '{task.name}' executes Power Query code but is not routed to "
+                            f"the runner queue '{settings.POWER_QUERY_RUNNER_QUEUE}'.",
+                            obj=task,
+                            id="power_query.W002",
+                        )
+                    )
     except (OperationalError, ProgrammingError):
         pass
     return warnings

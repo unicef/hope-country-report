@@ -10,10 +10,12 @@ from concurrency.fields import AutoIncVersionField
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.db import models
 from django.urls import reverse
+from django.utils.functional import classproperty
 
 from ...core.utils import SmartManager
 from ..manager import PowerQueryManager
 from ..processors import mimetype_map
+from ..utils import get_execution_queue
 
 if TYPE_CHECKING:
     from typing import Any
@@ -32,6 +34,24 @@ class PowerQueryCeleryFields(models.Model):
 
     class Meta:
         abstract = True
+
+
+class RunnerQueueMixin:
+    """Send query-executing tasks to the queue served by the Power Query runner."""
+
+    @classproperty
+    def celery_task_queue(cls) -> str:  # type: ignore[override]
+        return get_execution_queue()
+
+    def queue(self, use_version: bool = True) -> str | None:
+        if self.task_status not in self.ACTIVE_STATUSES:
+            res = self.task_handler.apply_async(
+                args=(self.pk, self.version if use_version else None),
+                queue=self.celery_task_queue,
+            )
+            self.set_queued(res)
+            return self.curr_async_result_id
+        return None
 
 
 class AdminReversable(models.Model):

@@ -21,7 +21,7 @@ from hope_country_report.utils.perf import profile
 from ..exceptions import QueryRunCanceled, QueryRunTerminated
 from ..json import PQJSONEncoder
 from ..utils import SAFE_BUILTINS, dict_hash, query_execution_guard, to_dataset, validate_safe_code
-from ._base import AdminReversable, PowerQueryCeleryFields, PowerQueryModel
+from ._base import AdminReversable, PowerQueryCeleryFields, PowerQueryModel, RunnerQueueMixin
 from .arguments import Parametrizer
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminReversable, models.Model):
+class Query(RunnerQueueMixin, CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminReversable, models.Model):
     country_office = models.ForeignKey(CountryOffice, on_delete=models.CASCADE, blank=True, null=True)
 
     datasets: "QuerySet[Dataset]"
@@ -147,6 +147,8 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
         running_task: "PowerQueryTask|None" = None,
         **kwargs: "dict[str, Any]",
     ) -> "tuple[Dataset, dict[str,Any]]":
+        if settings.POWER_QUERY_EXECUTION_MODE == "runner" and not settings.POWER_QUERY_RUNNER:
+            raise RuntimeError("Power Query execution is only allowed in the dedicated runner")
         from .dataset import Dataset
 
         model = self.parent.target.model_class() if self.parent else self.target.model_class()
