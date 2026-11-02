@@ -102,8 +102,9 @@ def test_report_list(browser: "SmartDriver", report_document: "ReportDocument"):
 
     select = Select(browser.wait_for(By.NAME, "tenant"))
     select.select_by_visible_text("Afghanistan")
+    browser.wait_for_url("/afghanistan/")
 
-    browser.wait_for(By.LINK_TEXT, "Reports").click()
+    browser.click_and_wait(browser.wait_for(By.LINK_TEXT, "Reports"))
     browser.wait_for_url("/afghanistan/docs/")
     browser.click_and_wait(browser.wait_for(By.LINK_TEXT, "tag1"))
     browser.click_and_wait(browser.wait_for(By.ID, "remove-filter"))
@@ -129,8 +130,9 @@ def test_report_config(browser: SmartDriver, report_document: "ReportDocument"):
 
     select = Select(browser.wait_for(By.NAME, "tenant"))
     select.select_by_visible_text("Afghanistan")
+    browser.wait_for_url("/afghanistan/")
 
-    browser.wait_for(By.LINK_TEXT, "Settings").click()
+    browser.click_and_wait(browser.wait_for(By.LINK_TEXT, "Settings"))
     browser.wait_for_url("/afghanistan/configurations/")
     browser.click_and_wait(browser.wait_for(By.LINK_TEXT, "tag1"))
     browser.click_and_wait(browser.wait_for(By.ID, "remove-filter"))

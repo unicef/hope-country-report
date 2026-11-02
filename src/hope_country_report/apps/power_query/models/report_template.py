@@ -16,6 +16,7 @@ from hope_country_report.apps.power_query.validators import (
     report_template_upload_to,
     validate_template_content,
     validate_template_extension,
+    validate_template_mime_type,
     validate_template_size,
 )
 
@@ -31,7 +32,12 @@ class ReportTemplate(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True, unique=True)
     doc = models.FileField(
         upload_to=report_template_upload_to,
-        validators=[validate_template_extension, validate_template_size, validate_template_content],
+        validators=[
+            validate_template_extension,
+            validate_template_mime_type,
+            validate_template_size,
+            validate_template_content,
+        ],
     )
     file_suffix = models.CharField(max_length=20)
 

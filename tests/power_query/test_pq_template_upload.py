@@ -10,6 +10,7 @@ from hope_country_report.apps.power_query.validators import (
     report_template_upload_to,
     validate_template_content,
     validate_template_extension,
+    validate_template_mime_type,
     validate_template_size,
 )
 
@@ -22,8 +23,14 @@ def _docx_bytes() -> bytes:
     return buffer.getvalue()
 
 
-def _upload(name: str, content: bytes = b"x") -> SimpleUploadedFile:
-    return SimpleUploadedFile(name, content)
+def _upload(name: str, content: bytes = b"x", content_type: str | None = None) -> SimpleUploadedFile:
+    if content_type is None:
+        content_type = (
+            "application/pdf"
+            if name.lower().endswith(".pdf")
+            else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+    return SimpleUploadedFile(name, content, content_type=content_type)
 
 
 @pytest.mark.parametrize("name", ["evil.html", "evil.svg", "archive.zip", "run.exe", "noext"])
@@ -35,6 +42,24 @@ def test_extension_rejected(name):
 @pytest.mark.parametrize("name", ["template.docx", "template.pdf", "TEMPLATE.PDF"])
 def test_extension_accepted(name):
     validate_template_extension(_upload(name))
+
+
+@pytest.mark.parametrize("name", ["template.docx", "template.pdf", "TEMPLATE.PDF"])
+def test_mime_type_accepted(name):
+    validate_template_mime_type(_upload(name))
+
+
+@pytest.mark.parametrize(
+    ("name", "content_type"),
+    [
+        ("template.pdf", "text/html"),
+        ("template.docx", "application/zip"),
+        ("template.pdf", "application/octet-stream"),
+    ],
+)
+def test_mime_type_rejected(name, content_type):
+    with pytest.raises(ValidationError):
+        validate_template_mime_type(_upload(name, content_type=content_type))
 
 
 def test_content_rejects_fake_pdf():

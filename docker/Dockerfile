@@ -29,7 +29,9 @@ wget \
   && apt-get purge -y --auto-remove $buildDeps
 
 RUN groupadd --gid 1024 unicef \
-    && adduser --disabled-login --disabled-password --no-create-home --ingroup unicef -q hope
+    && adduser --disabled-login --disabled-password --no-create-home --ingroup unicef -q hope \
+    && groupadd --gid 1030 pqrunner \
+    && adduser --system --uid 1030 --gid 1030 --home /var/run/app/runner --no-create-home --shell /usr/sbin/nologin --quiet pqrunner
 
 
 # ------- builder -------

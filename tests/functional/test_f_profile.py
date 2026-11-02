@@ -29,8 +29,9 @@ def test_user_profile(browser: "SmartDriver", afg_user: "User"):
 
     select = Select(browser.wait_for(By.NAME, "tenant"))
     select.select_by_visible_text("Afghanistan")
+    browser.wait_for_url("/afghanistan/")
 
-    browser.wait_for(By.CLASS_NAME, "profile-link").click()
+    browser.click_and_wait(browser.wait_for(By.CLASS_NAME, "profile-link"))
     browser.wait_for_url(reverse("user-profile"))
 
     browser.select2("timezone", "Rome")
