@@ -30,15 +30,21 @@ def test_celery_terminate(django_app, admin_user, query):
     url = reverse("admin:power_query_query_celery_terminate", args=[query.pk])
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
-    # django-celery-boost 0.9 gates these actions on curr_async_result_id,
-    # not on is_queued() (a task can be scheduled but not in the Redis queue).
-    Query.objects.filter(pk=query.pk).update(curr_async_result_id=None)
-    res_get = django_app.get(url, user=admin_user, headers={"Referer": change_url})
-    assert res_get.status_code == 302
-    assert res_get.location == change_url
-    res_follow = res_get.follow(expect_errors=True)
-    messages = [m.message for m in res_follow.context["messages"]]
-    assert "Task is not scheduled." in messages
+    with mock.patch.object(Query, "is_queued", return_value=False):
+        res_get = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get.status_code == 302
+        assert res_get.location == change_url
+        res_follow = res_get.follow(expect_errors=True)
+        messages = [m.message for m in res_follow.context["messages"]]
+        assert "Task is not scheduled." in messages
+
+    Query.objects.filter(pk=query.pk).update(curr_async_result_id="test-task-id")
+    with mock.patch.object(Query, "is_queued", return_value=True):
+        with mock.patch.object(Query, "terminate") as mock_terminate:
+            res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+            assert res.status_code == 200
+            assert "Confirm termination request" in res.text
+            assert str(query) in res.text
 
     Query.objects.filter(pk=query.pk).update(curr_async_result_id="some-task-id")
     with mock.patch.object(Query, "terminate") as mock_terminate:
@@ -108,21 +114,24 @@ def test_celery_revoke(django_app, admin_user, query):
     url = reverse("admin:power_query_query_celery_revoke", args=[query.pk])
     change_url = reverse("admin:power_query_query_change", args=[query.pk])
 
-    # 0.9: the action checks curr_async_result_id; is_queued is no longer the gate.
-    Query.objects.filter(pk=query.pk).update(curr_async_result_id=None)
-    res_get_not_queued = django_app.get(url, user=admin_user, headers={"Referer": change_url})
-    assert res_get_not_queued.status_code == 302
-    assert res_get_not_queued.location == change_url
-    res_follow_not_queued = res_get_not_queued.follow(expect_errors=True)
-    messages = [m.message for m in res_follow_not_queued.context["messages"]]
-    assert "Task is not scheduled." in messages
+    with mock.patch.object(Query, "is_queued", return_value=False):
+        res_get_not_queued = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+        assert res_get_not_queued.status_code == 302
+        assert res_get_not_queued.location == change_url
+        res_follow_not_queued = res_get_not_queued.follow(expect_errors=True)
+        messages = [m.message for m in res_follow_not_queued.context["messages"]]
+        assert "Task is not scheduled." in messages
 
-    Query.objects.filter(pk=query.pk).update(curr_async_result_id="some-task-id")
-    with mock.patch.object(Query, "revoke") as mock_revoke:
-        res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
-        assert res.status_code == 200
-        assert "Confirm revoking action for [ABSTRACT]" in res.text
-        assert str(query) in res.text
+    Query.objects.filter(pk=query.pk).update(curr_async_result_id="test-task-id")
+    with mock.patch.object(Query, "is_queued", return_value=True):
+        with mock.patch.object(Query, "revoke") as mock_revoke:
+            res = django_app.get(url, user=admin_user, headers={"Referer": change_url})
+            assert res.status_code == 200
+            assert "Confirm revoking action for [ABSTRACT]" in res.text
+            assert str(query) in res.text
+
+            res_post = res.forms[1].submit()
+            assert res_post.status_code == 302
 
         res_post = res.forms[1].submit()
         assert res_post.status_code == 302

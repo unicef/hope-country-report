@@ -90,3 +90,11 @@ repos:
         args:
           - -p
           - /\[tool\.uv\.sources\]\s/s
+
+  - repo: local
+    hooks:
+      - id: sh-syntax
+        name: sh -n (docker scripts syntax)
+        files: ^docker/bin/.*\.sh$
+        entry: sh -n
+        language: system

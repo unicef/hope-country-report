@@ -155,6 +155,12 @@ jobs:
                 --cache-to "type=gha,mode=max" \
                 -f docker/Dockerfile .
 
+      - name: Verify pq-runner user
+        run: |
+             output=$(docker run --rm ${{env.IMAGE}} pq-uid)
+             echo "$output"
+             echo "$output" | grep -q "uid=1030(pqrunner) gid=1030(pqrunner)"
+
       - name: Run Test suite
         run: |
             mkdir -p output

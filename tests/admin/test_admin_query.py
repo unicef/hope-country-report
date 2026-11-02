@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from django.contrib.contenttypes.models import ContentType
+from django.test import override_settings
 from django.urls import reverse
 
 if TYPE_CHECKING:
@@ -117,6 +118,30 @@ def test_query_preview_none(query_none, django_app, admin_user):
         res.pyquery("ul.messagelist .warning")[0].text
         == "Query does not returns a valid result. It returned <class 'NoneType'>"
     )
+
+
+@override_settings(
+    POWER_QUERY_EXECUTION_MODE="runner",
+    POWER_QUERY_RUNNER=True,
+    POWER_QUERY_RUNNER_QUEUE="queue_test_power_query",
+    CELERY_TASK_ALWAYS_EAGER=True,
+)
+def test_query_preview_runner(django_app, admin_user):
+    """Runner mode dispatches preview and ingests the result as a Dataset."""
+    from testutils.factories import QueryFactory
+
+    from hope_country_report.apps.power_query.models import Dataset
+
+    query = QueryFactory(name="runner-preview", code="result=[{'value': 1}]")
+    url = reverse("admin:power_query_query_preview", args=[query.pk])
+    res = django_app.get(url, user=admin_user)
+    assert res.status_code == 302
+    assert res.location == reverse("admin:power_query_query_change", args=[query.pk])
+
+    dataset = Dataset.objects.get(query=query)
+    assert dataset.size == 1
+    assert dataset.info["arguments"] == {}
+    assert dataset.data[0][0] == 1
 
 
 def test_query_preview_exception(query_exception, django_app, admin_user):
