@@ -14,6 +14,7 @@ from django.core.cache import caches
 from django.db import Error as DjangoDbError
 from django.db import connection
 from django.db.models import Model
+from django.db.utils import OperationalError
 from django.utils.functional import cached_property
 from django_celery_beat.models import PeriodicTask
 from redis import StrictRedis
@@ -109,7 +110,14 @@ class ReportTask(AbstractPowerQueryTask):
     model_name = "Report"
 
 
-@app.task(bind=True, base=PowerQueryTask)
+@app.task(
+    bind=True,
+    base=PowerQueryTask,
+    autoretry_for=(OperationalError,),
+    retry_backoff=300,
+    retry_jitter=True,
+    max_retries=3,
+)
 @sentry_tags
 def run_background_query(self: PowerQueryTask, query_id: int, version: int) -> "QueryMatrixResult":
     from hope_country_report.apps.power_query.models import Query

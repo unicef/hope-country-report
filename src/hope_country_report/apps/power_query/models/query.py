@@ -10,6 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import JSONField, Q
+from django.db.utils import OperationalError
 from django.utils import timezone
 from django_celery_boost.models import CeleryTaskModel
 from sentry_sdk import capture_exception, configure_scope
@@ -114,6 +115,7 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
         self.sentry_error_id = None
         self.info = {}
         results: "QueryMatrixResult" = {}
+        retryable_error: OperationalError | None = None
 
         with configure_scope() as scope:
             scope.set_tag("power_query", True)
@@ -131,11 +133,14 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                     results[f"sentry_{str(a)}"] = str(err)
                     self.error_message = str(e)
                     self.sentry_error_id = str(err)
+                    if isinstance(e, OperationalError) and "conflict with recovery" in str(e).lower():
+                        retryable_error = retryable_error or e
             if self.error_message:
                 results["error_message"] = self.error_message
                 results["sentry_error_id"] = self.sentry_error_id
             self.update_results(results)
-            self.datasets.exclude(pk__in=[dpk for dpk in results.values() if isinstance(dpk, int)]).delete()
+            if retryable_error is not None and running_task is not None:
+                raise retryable_error
         return results
 
     def run(
@@ -195,7 +200,7 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                             self.info = {
                                 "debug": debug,
                             }
-                            self.save()
+                            self.save(update_fields=["info"])
                             raise
                         info = {
                             "type": type(result).__name__,
