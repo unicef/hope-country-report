@@ -8,9 +8,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
-from django.db import models
+from django.db import DEFAULT_DB_ALIAS, connections, models
 from django.db.models import JSONField, Q
-from django.db.utils import OperationalError
+from django.db.utils import InterfaceError, OperationalError
 from django.utils import timezone
 from django_celery_boost.models import CeleryTaskModel
 from sentry_sdk import capture_exception, configure_scope
@@ -117,10 +117,16 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
         results: "QueryMatrixResult" = {}
         retryable_error: OperationalError | None = None
 
+        db_alias = getattr(settings, "POWER_QUERY_DB_ALIAS", "default")
         with configure_scope() as scope:
             scope.set_tag("power_query", True)
             scope.set_tag("power_query.name", self.name)
             for a in args:
+                if db_alias != DEFAULT_DB_ALIAS:
+                    try:
+                        connections[db_alias].close_if_unusable_or_obsolete()
+                    except Exception:
+                        logger.debug("Could not reset the %s connection before %r", db_alias, a, exc_info=True)
                 try:
                     dataset, info = self.run(persist, a, running_task=running_task)
                     results[str(a)] = dataset.pk
@@ -133,6 +139,11 @@ class Query(CeleryTaskModel, PowerQueryCeleryFields, PowerQueryModel, AdminRever
                     results[f"sentry_{str(a)}"] = str(err)
                     self.error_message = str(e)
                     self.sentry_error_id = str(err)
+                    if isinstance(e, (OperationalError, InterfaceError)) and db_alias != DEFAULT_DB_ALIAS:
+                        try:
+                            connections[db_alias].close()
+                        except Exception:
+                            logger.debug("Could not close the %s connection after %r", db_alias, a, exc_info=True)
                     if isinstance(e, OperationalError) and "conflict with recovery" in str(e).lower():
                         retryable_error = retryable_error or e
             if self.error_message:
