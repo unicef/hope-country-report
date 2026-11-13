@@ -42,6 +42,13 @@ logger = logging.getLogger(__name__)
 _font_cache: dict[str, bytes] = {}
 
 
+def get_execution_queue() -> str:
+    """Return the queue allowed to execute Power Query code."""
+    if settings.POWER_QUERY_EXECUTION_MODE == "runner":
+        return settings.POWER_QUERY_RUNNER_QUEUE
+    return settings.CELERY_TASK_DEFAULT_QUEUE
+
+
 def size_of(obj: Any, seen: set | None = None):
     size = sys.getsizeof(obj)
     if seen is None:

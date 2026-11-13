@@ -1,4 +1,6 @@
 from typing import TYPE_CHECKING
+from unittest import mock
+from unittest.mock import PropertyMock
 
 import pytest
 from django.contrib.contenttypes.models import ContentType
@@ -154,3 +156,24 @@ def test_query_preview_exception(query_exception, django_app, admin_user):
     assert "/select-tenant/" in res_follow1.location
     res_follow2 = res_follow1.follow()
     assert res_follow2.status_code == 200
+
+
+@override_settings(
+    POWER_QUERY_EXECUTION_MODE="runner",
+    POWER_QUERY_RUNNER=True,
+    POWER_QUERY_RUNNER_QUEUE="queue_test_power_query",
+)
+def test_report_execute_dispatches_to_runner(django_app, admin_user):
+    from testutils.factories import ReportConfigurationFactory
+
+    from hope_country_report.apps.power_query.models import ReportConfiguration
+
+    report = ReportConfigurationFactory()
+    url = reverse("admin:power_query_reportconfiguration_execute", args=[report.pk])
+    with mock.patch.object(ReportConfiguration, "task_handler", new_callable=PropertyMock) as handler:
+        handler.return_value.apply_async.return_value.id = "test-task-id"
+        res = django_app.get(url, user=admin_user)
+
+    assert res.status_code == 302
+    assert res.location == report.get_admin_url()
+    assert handler.return_value.apply_async.call_args.kwargs["queue"] == "queue_test_power_query"

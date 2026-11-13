@@ -192,3 +192,72 @@ def test_celery_error(settings, query_exception: Query) -> None:
     assert query_exception.error_message == "internal exc"
     assert query_exception.sentry_error_id
     assert query_exception.effective_status == Query.FAILURE
+
+
+def test_queue_uses_runner_queue(settings, query1: Query) -> None:
+    settings.POWER_QUERY_EXECUTION_MODE = "runner"
+    settings.POWER_QUERY_RUNNER_QUEUE = "queue_test_runner"
+    assert query1.celery_task_queue == "queue_test_runner"
+
+    with mock.patch.object(Query, "task_handler", new_callable=PropertyMock) as handler:
+        handler.return_value.apply_async.return_value.id = "test-task-id"
+        query1.queue()
+        assert handler.return_value.apply_async.call_args.kwargs["queue"] == "queue_test_runner"
+
+
+def test_queue_uses_default_queue(settings, query1: Query) -> None:
+    settings.POWER_QUERY_EXECUTION_MODE = "inline"
+    assert query1.celery_task_queue == settings.CELERY_TASK_DEFAULT_QUEUE
+
+
+def test_query_run_blocked_outside_runner(settings, query1: Query) -> None:
+    settings.POWER_QUERY_EXECUTION_MODE = "runner"
+    settings.POWER_QUERY_RUNNER = False
+    with pytest.raises(RuntimeError, match="runner"):
+        query1.run()
+
+
+def test_run_background_query_blocked_outside_runner(settings, query1: Query) -> None:
+    settings.POWER_QUERY_EXECUTION_MODE = "runner"
+    settings.POWER_QUERY_RUNNER = False
+    with pytest.raises(RuntimeError, match="runner"):
+        run_background_query.run(query1.pk, query1.version)
+
+
+def test_refresh_report_blocked_outside_runner(settings, report: "ReportConfiguration") -> None:
+    settings.POWER_QUERY_EXECUTION_MODE = "runner"
+    settings.POWER_QUERY_RUNNER = False
+    with pytest.raises(RuntimeError, match="runner"):
+        refresh_report.run(report.pk, report.version)
+
+
+@pytest.mark.django_db
+def test_reports_refresh_routes_subtasks_to_runner(
+    settings, report: "ReportConfiguration", periodic_task_fixture: PeriodicTask
+) -> None:
+    settings.POWER_QUERY_EXECUTION_MODE = "runner"
+    settings.POWER_QUERY_RUNNER_QUEUE = "queue_test_runner"
+
+    mock_task_self_request = MagicMock(name="mock_task_self_request")
+    mock_task_self_request.periodic_task_name = periodic_task_fixture.name
+    mock_task_self_request.id = f"test_task_id_{uuid.uuid4().hex}"
+
+    with mock.patch("celery.app.task.Task.request", new_callable=PropertyMock, return_value=mock_task_self_request):
+        with mock.patch("hope_country_report.apps.power_query.celery_tasks.group") as mock_group:
+            reports_refresh.run()
+
+    subtasks = mock_group.call_args.args[0]
+    assert subtasks
+    assert {signature.options["queue"] for signature in subtasks} == {"queue_test_runner"}
+
+
+@pytest.mark.django_db
+def test_refresh_report_dispatches_notification_from_runner(settings, report: "ReportConfiguration") -> None:
+    settings.POWER_QUERY_EXECUTION_MODE = "runner"
+    settings.POWER_QUERY_RUNNER = True
+
+    with mock.patch("hope_country_report.apps.power_query.celery_tasks.notify_report") as mock_notify:
+        refresh_report.run(report.pk, report.version)
+
+    mock_notify.apply_async.assert_called_once()
+    assert mock_notify.apply_async.call_args.kwargs["queue"] == settings.CELERY_TASK_DEFAULT_QUEUE
