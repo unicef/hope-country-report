@@ -113,6 +113,15 @@ def test_run_background_query(settings, query1: Query) -> None:
     assert query1.datasets.exists()
 
 
+def test_run_background_query_retry_config() -> None:
+    from django.db.utils import OperationalError
+
+    assert run_background_query.autoretry_for == (OperationalError,)
+    assert run_background_query.max_retries == 3
+    assert run_background_query.retry_backoff == 300
+    assert run_background_query.retry_jitter is True
+
+
 def test_run_background_query_version_mismatch(settings, query1: Query) -> None:
     settings.CELERY_TASK_ALWAYS_EAGER = True
     result: EagerResult = run_background_query.delay(query1.pk, -1)

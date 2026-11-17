@@ -1,8 +1,10 @@
 from typing import TYPE_CHECKING
+from unittest import mock
 from uuid import UUID
 
 import pytest
 from django.conf import settings
+from django.db.utils import OperationalError
 from freezegun import freeze_time
 
 from hope_country_report.apps.tenant.config import conf
@@ -342,3 +344,75 @@ def test_query_marshalling(query: "Query", data):
         ds, extra = query.run()
     assert ds.data.count() == 2
     assert ds.data.first().pk == UUID(data["hh1"][0].pk)
+
+
+def _recovery_conflict_run(query: "Query", failing_value: bool = False):
+    original_run = query.run
+
+    def fake_run(persist, arguments=None, **kwargs):
+        if arguments and arguments.get("withdrawn") is failing_value:
+            raise OperationalError("canceling statement due to conflict with recovery")
+        return original_run(persist, arguments, **kwargs)
+
+    return fake_run
+
+
+def test_execute_matrix_retains_last_good_dataset_on_failure(query_parametrizer: "Query"):
+    query_parametrizer.execute_matrix()
+    version = query_parametrizer.version
+
+    with mock.patch.object(
+        query_parametrizer,
+        "run",
+        side_effect=_recovery_conflict_run(query_parametrizer),
+    ):
+        with pytest.raises(OperationalError):
+            query_parametrizer.execute_matrix(running_task=mock.Mock())
+
+    query_parametrizer.refresh_from_db()
+    assert query_parametrizer.datasets.count() == 2
+    assert query_parametrizer.datasets.filter(info__arguments__withdrawn=False).exists()
+    assert query_parametrizer.version == version
+    assert any(key.startswith("error_") for key in query_parametrizer.info["last_run_results"])
+
+
+def test_execute_matrix_recovery_error_does_not_raise_without_task(query_parametrizer: "Query"):
+    query_parametrizer.execute_matrix()
+
+    with mock.patch.object(
+        query_parametrizer,
+        "run",
+        side_effect=_recovery_conflict_run(query_parametrizer),
+    ):
+        result = query_parametrizer.execute_matrix()
+
+    assert query_parametrizer.datasets.count() == 2
+    assert any(key.startswith("error_") for key in result)
+
+
+def test_execute_matrix_non_recovery_error_is_not_retried(query_parametrizer: "Query"):
+    query_parametrizer.execute_matrix()
+    original_run = query_parametrizer.run
+
+    def fake_run(persist, arguments=None, **kwargs):
+        if arguments and arguments.get("withdrawn") is False:
+            raise OperationalError("some other operational error")
+        return original_run(persist, arguments, **kwargs)
+
+    with mock.patch.object(query_parametrizer, "run", side_effect=fake_run):
+        result = query_parametrizer.execute_matrix(running_task=mock.Mock())
+
+    assert query_parametrizer.datasets.count() == 2
+    assert any(key.startswith("error_") for key in result)
+
+
+def test_run_failure_does_not_bump_query_version(query: "Query"):
+    query.code = "raise Exception('boom')"
+    query.save()
+    version = query.version
+
+    with pytest.raises(Exception):
+        query.run(persist=True)
+
+    query.refresh_from_db()
+    assert query.version == version

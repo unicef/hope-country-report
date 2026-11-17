@@ -17,7 +17,7 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connections, models
-from django.db.models import QuerySet
+from django.db.models import F, QuerySet
 from django.db.models.sql.query import Query as SQLQuery
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.shortcuts import redirect, render
@@ -142,7 +142,7 @@ class QueryAdmin(
     autocomplete_fields = ("target", "owner", "target")
     readonly_fields = ("sentry_error_id", "error_message", "info", "last_run", "version", "effective_status")
     change_form_template = None
-    ordering = ["-last_run"]
+    ordering = [F("last_run").desc(nulls_last=True)]
     form = QueryForm
     date_hierarchy = "datasets__last_run"
 
